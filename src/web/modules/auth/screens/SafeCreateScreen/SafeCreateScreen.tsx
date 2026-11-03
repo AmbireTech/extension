@@ -34,8 +34,6 @@ const SafeCreateScreen = () => {
           withBackButton
           onBackButtonPress={safeCreate.handleBackPress}
           title={safeCreate.title}
-          step={safeCreate.preview ? 2 : 1}
-          totalSteps={2}
           style={flexbox.flex1}
           titleContainerStyle={spacings.mbSm}
         >

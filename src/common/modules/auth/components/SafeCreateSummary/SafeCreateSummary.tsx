@@ -1,42 +1,58 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
-import shortenAddress from '@ambire-common/utils/shortenAddress'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import Alert from '@common/components/Alert'
-import Avatar from '@common/components/Avatar'
-import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import SafeCreateOwnerRow from '@common/modules/auth/components/SafeCreateOwnerRow'
 import SafeCreateSectionLabel from '@common/modules/auth/components/SafeCreateSectionLabel'
-import { SafeCreatePreview as Preview } from '@common/modules/auth/hooks/useSafeCreate'
+import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useSafeOwnerDetails from '@common/modules/auth/hooks/useSafeOwnerDetails'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
-type Props = {
-  preview: Preview
-}
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const SHORTENED_ADDRESS_LENGTH = 13
+/** The Safe version `getNewSafeAccount` creates (see `SAFE_V1_4_1`) */
+const NEW_SAFE_VERSION = '1.4.1'
+
+const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
+  state.readyToAddAccounts
 
 /**
- * The summary of the Safe about to be created, shown on the preview step of Safe create
- * before the user confirms it: its address, approvals needed, version, owners and networks.
- * Its name is set on the personalize step that follows, so it isn't shown here.
+ * The details of the Safe about to be created, shown on the personalize step under the
+ * card where the user names it: approvals needed, version, owners and networks.
+ * Shows only while that step names the Safe from Safe create, nothing for any other flow.
  */
-const SafeCreatePreview = ({ preview }: Props) => {
+const SafeCreateSummary = () => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { address, version, requiredConfirmations, owners } = preview
+  const { safeCreateDraft } = useOnboardingNavigation()
+  const { state: readyToAddAccounts } = useController(
+    'AccountPickerController',
+    selectReadyToAddAccounts
+  )
+  const getOwnerDetails = useSafeOwnerDetails()
+  const isNamingTheNewSafe =
+    !!safeCreateDraft &&
+    readyToAddAccounts.length === 1 &&
+    readyToAddAccounts[0]?.addr === safeCreateDraft.safeAddress
 
+  const owners = useMemo(
+    () => safeCreateDraft?.ownerAddresses.map((address) => getOwnerDetails(address)) ?? [],
+    [safeCreateDraft, getOwnerDetails]
+  )
   const signingOwnersCount = useMemo(() => owners.filter(({ canSign }) => canSign).length, [owners])
 
+  if (!isNamingTheNewSafe || !safeCreateDraft) return null
+
   return (
-    <View>
+    <View testID="safe-create-summary">
       {!signingOwnersCount && (
         <Alert
           type="warning"
@@ -44,33 +60,18 @@ const SafeCreatePreview = ({ preview }: Props) => {
           text={t(
             "None of its owners can sign with the keys in your wallet. You'll be able to see this Safe, but not send from it. Go back to add an account you can sign with as an owner."
           )}
-          style={spacings.mbSm}
+          style={spacings.mtLg}
         />
       )}
 
       <View style={[styles.card, spacings.mtLg]}>
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvSm]}>
-          <Avatar pfp={address} address={address} smartAccountType="Safe" size={48} />
-          <View style={[flexbox.flex1, spacings.mlSm]}>
-            <Text fontSize={16} weight="semiBold">
-              {t('Safe account')}
-            </Text>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text fontSize={12} appearance="secondaryText" testID="safe-create-preview-address">
-                {shortenAddress(address, SHORTENED_ADDRESS_LENGTH)}
-              </Text>
-              <CopyText text={address} iconSize={14} style={spacings.mlMi} />
-            </View>
-          </View>
-        </View>
-        <View style={styles.divider} />
         <View style={styles.row}>
           <Text fontSize={14} appearance="secondaryText">
             {t('Approvals needed')}
           </Text>
-          <Text fontSize={14} weight="semiBold" testID="safe-create-preview-approvals">
+          <Text fontSize={14} weight="semiBold" testID="safe-create-summary-approvals">
             {t('{{requiredConfirmations}} of {{ownersCount}} owners', {
-              requiredConfirmations,
+              requiredConfirmations: safeCreateDraft.requiredConfirmations,
               ownersCount: owners.length
             })}
           </Text>
@@ -81,7 +82,7 @@ const SafeCreatePreview = ({ preview }: Props) => {
             {t('Safe version')}
           </Text>
           <Text fontSize={14} weight="semiBold">
-            {version}
+            {NEW_SAFE_VERSION}
           </Text>
         </View>
       </View>
@@ -96,7 +97,7 @@ const SafeCreatePreview = ({ preview }: Props) => {
             owner={owner}
             withSigningBadge
             withDivider={index < owners.length - 1}
-            testID={`safe-create-preview-owner-${owner.address}`}
+            testID={`safe-create-summary-owner-${owner.address}`}
           />
         ))}
       </View>
@@ -117,4 +118,4 @@ const SafeCreatePreview = ({ preview }: Props) => {
   )
 }
 
-export default React.memo(SafeCreatePreview)
+export default React.memo(SafeCreateSummary)

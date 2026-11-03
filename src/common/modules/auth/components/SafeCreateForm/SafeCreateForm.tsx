@@ -86,7 +86,7 @@ const SafeCreateForm = ({
           <View style={styles.addOwnerIcon}>
             <AddIcon width={18} height={18} color={theme.primary} />
           </View>
-          <Text fontSize={16} weight="semiBold" appearance="primary" style={spacings.mlSm}>
+          <Text fontSize={14} weight="semiBold" appearance="primary" style={spacings.mlSm}>
             {t('Add owner')}
           </Text>
         </HoverablePressable>
@@ -99,7 +99,7 @@ const SafeCreateForm = ({
       <View style={styles.card}>
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvSm]}>
           <Text
-            fontSize={18}
+            fontSize={14}
             weight="semiBold"
             appearance={ownersCount ? 'primaryText' : 'tertiaryText'}
             style={[flexbox.flex1, spacings.mrSm]}

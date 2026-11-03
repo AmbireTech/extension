@@ -9,36 +9,21 @@ type Props = {
 }
 
 /**
- * The footer button of the Safe create screen (web and mobile): Continue on the owners
- * form, then Create Multisig on the preview step.
+ * The footer button of the Safe create screen (web and mobile). It prepares the Safe and
+ * goes on to the personalize step, which adds it once the user proceeds.
  */
 const SafeCreateFooterButton = ({ safeCreate }: Props) => {
   const { t } = useTranslation()
-  const {
-    preview,
-    isContinueButtonDisabled,
-    handleContinue,
-    isCreateButtonDisabled,
-    handleCreate
-  } = safeCreate
+  const { isCreateButtonDisabled, handleCreate } = safeCreate
 
-  return preview ? (
+  return (
     <Button
       testID="safe-create-button"
       size="large"
-      text={t('Create Multisig')}
+      text={t('Continue')}
       hasBottomSpacing={false}
       onPress={handleCreate}
       disabled={isCreateButtonDisabled}
-    />
-  ) : (
-    <Button
-      testID="safe-create-continue-button"
-      size="large"
-      text={t('Continue')}
-      hasBottomSpacing={false}
-      onPress={handleContinue}
-      disabled={isContinueButtonDisabled}
     />
   )
 }
