@@ -52,6 +52,7 @@ import styles from './styles'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 export interface AddressSelectProps extends InputProps {
   setAddress: (text: string) => void
@@ -288,6 +289,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
   const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const canSendToPrivacyPoolsAccounts = useMemo(
     () => !account || !getIsViewOnly(keys, account.associatedKeys),
     [account, keys]
@@ -330,6 +332,18 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       ...contacts
     ]
   }, [account, contacts, includeSelectedAccount])
+
+  // Computed once for the whole list, so the rows don't each subscribe to the keystore.
+  // Safe accounts are left out, like in the accounts list
+  const viewOnlyAccountAddresses = useMemo(
+    () =>
+      new Set(
+        accounts
+          .filter((acc) => !acc.safeCreation && getIsViewOnly(keys, acc.associatedKeys))
+          .map((acc) => acc.addr)
+      ),
+    [accounts, keys]
+  )
 
   const onManagePress = useCallback(() => {
     navigate(ROUTES.addressBook)
@@ -449,10 +463,11 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
               plainAddressMaxLength={contactAddressMaxLength}
               // Tapping a row selects the address, so a copy icon is not needed on mobile
               withCopy={isWeb}
+              isViewOnly={viewOnlyAccountAddresses.has(contact.address)}
             />
           )
         })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+    [selectableContacts, filteredContacts, contactAddressMaxLength, viewOnlyAccountAddresses]
   )
 
   const manuallyAddedContactOptions = useMemo(

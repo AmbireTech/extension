@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import AccountAddress from '@common/components/AccountAddress'
+import { ViewOnlyBadge } from '@common/components/AccountKeysBadge'
 import Avatar from '@common/components/Avatar'
 import Editable from '@common/components/Editable'
 import Text from '@common/components/Text'
@@ -41,6 +42,8 @@ interface Props {
   fontSize?: number
   height?: number
   isActive?: boolean
+  /** Shows a "View-only" badge next to the name, for one of the user's accounts without keys */
+  isViewOnly?: boolean
 }
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
@@ -61,7 +64,8 @@ const AddressBookContact: FC<Props> = ({
   avatarSize,
   fontSize = 14,
   height = 20,
-  isActive = false
+  isActive = false,
+  isViewOnly = false
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const ContainerElement = onPress ? AnimatedPressable : View
@@ -166,13 +170,14 @@ const AddressBookContact: FC<Props> = ({
                 fontSize={fontSize}
                 weight="medium"
                 numberOfLines={isNarrowWebLayout ? 1 : undefined}
-                style={!name && spacings.mrTy}
+                style={[!name && spacings.mrTy, isViewOnly && { flexShrink: 1 }]}
               >
                 {name ||
                   (account?.addr === selectedAccount?.addr
                     ? account?.preferences.label
                     : 'New address')}
               </Text>
+              {isViewOnly && <ViewOnlyBadge style={spacings.mlTy} />}
             </View>
           )}
           <View
