@@ -561,7 +561,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
         isRecipientHumanizerKnownTokenOrSmartContract={
           isRecipientHumanizerKnownTokenOrSmartContract
         }
-        isRecipientAddressUnknown={isRecipientAddressUnknown}
+        isRecipientAddressSavable={isRecipientAddressUnknown && !addressPoisoningMatch}
         isRecipientAddressSameAsSender={actualAddress === account?.addr}
         addressValidationMsg={addressValidationMsg}
         domainVerificationMessage={domainVerificationMessage}
@@ -571,6 +571,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     [
       isRecipientHumanizerKnownTokenOrSmartContract,
       isRecipientAddressUnknown,
+      addressPoisoningMatch,
       actualAddress,
       account,
       addressValidationMsg,

@@ -349,6 +349,7 @@ const DashboardBanner = ({
       />
       <DashboardBannerBottomSheet
         id={String(banner.id)}
+        activeRouteId={isSwapAndBridgeStatus ? meta?.activeRouteId : undefined}
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
       />
