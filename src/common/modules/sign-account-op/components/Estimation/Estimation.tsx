@@ -292,8 +292,8 @@ const Estimation = ({
     return signAccountOpState?.feeSpeeds[selectedOptionIdentifier] || []
   }, [signAccountOpState?.feeSpeeds, selectedOptionIdentifier])
 
-  // With custom gas values every speed in feeSpeeds costs the same, so the speed menu and the
-  // custom fee warnings use the network fee speeds
+  // What each speed costs at the network gas prices, also while custom gas is set. The speed menu
+  // shows them, as picking a speed drops the custom gas, and the custom fee warnings compare with them
   const networkFeeSpeeds = useMemo(() => {
     if (!selectedOptionIdentifier) return []
 
@@ -883,6 +883,7 @@ const Estimation = ({
         networkSpeeds={networkFeeSpeeds}
         hasCustomGasPrices={isCustomFeeSpeedSelected}
         onResetCustomGas={resetCustomGas}
+        isEstimationLoading={signAccountOpState.estimation.status === EstimationStatus.Loading}
       />
       <View>
         {!isViewOnly && (

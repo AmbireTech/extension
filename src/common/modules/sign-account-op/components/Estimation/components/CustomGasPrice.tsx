@@ -160,6 +160,8 @@ type Props = {
   hasCustomGasPrices: boolean
   /** Drops the custom gas values and goes back to the network fee */
   onResetCustomGas: () => void
+  /** The fee is calculated from the estimation, so saving waits until it reloads */
+  isEstimationLoading: boolean
 }
 
 const CustomGasPrice = ({
@@ -177,7 +179,8 @@ const CustomGasPrice = ({
   isCancel,
   networkSpeeds,
   hasCustomGasPrices,
-  onResetCustomGas
+  onResetCustomGas,
+  isEstimationLoading
 }: Props) => {
   const { t } = useTranslation()
   const { isNarrowWebLayout, isCompactLayout } = useCompactLayout()
@@ -518,7 +521,7 @@ const CustomGasPrice = ({
             type="primary"
             text={t('Save')}
             onPress={saveCustomGasPrice}
-            disabled={!customGasPriceValues}
+            disabled={!customGasPriceValues || isEstimationLoading}
             hasBottomSpacing={false}
             style={
               isNarrowWebLayout && !hasCustomGasPrices
