@@ -22,6 +22,7 @@ import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
 import NfcController from '@mobile/modules/hardware-wallet/controllers/NfcController'
@@ -77,7 +78,7 @@ const userBalances: Record<string, number> = {}
  */
 const fetchWithAnalytics: Fetch = (input, init) => {
   const url = input.toString()
-  if (!isAmbireApiUrl(url)) return fetch(input as any, init as any) as any
+  if (!isAmbireApiUrl(url)) return fetchWithRelayerCustomHeaders(input as any, init as any) as any
 
   // Optional all the way down, because a request can fire while the controllers are
   // still being constructed
@@ -101,7 +102,7 @@ const fetchWithAnalytics: Fetch = (input, init) => {
       ? attachBalanceHint(url, currentAccount.addr, userBalances[currentAccount.addr] || 0)
       : url
 
-  return fetch(urlWithHint, {
+  return fetchWithRelayerCustomHeaders(urlWithHint, {
     ...(init as any),
     // Applied last, so that the caller can never overwrite the analytics data
     headers: {
@@ -265,7 +266,12 @@ export const initControllerHost = (config: ControllerHostConfig): string[] => {
   try {
     setCriticalControllers(config.criticalControllers)
 
-    const ledgerCtrl = new LedgerController()
+    const ledgerCtrl = new LedgerController({
+      // Ledger keys imported on mobile before the model was stored have it as 'unknown'
+      onKeyConfirmed: (addr, deviceModel) => {
+        void mainCtrl?.keystore.updateUnknownKeyDeviceModel({ addr, type: 'ledger', deviceModel })
+      }
+    })
     ledgerTransportService.setIsSigningReportAllowed(
       () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
     )

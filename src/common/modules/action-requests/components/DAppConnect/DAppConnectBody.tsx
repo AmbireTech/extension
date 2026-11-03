@@ -2,6 +2,7 @@ import React, { FC, useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { DappWebsiteContentUpdate } from '@ambire-common/interfaces/dapp'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
@@ -12,14 +13,17 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TrustAppButton from '@common/components/TrustAppButton'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_LG, SPACING_MI } from '@common/styles/spacings'
+import { isMobile } from '@common/config/env'
+import spacings, { SPACING, SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import DAppPermissions from './DAppPermissions'
+import DAppWebsiteContentUpdate from './DAppWebsiteContentUpdate'
 import getStyles from './styles'
 
 const DAppConnectBody: FC<{
+  id: string
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
   isTrustedByUser?: boolean
@@ -27,13 +31,16 @@ const DAppConnectBody: FC<{
   onToggleTrust?: () => void
   onEnableScamChecker?: () => void
   isScamCheckerEnabled?: boolean
+  websiteContentUpdate?: DappWebsiteContentUpdate | null
 }> = ({
+  id,
   securityCheck,
   isTrustedByUser = false,
   canBeTrustedByUser = false,
   onToggleTrust,
   onEnableScamChecker,
   isScamCheckerEnabled = true,
+  websiteContentUpdate,
   responsiveSizeMultiplier = 1
 }) => {
   const { t } = useTranslation()
@@ -54,7 +61,7 @@ const DAppConnectBody: FC<{
 
   const spacingsStyle = useMemo(() => {
     return {
-      paddingHorizontal: SPACING_LG * responsiveSizeMultiplier,
+      paddingHorizontal: (isMobile ? SPACING_SM : SPACING) * responsiveSizeMultiplier,
       paddingTop: SPACING * responsiveSizeMultiplier,
       paddingBottom: SPACING * responsiveSizeMultiplier
     }
@@ -224,6 +231,13 @@ const DAppConnectBody: FC<{
           </View>
         )}
       </View>
+      {!!websiteContentUpdate && (
+        <DAppWebsiteContentUpdate
+          id={id}
+          websiteContentUpdate={websiteContentUpdate}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+        />
+      )}
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
       {!(isBlacklisted || isSuspiciousHosting || hasFailedToGet) && (
         <Text

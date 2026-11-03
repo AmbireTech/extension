@@ -24,6 +24,7 @@ const useDappConnect = () => {
   const { trustDapp, untrustDapp } = useTrustDapp()
 
   const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
+  const websiteContentUpdate = dappsState.dappToConnectWebsiteContentUpdate
 
   // Both flags are only ever set on an app the hosting check flagged, so the suspicious-hosting
   // warning is the only thing they speak about.
@@ -115,6 +116,7 @@ const useDappConnect = () => {
   return {
     t,
     dappToConnect,
+    websiteContentUpdate,
     userRequest,
     isAuthorizing,
     handleDenyButtonPress,

@@ -38,6 +38,11 @@ export interface BottomSheetProps {
   isScrollEnabled?: boolean
   reserveScrollPadding?: boolean
   withBackdropBlur?: boolean
+  /**
+   * Set to false to remove the drag area along the top edge of the sheet. A modal does not show it,
+   * but it still catches the clicks that land on the top 20px, so content there can't be pressed.
+   */
+  withHandle?: boolean
 }
 
 declare const BottomSheet: React.FC<BottomSheetProps>

@@ -27,19 +27,11 @@ const getStyles = (theme: ThemeProps) =>
           maxWidth: 480,
           width: '100%'
         },
-    content: isMobile
-      ? {
-          ...common.fullWidth,
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          overflow: 'hidden',
-          // Grows instead of flex: 1, so on short screens it keeps its height and scrolls
-          flexGrow: 1
-        }
-      : {
-          ...common.fullWidth,
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          overflow: 'hidden'
-        },
+    content: {
+      ...common.fullWidth,
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      overflow: 'hidden'
+    },
     contentHeader: isMobile
       ? {}
       : {
@@ -47,8 +39,7 @@ const getStyles = (theme: ThemeProps) =>
           ...flexbox.alignCenter
         },
     contentBody: {
-      backgroundColor: theme.secondaryBackground,
-      ...(isMobile && { flexGrow: 1 })
+      backgroundColor: theme.secondaryBackground
     },
     securityChecksContainer: {
       backgroundColor: theme.primaryBackground,

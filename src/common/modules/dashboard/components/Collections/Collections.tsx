@@ -6,6 +6,7 @@ import { useModalize } from 'react-native-modalize'
 import { Network } from '@ambire-common/interfaces/network'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import CollectionCard from '@common/components/CollectionCard'
+import NftImagesDisabledHint from '@common/components/NftImagesDisabledHint'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
@@ -115,6 +116,10 @@ const Collections: FC<Props> = ({ openTab, initTab, networks, dashboardNetworkFi
 
   const renderItem = useCallback(
     ({ item }: any) => {
+      if (item === 'images-hint') {
+        return <NftImagesDisabledHint style={styles.imagesHint} />
+      }
+
       if (item === 'empty') {
         return (
           <Text
@@ -209,6 +214,7 @@ const Collections: FC<Props> = ({ openTab, initTab, networks, dashboardNetworkFi
         tab="collectibles"
         openTab={openTab}
         data={[
+          ...(filteredPortfolioCollections.length ? ['images-hint'] : []),
           ...(initTab?.collectibles ? filteredPortfolioCollections : []),
           !filteredPortfolioCollections.length && isPortfolioAllReady ? 'empty' : '',
           !isReadyToVisualizeCollections ? 'skeleton' : 'keep-this-to-avoid-key-warning'

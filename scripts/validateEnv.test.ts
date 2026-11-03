@@ -1,8 +1,10 @@
 import {
   ENV_TARGETS,
   getRequiredEnvVariables,
+  parseRelayerCustomHeaders,
   PRODUCTION_APP_ENV,
-  validateEnvValues
+  validateEnvValues,
+  validateRelayerCustomHeaders
 } from './validateEnv'
 
 const ENV_SAMPLE = `
@@ -72,5 +74,45 @@ describe('validateEnvValues', () => {
         PRODUCTION_APP_ENV
       )
     ).toThrow(`Invalid production environment variable: RELAYER_URL = ${STAGING_RELAYER_URL}`)
+  })
+})
+
+describe('parseRelayerCustomHeaders', () => {
+  it('gives no headers for an empty value', () => {
+    expect(parseRelayerCustomHeaders('')).toEqual({})
+  })
+
+  it('parses a JSON object with string values', () => {
+    expect(parseRelayerCustomHeaders('{"x-test-header":"some-header"}')).toEqual({
+      'x-test-header': 'some-header'
+    })
+  })
+
+  it('rejects a value that is not a JSON object with string values, without leaking it', () => {
+    expect(() => parseRelayerCustomHeaders('x-test-header=some-header')).toThrow(
+      /must be a JSON object/
+    )
+    expect(() => parseRelayerCustomHeaders('{"x-test-header":3}')).toThrow(/must be a JSON object/)
+  })
+})
+
+describe('validateRelayerCustomHeaders', () => {
+  const RELAYER_CUSTOM_HEADERS = '{"x-test-header":"some-header"}'
+
+  it('passes in a local build', () => {
+    expect(() => validateRelayerCustomHeaders({ RELAYER_CUSTOM_HEADERS })).not.toThrow()
+  })
+
+  it('passes in a CI build when no headers are set', () => {
+    expect(() => validateRelayerCustomHeaders({ CI: 'true' })).not.toThrow()
+  })
+
+  it('rejects the headers in a CI build, without leaking them', () => {
+    const envValues = { CI: 'true', RELAYER_CUSTOM_HEADERS }
+
+    expect(() => validateRelayerCustomHeaders(envValues)).toThrow(
+      'RELAYER_CUSTOM_HEADERS must not be set in a CI build'
+    )
+    expect(() => validateRelayerCustomHeaders(envValues)).not.toThrow(/x-test-header|some-header/)
   })
 })

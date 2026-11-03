@@ -16,6 +16,8 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+const ACCENT_TITLE_LINE_HEIGHT = 20
+
 const ICON_MAP: {
   [key in BannerType]: React.FC<any>
 } = {
@@ -37,6 +39,8 @@ export interface Props {
   contentContainerStyle?: ViewStyle
   titleFontSize?: number
   singleRow?: boolean
+  // renders the banner in the brand accent instead of the color of its `type`
+  isAccent?: boolean
   buttonText?: string
   onPress?: () => void
   onCloseIconPress?: () => void
@@ -54,6 +58,7 @@ const Banner = React.memo(
     CustomIcon,
     titleFontSize,
     singleRow,
+    isAccent,
     buttonText,
     style,
     onCloseIconPress,
@@ -65,6 +70,7 @@ const Banner = React.memo(
     const hasPrimaryAction = !!buttonText && !!onPress
     const hasDismissAction = !!dismissButtonText && !!onDismissButtonPress
     const hasActions = hasPrimaryAction || hasDismissAction
+    const accentColor = isAccent ? theme.primaryAccent : undefined
     const hasContentBelowTitle = !singleRow && (!!text || hasActions)
 
     const Icon = useMemo(() => {
@@ -78,9 +84,13 @@ const Banner = React.memo(
         style={[
           styles.container,
           flexbox.alignStart,
-          {
-            backgroundColor: theme[`${type}Background`]
-          },
+          isAccent
+            ? {
+                backgroundColor: theme.primaryAccent100,
+                borderWidth: 1,
+                borderColor: theme.primaryAccent
+              }
+            : { backgroundColor: theme[`${type}Background`] },
           style
         ]}
       >
@@ -100,14 +110,18 @@ const Banner = React.memo(
             <Icon
               width={isMobile ? 22 : 24}
               height={isMobile ? 22 : 24}
-              color={theme[`${type}Text`]}
+              color={accentColor || theme[`${type}Text`]}
             />
-            <View style={[flexbox.flex1, spacings.mlMi]}>
+            <View style={[flexbox.flex1, isAccent ? spacings.mlSm : spacings.mlMi]}>
               <Text
                 fontSize={titleFontSize || (isMobile ? 14 : 16)}
-                weight="medium"
+                weight={isAccent ? 'semiBold' : 'medium'}
                 numberOfLines={singleRow ? 1 : undefined}
-                style={!singleRow && isMobile && { marginTop: 2 }}
+                style={[
+                  !singleRow && isMobile && { marginTop: 2 },
+                  // `Text` resets the line height whenever it gets a custom font size
+                  isAccent && { lineHeight: ACCENT_TITLE_LINE_HEIGHT }
+                ]}
               >
                 {title}
               </Text>
@@ -129,6 +143,7 @@ const Banner = React.memo(
             <BannerButton
               type="primary"
               colorType={type}
+              accentColor={accentColor}
               onPress={onPress}
               testID={`dashboard-${type}-banner`}
               style={spacings.mlTy}
@@ -188,6 +203,7 @@ const Banner = React.memo(
                 <BannerButton
                   type="primary"
                   colorType={type}
+                  accentColor={accentColor}
                   onPress={onPress}
                   testID={`dashboard-${type}-banner`}
                 >
