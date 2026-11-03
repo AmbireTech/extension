@@ -79,7 +79,9 @@ const useSafeCreate = () => {
     if (isCreateButtonDisabled) return
 
     const newSafeAccount = getNewSafeAccount(ownerAddresses, requiredConfirmations, accounts)
-    if (accounts.some(({ addr }) => addr === newSafeAccount.addr)) {
+    // Case-insensitive, in case an account was stored without a checksum (e.g. by an older version)
+    const newSafeAddress = newSafeAccount.addr.toLowerCase()
+    if (accounts.some(({ addr }) => addr.toLowerCase() === newSafeAddress)) {
       addToast(
         t(
           'This Safe account is already in your wallet. The same owners and required confirmations always lead to the same account.'
