@@ -1,17 +1,16 @@
-import React, { useCallback, useMemo } from 'react'
-import { Controller } from 'react-hook-form'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
+import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddIcon from '@common/assets/svg/AddIcon'
-import CloseIcon from '@common/assets/svg/CloseIcon'
-import AddressBookContact from '@common/components/AddressBookContact'
-import AddressSelect from '@common/components/AddressSelect'
+import Button from '@common/components/Button'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import useSafeCreate, { SafeCreateOwner } from '@common/modules/auth/hooks/useSafeCreate'
+import SafeCreateOwnerField from '@common/modules/auth/components/SafeCreateOwnerField'
+import useSafeCreate from '@common/modules/auth/hooks/useSafeCreate'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -25,57 +24,16 @@ type Props = Omit<
   withShortenedAddresses?: boolean
 }
 
-const SHORTENED_ADDRESS_MAX_LENGTH = 16
-
-const OwnerRow = React.memo(
-  ({
-    owner,
-    withShortenedAddresses,
-    withDivider,
-    onRemove
-  }: {
-    owner: SafeCreateOwner
-    withShortenedAddresses?: boolean
-    /** Draws a line below the row, to separate it from the next owner */
-    withDivider: boolean
-    onRemove: (address: Hex) => void
-  }) => {
-    const { t } = useTranslation()
-    const { styles, theme } = useTheme(getStyles)
-
-    const handleRemove = useCallback(() => onRemove(owner.address), [onRemove, owner.address])
-
-    return (
-      <View style={[styles.ownerRow, withDivider && styles.ownerRowDivider]}>
-        <AddressBookContact
-          address={owner.address}
-          name={owner.name}
-          avatarSize={32}
-          plainAddressMaxLength={withShortenedAddresses ? SHORTENED_ADDRESS_MAX_LENGTH : undefined}
-          style={spacings.ph0}
-        />
-        <HoverablePressable
-          onPress={handleRemove}
-          hitSlop={8}
-          style={styles.removeOwnerButton}
-          accessibilityLabel={t('Remove owner')}
-          testID={`safe-create-remove-owner-${owner.address}`}
-        >
-          <CloseIcon color={theme.iconPrimary} strokeWidth="2" width={12} height={12} />
-        </HoverablePressable>
-      </View>
-    )
-  }
-)
-
 const SafeCreateForm = ({
   control,
-  ownerAddressState,
-  ownerAddressValidation,
-  validateOwnerAddress,
-  owners,
-  getUnsupportedOwnerReason,
-  handleRemoveOwner,
+  setValue,
+  trigger,
+  ownerFields,
+  addOwnerField,
+  removeOwnerField,
+  ownerFieldValidations,
+  ownerAddressesByField,
+  ownersCount,
   requiredConfirmations,
   canDecreaseRequiredConfirmations,
   canIncreaseRequiredConfirmations,
@@ -86,14 +44,23 @@ const SafeCreateForm = ({
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
 
-  const ownerAddresses = useMemo(() => owners.map(({ address }) => address), [owners])
+  // Each field leaves out the owners entered in the other fields, but not its own
+  const hiddenAddressesByField = useMemo(
+    () =>
+      ownerAddressesByField.map((_, index) =>
+        ownerAddressesByField.filter(
+          (address, otherIndex): address is Hex => !!address && otherIndex !== index
+        )
+      ),
+    [ownerAddressesByField]
+  )
 
   const confirmationsDescription = useMemo(() => {
-    if (!owners.length) return t('Add an owner to set this')
-    if (owners.length === 1) return t('The only owner must approve')
+    if (!ownersCount) return t('Add an owner to set this')
+    if (ownersCount === 1) return t('The only owner must approve')
 
-    const translationParams = { requiredConfirmations, ownersCount: owners.length }
-    if (requiredConfirmations === owners.length)
+    const translationParams = { requiredConfirmations, ownersCount }
+    if (requiredConfirmations === ownersCount)
       return t(
         'All {{requiredConfirmations}} of {{ownersCount}} owners must approve',
         translationParams
@@ -103,56 +70,39 @@ const SafeCreateForm = ({
       'Any {{requiredConfirmations}} of {{ownersCount}} owners must approve',
       translationParams
     )
-  }, [owners.length, requiredConfirmations, t])
+  }, [ownersCount, requiredConfirmations, t])
 
   return (
     <View>
-      <Text fontSize={14} weight="medium" style={spacings.mbTy}>
-        {t('Add owner')}
-      </Text>
-      <Controller
-        control={control}
-        rules={{ validate: validateOwnerAddress, required: true }}
-        name="ownerAddress.fieldValue"
-        render={({ field: { onChange, value } }) => (
-          <AddressSelect
-            address={value}
-            setAddress={onChange}
-            validation={ownerAddressValidation}
-            resolvedAddress={ownerAddressState.resolvedAddress}
-            resolvedAddressType={ownerAddressState.resolvedAddressType}
-            isRecipientDomainResolving={ownerAddressState.isDomainResolving}
-            bottomSheetTitle={t('Add Safe owner')}
-            withShortenedAddresses={withShortenedAddresses}
-            includeSelectedAccount
-            getContactDisabledReason={getUnsupportedOwnerReason}
-            // The owners that are already added are left out, so they can't be picked twice
-            hiddenAddresses={ownerAddresses}
-            // The parent has the same color as the default input background, so use the focused
-            // input color to keep the input visible and the same before and after focus
-            inputBackgroundColor={theme.tertiaryBackground}
-          />
-        )}
-      />
-
-      <Text fontSize={18} weight="semiBold" style={[spacings.mtLg, spacings.mbSm]}>
+      <Text fontSize={18} weight="semiBold" style={spacings.mbSm}>
         {t('Owners')}
       </Text>
-      {owners.length ? (
-        owners.map((owner, index) => (
-          <OwnerRow
-            key={owner.address}
-            owner={owner}
-            withShortenedAddresses={withShortenedAddresses}
-            withDivider={index < owners.length - 1}
-            onRemove={handleRemoveOwner}
-          />
-        ))
-      ) : (
-        <Text fontSize={14} appearance="secondaryText">
-          {t('No owners added')}
-        </Text>
-      )}
+      {ownerFields.map((field, index) => (
+        <SafeCreateOwnerField
+          key={field.id}
+          control={control}
+          setValue={setValue}
+          trigger={trigger}
+          index={index}
+          canRemove={ownerFields.length > 1}
+          onRemove={removeOwnerField}
+          overwriteValidation={ownerFieldValidations[index] ?? null}
+          hiddenAddresses={hiddenAddressesByField[index] ?? []}
+          withShortenedAddresses={withShortenedAddresses}
+        />
+      ))}
+      <Button
+        type="outline"
+        testID="safe-create-add-owner"
+        style={{ height: 40 }}
+        size="tiny"
+        onPress={addOwnerField}
+        childrenPosition="left"
+        text={t('Add another owner')}
+        hasBottomSpacing={false}
+      >
+        <AddCircularIcon width={20} height={20} color={theme.primaryText} style={spacings.mrMi} />
+      </Button>
 
       <View style={styles.confirmationsSection}>
         {/* The stepper shares a line with the title, so it stays put when the description wraps */}

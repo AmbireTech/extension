@@ -1,48 +1,65 @@
 import { getAddress, isAddress } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 
-import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
+import { AddressState } from '@ambire-common/interfaces/domains'
 import { Hex } from '@ambire-common/interfaces/hex'
-import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { useTranslation } from '@common/config/localization'
-import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-/** An owner the user has added to the Safe that is about to be created. */
-export type SafeCreateOwner = {
-  address: Hex
-  /** The label of the matching wallet account or address book contact, if any */
-  name?: string
-}
-
-type FormValues = {
-  ownerAddress: AddressState
+/** The values of the Safe create form: one address field per owner */
+export type SafeCreateFormValues = {
+  owners: AddressState[]
 }
 
 const MIN_REQUIRED_CONFIRMATIONS = 1
 
-const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
-const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
+const EMPTY_OWNER_FIELD_VALUE: AddressState = {
+  fieldValue: '',
+  resolvedAddress: '',
+  resolvedAddressType: null,
+  isDomainResolving: false
+}
+
+const DEFAULT_FORM_VALUES: SafeCreateFormValues = { owners: [EMPTY_OWNER_FIELD_VALUE] }
+
+/**
+ * Returns the indexes of every owner field whose address is also entered in another field.
+ * Addresses are compared case-insensitively. Empty fields and incomplete addresses are
+ * never duplicates.
+ */
+const getDuplicateOwnerIndexes = (ownerFieldAddresses: string[]) => {
+  const normalizedAddresses = ownerFieldAddresses.map((address) =>
+    isAddress(address) ? address.toLowerCase() : ''
+  )
+
+  return normalizedAddresses.reduce<number[]>((duplicateIndexes, address, index) => {
+    if (!address) return duplicateIndexes
+
+    const isEnteredInAnotherField = normalizedAddresses.some(
+      (otherAddress, otherIndex) => otherIndex !== index && otherAddress === address
+    )
+
+    return isEnteredInAnotherField ? [...duplicateIndexes, index] : duplicateIndexes
+  }, [])
+}
+
 const selectCreateSafeAccountStatus = (state: AllControllersMappingType['SafeController']) =>
   state.statuses.createSafeAccount
 
 const useSafeCreate = () => {
   const { t } = useTranslation()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { state: accounts } = useController('AccountsController', selectAccounts)
-  const { state: contacts } = useController('AddressBookController', selectContacts)
   const { state: createSafeAccountStatus, dispatch: safeDispatch } = useController(
     'SafeController',
     selectCreateSafeAccountStatus
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [ownerAddresses, setOwnerAddresses] = useState<Hex[]>([])
   const [selectedRequiredConfirmations, setSelectedRequiredConfirmations] = useState(
     MIN_REQUIRED_CONFIRMATIONS
   )
@@ -50,116 +67,62 @@ const useSafeCreate = () => {
     control,
     setValue,
     trigger,
-    formState: { isValid }
-  } = useForm<FormValues>({
+    formState: { isValid: areAllOwnerFieldsValid }
+  } = useForm<SafeCreateFormValues>({
     mode: 'all',
-    defaultValues: {
-      ownerAddress: {
-        fieldValue: '',
-        resolvedAddress: '',
-        resolvedAddressType: null,
-        isDomainResolving: false
-      }
-    }
+    defaultValues: DEFAULT_FORM_VALUES
   })
-  const ownerAddressState = useWatch({ control, name: 'ownerAddress' })
+  const { fields, append, remove } = useFieldArray({ control, name: 'owners' })
+  const ownerFieldStates = useWatch({ control, name: 'owners' })
 
-  const setOwnerAddressState = useCallback(
-    (newState: AddressStateOptional) => {
-      const addressStateEntries = Object.entries(newState) as [
-        keyof AddressState,
-        AddressState[keyof AddressState]
-      ][]
-
-      addressStateEntries.forEach(([key, value]) => {
-        setValue(`ownerAddress.${key}`, value, {
-          shouldDirty: true,
-          shouldTouch: true,
-          shouldValidate: true
-        })
-      })
-    },
-    [setValue]
-  )
-  const handleRevalidateOwnerAddress = useCallback(() => {
-    void trigger('ownerAddress.fieldValue')
-  }, [trigger])
-
-  const ownerAddressSet = useMemo(
-    () => new Set(ownerAddresses.map((address) => address.toLowerCase())),
-    [ownerAddresses]
+  const ownerFieldAddresses = useMemo(
+    () => ownerFieldStates.map((ownerFieldState) => getAddressFromAddressState(ownerFieldState)),
+    [ownerFieldStates]
   )
 
-  const enteredOwnerAddress = useMemo(
-    () => getAddressFromAddressState(ownerAddressState),
-    [ownerAddressState]
-  )
-  const isEnteredOwnerAlreadyAdded =
-    isAddress(enteredOwnerAddress) && ownerAddressSet.has(enteredOwnerAddress.toLowerCase())
-
-  // Only the owners that sign with a key are supported for now, so the smart accounts
-  // (incl. Safes) in the wallet are disabled in the list and can't be added
-  const getUnsupportedOwnerReason = useCallback(
-    (address: string) => {
-      const smartAccount = accounts.find(
-        (account) => isSmartAccount(account) && account.addr.toLowerCase() === address.toLowerCase()
-      )
-      if (!smartAccount) return null
-
-      return t('Smart accounts coming soon.')
-    },
-    [accounts, t]
+  const duplicateOwnerIndexes = useMemo(
+    () => getDuplicateOwnerIndexes(ownerFieldAddresses),
+    [ownerFieldAddresses]
   )
 
-  // Covers a smart account address that is typed or pasted instead of picked from the list
-  const ownerValidation = useMemo<Validation | null>(() => {
-    const unsupportedOwnerReason = getUnsupportedOwnerReason(enteredOwnerAddress)
-    if (unsupportedOwnerReason) return { severity: 'error', message: unsupportedOwnerReason }
-    if (isEnteredOwnerAlreadyAdded)
-      return { severity: 'error', message: t('This owner is already added.') }
+  /**
+   * What each owner field shows on top of its address validation, in the same order as the
+   * fields. Covers an owner entered in more than one field.
+   */
+  const ownerFieldValidations = useMemo<(Validation | null)[]>(
+    () =>
+      ownerFieldAddresses.map((_, index) =>
+        duplicateOwnerIndexes.includes(index)
+          ? { severity: 'error', message: t('You already entered this owner.') }
+          : null
+      ),
+    [ownerFieldAddresses, duplicateOwnerIndexes, t]
+  )
 
-    return null
-  }, [enteredOwnerAddress, getUnsupportedOwnerReason, isEnteredOwnerAlreadyAdded, t])
+  /** The address each field adds as an owner, or null for an empty, invalid or repeated one */
+  const ownerAddressesByField = useMemo<(Hex | null)[]>(
+    () =>
+      ownerFieldAddresses.map((address, index) => {
+        if (ownerFieldStates[index]?.isDomainResolving) return null
+        if (!isAddress(address) || ownerFieldValidations[index]) return null
 
-  const {
-    address: ownerAddress,
-    validation: ownerAddressValidation,
-    RHFValidate: validateOwnerAddress,
-    resetAddressInput
-  } = useAddressInput({
-    addressState: ownerAddressState,
-    setAddressState: setOwnerAddressState,
-    overwriteValidation: ownerValidation,
-    handleRevalidate: handleRevalidateOwnerAddress
-  })
+        return getAddress(address) as Hex
+      }),
+    [ownerFieldAddresses, ownerFieldStates, ownerFieldValidations]
+  )
 
-  const owners = useMemo<SafeCreateOwner[]>(() => {
-    const accountLabelByAddress = new Map(
-      accounts.map((account) => [account.addr.toLowerCase(), account.preferences.label])
-    )
-    const contactNameByAddress = new Map(
-      contacts.map((contact) => [contact.address.toLowerCase(), contact.name])
-    )
-
-    return ownerAddresses.map((address) => {
-      const normalizedAddress = address.toLowerCase()
-
-      return {
-        address,
-        name:
-          accountLabelByAddress.get(normalizedAddress) ||
-          contactNameByAddress.get(normalizedAddress)
-      }
-    })
-  }, [accounts, contacts, ownerAddresses])
+  const ownerAddresses = useMemo(
+    () => ownerAddressesByField.filter((address): address is Hex => !!address),
+    [ownerAddressesByField]
+  )
 
   // Kept within [1, owners count] even when owners are removed after the value was picked
   const requiredConfirmations = Math.max(
     MIN_REQUIRED_CONFIRMATIONS,
-    Math.min(selectedRequiredConfirmations, owners.length)
+    Math.min(selectedRequiredConfirmations, ownerAddresses.length)
   )
   const canDecreaseRequiredConfirmations = requiredConfirmations > MIN_REQUIRED_CONFIRMATIONS
-  const canIncreaseRequiredConfirmations = requiredConfirmations < owners.length
+  const canIncreaseRequiredConfirmations = requiredConfirmations < ownerAddresses.length
 
   const handleDecreaseRequiredConfirmations = useCallback(() => {
     if (!canDecreaseRequiredConfirmations) return
@@ -173,38 +136,18 @@ const useSafeCreate = () => {
     setSelectedRequiredConfirmations(requiredConfirmations + 1)
   }, [canIncreaseRequiredConfirmations, requiredConfirmations])
 
-  const canAddEnteredOwner = isValid && isAddress(ownerAddress) && !ownerValidation
+  const addOwnerField = useCallback(() => {
+    append(EMPTY_OWNER_FIELD_VALUE)
+  }, [append])
 
-  // An eligible owner is added as soon as it's picked from the list, pasted or its domain
-  // is resolved, and the field is cleared for the next one. It can be removed from the list
-  useEffect(() => {
-    if (!canAddEnteredOwner) return
-
-    const checksummedOwnerAddress = getAddress(ownerAddress) as Hex
-    // Syncs with the address input, whose validation and domain resolution are async
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOwnerAddresses((currentOwnerAddresses) =>
-      currentOwnerAddresses.some(
-        (address) => address.toLowerCase() === checksummedOwnerAddress.toLowerCase()
-      )
-        ? currentOwnerAddresses
-        : [...currentOwnerAddresses, checksummedOwnerAddress]
-    )
-    resetAddressInput()
-  }, [canAddEnteredOwner, ownerAddress, resetAddressInput])
-
-  const handleRemoveOwner = useCallback((addressToRemove: Hex) => {
-    setOwnerAddresses((currentOwnerAddresses) =>
-      currentOwnerAddresses.filter(
-        (address) => address.toLowerCase() !== addressToRemove.toLowerCase()
-      )
-    )
-  }, [])
-
-  // Eligible owners are added right away, so anything left in the field is still being
-  // entered or can't be added (its validation says why) and doesn't block the creation
+  // Empty fields are skipped, so the user can leave a spare field instead of removing it.
+  // Anything else must be a valid owner, so no entered owner is silently left out
   const isCreating = isSubmitting || createSafeAccountStatus === 'LOADING'
-  const isCreateButtonDisabled = !owners.length || isCreating
+  const isCreateButtonDisabled =
+    !ownerAddresses.length ||
+    !areAllOwnerFieldsValid ||
+    !!duplicateOwnerIndexes.length ||
+    isCreating
 
   const handleCreate = useCallback(() => {
     if (isCreateButtonDisabled) return
@@ -232,13 +175,15 @@ const useSafeCreate = () => {
 
   return {
     control,
+    setValue,
+    trigger,
     goToPrevRoute,
-    ownerAddressState,
-    ownerAddressValidation,
-    validateOwnerAddress,
-    owners,
-    getUnsupportedOwnerReason,
-    handleRemoveOwner,
+    ownerFields: fields,
+    addOwnerField,
+    removeOwnerField: remove,
+    ownerFieldValidations,
+    ownerAddressesByField,
+    ownersCount: ownerAddresses.length,
     requiredConfirmations,
     canDecreaseRequiredConfirmations,
     canIncreaseRequiredConfirmations,

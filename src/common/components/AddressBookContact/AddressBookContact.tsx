@@ -41,8 +41,6 @@ interface Props {
   fontSize?: number
   height?: number
   isActive?: boolean
-  /** Why the contact can't be picked, shown in place of its address (e.g. in a list of options) */
-  disabledReason?: string | null
 }
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
@@ -63,8 +61,7 @@ const AddressBookContact: FC<Props> = ({
   avatarSize,
   fontSize = 14,
   height = 20,
-  isActive = false,
-  disabledReason
+  isActive = false
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const ContainerElement = onPress ? AnimatedPressable : View
@@ -185,21 +182,15 @@ const AddressBookContact: FC<Props> = ({
               isNarrowWebLayout && { flex: 1, minWidth: 0 }
             ]}
           >
-            {disabledReason ? (
-              <Text fontSize={12} appearance="errorText" numberOfLines={2} style={flexbox.flex1}>
-                {disabledReason}
-              </Text>
-            ) : (
-              <AccountAddress
-                {...reverseLookup}
-                address={address}
-                addressHighlight={addressHighlight}
-                containerStyle={{ paddingVertical: 0 }}
-                withCopy={withCopy}
-                plainAddressMaxLength={plainAddressMaxLength}
-                withUpdateEnsInTooltip={!isEditable}
-              />
-            )}
+            <AccountAddress
+              {...reverseLookup}
+              address={address}
+              addressHighlight={addressHighlight}
+              containerStyle={{ paddingVertical: 0 }}
+              withCopy={withCopy}
+              plainAddressMaxLength={plainAddressMaxLength}
+              withUpdateEnsInTooltip={!isEditable}
+            />
           </View>
         </View>
       </View>

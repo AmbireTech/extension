@@ -9,7 +9,6 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import SafeCreateForm from '@common/modules/auth/components/SafeCreateForm'
-import SafeCreateInfo from '@common/modules/auth/components/SafeCreateInfo'
 import useSafeCreate from '@common/modules/auth/hooks/useSafeCreate'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -54,7 +53,6 @@ const SafeCreateScreen = () => {
               <Text fontSize={14} appearance="secondaryText" style={[spacings.mbTy, text.center]}>
                 {t('Choose owners and required confirmations')}
               </Text>
-              <SafeCreateInfo style={[flexbox.alignSelfCenter, spacings.mbLg]} />
               <SafeCreateForm
                 {...formProps}
                 // The onboarding panel is too narrow to fit a full address

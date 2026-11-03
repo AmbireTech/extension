@@ -72,12 +72,6 @@ export interface AddressSelectProps extends InputProps {
    * default input background, so the input stays visible.
    */
   inputBackgroundColor?: ColorValue
-  /**
-   * Returns why a contact or wallet account can't be picked, e.g. an account type the flow
-   * doesn't support yet. Such options are disabled, listed last and show the reason in place
-   * of the address.
-   */
-  getContactDisabledReason?: (address: string) => string | null
   /** Addresses left out of the list, e.g. the ones the flow has already picked */
   hiddenAddresses?: string[]
   // The props below drive the "Add to address book" prompt, which only applies when the
@@ -91,12 +85,6 @@ export interface AddressSelectProps extends InputProps {
   privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
   onSelectPrivacyPoolsAccount?: (seedId: string) => void
 }
-
-/** Keeps the order of the options, but lists the disabled ones after all the others */
-const moveDisabledOptionsLast = <T extends { disabled?: boolean }>(options: T[]): T[] => [
-  ...options.filter((option) => !option.disabled),
-  ...options.filter((option) => option.disabled)
-]
 
 // Marks a Privacy Pools account option - see `setAddressWrapped`
 const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
@@ -236,7 +224,8 @@ const SelectedMenuOption: React.FC<{
         button={
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-        buttonProps={{ onPress: () => setIsMenuOpen(true) }}
+        // The arrow follows the menu (up when open), so pressing it toggles the menu
+        buttonProps={{ onPress: () => setIsMenuOpen(!isMenuOpen) }}
         inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
         buttonStyle={{
           ...spacings.pv0,
@@ -296,7 +285,6 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   withShortenedAddresses,
   includeSelectedAccount = false,
   inputBackgroundColor,
-  getContactDisabledReason,
   hiddenAddresses,
   privacyPoolsAccounts,
   onSelectPrivacyPoolsAccount
@@ -455,70 +443,54 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      moveDisabledOptionsLast(
-        (isMobile ? selectableContacts : filteredContacts)
-          .filter((contact) => contact.isWalletAccount)
-          .map((contact, index) => {
-            const disabledReason = getContactDisabledReason?.(contact.address)
-
-            return {
-              value: contact.address,
-              disabled: !!disabledReason,
-              label: (
-                <AddressBookContact
-                  avatarSize={32}
-                  testID={`address-book-my-wallet-contact-${index + 1}`}
-                  key={contact.address}
-                  style={{
-                    borderRadius: 0,
-                    ...spacings.ph0,
-                    ...spacings.pv0
-                  }}
-                  address={contact.address}
-                  name={contact.name}
-                  plainAddressMaxLength={contactAddressMaxLength}
-                  // Tapping a row selects the address, so a copy icon is not needed on mobile
-                  withCopy={isWeb}
-                  disabledReason={disabledReason}
-                />
-              )
-            }
-          })
-      ),
-    [selectableContacts, filteredContacts, contactAddressMaxLength, getContactDisabledReason]
+      (isMobile ? selectableContacts : filteredContacts)
+        .filter((contact) => contact.isWalletAccount)
+        .map((contact, index) => ({
+          value: contact.address,
+          label: (
+            <AddressBookContact
+              avatarSize={32}
+              testID={`address-book-my-wallet-contact-${index + 1}`}
+              key={contact.address}
+              style={{
+                borderRadius: 0,
+                ...spacings.ph0,
+                ...spacings.pv0
+              }}
+              address={contact.address}
+              name={contact.name}
+              plainAddressMaxLength={contactAddressMaxLength}
+              // Tapping a row selects the address, so a copy icon is not needed on mobile
+              withCopy={isWeb}
+            />
+          )
+        })),
+    [selectableContacts, filteredContacts, contactAddressMaxLength]
   )
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      moveDisabledOptionsLast(
-        (isMobile ? selectableContacts : filteredContacts)
-          .filter((contact) => !contact.isWalletAccount)
-          .map((contact) => {
-            const disabledReason = getContactDisabledReason?.(contact.address)
-
-            return {
-              value: contact.address,
-              disabled: !!disabledReason,
-              label: (
-                <AddressBookContact
-                  avatarSize={32}
-                  key={contact.address}
-                  style={{
-                    borderRadius: 0,
-                    ...spacings.ph0,
-                    ...spacings.pv0
-                  }}
-                  address={contact.address}
-                  name={contact.name}
-                  plainAddressMaxLength={contactAddressMaxLength}
-                  withCopy={isWeb}
-                  disabledReason={disabledReason}
-                />
-              )
-            }
-          })
-      ),
-    [selectableContacts, filteredContacts, contactAddressMaxLength, getContactDisabledReason]
+      (isMobile ? selectableContacts : filteredContacts)
+        .filter((contact) => !contact.isWalletAccount)
+        .map((contact) => ({
+          value: contact.address,
+          label: (
+            <AddressBookContact
+              avatarSize={32}
+              key={contact.address}
+              style={{
+                borderRadius: 0,
+                ...spacings.ph0,
+                ...spacings.pv0
+              }}
+              address={contact.address}
+              name={contact.name}
+              plainAddressMaxLength={contactAddressMaxLength}
+              withCopy={isWeb}
+            />
+          )
+        })),
+    [selectableContacts, filteredContacts, contactAddressMaxLength]
   )
 
   const selectedOption = useMemo(
