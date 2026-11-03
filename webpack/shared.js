@@ -5,8 +5,10 @@
 require('dotenv').config()
 
 const createExpoWebpackConfigAsync = require('@expo/webpack-config')
+const { getExpoBabelLoader } = require('@expo/webpack-config/utils')
 const path = require('path')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const { getRelayerCustomHeadersCacheKey } = require('../scripts/validateEnv')
 const { isWebkit, isGecko, buildOutputDir } = require('./env')
 
 // Inside webpack/, __dirname points at the webpack/ folder, so resolve repo-root
@@ -68,6 +70,11 @@ function removeExpoPlugin(config, pluginName) {
 async function createBaseConfig(env, argv) {
   const config = await createExpoWebpackConfigAsync(env, argv)
   const enableLavaMoat = config.mode === 'production' && isWebkit
+
+  // The babel-loader disk cache is kept even in production builds
+  const babelLoader = getExpoBabelLoader(config)
+  if (!babelLoader) throw new Error('The Expo babel-loader rule was not found')
+  babelLoader.use.options.cacheIdentifier += getRelayerCustomHeadersCacheKey(process.env)
 
   config.resolve.alias['@ledgerhq/devices/hid-framing'] = '@ledgerhq/devices/lib/hid-framing'
   config.resolve.alias.dns = 'dns-js'

@@ -16,6 +16,7 @@ import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/co
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import LottieView from '@common/components/LottieView/LottieView.web'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 import HumanReadableError from '@legends/classes/HumanReadableError'
 import background from '@legends/common/assets/images/background.png'
@@ -131,7 +132,7 @@ const StakeWalletModal: React.FC<{ isOpen: boolean; handleClose: () => void }> =
     if (!isConnected || !isOpen) return setIsLoadingLogs(false)
     setIsLoadingLogs(true)
 
-    fetch(`${RELAYER_URL}/v2/identity/logs`, {
+    fetchWithRelayerCustomHeaders(`${RELAYER_URL}/v2/identity/logs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

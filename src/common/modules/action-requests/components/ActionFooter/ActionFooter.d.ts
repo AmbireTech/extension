@@ -3,6 +3,11 @@ type Props = {
   onResolve: () => void
   rejectButtonText?: string
   resolveButtonText?: string
+  /**
+   * Shown instead of `resolveButtonText` when that doesn't fit on one row. Only on mobile,
+   * where the buttons share the row equally
+   */
+  resolveButtonShortText?: string
   resolveDisabled?: boolean
   resolveType?: ButtonProps['type']
   rejectButtonTestID?: string

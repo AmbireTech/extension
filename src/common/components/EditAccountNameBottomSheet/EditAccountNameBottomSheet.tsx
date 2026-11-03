@@ -148,7 +148,7 @@ const EditAccountNameBottomSheet = ({
         </Text>
       </View>
       <Input
-        value={name}
+        defaultValue={currentName}
         onChangeText={setName}
         onSubmitEditing={handleSave}
         maxLength={ACCOUNT_NAME_MAX_LENGTH}
