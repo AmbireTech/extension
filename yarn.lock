@@ -2938,10 +2938,10 @@
   resolved "https://registry.yarnpkg.com/@kohaku-eth/poseidon/-/poseidon-0.0.1.tgz#da1e22e4694519411c5eed4233ce4d132491ac5e"
   integrity sha512-qbMzNo6uBx+9R/TW8G2vJNbXkzkVxmFABAEVpiSxynTSrOed4sA6Y8ZoT7/BTDX6o+/ch6OrJItOULfoUW1dJw==
 
-"@kohaku-eth/privacy-pools@0.1.0-alpha.34":
-  version "0.1.0-alpha.34"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.34.tgz#27af4ef57cf9c973b5f5fcae7e9f8b22323831e6"
-  integrity sha512-eTP807AHbk1WLndbOsDmqWmulKr2yUW4nzq94Y/Zstqwg/adx0gDEWCP7FY26snThaykAhMarTG+4QAPuqSHLQ==
+"@kohaku-eth/privacy-pools@0.1.0-alpha.35":
+  version "0.1.0-alpha.35"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.35.tgz#9af7941e870ebd3a732dcf61836c4c1d77581ff7"
+  integrity sha512-NK5ZqgQJAuXXVaLx3Wsvi3ac3mfRyCk/L9irSQVuLRoKcXxOYiowBdwmrWPikQidwWg4IKiNe7PIjVmm+IDFEQ==
   dependencies:
     "@fatsolutions/privacy-pools-core-circuits" "1.0.5"
     "@kohaku-eth/plugins" "0.0.1-alpha.20"
