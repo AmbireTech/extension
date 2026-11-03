@@ -128,6 +128,8 @@ const AddressInput: React.FC<Props> = ({
       )}
       <Input
         {...NO_AUTOFILL_PROPS}
+        // Stops the keyboard from adding a space after the dot when typing a domain, like name.eth
+        keyboardType="url"
         // Purposefully spread props here, so that we don't override AddressInput's props
         {...rest}
         value={value}
