@@ -69,7 +69,6 @@ const SafeImportScreen = () => {
                     inputWrapperStyle={{ borderColor: theme.primaryBorder }}
                     error={value.length ? errors?.safeAddress?.message : ''}
                     autoCorrect={false}
-                    keyboardType="url"
                     onSubmitEditing={handleFormSubmit}
                     disabled={false}
                   />
