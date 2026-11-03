@@ -6,9 +6,6 @@ import usePrevious from '@common/hooks/usePrevious'
 
 import { SectionedSelectProps, SelectProps, SelectValue } from './types'
 
-/** Shared by every row where there is no hover, so their props stay the same between renders. */
-const noHoverIn = () => {}
-
 type Props = Pick<SelectProps, 'size' | 'value' | 'mode' | 'renderOption'> &
   Pick<SectionedSelectProps, 'sections'> & {
     listHeight: number
@@ -294,20 +291,15 @@ const useSelectKeyboardControl = ({
         })
       }
 
-      let onHoverIn = noHoverIn
+      let sectionIndex = -1
       let isHighlighted = false
 
       try {
-        let sectionIndex: number
-
         if (sections.length === 1 && sections[0]?.key === 'default') {
           sectionIndex = 0
         } else {
           sectionIndex = sections.findIndex((s) => s.key === (section as any)?.key)
         }
-        // Hover exists on web only. A handler made per call is a new prop for every row each
-        // time the list renders, which defeats the rows' `React.memo`
-        if (!isMobile) onHoverIn = () => handleSetHoverIn({ sectionIndex, optionIndex })
 
         if (
           highlightedItemIndexForRender &&
@@ -321,13 +313,14 @@ const useSelectKeyboardControl = ({
       }
       return (
         <MenuOption
+          sectionIndex={sectionIndex}
           index={optionIndex}
           item={item}
           height={optionHeight}
           isSelected={item.value === value?.value}
           isHighlighted={isHighlighted}
           onPress={handleOptionSelect}
-          onHoverIn={onHoverIn}
+          onHoverIn={handleSetHoverIn}
           onHoverOut={handleSetHoverOut}
           disabled={!!item?.disabled}
           size={size}
