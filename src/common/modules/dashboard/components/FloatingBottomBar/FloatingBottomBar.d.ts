@@ -9,7 +9,6 @@ export interface FloatingBottomBarProps {
   displayCurrentApp?: boolean
   /** The tab of the page the bar belongs to. Set it to put the network picker in the bar. */
   networkFilterTab?: TabType
-  isHidden: boolean
   searchPlaceholder?: string
 }
 

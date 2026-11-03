@@ -21,6 +21,8 @@ import getStyles from './styles'
 import TrustedIcon from './TrustedIcon'
 
 type Props = Partial<DappProviderRequest['session']> & {
+  /** Defaults to "Connection request from" */
+  title?: string
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
   isTrustedByUser?: boolean
@@ -53,6 +55,7 @@ const splitByRootDomain = (id: string) => {
 const DAppConnectHeader: FC<Props> = ({
   id,
   icon,
+  title,
   responsiveSizeMultiplier = 1,
   securityCheck,
   isTrustedByUser = false,
@@ -106,7 +109,7 @@ const DAppConnectHeader: FC<Props> = ({
           isMobile && text.center
         ]}
       >
-        {t('Connection request from')}
+        {title ?? t('Connection request from')}
       </Text>
       <View style={[isWeb && flexbox.directionRow, flexbox.alignCenter]}>
         <View style={[isWeb && spacings.mr, isMobile && spacings.mbTy]}>

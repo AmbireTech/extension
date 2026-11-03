@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
-import { COMPACT_LAYOUT_BUTTON_HEIGHT } from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -21,11 +21,8 @@ import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-// An exception to the `size="large"` height (56). The sign screen is dense and the
-// footer is always visible, so all of its buttons are slightly shorter in order to
-// free up vertical space for the transaction details above. Keep every button in
-// the footer on this height, otherwise they won't line up. Same as the compact layout's buttons.
-const FOOTER_BUTTON_HEIGHT = COMPACT_LAYOUT_BUTTON_HEIGHT
+// Keep every button in the footer on this height, otherwise they won't line up
+const FOOTER_BUTTON_HEIGHT = BUTTON_HEIGHT
 
 const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
   state.userRequests
@@ -48,7 +45,8 @@ const Footer = ({
   shouldRejectOnchain,
   isRejectDisabled,
   holdToProceedButtonType = 'primary',
-  signButtonType = 'primary'
+  signButtonType = 'primary',
+  onClose
 }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -81,6 +79,20 @@ const Footer = ({
   }, [accountOp?.signature, account?.safeCreation])
 
   const batchBadgeCount = batchCount > 1 ? batchCount : 0
+
+  if (onClose) {
+    return (
+      <Button
+        testID="transaction-button-close"
+        type="primary"
+        text={t('Close')}
+        onPress={onClose}
+        hasBottomSpacing={false}
+        size={isCompactLayout ? 'regular' : 'large'}
+        style={{ width: '100%', ...(!isCompactLayout && { height: FOOTER_BUTTON_HEIGHT }) }}
+      />
+    )
+  }
 
   const rejectButton = (
     <RejectButton

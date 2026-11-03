@@ -22,7 +22,9 @@ import { bootstrapWithStorage } from '../../common-helpers/bootstrap'
  * deliberate, understood increase.
  */
 
-const EAGER_JS_BUDGET_BYTES = 11 * 1024 * 1024
+// Raised from 11MB: the measured build is the LavaMoat policy-generating one, whose runtime
+// alone is ~60KB larger than a release build's, and the dashboard carousel added its own code.
+const EAGER_JS_BUDGET_BYTES = 11.5 * 1024 * 1024
 
 test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
   test.setTimeout(120000)
@@ -79,7 +81,7 @@ test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
         1024 /
         1024
       ).toFixed(
-        0
+        1
       )}MB budget. Likely background-only code (a controller/humanizer/heavy lib) leaked into the UI bundle - check for a missing \`import type\`. Largest chunks:\n${breakdown}`
     ).toBeLessThan(EAGER_JS_BUDGET_BYTES)
   })

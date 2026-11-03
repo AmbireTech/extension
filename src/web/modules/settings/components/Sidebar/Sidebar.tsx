@@ -28,6 +28,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import SettingsLink from '@common/modules/settings/components/SettingsLink'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -193,7 +194,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
           </View>
           {!!validBackRoute && (
             <Pressable
-              style={{ width: 56, height: 56, ...flexbox.center }}
+              style={{ width: BUTTON_HEIGHT, height: BUTTON_HEIGHT, ...flexbox.center }}
               onPress={() => {
                 navigate(WEB_ROUTES.dashboard)
               }}

@@ -10,13 +10,23 @@ import useSelectKeyboardControl from './useSelectKeyboardControl'
 
 type Props = Pick<
   SelectProps,
-  'menuOptionHeight' | 'setValue' | 'size' | 'attemptToFetchMoreOptions' | 'mode' | 'menuPosition'
+  | 'menuOptionHeight'
+  | 'setValue'
+  | 'size'
+  | 'attemptToFetchMoreOptions'
+  | 'mode'
+  | 'menuPosition'
+  | 'renderOption'
+  | 'closeMenuOnSelect'
 > & {
   value: SelectProps['value']
   data: SectionedSelectProps['sections']
   stickySectionHeadersEnabled?: boolean
   headerHeight?: number
   onSearch?: (searchTerm: string) => void
+  isMenuOpen?: SectionedSelectProps['isMenuOpen']
+  setIsMenuOpen?: SectionedSelectProps['setIsMenuOpen']
+  listRef?: SectionedSelectProps['listRef']
 }
 
 const useSelectInternal = ({
@@ -30,9 +40,18 @@ const useSelectInternal = ({
   attemptToFetchMoreOptions,
   mode = isMobile ? 'bottomSheet' : 'select',
   menuPosition,
-  onSearch
+  onSearch,
+  renderOption,
+  closeMenuOnSelect = true,
+  isMenuOpen: controlledIsMenuOpen,
+  setIsMenuOpen: setControlledIsMenuOpen,
+  listRef: externalListRef
 }: Props) => {
-  const useSelectReturnValue = useSelect({ menuPosition })
+  const useSelectReturnValue = useSelect({
+    menuPosition,
+    isMenuOpen: controlledIsMenuOpen,
+    setIsMenuOpen: setControlledIsMenuOpen
+  })
   const { search, isMenuOpen, setIsMenuOpen, setSearch } = useSelectReturnValue
   const optionHeight = menuOptionHeight || SELECT_SIZE_TO_HEIGHT[size]
 
@@ -41,10 +60,12 @@ const useSelectInternal = ({
   const handleOptionSelect = useCallback(
     (item: SelectValue) => {
       !!setValue && setValue(item)
+      if (!closeMenuOnSelect) return
+
       setIsMenuOpen(false)
       setSearch('search', '')
     },
-    [setValue, setIsMenuOpen, setSearch]
+    [setValue, closeMenuOnSelect, setIsMenuOpen, setSearch]
   )
 
   const prevIsMenuOpen = usePrevious(isMenuOpen)
@@ -158,7 +179,9 @@ const useSelectInternal = ({
     stickySectionHeadersEnabled,
     setIsMenuOpen,
     handleOptionSelect,
-    mode
+    mode,
+    renderOption,
+    listRef: externalListRef
   })
 
   return {

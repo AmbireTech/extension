@@ -4,9 +4,7 @@ import { StyleSheet, View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
@@ -14,7 +12,7 @@ import AccountKeysBadge from '@common/components/AccountKeysBadge'
 import Avatar from '@common/components/Avatar'
 import Badge from '@common/components/Badge'
 import Dropdown from '@common/components/Dropdown'
-import Editable from '@common/components/Editable'
+import EditableAccountName from '@common/components/EditableAccountName'
 import NetworkIcon from '@common/components/NetworkIcon'
 import PendingRequestsBadge from '@common/components/PendingRequestsBadge'
 import SafeSignerBadges from '@common/components/SafeSignerBadges'
@@ -29,15 +27,17 @@ import useReverseLookup from '@common/hooks/useReverseLookup'
 import useSafeDeployedChainIds from '@common/hooks/useSafeDeployedChainIds'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import measureLayoutSync from '@common/utils/measureLayoutSync'
 
+import { BalanceBadge, SelectedAccountBalanceBadge } from './AccountBalanceBadge'
 import getStyles, { ACCOUNT_AVATAR_SIZE, ACCOUNT_SELECT_ACCOUNT_HEIGHT } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const ACTION_ICON_SIZE = isMobile ? 32 : 24
+const NAME_TEXT_PROPS = { weight: 'medium' } as const
 /** The chain icons in the Safe badge, smaller than in the account picker to fit in a badge */
 const SAFE_CHAIN_ICON_SIZE = 14
 const SAFE_CHAIN_ICON_OVERLAP = 5
@@ -48,6 +48,8 @@ const selectSelectAccountStatus = (state: AllControllersMappingType['MainControl
   state.statuses.selectAccount
 const selectSelectedAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
+const selectIsPrivacyModeEnabled = (state: AllControllersMappingType['WalletStateController']) =>
+  state.isPrivacyModeEnabled
 
 const Account = ({
   account,
@@ -129,7 +131,12 @@ const Account = ({
     [addr]
   )
   const { state: balance } = useController('SelectedAccountController', selectBalance)
-  const { dispatch: accountsDispatch } = useController('AccountsController')
+  const isSelectedAccount = selectedAccount?.addr === addr
+  const { state: isPrivacyModeEnabled } = useController(
+    'WalletStateController',
+    selectIsPrivacyModeEnabled
+  )
+  const { dispatchAndWait: accountsDispatchAndWait } = useController('AccountsController')
   const reverseLookup = useReverseLookup({ address: addr, privacyUpdateMode: 'never' })
   const accountKeys = useAccountKeys(account)
   const [bindAnim, animStyle] = useCustomHover({
@@ -192,6 +199,7 @@ const Account = ({
     account,
     accountKeys,
     balance,
+    isPrivacyModeEnabled,
     pendingRequestsCount,
     safeDeployedChainIds,
     withBadges,
@@ -233,19 +241,16 @@ const Account = ({
   ])
 
   const onSave = useCallback(
-    (value: string) => {
-      if (!addr) return
-
-      accountsDispatch({
+    async (value: string) => {
+      await accountsDispatchAndWait({
         type: 'method',
         params: {
           method: 'updateAccountPreferences',
           args: [[{ addr, preferences: { label: value, pfp: preferences.pfp } }]]
         }
       })
-      addToast(t('Account label updated.'))
     },
-    [addToast, addr, accountsDispatch, preferences.pfp, t]
+    [addr, accountsDispatchAndWait, preferences.pfp]
   )
 
   const onDropdownSelect = (item: { label: string; value: string }) => {
@@ -303,16 +308,11 @@ const Account = ({
     </Text>
   ) : (
     <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
-      <Editable
-        initialValue={account.preferences.label}
+      <EditableAccountName
+        account={account}
+        name={account.preferences.label}
         onSave={onSave}
-        fontSize={16}
-        height={isMobile ? 24 : 20}
-        textProps={{
-          weight: 'medium'
-        }}
-        minWidth={120}
-        maxLength={40}
+        textProps={NAME_TEXT_PROPS}
       />
     </View>
   )
@@ -344,24 +344,13 @@ const Account = ({
         { columnGap: SPACING_MI, rowGap: SPACING_MI }
       ]}
     >
-      {balance !== null && withBalance && (
-        <Badge
-          style={{
-            columnGap: SPACING_MI,
-            // The icon leads, like the avatar on the Safe signer badges
-            paddingLeft: SPACING_MI,
-            // The badge leaves room only for a trailing info icon when it has children
-            paddingRight: SPACING_TY,
-            // Stands out from the card in either theme, as the card is in the secondary one
-            backgroundColor: theme.primaryBackground
-          }}
-        >
-          <WalletIcon width={14} height={14} color={theme.secondaryText} />
-          <Text fontSize={12} weight="semiBold" color={theme.primaryText}>
-            {formatDecimals(balance, 'value')}
-          </Text>
-        </Badge>
-      )}
+      {withBalance &&
+        !isPrivacyModeEnabled &&
+        (isSelectedAccount ? (
+          <SelectedAccountBalanceBadge />
+        ) : (
+          balance !== null && <BalanceBadge balance={balance} />
+        ))}
       {!!pendingRequestsCount && <PendingRequestsBadge count={pendingRequestsCount} />}
       {!!withKeyType &&
         (safeDeployedChainIds.length ? (

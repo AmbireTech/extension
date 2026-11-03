@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Account } from '@ambire-common/interfaces/account'
 import BottomSheet from '@common/components/BottomSheet'
@@ -82,7 +81,6 @@ const SelectDataToSyncSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { bottom } = useSafeAreaInsets()
 
   const renderItem = useCallback(
     ({ item }: { item: Account }) => (
@@ -195,7 +193,6 @@ const SelectDataToSyncSheet = ({
             spacings.ptSm,
             {
               paddingHorizontal: SHEET_HORIZONTAL_PADDING,
-              paddingBottom: isWeb ? 0 : bottom || SPACING_SM,
               backgroundColor: theme.primaryBackground
             }
           ]}

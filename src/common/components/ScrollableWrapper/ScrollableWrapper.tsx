@@ -47,7 +47,12 @@ export type WrapperProps<T = any> = BaseProps &
   SectionListCompatibleProps<T> & {
     children?: React.ReactNode
     onDragEnd?: (fromIndex: number, toIndex: number) => void
-    renderItem?: (
+    /**
+     * Renders a row of `WRAPPER_TYPES.DRAGGABLE_FLAT_LIST`. Kept apart from `renderItem`, whose
+     * `{ item, index }` signature the other list types expect, as no function can satisfy both.
+     * Spread `listeners` and `attributes` on the element that should start the drag.
+     */
+    renderDraggableItem?: (
       item: T,
       index: number,
       isDragging: boolean,
@@ -71,6 +76,7 @@ const ScrollableWrapper = ({
   wrapperRef,
   onDragEnd,
   renderItem,
+  renderDraggableItem,
   keyExtractor,
   data,
   showsVerticalScrollIndicator = isWeb,
@@ -158,7 +164,7 @@ const ScrollableWrapper = ({
           keyExtractor ? (item: any) => keyExtractor(item, 0) : (item: any) => item.key ?? ''
         }
         onDragEnd={onDragEnd ?? (() => {})}
-        renderItem={renderItem ?? (() => null)}
+        renderItem={renderDraggableItem ?? (() => null)}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}

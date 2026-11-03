@@ -17,16 +17,13 @@ interface Styles {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
     container: {
-      ...flexbox.alignCenter,
-      // Grows instead of flex: 1, so on short screens it keeps its height and scrolls
-      flexGrow: 1
+      ...flexbox.alignCenter
     },
     content: {
       ...common.fullWidth,
       borderRadius: BORDER_RADIUS_PRIMARY,
       overflow: 'hidden',
-      backgroundColor: theme.tertiaryBackground,
-      flexGrow: 1
+      backgroundColor: theme.tertiaryBackground
     },
     contentHeader: {
       ...flexbox.alignCenter,

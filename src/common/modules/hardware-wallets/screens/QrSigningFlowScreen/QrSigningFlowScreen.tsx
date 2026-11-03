@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
 import BottomSheet from '@common/components/BottomSheet'
@@ -16,7 +15,7 @@ import useTheme from '@common/hooks/useTheme'
 import { QrSigningStep, QrSignRequest } from '@common/modules/hardware-wallets/qr/types'
 import QrSignRequestScreen from '@common/modules/hardware-wallets/screens/QrSignRequestScreen'
 import QrSignResponseScanner from '@common/modules/hardware-wallets/screens/QrSignResponseScanner'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -54,7 +53,6 @@ const QrSigningFlowScreen = ({
   const { isCompactLayout: withMobileLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { bottom } = useSafeAreaInsets()
 
   const request = useMemo(() => currentRequest, [currentRequest])
   const step = useMemo(() => signingStep, [signingStep])
@@ -82,7 +80,6 @@ const QrSigningFlowScreen = ({
           flexbox.alignCenter,
           spacings.ptSm,
           {
-            paddingBottom: isWeb ? 0 : bottom || SPACING_SM,
             backgroundColor: theme.primaryBackground
           }
         ]}
@@ -107,7 +104,6 @@ const QrSigningFlowScreen = ({
   }, [
     request,
     step,
-    bottom,
     theme.primaryBackground,
     t,
     handleOnRejectPressed,
