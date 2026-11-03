@@ -1,14 +1,18 @@
 import { getAddress, isAddress } from 'ethers'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { Hex } from '@ambire-common/interfaces/hex'
+import { getNewSafeAccount } from '@ambire-common/libs/safe/safe'
 import { Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -49,16 +53,14 @@ const getDuplicateOwnerIndexes = (ownerFieldAddresses: string[]) => {
   }, [])
 }
 
-const selectCreateSafeAccountStatus = (state: AllControllersMappingType['SafeController']) =>
-  state.statuses.createSafeAccount
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 const useSafeCreate = () => {
   const { t } = useTranslation()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { state: createSafeAccountStatus, dispatch: safeDispatch } = useController(
-    'SafeController',
-    selectCreateSafeAccountStatus
-  )
+  const { addToast } = useToast()
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedRequiredConfirmations, setSelectedRequiredConfirmations] = useState(
     MIN_REQUIRED_CONFIRMATIONS
@@ -142,36 +144,53 @@ const useSafeCreate = () => {
 
   // Empty fields are skipped, so the user can leave a spare field instead of removing it.
   // Anything else must be a valid owner, so no entered owner is silently left out
-  const isCreating = isSubmitting || createSafeAccountStatus === 'LOADING'
   const isCreateButtonDisabled =
     !ownerAddresses.length ||
     !areAllOwnerFieldsValid ||
     !!duplicateOwnerIndexes.length ||
-    isCreating
+    isSubmitting
 
-  const handleCreate = useCallback(() => {
+  // Like a Safe import, the new Safe is only prepared here. The personalize step, where the
+  // user can name it, adds it to the wallet once they proceed
+  const handleCreate = useCallback(async () => {
     if (isCreateButtonDisabled) return
 
-    // Set locally, as the LOADING status of the controller arrives with a delay,
-    // in which a second press would dispatch the creation again
+    const newSafeAccount = getNewSafeAccount(ownerAddresses, requiredConfirmations, accounts)
+    if (accounts.some(({ addr }) => addr === newSafeAccount.addr)) {
+      addToast(
+        t(
+          'This Safe account is already in your wallet. The same owners and required confirmations always lead to the same account.'
+        ),
+        { type: 'error' }
+      )
+      return
+    }
+
     setIsSubmitting(true)
-    safeDispatch({
-      type: 'method',
-      params: { method: 'createSafeAccount', args: [ownerAddresses, requiredConfirmations] }
-    })
-  }, [isCreateButtonDisabled, ownerAddresses, requiredConfirmations, safeDispatch])
-
-  // Proceed to the account personalization once the Safe is added to the wallet.
-  // On error, the controller shows the error and the user stays on the form
-  useEffect(() => {
-    if (!isSubmitting) return
-    if (createSafeAccountStatus !== 'SUCCESS' && createSafeAccountStatus !== 'ERROR') return
-
-    // Syncs with the status of the controller, which is an external store
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsSubmitting(false)
-    if (createSafeAccountStatus === 'SUCCESS') goToNextRoute()
-  }, [createSafeAccountStatus, goToNextRoute, isSubmitting])
+    try {
+      await accountPickerDispatchAndWait({
+        type: 'method',
+        params: { method: 'prepareAccounts', args: [{ accounts: [newSafeAccount] }] }
+      })
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
+    } catch (error) {
+      console.error('Failed to prepare the new Safe account', error)
+      captureException(error)
+      addToast(t("We couldn't create the Safe account. Please try again."), { type: 'error' })
+    } finally {
+      // Going back from the personalize step adds nothing, so the form is usable again
+      setIsSubmitting(false)
+    }
+  }, [
+    isCreateButtonDisabled,
+    ownerAddresses,
+    requiredConfirmations,
+    accounts,
+    addToast,
+    t,
+    accountPickerDispatchAndWait,
+    goToNextRoute
+  ])
 
   return {
     control,
