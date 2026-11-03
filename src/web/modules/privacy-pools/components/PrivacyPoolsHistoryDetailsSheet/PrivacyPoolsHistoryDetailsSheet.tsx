@@ -83,7 +83,7 @@ const PrivacyPoolsHistoryDetailsSheet: FC<Props> = ({
   const explorerUrl = network.explorerUrl?.endsWith('/')
     ? network.explorerUrl.slice(0, -1)
     : network.explorerUrl
-  // Missing for an event synced before transaction hashes were kept, until it is read again
+  // Missing for an event this device synced before transaction hashes were kept
   const explorerLink = entry.txnId && explorerUrl ? `${explorerUrl}/tx/${entry.txnId}` : null
 
   const copy = useCallback(
