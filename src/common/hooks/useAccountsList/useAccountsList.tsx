@@ -279,6 +279,11 @@ const useAccountsList = ({
     selectedAccountIndex,
     control,
     search,
+    /**
+     * Whether `accounts` is narrowed by the search. Follows the debounced value the filtering
+     * uses, so it can lag behind `search` while typing
+     */
+    isFiltered: !!debouncedSearch,
     keyExtractor,
     getItemLayout,
     getAccountItemHeight,
