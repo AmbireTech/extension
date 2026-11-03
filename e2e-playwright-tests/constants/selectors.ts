@@ -10,7 +10,7 @@ const selectors = {
   getStarted: {
     createNewAccountButton: 'create-new-account-btn',
     importAccountButton: 'button-import-account',
-    confirmationMessageForViewOnly: 'added-successfully-text',
+    personalizeAccountsHeader: 'personalize-accounts-header',
     confirmationMessageAmbireWallet: 'wallet-ready-to-use-text',
     checkbox: 'checkbox',
     enterPassField: 'enter-pass-field',
@@ -34,9 +34,10 @@ const selectors = {
     viewOnlyBtnImport: 'view-only-button-import',
     importBtn: 'import-button',
     openDashboardButton: 'onboarding-completed-open-dashboard-btn',
-    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0', // same id used for clearing input field; after edit for checking confirmation pill 'Save'
+    editFirstAccNameButton: 'edit-btn-for-edit-name-field-0', // opens the edit account name modal
     editAccountNameInputField: 'edit-name-field-0',
-    saveAndContinueBtn: 'button-save-and-continue',
+    saveFirstAccNameButton: 'edit-name-field-0-save-button',
+    saveAndContinueBtn: 'button-proceed',
     hdPathLegerLive: 'hd-path-option-ledger-live',
     changeHDPathButton: 'change-hd-path-btn',
     hdPathConfirmButton: 'hd-path-confirm-btn',
@@ -98,7 +99,6 @@ const selectors = {
     watchAnAddressButton: 'watch-an-address-button',
     viewOnlyImportButton: 'view-only-button-import',
     validENSDomainText: '//div[contains(text(),"Valid ENS domain")]',
-    addedSuccessfullyText: '//div[contains(text(),"Added successfully")]',
     accessAccFromDashboardInfoText: '//div[contains(text(),"access your accounts")]',
     addAccountButton: 'add-account-modal',
     hiddenTokenName: 'hidden-token-name', // works for custom tokens section
@@ -339,10 +339,12 @@ const selectors = {
   switchAccountDenyButton: 'switch-account-deny-button',
   rejectRequestOptionCurrent: 'reject-request-option-current',
   transactionCallDyn: (index: number) => `recipient-address-${index}`, // one card per call on the sign transaction screen
-  dappScopedAccountsToggle: 'dapp-scoped-accounts-toggle',
-  dappScopedAccountsSelectorButton: 'dapp-scoped-accounts-selector-button',
-  dappScopedAccountsContinueButton: 'dapp-scoped-accounts-continue-button',
-  dappAccountRow: (addr: string) => `dapp-account-row-${addr}`,
+  // The account select in the header of the dapp connect screen
+  dappConnectAccountSelect: 'account-select-toggle',
+  dappConnectAccountOption: (addr: string) => `account-select-option-${addr}`,
+  dappConnectShowAccount: (addr: string) => `account-select-show-${addr}`,
+  dappConnectLimitToSelectedAccount: 'account-select-visible-section-action',
+  dappConnectAccountSelectDone: 'account-select-done',
   // Notifications
   networkSuccessfullyAddedSnackbar:
     '(//div[contains(normalize-space(), "Network successfully added!")])[4]', // TODO: snackbar selector finding 8 elements; change once we have ID on FE

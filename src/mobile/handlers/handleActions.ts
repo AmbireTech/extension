@@ -2,7 +2,6 @@ import { getSessionId, Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { getDappIdFromUrl, getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
-import { KeyIterator } from '@ambire-common/libs/keyIterator/keyIterator'
 import LedgerKeyIterator from '@common/modules/hardware-wallet/libs/ledgerKeyIterator'
 import TrezorKeyIterator from '@common/modules/hardware-wallet/libs/trezorKeyIterator'
 import NfcKeyIterator from '@common/modules/hardware-wallets/libs/nfcKeyIterator'
@@ -245,32 +244,28 @@ export const handleActions = async (
       break
     }
 
-    case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_FROM_SAVED_SEED_PHRASE': {
-      const keystoreSavedSeed = await mainCtrl.keystore.getSavedSeed(params.id)
-      if (!keystoreSavedSeed) return
-
-      const keyIterator = new KeyIterator(keystoreSavedSeed.seed, keystoreSavedSeed.seedPassphrase)
-      mainCtrl.accountPicker.setInitParams({
-        keyIterator,
-        hdPathTemplate: keystoreSavedSeed.hdPathTemplate
-      })
-      break
-    }
-
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER': {
-      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator)
+      return await mainCtrl.handleAccountPickerInitLedger(LedgerKeyIterator, params?.requestId)
     }
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR': {
-      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator)
+      return await mainCtrl.handleAccountPickerInitTrezor(TrezorKeyIterator, params?.requestId)
     }
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET': {
-      return await mainCtrl.handleAccountPickerInitQr(QrKeyIterator, params.payload)
+      return await mainCtrl.handleAccountPickerInitQr(
+        QrKeyIterator,
+        params.payload,
+        params.requestId
+      )
     }
 
     case 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET': {
-      return await mainCtrl.handleAccountPickerInitNfc(NfcKeyIterator, params.payload)
+      return await mainCtrl.handleAccountPickerInitNfc(
+        NfcKeyIterator,
+        params.payload,
+        params.requestId
+      )
     }
 
     case 'WEBVIEW_ORIGIN_CHANGED': {

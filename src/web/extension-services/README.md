@@ -69,9 +69,16 @@ Every dApp connection is a `Session` in the DappsController, holding the messeng
 
 A broadcast lands in the whole tab, so the session's origin travels with it and the provider drops anything that doesn't match the page it is running in.
 
+## The Privacy Pools prover
+
+On Chrome, Privacy Pools proofs run in an offscreen document (`privacy-pools-prover/`) on every core, since the service worker has no `Worker` and would prove on one thread. The background opens it on the first proof and closes it when idle. If it cannot start, the background proves by itself from then on. Firefox and Safari always prove in the background.
+
+Proving inputs include a deposit's secret and nullifier, enough to spend it. They go only over a port the document opens, never `runtime.sendMessage` (which every extension page receives), after the background checks the port's extension id, exact URL and lack of a tab. The document is bundled under LavaMoat, has no Sentry and logs only to its own console, because a circuit error can reveal the inputs.
+
 ## Things not to break
 
 - Only extension pages may open a UI port. A port can call any controller method, including key and seed export, so the background verifies the sender.
+- Proving inputs only go to a port verified as the prover document's, and that document reports errors nowhere else.
 - A reply goes to the one frame that asked, not to the tab. Otherwise an answer meant for a dApp in an iframe lands in every other frame of the page.
 - Where a dApp sits, meaning its frame and the tab's top-level document, always comes from the browser and never from the page.
 - Page scripts do as little as possible in cross-origin and deeply nested frames, which is where ads and third-party widgets live.

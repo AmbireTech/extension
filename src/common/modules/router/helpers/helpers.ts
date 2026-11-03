@@ -1,4 +1,6 @@
+import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
+import { IPrivacyPoolsController } from '@ambire-common/interfaces/privacyPools'
 import { IRequestsController } from '@ambire-common/interfaces/requests'
 import { ISurveyController } from '@ambire-common/interfaces/survey'
 import { ISwapAndBridgeController } from '@ambire-common/interfaces/swapAndBridge'
@@ -65,25 +67,42 @@ const getRouteForUserRequest = ({
 
 const getInitialRoute = ({
   keystoreState,
+  accountPickerState,
   authStatus,
   requestsState,
   swapAndBridgeState,
   transferState,
+  privacyPoolsState,
   surveyState,
   isRequestWindow,
   isSidePanel
 }: {
   keystoreState: IKeystoreController
+  accountPickerState?: Pick<IAccountPickerController, 'readyToAddAccounts'>
   authStatus?: AUTH_STATUS
   requestsState: IRequestsController
   swapAndBridgeState: ISwapAndBridgeController
   transferState: ITransferController
+  privacyPoolsState?: IPrivacyPoolsController
   surveyState?: ISurveyController
   isRequestWindow: boolean
   isSidePanel?: boolean
 }) => {
   if (keystoreState.isReadyToStoreKeys && !keystoreState.isUnlocked) {
     return ROUTES.keyStoreUnlock
+  }
+
+  // Accounts prepared by a flow the user left on its last step (e.g. by closing the tab)
+  // wait there, for them to add or go back from - the background keeps them while it runs.
+  // Only while the wallet has no accounts: the step is tab-only, so the popup focuses its tab
+  // instead of showing nothing. With accounts, the popup opens as usual.
+  if (
+    !isRequestWindow &&
+    !isSidePanel &&
+    authStatus === AUTH_STATUS.NOT_AUTHENTICATED &&
+    accountPickerState?.readyToAddAccounts.length
+  ) {
+    return ROUTES.accountPersonalize
   }
 
   if (authStatus === AUTH_STATUS.NOT_AUTHENTICATED) {
@@ -112,6 +131,8 @@ const getInitialRoute = ({
       }
       return ROUTES.transfer
     }
+    // Cleared on switching accounts, so it is always the selected Privacy Pools account's
+    if (privacyPoolsState?.hasPersistedSendForm) return ROUTES.privacyPoolsSend
     if (surveyState && surveyState.hasPersistentState) return ROUTES.survey
     return ROUTES.dashboard
   }
@@ -127,15 +148,22 @@ const getInitialRoute = ({
 const resolveViewRoute = async (mainCtrl: MainController, view: View): Promise<string | null> => {
   const routeControllers = {
     keystoreState: mainCtrl.keystore,
+    accountPickerState: mainCtrl.accountPicker,
     requestsState: mainCtrl.requests,
     swapAndBridgeState: mainCtrl.swapAndBridge,
     transferState: mainCtrl.transfer,
+    privacyPoolsState: mainCtrl.privacyPools,
     surveyState: mainCtrl.survey
   }
 
-  await awaitControllersInitialLoad([...Object.values(routeControllers), mainCtrl.accounts])
+  await awaitControllersInitialLoad([
+    ...Object.values(routeControllers),
+    mainCtrl.accounts,
+    mainCtrl.selectedAccount
+  ])
 
-  const authStatus = mainCtrl.accounts.accounts.length
+  // As in `authContext`, so a wallet with only Privacy Pools accounts isn't sent to onboarding
+  const authStatus = mainCtrl.selectedAccount.selectedType
     ? AUTH_STATUS.AUTHENTICATED
     : AUTH_STATUS.NOT_AUTHENTICATED
 

@@ -31,7 +31,7 @@ interface Props {
 
 /**
  * A row, shown under the transactions of the nonce, with the signatures collected for the
- * cancellation of the nonce so far and a Reject button. It is always displayed. When a
+ * cancellation of the nonce so far (hidden while there are none) and a Reject button. It is always displayed. When a
  * cancellation exists, the button opens it in the sign flow. Otherwise, the button prepares
  * one, exactly as the Reject button on the sign screen does.
  */
@@ -110,13 +110,22 @@ const PendingCancellationRow: FC<Props> = ({
         styles.cancellationRow,
         flexbox.directionRow,
         flexbox.alignCenter,
-        flexbox.justifySpaceBetween,
-        spacings.phSm
+        flexbox.justifySpaceBetween
       ]}
     >
-      <Text fontSize={12} weight="medium" appearance="secondaryText" style={flexbox.flex1}>
-        {t('{{signedCount}}/{{threshold}} signatures', { signedCount, threshold })}
-      </Text>
+      {signedCount > 0 ? (
+        <Text
+          fontSize={14}
+          weight="medium"
+          appearance="secondaryText"
+          style={[flexbox.flex1, spacings.phSm]}
+        >
+          {t('{{signedCount}}/{{threshold}} signatures', { signedCount, threshold })}
+        </Text>
+      ) : (
+        // Keeps the Reject button aligned to the right, when there are no signatures to show
+        <View style={flexbox.flex1} />
+      )}
       <Button
         testID={`pending-cancellation-sign-${request?.id}`}
         type="danger"
@@ -127,7 +136,8 @@ const PendingCancellationRow: FC<Props> = ({
         onHoverIn={handleHoverIn}
         onHoverOut={handleHoverOut}
         hasBottomSpacing={false}
-        style={[spacings.ml, { minWidth: 76, height: 40 }]}
+        textStyle={styles.actionButtonText}
+        style={[spacings.ml, styles.actionButton]}
       />
     </View>
   )

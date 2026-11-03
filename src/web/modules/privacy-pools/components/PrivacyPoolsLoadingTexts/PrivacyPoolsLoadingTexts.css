@@ -1,0 +1,37 @@
+/*
+ * A purple band sweeping once across each text, like an AI assistant's "thinking" text. The span
+ * is remounted for every text, so each one gets its own sweep, already on its way as the text fades
+ * in. Its duration and head start are set by the component, which fades the text out as the band
+ * leaves it. At an even speed, which the text never sees start or stop, as the band is outside it
+ * then.
+ *
+ * The gradient is three times the text's width, its band in the middle third, so the band starts
+ * and ends fully outside the text and never shows half-way at either edge.
+ */
+.privacy-pools-shimmer-text {
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  white-space: nowrap;
+  animation-name: privacy-pools-shimmer;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+}
+
+@keyframes privacy-pools-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .privacy-pools-shimmer-text {
+    animation: none;
+  }
+}

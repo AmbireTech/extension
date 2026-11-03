@@ -26,5 +26,9 @@ export const CRASH_ANALYTICS_BACKGROUND_CONFIG: Sentry.BrowserOptions = {
 
 export const captureBackgroundException = Sentry.captureException
 export const captureBackgroundMessage = Sentry.captureMessage
-export const setBackgroundExtraContext = Sentry.setExtra
-export const setBackgroundUserContext = Sentry.setUser
+
+/** Puts the crash report id on later reports, or removes the user when there is none. */
+export const setBackgroundCrashReportId = (crashReportId: string | null) =>
+  Sentry.setUser(crashReportId ? { id: crashReportId } : null)
+
+export const setBackgroundTagContext = Sentry.setTag

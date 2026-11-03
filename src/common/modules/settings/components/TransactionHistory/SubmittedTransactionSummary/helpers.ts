@@ -1,12 +1,43 @@
 import { formatUnits, ZeroAddress } from 'ethers'
 
+import { CallsUserRequestParams } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
+import { getFeeIncreasePercent } from '@ambire-common/libs/gasPrice/speedUp'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import { generateUuid } from '@ambire-common/utils/uuid'
 import formatDateTime from '@common/utils/formatDateTime'
 
 import { DisplayBalanceChange, SubmittedAccountOpLike } from './types'
 
 export const MAX_VISIBLE_BALANCE_CHANGES = 3
+
+/**
+ * Builds the request params for repeating a past transaction.
+ * The `swapTxn` of a repeated swap/bridge is not carried over, as it links an account op to its
+ * swap route - when batched, the repeat would replace the `swapTxn` of a swap from the swap form
+ * and that swap would stop being tracked. The activity still shows the repeat as a swap/bridge
+ * by its calls' `activeRouteId`.
+ * The calls get a new route id though, as the past route is matched to calls by it - e.g.
+ * rejecting the repeat would otherwise remove the past route.
+ */
+export const getRepeatTransactionRequestParams = ({
+  calls,
+  chainId,
+  accountAddr
+}: {
+  calls: SubmittedAccountOpLike['calls']
+  chainId: bigint
+  accountAddr: string
+}): CallsUserRequestParams => {
+  const repeatedRouteId = `${generateUuid()}-repeat`
+
+  return {
+    calls: calls.map((call) =>
+      call.activeRouteId ? { ...call, activeRouteId: repeatedRouteId } : call
+    ),
+    meta: { chainId, accountAddr }
+  }
+}
 
 export const isNftBalanceChange = (
   change: DisplayBalanceChange
@@ -155,6 +186,28 @@ export const getVisibleSummaryBalanceChanges = (balanceChanges: DisplayBalanceCh
       .slice(0, MAX_VISIBLE_BALANCE_CHANGES - 1),
     gasTankBalanceChange
   ]
+}
+
+/**
+ * A speed up that is still waiting to go through. The Activity shows it in place of the
+ * transaction it replaces (see collapseReplacedAccountOps), so its row tells it's speeding up
+ */
+export const isSpeedingUp = (submittedAccountOp: SubmittedAccountOpLike) =>
+  submittedAccountOp.status === AccountOpStatus.BroadcastedButNotConfirmed &&
+  !!submittedAccountOp.meta?.speedUp?.enabled
+
+/**
+ * How much more a speed up pays than the transaction it replaces, in whole percent.
+ * Null when it's unknown or not higher, e.g. when the speed up needs less gas
+ */
+export const getSpeedUpFeeIncreasePercent = (
+  submittedAccountOp: SubmittedAccountOpLike
+): number | null => {
+  const replacedAmount = submittedAccountOp.meta?.speedUp?.replacedFees?.amount
+  const newAmount = submittedAccountOp.gasFeePayment?.amount
+  if (replacedAmount === undefined || newAmount === undefined) return null
+
+  return getFeeIncreasePercent(replacedAmount, newAmount)
 }
 
 export const getPresentationalStatus = (

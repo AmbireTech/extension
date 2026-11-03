@@ -15,26 +15,32 @@ import { EventEmitterRegistryController } from '@ambire-common/controllers/event
 import { MainController } from '@ambire-common/controllers/main/main'
 import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
-import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
+import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
 import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
 import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import wait from '@ambire-common/utils/wait'
 import {
+  createCrashReportAccountTagsSync,
   excludeIntegrationsByName,
-  getCrashReportAccountAddr,
-  getCrashReportUserId,
+  getCrashReportAccountTags,
   getReportableAction,
   logSentryDeliveryWhenTesting,
   reportControllerError
 } from '@common/config/analytics/crashReportHelpers'
-import { processCrashReportEvent } from '@common/config/analytics/processCrashReportEvent'
+import {
+  processCrashReportEvent,
+  stripPrivacyPoolsCrashReportEvent
+} from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
-import { CULTURE_CONTEXT_INTEGRATION_NAME } from '@common/constants/crashAnalytics'
+import {
+  CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS,
+  CULTURE_CONTEXT_INTEGRATION_NAME
+} from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
@@ -48,6 +54,7 @@ import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
@@ -84,6 +91,10 @@ import {
   Port,
   PortMessenger
 } from '@web/extension-services/messengers'
+import {
+  canUseOffscreenProver,
+  createOffscreenProverFactory
+} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
 import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
@@ -96,8 +107,8 @@ import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 import {
   captureBackgroundException,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
-  setBackgroundExtraContext,
-  setBackgroundUserContext
+  setBackgroundCrashReportId,
+  setBackgroundTagContext
 } from './CrashAnalytics'
 import { sendCriticalControllerStates } from './criticalControllerStates'
 
@@ -159,6 +170,8 @@ function stateDebug(
  */
 const IDB_OPEN_ATTEMPTS = 2
 
+const syncCrashReportAccountTags = createCrashReportAccountTagsSync(setBackgroundTagContext)
+
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
 let mainCtrl: MainController
@@ -185,6 +198,11 @@ if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
     beforeSend(event, hint) {
       const processedEvent = processCrashReportEvent(event, hint.originalException)
       if (!processedEvent) return null
+
+      stripPrivacyPoolsCrashReportEvent(
+        processedEvent,
+        mainCtrl?.selectedAccount.selectedType === 'privacyPools'
+      )
 
       // We don't want to miss errors that occur before the controllers are initialized.
       // processCrashReportEvent has already scrubbed it -- only the crashAnalyticsEnabled gate below,
@@ -298,7 +316,10 @@ const init = async () => {
 
   pm = new PortMessenger()
   ledgerCtrl = new LedgerController(
-    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
+    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports'),
+    (addr, deviceModel) => {
+      void mainCtrl?.keystore.updateUnknownKeyDeviceModel({ addr, type: 'ledger', deviceModel })
+    }
   )
   trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   oneKeyCtrl = new OneKeyController()
@@ -310,7 +331,7 @@ const init = async () => {
   const fetchWithAnalytics: Fetch = (url, init) => {
     if (!isAmbireApiUrl(url.toString())) {
       // @ts-ignore
-      return fetch(url, init)
+      return fetchWithRelayerCustomHeaders(url, init)
     }
 
     // As of v4.26.0, custom internal headers. The mobile app sends the same ones from
@@ -363,7 +384,7 @@ const init = async () => {
     // browser extensions are designed to run within the web environment,
     // which already provides a native and well-optimized fetch API.
     // @ts-ignore
-    return fetch(url, initWithCustomHeaders)
+    return fetchWithRelayerCustomHeaders(url, initWithCustomHeaders)
   }
 
   eventEmitterRegistry = new EventEmitterRegistryController(() => {
@@ -377,9 +398,6 @@ const init = async () => {
           if (ctrl.name === 'KeystoreController') {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
-              setBackgroundUserContext({
-                id: getCrashReportUserId(keystoreCtrl, mainCtrl.invite.verifiedCode)
-              })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
               } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
@@ -390,12 +408,19 @@ const init = async () => {
             }
           }
 
-          if (ctrl.name === 'SelectedAccountController') {
-            const accountAddr = getCrashReportAccountAddr(ctrl as ISelectedAccountController)
+          if (ctrl.name === 'WalletStateController') {
+            setBackgroundCrashReportId((ctrl as WalletStateController).crashReportId)
+          }
 
-            if (accountAddr) {
-              setBackgroundExtraContext('account', accountAddr)
-            }
+          if (CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS.includes(ctrl.name)) {
+            syncCrashReportAccountTags(
+              getCrashReportAccountTags({
+                selectedAccount: mainCtrl.selectedAccount.account,
+                accountStates: mainCtrl.accounts.accountStates,
+                keys: mainCtrl.keystore.keys,
+                accounts: mainCtrl.accounts.accounts
+              })
+            )
           }
         }, 'background')
       }
@@ -415,8 +440,7 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            // mainCtrl may not exist yet - WalletStateController is created and loads before it
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl?.name }
+            params: { errors: ctrl.emittedErrors, controller: ctrl.name }
           })
           reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
@@ -483,12 +507,23 @@ const init = async () => {
 
   const idb = await openIdbWithRetry()
 
+  // Copied at build time and served same-origin - see webpack/extension.js
+  const privacyPoolsCircuitsBaseUrl = browser.runtime.getURL('privacy-pools-circuits/')
+
   mainCtrl = new MainController({
     eventEmitterRegistry,
     appVersion: APP_VERSION,
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
+    privacyPoolsCircuitsBaseUrl,
+    // On Chrome, in an offscreen document using every core; elsewhere or if it fails, right here
+    privacyPoolsProverFactory: canUseOffscreenProver()
+      ? createOffscreenProverFactory({
+          fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
+          onError: (error) => captureBackgroundException(error)
+        })
+      : undefined,
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
@@ -934,7 +969,7 @@ if ('hid' in navigator) navigator.hid.addEventListener('disconnect', () => {})
 try {
   browser.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
     if (newState !== 'active') return
-    if (!mainCtrl || !mainCtrl.selectedAccount.account) {
+    if (!mainCtrl || !mainCtrl.selectedAccount.selectedType) {
       console.error(
         'Idle state changed to active but mainCtrl or selected account is not initialized',
         mainCtrl

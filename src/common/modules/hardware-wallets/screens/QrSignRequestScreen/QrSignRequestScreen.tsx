@@ -2,15 +2,17 @@ import React, { useMemo } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
+import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
+import useTheme from '@common/hooks/useTheme'
 import AnimatedQrCode from '@common/modules/hardware-wallets/components/AnimatedQrCode'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
-import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
@@ -25,6 +27,13 @@ type Props = {
     total: number
   } | null
   signingRequest?: HardwareWalletSigningRequest | null
+  /** The calls as Ambire humanized them on the sign screen */
+  humanization?: IrCall[]
+  /**
+   * Set when the request is larger than what some QR wallets can show or scan, so the user
+   * is warned before scanning that the device may reject it.
+   */
+  isTooLargeForDevice?: boolean
 }
 
 // Matches what the QR wallets themselves animate at (the Keycard Shell firmware uses
@@ -41,7 +50,9 @@ const QrSignRequestScreen = ({
   urType,
   urCborHex,
   transactionProgress = null,
-  signingRequest = null
+  signingRequest = null,
+  humanization,
+  isTooLargeForDevice = false
 }: Props) => {
   const { isCompactLayout: withMobileLayout, isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
@@ -82,6 +93,20 @@ const QrSignRequestScreen = ({
       <Text style={[spacings.mbSm, { textAlign: 'center' }]}>
         {t('Scan this QR code with your QR-based device to sign.')}
       </Text>
+      {isTooLargeForDevice && (
+        <Alert
+          type="warning"
+          size="sm"
+          title={t('This request may be too large for your device')}
+          text={t(
+            'Some devices can\'t display this much data and may reject it with an error such as "Invalid QR Code". If that happens, go back and sign with a different key, or contact your device maker\'s support.'
+          )}
+          style={{
+            ...spacings.mbSm,
+            ...(withMobileLayout ? { width: '100%' } : { width: 420 })
+          }}
+        />
+      )}
       <View style={[flexbox.alignCenter, flexbox.flex1, { width: '100%' }]}>
         {qrCode}
         {transactionProgress ? (
@@ -93,6 +118,7 @@ const QrSignRequestScreen = ({
         {!!signingRequest && (
           <SigningRequestDetails
             signingRequest={signingRequest}
+            humanization={humanization}
             style={
               withMobileLayout
                 ? [spacings.mtSm, { width: '100%' }]

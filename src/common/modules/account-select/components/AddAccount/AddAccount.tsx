@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -11,6 +11,7 @@ import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
+import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeBadgeIcon, { SAFE_BRAND_GREEN } from '@common/assets/svg/SafeBadgeIcon'
@@ -20,13 +21,15 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import useNavigation from '@common/hooks/useNavigation'
+import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import { NfcWalletIcons } from '@common/modules/hardware-wallets/nfc/wallets/icons'
@@ -51,8 +54,21 @@ const AddAccount = ({
   showImportOnly?: boolean
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
-  const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
+  const { goToNextRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
+  // Trezor and GridPlus connect from here, as their own windows ask for the device
+  const connectHardwareWallet = useCallback(
+    (
+      type:
+        | 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR'
+        | 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
+    ) =>
+      initAccountPicker({ type }).catch((error) => {
+        // The controller reports its own failures
+        console.error('Failed to set the account picker up for the hardware wallet', error)
+      }),
+    [initAccountPicker]
+  )
   const { createNewSeedAccount, isCreating: isCreatingNewSeedAccount } = useCreateNewSeedAccount()
   const { scanCard } = useNfcAccountImport()
   const [height, setHeight] = useState<number>(0)
@@ -66,7 +82,19 @@ const AddAccount = ({
     open: openSeedPhraseBottomSheet,
     close: closeSeedPhraseBottomSheet
   } = useModalize()
+  const {
+    ref: privacyPoolsSheetRef,
+    open: openPrivacyPoolsBottomSheet,
+    close: closePrivacyPoolsBottomSheet
+  } = useModalize()
   const { state: seeds } = useController('KeystoreController', selectSeeds)
+  const { navigate } = useNavigation()
+
+  const handlePrivacyPoolsAccountAdded = useCallback(() => {
+    closePrivacyPoolsBottomSheet()
+    closeBottomSheet()
+    navigate(ROUTES.dashboard)
+  }, [closeBottomSheet, closePrivacyPoolsBottomSheet, navigate])
 
   const optionsHW = useMemo(() => {
     if (isMobile)
@@ -106,8 +134,7 @@ const AddAccount = ({
         text: t('Trezor'),
         icon: TrezorBadgeIcon,
         onPress: () => {
-          setTriggeredHwWalletFlow('trezor')
-          dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
+          void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR')
         },
         testID: 'trezor-option'
       },
@@ -134,8 +161,7 @@ const AddAccount = ({
         text: t('GridPlus'),
         icon: GridPlusIcon,
         onPress: () => {
-          setTriggeredHwWalletFlow('lattice')
-          dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
+          void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE')
         },
         testID: 'lattice-option'
       },
@@ -149,7 +175,7 @@ const AddAccount = ({
         testID: 'qr-option'
       }
     ]
-  }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
+  }, [connectHardwareWallet, goToNextRoute, t])
 
   const optionsNfc = useMemo(() => {
     if (!isMobile) return []
@@ -263,6 +289,16 @@ const AddAccount = ({
             disabled={isCreatingNewSeedAccount}
           />
         )}
+        {/* Extension only for now */}
+        {isPrivacyPoolsEnabled && !showImportOnly && (
+          <Option
+            text={t('Add a Privacy Pools account')}
+            icon={PrivacyPoolsIcon}
+            onPress={openPrivacyPoolsBottomSheet as any}
+            testID="add-privacy-pools-account"
+            status="none"
+          />
+        )}
         <ExpandableOptionSection
           dropdownText={t('Import an account')}
           dropdownIcon={ImportAccountIcon}
@@ -316,6 +352,13 @@ const AddAccount = ({
         )}
       </View>
 
+      {isPrivacyPoolsEnabled && !showImportOnly && (
+        <AddPrivacyPoolsAccountBottomSheet
+          sheetRef={privacyPoolsSheetRef}
+          closeBottomSheet={closePrivacyPoolsBottomSheet}
+          onAdded={handlePrivacyPoolsAccountAdded}
+        />
+      )}
       <SavedSeedPhrasesBottomSheet
         sheetRef={seedPhraseSheetRef}
         open={openSeedPhraseBottomSheet}

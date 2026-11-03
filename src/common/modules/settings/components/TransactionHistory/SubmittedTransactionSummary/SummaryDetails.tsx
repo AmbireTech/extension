@@ -90,7 +90,8 @@ const SummaryDetails = ({
   const modalFinalStatus = getModalFinalStatus(getPresentationalStatus(submittedAccountOp))
   const shouldShowTransactionHashStep =
     submittedAccountOp.identifiedBy.type !== 'MultipleTxns' &&
-    (submittedAccountOp.status === AccountOpStatus.Success ||
+    (isPendingConfirmation ||
+      submittedAccountOp.status === AccountOpStatus.Success ||
       submittedAccountOp.status === AccountOpStatus.Failure) &&
     !!submittedAccountOp.txnId
   const openCallExplorer = async (callTxnId?: string) => {

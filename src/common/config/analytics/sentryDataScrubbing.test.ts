@@ -412,4 +412,108 @@ describe('scrubSentryEventSecrets', () => {
     expect(result.extra.action).not.toContain('0xdeadbeef')
     expect(result.extra.action).toContain('[REDACTED]')
   })
+
+  describe('wallet addresses', () => {
+    const ADDRESS = '0x'.concat('ab12'.repeat(10))
+    const CHECKSUMMED = '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B'
+
+    it('redacts an address in messages, exception values, breadcrumbs and tags', () => {
+      const event = {
+        message: `failed for ${ADDRESS}`,
+        exception: { values: [{ type: 'Error', value: `bad account ${CHECKSUMMED}` }] },
+        breadcrumbs: [
+          { message: `balance of ${ADDRESS}`, data: { url: `https://x.io/a/${ADDRESS}?q=1` } }
+        ],
+        tags: { account: ADDRESS },
+        extra: { list: [ADDRESS] },
+        contexts: { acc: { id: CHECKSUMMED } }
+      }
+
+      const serialized = JSON.stringify(scrubSentryEventSecrets(event))
+
+      expect(serialized).not.toContain(ADDRESS)
+      expect(serialized).not.toContain(CHECKSUMMED)
+      expect(serialized).toContain('https://x.io/a/[REDACTED_ADDRESS]?q=1')
+    })
+
+    it('redacts the address under address-named keys instead of trusting the key', () => {
+      const event = { extra: { address: ADDRESS, accountAddr: CHECKSUMMED, fromAddress: ADDRESS } }
+
+      const result = scrubSentryEventSecrets(event)
+
+      expect(result.extra).toEqual({
+        address: '[REDACTED_ADDRESS]',
+        accountAddr: '[REDACTED_ADDRESS]',
+        fromAddress: '[REDACTED_ADDRESS]'
+      })
+    })
+
+    it('redacts addresses inside a stringified JSON blob and keeps the rest', () => {
+      const event = { extra: { action: `{"params":{"addr":"${ADDRESS}","chainId":1}}` } }
+
+      const result = scrubSentryEventSecrets(event)
+
+      expect(JSON.parse(result.extra.action)).toEqual({
+        params: { addr: '[REDACTED_ADDRESS]', chainId: 1 }
+      })
+    })
+
+    it('redacts several addresses glued to punctuation in one string', () => {
+      const event = { message: `(${ADDRESS}),${CHECKSUMMED}/` }
+
+      expect(scrubSentryEventSecrets(event).message).toBe(
+        '([REDACTED_ADDRESS]),[REDACTED_ADDRESS]/'
+      )
+    })
+
+    it('never partially redacts a 64-hex value: it becomes one [REDACTED_HEX]', () => {
+      const hex = '0x'.concat('ab12'.repeat(16))
+
+      expect(scrubSentryEventSecrets({ message: hex }).message).toBe('[REDACTED_HEX]')
+    })
+
+    it('still redacts an address left-padded to 32 bytes as hex, not as an address', () => {
+      const padded = '0x'.concat('0'.repeat(24), 'ab12'.repeat(10))
+
+      expect(scrubSentryEventSecrets({ message: padded }).message).toBe('[REDACTED_HEX]')
+    })
+
+    it('does not cut an address-sized prefix out of longer hex such as calldata', () => {
+      const longHex = '0x'.concat('ab12'.repeat(20))
+      const event = { message: longHex }
+
+      expect(scrubSentryEventSecrets(event).message).toBe(longHex)
+    })
+
+    it('keeps a hash under a hash-like key but still redacts an address under that key', () => {
+      const hash = '0x'.concat('e'.repeat(64))
+      const event = { extra: { txHash: hash, signatureSigner: ADDRESS, callData: ADDRESS } }
+
+      const result = scrubSentryEventSecrets(event)
+
+      expect(result.extra.txHash).toBe(hash)
+      expect(result.extra.signatureSigner).toBe('[REDACTED_ADDRESS]')
+      expect(result.extra.callData).toBe('[REDACTED_ADDRESS]')
+    })
+
+    it('redacts an address embedded in a message under a hash-like key', () => {
+      const event = { extra: { txHash: `pending from ${ADDRESS}` } }
+
+      expect(scrubSentryEventSecrets(event).extra.txHash).toBe('pending from [REDACTED_ADDRESS]')
+    })
+
+    it('is idempotent for addresses', () => {
+      const once = scrubSentryEventSecrets({ message: `to ${ADDRESS}` })
+
+      expect(scrubSentryEventSecrets(once)).toEqual(once)
+    })
+
+    it('leaves 39-hex and non-hex lookalikes untouched', () => {
+      const short = '0x'.concat('a'.repeat(39))
+      const nonHex = '0x'.concat('g'.repeat(40))
+      const event = { message: `${short} ${nonHex}` }
+
+      expect(scrubSentryEventSecrets(event).message).toBe(event.message)
+    })
+  })
 })

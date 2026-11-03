@@ -6,8 +6,13 @@ const path = require('path')
 const {
   ENV_TARGETS,
   PRODUCTION_APP_ENV,
-  validateEnvVariables
+  getRelayerCustomHeadersCacheKey,
+  validateEnvVariables,
+  validateRelayerCustomHeaders
 } = require('./scripts/validateEnv')
+
+// Runs on every build, because CI builds must never inline the custom headers.
+validateRelayerCustomHeaders(process.env)
 
 // Release bundles, store builds and OTAs alike, inline the env, so a missing value would ship.
 // Only CI builds what reaches users. Local production builds may point at staging or leave out
@@ -33,6 +38,8 @@ const config = getSentryExpoConfig(__dirname, {
 })
 
 config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
+
+config.cacheVersion = `${config.cacheVersion}-${getRelayerCustomHeadersCacheKey(process.env)}`
 
 // PERF (cold start): defer module evaluation until first use instead of running
 // the entire ~16MB bundle's top-level code eagerly at boot. Metro's
@@ -86,7 +93,12 @@ config.transformer.minifierConfig = {
 const shimRedirects = {
   'scrypt-js': path.resolve(__dirname, 'src/mobile/shims/scrypt-js.ts'),
   pbkdf2: path.resolve(__dirname, 'src/mobile/shims/pbkdf2.ts'),
-  'eth-crypto': path.resolve(__dirname, 'src/mobile/shims/eth-crypto.ts')
+  'eth-crypto': path.resolve(__dirname, 'src/mobile/shims/eth-crypto.ts'),
+  // Proves with snarkjs, which needs Node built-ins and WebAssembly - see the shim
+  '@fatsolutions/privacy-pools-core-circuits': path.resolve(
+    __dirname,
+    'src/mobile/shims/privacyPoolsCircuits.ts'
+  )
 }
 
 // Swap two of viem's own modules for Rust-backed shims. Redirecting these
@@ -149,7 +161,11 @@ const nodeCoreRedirects = {
   // entry below is still load-bearing for everything else that does require it, ethers v5
   // (`@ethersproject/providers`), Sentry and the crypto-browserify family among them.
   crypto: 'react-native-quick-crypto',
-  stream: 'readable-stream',
+  // Same polyfill as the web build. The hoisted `readable-stream` (1.0.33) can't stand in for
+  // `stream`: it requires `stream` itself, so it would resolve to its own half-loaded module and
+  // crash with "Object prototype argument must be an Object or null" on the first use - e.g.
+  // `create-hash` (via `cipher-base`) when bs58check encodes the xpub on QR wallet import.
+  stream: 'stream-browserify',
   buffer: 'buffer',
   http: 'stream-http',
   https: 'https-browserify',

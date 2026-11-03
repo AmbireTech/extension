@@ -19,6 +19,8 @@ interface Props extends TextProps {
   actionsMode?: 'tooltip' | 'inline'
   fallbackLabel?: string
   isToken?: boolean
+  /** Shows only names already known locally, with no lookup that sends the address out. */
+  isLocalLabelOnly?: boolean
 }
 
 const selectContractNames = (state: AllControllersMappingType['ContractNamesController']) =>
@@ -31,9 +33,13 @@ const AddressName: FC<Props> = ({
   actionsMode = 'tooltip',
   fallbackLabel,
   isToken,
+  isLocalLabelOnly,
   ...rest
 }) => {
-  const { name, isLoading } = useReverseLookup({ address })
+  const { name, isLoading } = useReverseLookup({
+    address,
+    privacyUpdateMode: isLocalLabelOnly ? 'never' : undefined
+  })
   const { state: contractNames, dispatch: contractNamesDispatch } = useController(
     'ContractNamesController',
     selectContractNames
@@ -48,7 +54,7 @@ const AddressName: FC<Props> = ({
   }, [contract])
 
   useEffect(() => {
-    if (contractName) return
+    if (contractName || isLocalLabelOnly) return
 
     contractNamesDispatch({
       type: 'method',
@@ -57,7 +63,7 @@ const AddressName: FC<Props> = ({
         args: [address, chainId]
       }
     })
-  }, [contractNamesDispatch, address, chainId, contractName])
+  }, [contractNamesDispatch, address, chainId, contractName, isLocalLabelOnly])
 
   if (isLoading && !fallbackLabel) return <Spinner style={{ width: 16, height: 16 }} />
 

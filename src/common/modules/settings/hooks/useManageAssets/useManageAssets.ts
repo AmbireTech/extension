@@ -118,6 +118,10 @@ const composeAssetLists = <T extends PortfolioAsset>({
   const toDisplayedAssets = (storedAssets: StoredAsset[], areCustom: boolean) => {
     const assets = storedAssets
       .filter(({ chainId }) => {
+        // Records whose networkId was never migrated to a chainId (e.g. their network was
+        // removed before the migration) have none. The portfolio ignores them, so they are
+        // not listed either, as the rows can't be displayed without a network.
+        if (chainId === undefined) return false
         if (networkFilter === ALL_NETWORKS_FILTER) return true
 
         return networks.find((n) => n.chainId === chainId)?.name === networkFilter
@@ -176,7 +180,8 @@ const useManageAssets = <T extends PortfolioAsset>({
   const { networks } = useController('NetworksController').state
   const {
     state: {
-      portfolio: { isAllReady, tokens, collections }
+      portfolio: { isAllReady, tokens, collections },
+      selectedType
     }
   } = useController('SelectedAccountController')
 
@@ -199,8 +204,9 @@ const useManageAssets = <T extends PortfolioAsset>({
     customAssets,
     hiddenAssets,
     // The lists come from the stored state, so they only wait for the portfolio
-    // when there is nothing to display yet
-    isLoading: !isAllReady && !customAssets.length && !hiddenAssets.length
+    // when there is nothing to display yet. A Privacy Pools account has no portfolio to wait for.
+    isLoading:
+      selectedType !== 'privacyPools' && !isAllReady && !customAssets.length && !hiddenAssets.length
   }
 }
 

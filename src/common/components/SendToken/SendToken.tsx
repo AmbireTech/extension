@@ -63,7 +63,8 @@ type Props = {
   fromAmountValue: string
   fromTokenAmountSelectDisabled: boolean
   handleChangeFromToken: (value: SelectValue) => void
-  fromSelectedToken: TokenResult | null
+  // Narrowed so non-portfolio tokens can be passed too
+  fromSelectedToken: Pick<TokenResult, 'symbol' | 'priceIn' | 'decimals'> | null
   fromAmount?: string
   fromAmountInFiat?: string
   fromAmountFieldMode: 'token' | 'fiat'
@@ -83,6 +84,8 @@ type Props = {
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
   sections?: SectionedSelectProps['sections']
   renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
+  /** Whether the max amount is loading. Defaults to the selected account's portfolio state. */
+  isMaxAmountLoading?: boolean
   /** Extra styling for the amount slider's own row, e.g. to give it room before the panel ends. */
   sliderStyle?: ViewStyle
 }
@@ -113,6 +116,7 @@ const SendToken: FC<Props> = ({
   amountAdjustmentInfo,
   sections,
   renderSectionHeader,
+  isMaxAmountLoading,
   sliderStyle
 }) => {
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
@@ -201,10 +205,16 @@ const SendToken: FC<Props> = ({
     () => ({
       amount: Number(maxFromAmount),
       symbol: fromSelectedToken?.symbol || '',
-      isLoading: !portfolio?.isReadyToVisualize,
+      isLoading: isMaxAmountLoading ?? !portfolio?.isReadyToVisualize,
       isInaccurate: simulationFailed
     }),
-    [maxFromAmount, fromSelectedToken?.symbol, portfolio?.isReadyToVisualize, simulationFailed]
+    [
+      maxFromAmount,
+      fromSelectedToken?.symbol,
+      isMaxAmountLoading,
+      portfolio?.isReadyToVisualize,
+      simulationFailed
+    ]
   )
 
   const hasPrice = !!fromSelectedToken && fromSelectedToken.priceIn.length !== 0

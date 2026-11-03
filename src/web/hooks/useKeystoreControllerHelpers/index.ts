@@ -1,3 +1,0 @@
-import useKeystoreControllerHelpers from './useKeystoreControllerHelpers'
-
-export default useKeystoreControllerHelpers

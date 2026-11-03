@@ -8,7 +8,7 @@ const BADGE_PRESETS: { [preset in Preset]: BadgePreset } = {
       'Smart Accounts unlock the full potential of Ethereum and EVM networks, offering advanced features like paying gas fees in stablecoins, simulating transaction outcomes, and batching multiple actions into a single transaction.'
   },
   'view-only': {
-    text: 'view-only',
+    text: 'View-only',
     type: 'default',
     tooltipText:
       'The "View-only" account is imported without signer keys, meaning you can see its balances, connect it with apps, simulate transactions, and more, but you cannot control it or sign transactions or messages.'
@@ -20,7 +20,7 @@ const BADGE_PRESETS: { [preset in Preset]: BadgePreset } = {
       'Smart Accounts created with the Web or Mobile platforms of Ambire Wallet. You can sign transactions (single and batched ones), connect with apps, and more, but cannot utilize all the features and functionalities of the Ambire Wallet extension.'
   },
   linked: {
-    text: 'linked',
+    text: 'Linked',
     type: 'info',
     tooltipText:
       'Smart Accounts were initially created with a given signer key, but another signer key is authorized for that account on one or more of the supported networks.'
@@ -30,6 +30,13 @@ const BADGE_PRESETS: { [preset in Preset]: BadgePreset } = {
     type: 'warning',
     tooltipText: 'This account has a Metamask EIP-7702 delegation',
     specialType: 'metamask'
+  },
+  'privacy-pools': {
+    text: 'Privacy Pools',
+    type: 'privacyPools',
+    tooltipText:
+      'Keeps funds private in Privacy Pools. It has no public address of its own and is created from one of your recovery phrases - write that phrase down, as it is the only way to recover the account.',
+    specialType: 'privacy-pools'
   }
 }
 

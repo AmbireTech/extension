@@ -1,5 +1,7 @@
 import { hexlify } from 'ethers'
 
+import { Hex } from '@ambire-common/interfaces/hex'
+
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -19,6 +21,15 @@ import ledgerTransportService from '@mobile/services/ledger/ledgerTransportServi
 export type { LedgerSignature }
 
 class LedgerController implements ExternalSignerController, LedgerControllerInterface {
+  /** Called once the device proved it holds a key, with the model of that device */
+  #onKeyConfirmed?: (keyAddr: string, deviceModel: string) => void
+
+  constructor({
+    onKeyConfirmed
+  }: { onKeyConfirmed?: (keyAddr: string, deviceModel: string) => void } = {}) {
+    this.#onKeyConfirmed = onKeyConfirmed
+  }
+
   unlockedPath: string = ''
 
   unlockedPathKeyAddr: string = ''
@@ -27,7 +38,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   type = 'ledger'
 
-  deviceModel = 'unknown'
+  // The connected model, which the account picker stores in the key meta
+  get deviceModel(): string {
+    return ledgerTransportService.getDeviceModel() || 'unknown'
+  }
 
   deviceId = ''
 
@@ -48,12 +62,16 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     if (!expectedKeyOnThisPath && this.isUnlocked(path)) return 'ALREADY_UNLOCKED'
 
     try {
-      const address = await ledgerTransportService.getAddress(path)
+      // An expected key means signing comes next
+      const address = await ledgerTransportService.getAddress(path, !!expectedKeyOnThisPath)
 
       const wasAlreadyUnlocked = this.unlockedPath === path && this.unlockedPathKeyAddr === address
       this.unlockedPath = path
       this.unlockedPathKeyAddr = address
       this.walletSDK = true
+
+      if (expectedKeyOnThisPath && address.toLowerCase() === expectedKeyOnThisPath.toLowerCase())
+        this.#onKeyConfirmed?.(expectedKeyOnThisPath, this.deviceModel)
 
       return wasAlreadyUnlocked ? 'ALREADY_UNLOCKED' : 'JUST_UNLOCKED'
     } catch (e: any) {
@@ -111,6 +129,14 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
         message,
         primaryType
       } as any)
+    } catch (e: any) {
+      throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
+    }
+  }
+
+  async sign7702(derivationPath: string, chainId: bigint, delegationAddr: Hex, nonce: bigint) {
+    try {
+      return await ledgerTransportService.sign7702(derivationPath, chainId, delegationAddr, nonce)
     } catch (e: any) {
       throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
     }

@@ -4,17 +4,17 @@ import { Animated, ColorValue, Linking, View } from 'react-native'
 import Alert from '@common/components/Alert'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -23,7 +23,7 @@ import { QrWalletConfigs } from '@common/modules/hardware-wallets/qr/wallets'
 import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScannerWithPermission'
 
 const VISIBLE_WALLETS_COUNT = 2
-const QR_WALLET_ROW_HEIGHT = 56
+const QR_WALLET_ROW_HEIGHT = BUTTON_HEIGHT
 const BASE_SCANNER_SIZE = 290
 const MIN_SCANNER_SIZE = 220
 
@@ -85,12 +85,10 @@ const TutorialLink = React.memo(
 const QrConnectScreen = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
   const { addToast } = useToast()
-  const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
+  const { goToPrevRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
   const { height } = useWindowSize()
-  const { initParams, type } = useController('AccountPickerController').state
-  const mainCtrlState = useController('MainController').state
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
   const [scannerKey, setScannerKey] = useState(0)
@@ -140,20 +138,21 @@ const QrConnectScreen = () => {
 
   const onQrComplete = useCallback(
     async (payload: string | Uint8Array) => {
+      setIsSubmitting(true)
+      setScanError(null)
       try {
-        setIsSubmitting(true)
-        setScanError(null)
-
-        dispatch({
+        await initAccountPicker({
           type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET',
           params: { payload }
         })
-      } catch (error: any) {
-        addToast(error?.message || t('Failed to import QR wallet.'), { type: 'error' })
+      } catch (error) {
+        console.error('Failed to set the account picker up for the QR wallet', error)
+        setScanError(t('Failed to import QR wallet. Please try scanning again.'))
+      } finally {
         setIsSubmitting(false)
       }
     },
-    [dispatch, addToast, t]
+    [initAccountPicker, t]
   )
 
   const onResetScannerPress = useCallback(() => {
@@ -194,33 +193,6 @@ const QrConnectScreen = () => {
       })
     ]).start()
   }, [showMore, animatedHeight, animatedOpacity])
-
-  useEffect(() => {
-    if (
-      isSubmitting &&
-      mainCtrlState.statuses.handleAccountPickerInitQr === 'SUCCESS' &&
-      initParams &&
-      type === 'qr'
-    ) {
-      setIsSubmitting(false)
-      goToNextRoute()
-    }
-  }, [
-    isSubmitting,
-    initParams,
-    type,
-    goToNextRoute,
-    mainCtrlState.statuses.handleAccountPickerInitQr
-  ])
-
-  useEffect(() => {
-    if (!isSubmitting) return
-
-    if (mainCtrlState.statuses.handleAccountPickerInitQr === 'ERROR') {
-      setIsSubmitting(false)
-      setScanError(t('Failed to import QR wallet. Please try scanning again.'))
-    }
-  }, [isSubmitting, mainCtrlState.statuses.handleAccountPickerInitQr, t])
 
   const renderWalletRow = useCallback(
     (wallet: (typeof qrWallets)[number]) => (

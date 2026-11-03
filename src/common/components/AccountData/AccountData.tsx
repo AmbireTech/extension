@@ -6,6 +6,7 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
+import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -13,6 +14,7 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
@@ -68,6 +70,8 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
   const { isStoreReady } = useControllerStore()
 
   const { state: account } = useController('SelectedAccountController', selectAccount)
+  // Shown in place of a regular account, with no address to copy
+  const { selectedAccount: privacyPoolsAccount } = usePrivacyPoolsAccounts()
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
     duration: 50
@@ -109,7 +113,12 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
     return shortenAddress(account.addr, 13)
   }, [account, isNarrowWebLayout])
 
-  if (!account) return null
+  // A Privacy Pools account has no name or address of its own, so it is named by its kind
+  const label = account ? account.preferences.label : t('Private account')
+  const subtitle = account ? `(${formattedAddress})` : t('Privacy Pools')
+  const canCopyAddress = isWeb && !!account
+
+  if (!account && !privacyPoolsAccount) return null
 
   return (
     <View
@@ -139,7 +148,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
         {...(onPress ? bindAccountBtnAnim : {})}
       >
         <>
-          {isStoreReady ? (
+          {isStoreReady && account && (
             <Avatar
               pfp={account.preferences.pfp}
               address={account.addr}
@@ -149,7 +158,11 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
                 backgroundBehindColor ?? String(theme.primaryBackground)
               )}
             />
-          ) : (
+          )}
+          {isStoreReady && !account && (
+            <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+          )}
+          {!isStoreReady && (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />
           )}
           {isNarrowWebLayout ? (
@@ -170,7 +183,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
                 color="#FFFFFF"
                 fontSize={14}
               >
-                {account.preferences.label}
+                {label}
               </Text>
               {maxWidthSize('s') && (
                 <View
@@ -185,12 +198,12 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
                     numberOfLines={1}
                     ellipsizeMode="tail"
                     style={[{ flexShrink: 1, minWidth: 0 }, isWeb ? spacings.mrTy : undefined]}
-                    weight="mono_regular"
+                    weight={account ? 'mono_regular' : 'regular'}
                     fontSize={12}
                   >
-                    ({formattedAddress})
+                    {subtitle}
                   </Text>
-                  {isWeb && (
+                  {canCopyAddress && (
                     <AnimatedPressable
                       style={addressAnimStyle}
                       onPress={handleCopyText}
@@ -214,18 +227,18 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
                 color="#FFFFFF"
                 fontSize={14}
               >
-                {account.preferences.label}
+                {label}
               </Text>
               <>
                 <Text
                   color="#B9BFC9"
                   style={[isWeb ? spacings.mrTy : undefined]}
-                  weight="mono_regular"
+                  weight={account ? 'mono_regular' : 'regular'}
                   fontSize={12}
                 >
-                  ({formattedAddress})
+                  {subtitle}
                 </Text>
-                {isWeb && (
+                {canCopyAddress && (
                   <AnimatedPressable
                     style={addressAnimStyle}
                     onPress={handleCopyText}

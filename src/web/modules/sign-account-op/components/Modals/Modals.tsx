@@ -28,8 +28,6 @@ const Modals: FC<ModalsProps> = ({
   gasFeeUpdatedModalRef,
   handleAcceptGasFeeUpdate,
   handleDismissGasFeeUpdate,
-  feePayerKeyType,
-  signingKeyType,
   slowPaymasterRequest,
   shouldDisplayLedgerConnectModal,
   handleDismissLedgerConnectModal,
@@ -48,16 +46,9 @@ const Modals: FC<ModalsProps> = ({
   actionType
 }) => {
   const { t } = useTranslation()
-  const {
-    state: { signAccountOpController: swapAndBridgeSignAccountOp },
-    dispatch: swapAndBridgeDispatch
-  } = useController('SwapAndBridgeController')
-  const {
-    state: { signAccountOpController: transferSignAccountOp },
-    dispatch: transferDispatch
-  } = useController('TransferController')
-  const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
-    useController('SignAccountOpController')
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { dispatch: transferDispatch } = useController('TransferController')
+  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
   const transactionProgress = useMemo(() => {
     const totalTransactions = signAccountOpState?.accountOp?.calls?.length || 0
     const signedTransactionsCount = signAccountOpState?.signedTransactionsCount
@@ -162,6 +153,7 @@ const Modals: FC<ModalsProps> = ({
           currentRequest={currentRequest}
           signingStep={signingStep}
           signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
+          humanization={signAccountOpState?.humanization}
           transactionProgress={transactionProgress}
           submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
           onReject={handleQrSigningFlowOnRejectPressed}
@@ -174,22 +166,12 @@ const Modals: FC<ModalsProps> = ({
   if (renderedButNotNecessarilyVisibleModal === 'hw-sign' && signAccountOpState) {
     return (
       <SignAccountOpHardwareWalletSigningModal
-        signingKeyType={signingKeyType}
-        feePayerKeyType={feePayerKeyType}
-        isSignAndBroadcastInProgress={(() => {
-          if (actionType === 'swapAndBridge') {
-            return !!swapAndBridgeSignAccountOp?.isSignAndBroadcastInProgress
-          }
-          if (actionType === 'transfer') {
-            return !!transferSignAccountOp?.isSignAndBroadcastInProgress
-          }
-
-          return currentSignAccountOp ? currentSignAccountOp.isSignAndBroadcastInProgress : false
-        })()}
-        signAccountOpStatusType={signAccountOpState.status?.type}
+        activeSigningKeyType={signAccountOpState.activeSigningKeyType}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
         hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
+        humanization={signAccountOpState.humanization}
+        isPaymasterSlow={slowPaymasterRequest}
         accountOp={signAccountOpState.accountOp}
         actionType={actionType}
         cancelReq={() => {
