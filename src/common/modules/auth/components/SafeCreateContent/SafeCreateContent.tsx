@@ -12,15 +12,13 @@ type Props = {
   safeCreate: ReturnType<typeof useSafeCreate>
   /** Positions the subtitle, e.g. to center it under a centered title */
   subtitleStyle?: StyleProp<TextStyle>
-  /** Shortens the owner addresses, for a container too narrow to fit a full one */
-  withShortenedAddresses?: boolean
 }
 
 /**
  * The content of the Safe create screen (web and mobile): the subtitle and either the
  * owners form or, on the preview step, the summary of the Safe about to be created.
  */
-const SafeCreateContent = ({ safeCreate, subtitleStyle, withShortenedAddresses }: Props) => {
+const SafeCreateContent = ({ safeCreate, subtitleStyle }: Props) => {
   const { t } = useTranslation()
   const { preview } = safeCreate
 
@@ -35,7 +33,7 @@ const SafeCreateContent = ({ safeCreate, subtitleStyle, withShortenedAddresses }
       </Text>
       {/* Hidden instead of unmounted on the preview, so going back finds it as it was */}
       <View style={preview ? { display: 'none' } : undefined}>
-        <SafeCreateForm {...safeCreate} withShortenedAddresses={withShortenedAddresses} />
+        <SafeCreateForm {...safeCreate} />
       </View>
       {!!preview && <SafeCreatePreview preview={preview} />}
     </>

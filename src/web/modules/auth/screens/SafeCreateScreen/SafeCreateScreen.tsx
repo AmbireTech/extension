@@ -47,12 +47,7 @@ const SafeCreateScreen = () => {
               contentContainerStyle={{ paddingBottom: footerHeight + SPACING_SM }}
               showsVerticalScrollIndicator={false}
             >
-              <SafeCreateContent
-                safeCreate={safeCreate}
-                subtitleStyle={text.center}
-                // The onboarding panel is too narrow to fit a full address
-                withShortenedAddresses
-              />
+              <SafeCreateContent safeCreate={safeCreate} subtitleStyle={text.center} />
             </ScrollableWrapper>
             <FooterGlassView
               size="sm"

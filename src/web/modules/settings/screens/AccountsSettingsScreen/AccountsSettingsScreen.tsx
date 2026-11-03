@@ -30,7 +30,7 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
-import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
+import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -380,7 +380,7 @@ const AccountsSettingsScreen = () => {
           />
         )}
       </View>
-      <AccountDeploySettingsBottomSheet
+      <SafeActivationBottomSheet
         sheetRef={sheetRefAccountDeploySettings}
         closeBottomSheet={closeAccountDeploySettings}
         onClosed={clearAccountSettingsAccount}

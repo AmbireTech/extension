@@ -7,9 +7,9 @@ import { Account } from '@ambire-common/interfaces/account'
 import { SafeDeploymentRequestError } from '@ambire-common/interfaces/safe'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
+import BottomSheetTitle from '@common/components/BottomSheetTitle'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
@@ -18,8 +18,8 @@ import useController from '@common/hooks/useController'
 import { isSafeDeploymentRequestError } from '@common/hooks/useSafeActivation'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -39,7 +39,11 @@ const selectNetworks = (state: AllControllersMappingType['NetworksController']) 
 const selectAreAccountStatesLoading = (state: AllControllersMappingType['AccountsController']) =>
   state.areAccountStatesLoading
 
-const AccountDeploySettingsBottomSheet: FC<Props> = ({
+/**
+ * Activates (deploys) a Safe account created in the wallet on the networks the user picks,
+ * one network at a time. Opened from the dashboard banner and the account settings.
+ */
+const SafeActivationBottomSheet: FC<Props> = ({
   sheetRef,
   closeBottomSheet,
   onClosed,
@@ -191,54 +195,25 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
 
   return (
     <BottomSheet
-      id="account-deploy-settings-bottom-sheet"
+      id="safe-activation-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       onClosed={handleClosed}
-      scrollViewProps={{ contentContainerStyle: { flexGrow: 1 } }}
-      style={{ maxWidth: 840, ...spacings.pvMd }}
+      style={{ maxWidth: 480 }}
     >
-      <>
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <PanelBackButton onPress={closeBottomSheet} style={spacings.mrTy} />
-          {account ? (
-            <PanelTitle
-              title={t('{{label}} activation settings', { label: account.preferences.label })}
-              style={text.left}
-            />
-          ) : (
-            <SkeletonLoader width={200} height={24} />
-          )}
-        </View>
-
-        <Text fontSize={14} style={spacings.mbMd} appearance="secondaryText">
-          {t(
-            'Activate your Safe account on the networks where you want to use it. Activation is a one-time action for each network.'
-          )}
-        </Text>
-
-        <View
-          style={[
-            {
-              borderBottomWidth: 1,
-              borderBottomColor: theme.secondaryBorder
-            },
-            flexbox.directionRow,
-            spacings.pbMi
-          ]}
-        >
-          <View style={flexbox.flex1}>
-            <Text fontSize={14} weight="medium">
-              {t('Network')}
-            </Text>
-          </View>
-          <View style={[flexbox.flex1, flexbox.alignEnd]}>
-            <Text fontSize={14} weight="medium">
-              {t('Action')}
-            </Text>
-          </View>
-        </View>
-
+      <BottomSheetTitle
+        title={t('Activate Safe account')}
+        subtitle={t('One-time transaction per network.')}
+        onClose={closeBottomSheet}
+        closeButtonTestID="safe-activation-close"
+      />
+      <View
+        style={[
+          common.borderRadiusPrimary,
+          spacings.phSm,
+          { backgroundColor: theme.tertiaryBackground }
+        ]}
+      >
         {listedNetworks.map((network, index) => {
           const chainId = network.chainId.toString()
           const state = accountState?.[chainId]
@@ -250,46 +225,41 @@ const AccountDeploySettingsBottomSheet: FC<Props> = ({
           return (
             <View
               key={chainId}
+              testID={`safe-activation-network-${chainId}`}
               style={{
                 borderBottomWidth: index !== listedNetworks.length - 1 ? 1 : 0,
                 borderBottomColor: theme.secondaryBorder
               }}
             >
-              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvTy]}>
-                <View style={flexbox.flex1}>
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <NetworkIcon id={chainId} />
-                    <Text style={spacings.mlTy} fontSize={14}>
-                      {network.name}
-                    </Text>
-                  </View>
-                </View>
-                <View style={[flexbox.flex1, flexbox.alignEnd]}>
-                  {state?.isDeployed && <Badge type="success" text={t('Active')} />}
-                  {isStateLoading && <SkeletonLoader width={78} height={32} />}
-                  {canActivate && (
-                    <Button
-                      type="primary"
-                      size="tiny"
-                      style={[spacings.mb0, { minWidth: 78, height: 32 }]}
-                      disabled={rowState?.isLoading}
-                      onPress={() => deploy(network.chainId)}
-                      text={rowState?.isLoading ? t('Preparing...') : t('Activate')}
-                    />
-                  )}
-                </View>
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvSm]}>
+                <NetworkIcon id={chainId} size={36} />
+                <Text style={[flexbox.flex1, spacings.mlSm]} fontSize={16} weight="medium">
+                  {network.name}
+                </Text>
+                {state?.isDeployed && <Badge type="success" text={t('Active')} />}
+                {isStateLoading && <SkeletonLoader width={88} height={32} />}
+                {canActivate && (
+                  <Button
+                    type="primary"
+                    size="tiny"
+                    style={[spacings.mb0, { minWidth: 88, height: 32, borderRadius: 16 }]}
+                    disabled={rowState?.isLoading}
+                    onPress={() => deploy(network.chainId)}
+                    text={rowState?.isLoading ? t('Preparing...') : t('Activate')}
+                  />
+                )}
               </View>
               {!!rowState?.error && !state?.isDeployed && (
-                <Text fontSize={12} appearance="errorText" style={spacings.mbTy}>
+                <Text fontSize={12} appearance="errorText" style={spacings.mbSm}>
                   {deploymentErrorTexts[rowState.error]}
                 </Text>
               )}
             </View>
           )
         })}
-      </>
+      </View>
     </BottomSheet>
   )
 }
 
-export default React.memo(AccountDeploySettingsBottomSheet)
+export default React.memo(SafeActivationBottomSheet)

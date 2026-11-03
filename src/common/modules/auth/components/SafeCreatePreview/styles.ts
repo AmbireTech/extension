@@ -7,23 +7,21 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   card: ViewStyle
-  ownersCard: ViewStyle
   row: ViewStyle
   divider: ViewStyle
+  networksIcon: ViewStyle
 }
+
+const NETWORKS_ICON_SIZE = 36
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
+    // The rows bring their own vertical padding, so the dividers run between them
     card: {
       ...common.borderRadiusPrimary,
       ...spacings.phSm,
-      ...spacings.pvSm,
-      backgroundColor: theme.secondaryBackground
-    },
-    // The owner rows bring their own vertical padding, so the dividers run between them
-    ownersCard: {
-      ...common.borderRadiusPrimary,
-      ...spacings.phSm,
+      borderWidth: 1,
+      borderColor: theme.secondaryBorder,
       backgroundColor: theme.secondaryBackground
     },
     row: {
@@ -35,6 +33,14 @@ const getStyles = (theme: ThemeProps) =>
     divider: {
       height: 1,
       backgroundColor: theme.secondaryBorder
+    },
+    networksIcon: {
+      ...flexbox.center,
+      ...spacings.mrSm,
+      width: NETWORKS_ICON_SIZE,
+      height: NETWORKS_ICON_SIZE,
+      borderRadius: NETWORKS_ICON_SIZE / 2,
+      backgroundColor: theme.tertiaryBackground
     }
   })
 

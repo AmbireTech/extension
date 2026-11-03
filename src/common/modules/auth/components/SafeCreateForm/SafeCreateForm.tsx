@@ -1,122 +1,118 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
-import { Hex } from '@ambire-common/interfaces/hex'
-import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddIcon from '@common/assets/svg/AddIcon'
-import Button from '@common/components/Button'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import SafeCreateOwnerField from '@common/modules/auth/components/SafeCreateOwnerField'
+import SafeCreateAddOwnerBottomSheet from '@common/modules/auth/components/SafeCreateAddOwnerBottomSheet'
+import SafeCreateOwnerRow from '@common/modules/auth/components/SafeCreateOwnerRow'
+import SafeCreateSectionLabel from '@common/modules/auth/components/SafeCreateSectionLabel'
 import useSafeCreate from '@common/modules/auth/hooks/useSafeCreate'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
-type Props = Omit<
+type Props = Pick<
   ReturnType<typeof useSafeCreate>,
-  | 'title'
-  | 'handleBackPress'
-  | 'isContinueButtonDisabled'
-  | 'handleContinue'
-  | 'preview'
-  | 'isCreateButtonDisabled'
-  | 'handleCreate'
-> & {
-  /** Shortens the owner addresses, for a container too narrow to fit a full one */
-  withShortenedAddresses?: boolean
-}
+  | 'owners'
+  | 'addOwner'
+  | 'removeOwner'
+  | 'requiredConfirmations'
+  | 'canDecreaseRequiredConfirmations'
+  | 'canIncreaseRequiredConfirmations'
+  | 'handleDecreaseRequiredConfirmations'
+  | 'handleIncreaseRequiredConfirmations'
+>
 
 const SafeCreateForm = ({
-  control,
-  setValue,
-  trigger,
-  ownerFields,
-  addOwnerField,
-  removeOwnerField,
-  ownerFieldValidations,
-  ownerAddressesByField,
-  ownersCount,
+  owners,
+  addOwner,
+  removeOwner,
   requiredConfirmations,
   canDecreaseRequiredConfirmations,
   canIncreaseRequiredConfirmations,
   handleDecreaseRequiredConfirmations,
-  handleIncreaseRequiredConfirmations,
-  withShortenedAddresses
+  handleIncreaseRequiredConfirmations
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-
-  // Each field leaves out the owners entered in the other fields, but not its own
-  const hiddenAddressesByField = useMemo(
-    () =>
-      ownerAddressesByField.map((_, index) =>
-        ownerAddressesByField.filter(
-          (address, otherIndex): address is Hex => !!address && otherIndex !== index
-        )
-      ),
-    [ownerAddressesByField]
-  )
+  const {
+    ref: addOwnerSheetRef,
+    open: openAddOwnerSheet,
+    close: closeAddOwnerSheet
+  } = useModalize()
+  const ownersCount = owners.length
+  const ownerAddresses = useMemo(() => owners.map(({ address }) => address), [owners])
 
   const confirmationsDescription = useMemo(() => {
-    if (!ownersCount) return t('Add an owner to set this')
-    if (ownersCount === 1) return t('The only owner must approve')
+    if (!ownersCount) return t('Add at least one owner first.')
+    if (ownersCount === 1) return t('The only owner must approve each transaction.')
 
     const translationParams = { requiredConfirmations, ownersCount }
     if (requiredConfirmations === ownersCount)
-      return t(
-        'All {{requiredConfirmations}} of {{ownersCount}} owners must approve',
-        translationParams
-      )
+      return t('All {{ownersCount}} owners must approve each transaction.', translationParams)
 
     return t(
-      'Any {{requiredConfirmations}} of {{ownersCount}} owners must approve',
+      'Any {{requiredConfirmations}} of the {{ownersCount}} owners must approve each transaction.',
       translationParams
     )
   }, [ownersCount, requiredConfirmations, t])
 
   return (
     <View>
-      <Text fontSize={18} weight="semiBold" style={spacings.mbSm}>
-        {t('Owners')}
-      </Text>
-      {ownerFields.map((field, index) => (
-        <SafeCreateOwnerField
-          key={field.id}
-          control={control}
-          setValue={setValue}
-          trigger={trigger}
-          index={index}
-          canRemove={ownerFields.length > 1}
-          onRemove={removeOwnerField}
-          overwriteValidation={ownerFieldValidations[index] ?? null}
-          hiddenAddresses={hiddenAddressesByField[index] ?? []}
-          withShortenedAddresses={withShortenedAddresses}
-        />
-      ))}
-      <Button
-        type="outline"
-        testID="safe-create-add-owner"
-        style={{ height: 40 }}
-        size="tiny"
-        onPress={addOwnerField}
-        childrenPosition="left"
-        text={t('Add another owner')}
-        hasBottomSpacing={false}
-      >
-        <AddCircularIcon width={20} height={20} color={theme.primaryText} style={spacings.mrMi} />
-      </Button>
-
-      <View style={styles.confirmationsSection}>
-        {/* The stepper shares a line with the title, so it stays put when the description wraps */}
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-          <Text fontSize={18} weight="semiBold" style={[flexbox.flex1, spacings.mrSm]}>
-            {t('Required confirmations')}
+      <SafeCreateSectionLabel>
+        {ownersCount ? t('Owners · {{ownersCount}}', { ownersCount }) : t('Owners')}
+      </SafeCreateSectionLabel>
+      <View style={styles.card}>
+        {owners.map((owner) => (
+          <SafeCreateOwnerRow
+            key={owner.address}
+            owner={owner}
+            onRemove={removeOwner}
+            withDivider
+            testID={`safe-create-owner-${owner.address}`}
+          />
+        ))}
+        <HoverablePressable
+          testID="safe-create-add-owner"
+          onPress={openAddOwnerSheet as () => void}
+          style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvSm]}
+        >
+          <View style={styles.addOwnerIcon}>
+            <AddIcon width={18} height={18} color={theme.primary} />
+          </View>
+          <Text fontSize={16} weight="semiBold" appearance="primary" style={spacings.mlSm}>
+            {t('Add owner')}
           </Text>
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        </HoverablePressable>
+      </View>
+      <Text fontSize={14} appearance="secondaryText" style={spacings.mtTy}>
+        {t('Owners can be your own accounts, a hardware wallet, or someone you trust.')}
+      </Text>
+
+      <SafeCreateSectionLabel>{t('Approvals needed')}</SafeCreateSectionLabel>
+      <View style={styles.card}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvSm]}>
+          <Text
+            fontSize={18}
+            weight="semiBold"
+            appearance={ownersCount ? 'primaryText' : 'tertiaryText'}
+            style={[flexbox.flex1, spacings.mrSm]}
+            testID="safe-create-required-confirmations"
+          >
+            {ownersCount
+              ? t('{{requiredConfirmations}} of {{ownersCount}} owners', {
+                  requiredConfirmations,
+                  ownersCount
+                })
+              : t('No owners yet')}
+          </Text>
+          <View style={styles.stepper}>
             <HoverablePressable
               onPress={handleDecreaseRequiredConfirmations}
               disabled={!canDecreaseRequiredConfirmations}
@@ -128,18 +124,9 @@ const SafeCreateForm = ({
               testID="safe-create-decrease-confirmations"
             >
               {/* There is no minus icon in src/common/assets/svg, so a text minus sign stands in for it */}
-              <Text appearance="primary" style={styles.minusSign}>
-                −
-              </Text>
+              <Text style={styles.minusSign}>−</Text>
             </HoverablePressable>
-            <Text
-              fontSize={16}
-              weight="semiBold"
-              style={styles.stepperValue}
-              testID="safe-create-required-confirmations"
-            >
-              {requiredConfirmations}
-            </Text>
+            <View style={styles.stepperDivider} />
             <HoverablePressable
               onPress={handleIncreaseRequiredConfirmations}
               disabled={!canIncreaseRequiredConfirmations}
@@ -150,14 +137,25 @@ const SafeCreateForm = ({
               accessibilityLabel={t('Increase required confirmations')}
               testID="safe-create-increase-confirmations"
             >
-              <AddIcon width={18} height={18} color={theme.primary} />
+              <AddIcon width={18} height={18} color={theme.primaryText} />
             </HoverablePressable>
           </View>
         </View>
-        <Text fontSize={14} appearance="secondaryText">
-          {confirmationsDescription}
-        </Text>
+        <View style={styles.divider} />
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvSm]}>
+          <InfoIcon width={18} height={18} color={theme.iconPrimary} />
+          <Text fontSize={14} appearance="secondaryText" style={[flexbox.flex1, spacings.mlTy]}>
+            {confirmationsDescription}
+          </Text>
+        </View>
       </View>
+
+      <SafeCreateAddOwnerBottomSheet
+        sheetRef={addOwnerSheetRef}
+        closeBottomSheet={closeAddOwnerSheet}
+        ownerAddresses={ownerAddresses}
+        onAdd={addOwner}
+      />
     </View>
   )
 }
