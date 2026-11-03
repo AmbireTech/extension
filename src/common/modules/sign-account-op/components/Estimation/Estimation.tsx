@@ -278,40 +278,27 @@ const Estimation = ({
     })
   }, [dispatchUpdate, payValue, selectedFeeOption, selectedFeeSpeed])
 
-  const feeSpeeds = useMemo(() => {
-    if (!signAccountOpState?.selectedOption) return []
+  const selectedOption = signAccountOpState?.selectedOption
+  const selectedOptionIdentifier =
+    selectedOption && signAccountOpState
+      ? getFeeSpeedIdentifier(selectedOption, signAccountOpState.accountOp.accountAddr)
+      : null
 
-    const identifier = getFeeSpeedIdentifier(
-      signAccountOpState.selectedOption,
-      signAccountOpState.accountOp.accountAddr
-    )
+  const feeSpeeds = useMemo(() => {
+    if (!selectedOptionIdentifier) return []
 
     // The fallback array covers a corner case, that I could not reproduce,
     // but theoretically is possible - fan speed with this identifier to be missing
-    return signAccountOpState.feeSpeeds[identifier] || []
-  }, [
-    signAccountOpState?.feeSpeeds,
-    signAccountOpState?.selectedOption,
-    signAccountOpState?.accountOp.accountAddr
-  ])
+    return signAccountOpState?.feeSpeeds[selectedOptionIdentifier] || []
+  }, [signAccountOpState?.feeSpeeds, selectedOptionIdentifier])
 
   // With custom gas values every speed in feeSpeeds costs the same, so the speed menu and the
-  // advanced options use what each speed costs at the network gas prices
+  // custom fee warnings use the network fee speeds
   const networkFeeSpeeds = useMemo(() => {
-    if (!signAccountOpState?.selectedOption) return feeSpeeds
+    if (!selectedOptionIdentifier) return []
 
-    const identifier = getFeeSpeedIdentifier(
-      signAccountOpState.selectedOption,
-      signAccountOpState.accountOp.accountAddr
-    )
-
-    return signAccountOpState.networkFeeSpeeds[identifier] || feeSpeeds
-  }, [
-    feeSpeeds,
-    signAccountOpState?.networkFeeSpeeds,
-    signAccountOpState?.selectedOption,
-    signAccountOpState?.accountOp.accountAddr
-  ])
+    return signAccountOpState?.networkFeeSpeeds[selectedOptionIdentifier] || []
+  }, [signAccountOpState?.networkFeeSpeeds, selectedOptionIdentifier])
 
   const isGaslessTransaction = useMemo(() => {
     return (
