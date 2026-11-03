@@ -245,7 +245,7 @@ const SendForm = ({
   }, [options, tokenSections])
 
   const handleChangeToken = useCallback(
-    (value: string) => {
+    ({ value }: SelectValue) => {
       const tokenToSelect = tokens.find((tokenRes: TokenResult) => getTokenId(tokenRes) === value)
       transferDispatch({
         type: 'method',
@@ -361,7 +361,7 @@ const SendForm = ({
           fromTokenValue={tokenSelectValue}
           fromAmountValue={amountFieldValue}
           fromTokenAmountSelectDisabled={disableForm || amountSelectDisabled}
-          handleChangeFromToken={({ value }) => handleChangeToken(value as string)}
+          handleChangeFromToken={handleChangeToken}
           fromSelectedToken={selectedToken}
           fromAmount={controllerAmount}
           fromAmountInFiat={amountInFiat}
