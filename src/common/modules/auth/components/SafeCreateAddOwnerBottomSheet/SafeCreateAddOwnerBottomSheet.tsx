@@ -220,8 +220,6 @@ const SafeCreateAddOwnerBottomSheet = ({
         resolvedAddressType={addressState.resolvedAddressType}
         isRecipientDomainResolving={addressState.isDomainResolving}
         placeholder={t('Address or ENS name')}
-        // The Add button already shows that the address can be added
-        isSuccessHidden
         // The sheet has the same color as the default input background, so use the focused
         // input color to keep the input visible and the same before and after focus
         backgroundColor={theme.tertiaryBackground}

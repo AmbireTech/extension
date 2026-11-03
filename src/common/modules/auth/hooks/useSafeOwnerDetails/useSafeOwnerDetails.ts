@@ -87,8 +87,7 @@ const useSafeOwnerDetails = () => {
       const hardwareKey = accountKeys.find((key) => key.type !== 'internal')
       const getSource = () => {
         if (accountKeys.some((key) => key.type === 'internal')) return t('In this app')
-        if (hardwareKey && hardwareKey.type !== 'internal')
-          return HARDWARE_WALLET_DEVICE_NAMES[hardwareKey.type]
+        if (hardwareKey) return HARDWARE_WALLET_DEVICE_NAMES[hardwareKey.type]
 
         return t('In your wallet')
       }
