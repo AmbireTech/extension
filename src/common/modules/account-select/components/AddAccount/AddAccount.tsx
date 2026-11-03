@@ -16,6 +16,7 @@ import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import SafeBadgeIcon, { SAFE_BRAND_GREEN } from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -206,11 +207,18 @@ const AddAccount = ({
           ]
         : []),
       {
-        key: 'import-safe',
-        text: t('Import'),
+        key: 'import-safe-by-address',
+        text: t('Import by address'),
         icon: ImportAccountIcon,
-        onPress: () => goToNextRoute(ROUTES.safeImport),
-        testID: 'import-safe'
+        onPress: () => goToNextRoute(ROUTES.safeImportAddress),
+        testID: 'import-safe-by-address'
+      },
+      {
+        key: 'import-safe-by-owner',
+        text: t('Import by owner'),
+        icon: SingleKeyIcon,
+        onPress: () => goToNextRoute(ROUTES.safeImportByOwner),
+        testID: 'import-safe-by-owner'
       }
     ],
     [goToNextRoute, showImportOnly, t]

@@ -12,6 +12,7 @@ import SafeIcon from '@common/assets/svg/SafeIcon'
 import ScanIcon from '@common/assets/svg/ScanIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Button, { BUTTON_HEIGHT } from '@common/components/Button'
@@ -211,12 +212,19 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: SeedPhraseIcon
       },
       {
-        title: 'Safe',
+        title: 'Safe by address',
         onPress: () => {
-          goToNextRoute(ROUTES.safeImport)
+          goToNextRoute(ROUTES.safeImportAddress)
         },
         icon: SafeIcon,
         iconSize: 20
+      },
+      {
+        title: 'Safe by owner',
+        onPress: () => {
+          goToNextRoute(ROUTES.safeImportByOwner)
+        },
+        icon: SingleKeyIcon
       },
       {
         title: 'Ledger',

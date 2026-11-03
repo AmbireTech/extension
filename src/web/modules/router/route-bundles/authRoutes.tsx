@@ -19,7 +19,6 @@ export { default as QrCameraPermissionPage } from '@web/modules/hardware-wallet/
 export { default as QrConnectScreen } from '@web/modules/hardware-wallet/screens/QrConnectScreen/QrConnectScreen'
 export { default as SafeImportScreen } from '@web/modules/auth/screens/SafeImportScreen'
 export { default as SafeImportByOwnerScreen } from '@web/modules/auth/screens/SafeImportByOwnerScreen'
-export { default as SafeImportMethodScreen } from '@web/modules/auth/screens/SafeImportMethodScreen'
 export { default as SafeCreateScreen } from '@web/modules/auth/screens/SafeCreateScreen'
 export { default as SeedPhraseImportScreen } from '@web/modules/auth/screens/SeedPhraseImportScreen'
 export { default as ImportFromMobileScreen } from '@web/modules/app-data-sync/screens/ImportFromMobileScreen'
