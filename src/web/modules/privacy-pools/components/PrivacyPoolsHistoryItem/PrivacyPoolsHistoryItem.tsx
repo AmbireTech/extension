@@ -152,7 +152,12 @@ const PrivacyPoolsHistoryItem: FC<Props> = ({ entry, style }) => {
                     <Text fontSize={12} appearance="secondaryText">
                       {isIncoming ? t('from ') : t('to ')}
                     </Text>
-                    <InteractionAddress address={entry.counterpartyAddr} />
+                    {/* Named from this device only: a lookup would ask the network about the
+                    address just because it is in this account's history */}
+                    <InteractionAddress
+                      address={entry.counterpartyAddr}
+                      privacyUpdateMode="never"
+                    />
                   </View>
                 )}
               </View>

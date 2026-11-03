@@ -240,7 +240,8 @@ const PrivacyPoolsHistoryDetailsSheet: FC<Props> = ({
           renderRow(
             isIncoming ? t('From') : t('To'),
             <>
-              <InteractionAddress address={entry.counterpartyAddr} />
+              {/* Named from this device only, as in `PrivacyPoolsHistoryItem` */}
+              <InteractionAddress address={entry.counterpartyAddr} privacyUpdateMode="never" />
               {renderCopyButton(entry.counterpartyAddr)}
             </>,
             'privacy-pools-history-address'
