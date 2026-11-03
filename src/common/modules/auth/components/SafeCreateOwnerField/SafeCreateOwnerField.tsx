@@ -101,6 +101,8 @@ const SafeCreateOwnerField: FC<Props> = ({
               withShortenedAddresses={withShortenedAddresses}
               includeSelectedAccount
               hiddenAddresses={hiddenAddresses}
+              // Every owner field would show it, so a valid owner looks like any other value
+              isSuccessHidden
               // The parent has the same color as the default input background, so use the focused
               // input color to keep the input visible and the same before and after focus
               inputBackgroundColor={theme.tertiaryBackground}

@@ -18,7 +18,13 @@ import getStyles from './styles'
 
 type Props = Omit<
   ReturnType<typeof useSafeCreate>,
-  'goToPrevRoute' | 'isCreateButtonDisabled' | 'handleCreate'
+  | 'title'
+  | 'handleBackPress'
+  | 'isContinueButtonDisabled'
+  | 'handleContinue'
+  | 'preview'
+  | 'isCreateButtonDisabled'
+  | 'handleCreate'
 > & {
   /** Shortens the owner addresses, for a container too narrow to fit a full one */
   withShortenedAddresses?: boolean

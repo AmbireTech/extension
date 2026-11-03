@@ -74,6 +74,11 @@ export interface AddressSelectProps extends InputProps {
   inputBackgroundColor?: ColorValue
   /** Addresses left out of the list, e.g. the ones the flow has already picked */
   hiddenAddresses?: string[]
+  /**
+   * Shows a valid address like any other value, without the "Valid address" label and the
+   * success border, e.g. where several fields would all show it. The validation still runs.
+   */
+  isSuccessHidden?: boolean
   // The props below drive the "Add to address book" prompt, which only applies when the
   // address is a transfer recipient. Other flows can leave them out.
   addressValidationMsg?: string
@@ -116,6 +121,7 @@ const SelectedMenuOption: React.FC<{
   }
   inputBackgroundColor?: ColorValue
   plainAddressMaxLength?: number
+  isSuccessHidden?: boolean
 }> = ({
   selectRef,
   filteredContacts,
@@ -133,7 +139,8 @@ const SelectedMenuOption: React.FC<{
   autoFocus = false,
   addressHighlight,
   inputBackgroundColor,
-  plainAddressMaxLength
+  plainAddressMaxLength,
+  isSuccessHidden
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -191,6 +198,7 @@ const SelectedMenuOption: React.FC<{
         resolvedAddressType={resolvedAddressType}
         addressHighlight={addressHighlight}
         plainAddressMaxLength={plainAddressMaxLength}
+        isSuccessHidden={isSuccessHidden}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         // On mobile input mode we still need details view when poisoning highlight exists,
@@ -254,6 +262,7 @@ const SelectedMenuOption: React.FC<{
       addressHighlight,
       inputBackgroundColor,
       plainAddressMaxLength,
+      isSuccessHidden,
       type,
       validation
     ]
@@ -286,6 +295,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   includeSelectedAccount = false,
   inputBackgroundColor,
   hiddenAddresses,
+  isSuccessHidden,
   privacyPoolsAccounts,
   onSelectPrivacyPoolsAccount
 }) => {
@@ -623,6 +633,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           addressHighlight={selectedAddressHighlight}
           inputBackgroundColor={inputBackgroundColor}
           plainAddressMaxLength={contactAddressMaxLength}
+          isSuccessHidden={isSuccessHidden}
         />
       )
     },
@@ -638,7 +649,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       renderConfirmAddress,
       selectedAddressHighlight,
       inputBackgroundColor,
-      contactAddressMaxLength
+      contactAddressMaxLength,
+      isSuccessHidden
     ]
   )
 
@@ -681,6 +693,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             disabled={disabled}
             addressHighlight={selectedAddressHighlight}
             plainAddressMaxLength={contactAddressMaxLength}
+            isSuccessHidden={isSuccessHidden}
           />
         )}
         containerStyle={spacings.mb0}
