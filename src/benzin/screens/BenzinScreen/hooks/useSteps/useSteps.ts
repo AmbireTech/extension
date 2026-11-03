@@ -160,14 +160,6 @@ const parseHumanizer = (humanizedCalls: IrCall[]): IrCall[] => {
   return finalParsedCalls
 }
 
-/**
- * When enabling the entry point, hide the activator call from benzina
- * to reduce the panic caused to the user as this is an internal, routine call
- * we need to make, not one the user has requested
- */
-const filterEntryPointAuthCall = (call: IrCall) =>
-  !call.data.endsWith('0000000000000000000000000000000000000000000000000000000000007171')
-
 type ReceiptLogs = Parameters<typeof getTransferLogTokens>[0]
 
 const getBalanceChangesSignature = (changes?: BalanceChange[]) =>
@@ -1170,11 +1162,7 @@ const useSteps = ({
         .then((erc7730Descriptors) => {
           if (isStale || !erc7730Descriptors || !Object.keys(erc7730Descriptors).length) return
 
-          setCalls(
-            parseHumanizer(
-              humanizeAccountOp(accountOp, { erc7730Descriptors }).filter(filterEntryPointAuthCall)
-            )
-          )
+          setCalls(parseHumanizer(humanizeAccountOp(accountOp, { erc7730Descriptors })))
         })
         .catch(() => null)
     }
@@ -1182,7 +1170,7 @@ const useSteps = ({
     // if we have the extension account op passed, we do not need to
     // wait to show the calls
     if (extensionAccOp) {
-      const humanizedCalls = humanizeAccountOp(extensionAccOp).filter(filterEntryPointAuthCall)
+      const humanizedCalls = humanizeAccountOp(extensionAccOp)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(extensionAccOp.accountAddr)
       setFeeCall(extensionAccOp.feeCall || null)
@@ -1196,7 +1184,7 @@ const useSteps = ({
     // directly instead of falling all the way to reproducing calls from the raw txn/userOp receipt.
     if (submittedAccountOp) {
       const accountOp = submittedAccountOpToAccountOp(submittedAccountOp)
-      const humanizedCalls = humanizeAccountOp(accountOp).filter(filterEntryPointAuthCall)
+      const humanizedCalls = humanizeAccountOp(accountOp)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(submittedAccountOp.accountAddr)
       setFeeCall(submittedAccountOp.feeCall || null)
@@ -1237,7 +1225,7 @@ const useSteps = ({
         signature: '0x', // irrelevant
         gasFeePayment: null
       }
-      const humanizedCalls = humanizeAccountOp(accountOp).filter(filterEntryPointAuthCall)
+      const humanizedCalls = humanizeAccountOp(accountOp)
       setCalls(parseHumanizer(humanizedCalls))
       setFrom(accountOp.accountAddr)
       enhanceWithErc7730(accountOp)
