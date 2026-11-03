@@ -61,8 +61,12 @@ const DAppConnectBody: FC<{
   const isVerified = isScamCheckerEnabled && securityCheck === 'VERIFIED' && !isImpersonating
 
   // The trust action takes the severity badge's slot; the warning text below and the box's own
-  // border still carry the severity, so nothing is lost by swapping them.
-  const shouldOfferTrust = isSuspiciousHosting && canBeTrustedByUser
+  // border still carry the severity, so nothing is lost by swapping them. Not offered to a site
+  // that pretends to be another app - trusting it would hide the warning about its hosting on
+  // every later visit, while it is the copy that should be avoided.
+  const shouldOfferTrust = isSuspiciousHosting && canBeTrustedByUser && !isImpersonating
+  // A site trusted before it was found to pretend to be another app shows the warning badge instead
+  const shouldShowTrustedBadge = isScamCheckerEnabled && isTrustedByUser && !isImpersonating
   // When the scam checker is off, the "Activate" button takes the badge's slot
   const shouldShowWarningBadge =
     !shouldOfferTrust &&
@@ -175,7 +179,7 @@ const DAppConnectBody: FC<{
               />
             </Badge>
           )}
-          {isScamCheckerEnabled && isTrustedByUser && (
+          {shouldShowTrustedBadge && (
             <Badge
               type="warning"
               text={t('Trusted by you')}
