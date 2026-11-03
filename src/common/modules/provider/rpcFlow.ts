@@ -3,7 +3,9 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { MainController } from '@ambire-common/controllers/main/main'
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { Network } from '@ambire-common/interfaces/network'
 import { UiManager } from '@ambire-common/interfaces/ui'
+import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getMetadata } from '@common/modules/provider/metadata'
 import { ProviderController } from '@common/modules/provider/ProviderController'
 import { RequestRes } from '@common/modules/provider/types'
@@ -12,6 +14,7 @@ import underline2Camelcase from '@common/utils/underline2Camelcase'
 
 const lockedOrigins: { [key: string]: Promise<any> } = {}
 const connectOrigins: { [key: string]: Promise<any> } = {}
+const enablingNetworks: { [chainId: string]: Promise<unknown> } = {}
 
 const flow = new PromiseFlow<{
   request: DappProviderRequest
@@ -142,6 +145,53 @@ const flowContext = flow
 
     // The same error as a site without permission, so it can't tell a Privacy Pools account is used
     throw ethErrors.provider.unauthorized()
+  })
+  // if the app switches to a disabled network - prompt to enable it first. Sign requests for a
+  // disabled network are held by the RequestsController instead, until the network is enabled
+  .use(async ({ request, mainCtrl }, next) => {
+    const { method, params, session } = request
+    if (method !== 'wallet_switchEthereumChain') return next()
+
+    const disabledNetwork = mainCtrl.networks.disabledNetworks.find(
+      (n: Network) => Number(n.chainId) === Number(params?.[0]?.chainId)
+    )
+    if (!disabledNetwork) return next()
+
+    // Switches arriving at once for the same network all wait on one prompt instead of each
+    // opening their own
+    const chainIdKey = disabledNetwork.chainId.toString()
+    if (enablingNetworks[chainIdKey] === undefined) {
+      enablingNetworks[chainIdKey] = new Promise((resolve, reject) => {
+        mainCtrl.requests
+          .build({
+            type: 'dappRequest',
+            params: {
+              request: {
+                ...request,
+                method: 'wallet_addEthereumChain',
+                params: [
+                  {
+                    chainId: networkChainIdToHex(disabledNetwork.chainId),
+                    chainName: disabledNetwork.name,
+                    rpcUrls: disabledNetwork.rpcUrls,
+                    nativeCurrency: {
+                      name: disabledNetwork.nativeAssetName,
+                      symbol: disabledNetwork.nativeAssetSymbol
+                    }
+                  }
+                ]
+              },
+              dappPromise: { id: uuidv4(), resolve, reject, session }
+            }
+          })
+          .catch(reject)
+      }).finally(() => {
+        delete enablingNetworks[chainIdKey]
+      })
+    }
+    await enablingNetworks[chainIdKey]
+
+    return next()
   })
   // add the dapp request as a userRequest
   .use(async (props, next) => {
