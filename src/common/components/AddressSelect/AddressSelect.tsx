@@ -25,6 +25,7 @@ import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBo
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
 import NearIdenticalAddressSuggestion from '@common/components/AddressSelect/NearIdenticalAddressSuggestion'
 import { InputProps } from '@common/components/Input'
+import { INPUT_HEIGHT, INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import { SectionedSelect } from '@common/components/Select'
 import {
@@ -173,6 +174,9 @@ const SelectedMenuOption: React.FC<{
   ])
 
   const isButtonMode = type === 'selected-menu-option' && isMobile
+  // On mobile the near-identical address wraps to show all of its mistyped chars, so the
+  // input grows to fit it instead of keeping its single line height
+  const shouldGrowInput = isMobile && !!addressHighlight?.differingFrom
 
   const content = useMemo(
     () => (
@@ -226,7 +230,15 @@ const SelectedMenuOption: React.FC<{
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
         buttonProps={{ onPress: () => setIsMenuOpen(true) }}
-        inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
+        inputWrapperStyle={{
+          ...(type === 'input' && { backgroundColor: theme.neutral400 }),
+          ...(shouldGrowInput && { height: 'auto', minHeight: INPUT_WRAPPER_HEIGHT })
+        }}
+        inputStyle={
+          shouldGrowInput
+            ? { height: 'auto', minHeight: INPUT_HEIGHT, ...spacings.pvTy }
+            : undefined
+        }
         buttonStyle={{
           ...spacings.pv0,
           // Even padding keeps the clear button's press area centered on its icon
@@ -252,6 +264,7 @@ const SelectedMenuOption: React.FC<{
       setIsMenuOpen,
       theme.neutral400,
       addressHighlight,
+      shouldGrowInput,
       inputBackgroundColor,
       plainAddressMaxLength,
       type,

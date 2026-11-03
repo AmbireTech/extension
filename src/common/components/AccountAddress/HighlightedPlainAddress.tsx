@@ -70,6 +70,10 @@ const HighlightedPlainAddress: FC<Props> = ({
   }, [address, prefix, suffix, differingFrom])
 
   const textLineHeight = Math.ceil(fontSize * 1.5)
+  // On mobile a single line cuts out the middle of the address, which is where the few
+  // mistyped chars of a near-identical address usually are, so it wraps to show all of them
+  const shouldWrapNearIdenticalAddress = isMobile && !!differingFrom
+  const shouldWrap = withWrap || shouldWrapNearIdenticalAddress
 
   return (
     <Text
@@ -83,10 +87,12 @@ const HighlightedPlainAddress: FC<Props> = ({
         withWrap && {
           // @ts-ignore web-only style for wrapping long hex addresses
           wordBreak: 'break-all'
-        }
+        },
+        // Lets the text wrap within its row instead of overflowing it
+        shouldWrapNearIdenticalAddress && { flexShrink: 1 }
       ]}
-      numberOfLines={withWrap ? undefined : 1}
-      ellipsizeMode={!withWrap && isMobile ? 'middle' : undefined}
+      numberOfLines={shouldWrap ? undefined : 1}
+      ellipsizeMode={!shouldWrap && isMobile ? 'middle' : undefined}
     >
       {hideParentheses ? '' : '('}
       {segments.map(({ start, text, isHighlighted }) =>
