@@ -140,18 +140,24 @@ const AccountKey: React.FC<Props> = ({
     setIsShowingDetails((p) => !p)
   }, [])
 
-  // Hardware wallet keys never leave the device, so only private keys can be exported
+  // Hardware wallet keys never leave the device, so only private keys can be exported.
+  // A Safe's keys are its owners, so they are named so in its menu
   const menuItems = useMemo(() => {
+    const isSafeOwner = !!account.safeCreation
     const items: { label: string; value: string; style?: { color: string } }[] = []
-    if (canExportKey) items.push({ label: t('Export key'), value: MENU_VALUES.export })
+    if (canExportKey)
+      items.push({
+        label: isSafeOwner ? t('Export owner') : t('Export key'),
+        value: MENU_VALUES.export
+      })
     if (onRemoveKeyPress)
       items.push({
-        label: t('Remove key'),
+        label: isSafeOwner ? t('Remove owner') : t('Remove key'),
         value: MENU_VALUES.remove,
         style: { color: theme.errorDecorative as string }
       })
     return items
-  }, [canExportKey, onRemoveKeyPress, t, theme.errorDecorative])
+  }, [account.safeCreation, canExportKey, onRemoveKeyPress, t, theme.errorDecorative])
 
   const handleMenuSelect = useCallback(
     ({ value }: { value: string }) => {

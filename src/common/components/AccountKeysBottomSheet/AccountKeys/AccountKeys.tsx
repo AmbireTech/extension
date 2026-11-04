@@ -234,7 +234,11 @@ const AccountKeys: FC<Props> = ({
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
         {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
         <PanelTitle
-          title={t('{{accName}} keys', { accName: account.preferences.label })}
+          title={
+            account.safeCreation
+              ? t('{{accName}} owners', { accName: account.preferences.label })
+              : t('{{accName}} keys', { accName: account.preferences.label })
+          }
           style={isWeb ? text.left : text.center}
         />
       </View>
@@ -309,6 +313,7 @@ const AccountKeys: FC<Props> = ({
         {!!keyToRemove && (
           <RemoveKey
             keyToRemove={keyToRemove}
+            isSafeOwner={!!account.safeCreation}
             onCancel={closeRemoveKey}
             onRemoved={closeRemoveKey}
             onExportPress={handleExportFromRemoveKey}

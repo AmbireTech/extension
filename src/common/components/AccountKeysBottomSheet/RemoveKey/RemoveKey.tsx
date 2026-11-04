@@ -29,6 +29,8 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 interface Props {
   keyToRemove: { addr: Key['addr']; type: Key['type'] }
+  /** Opened from a Safe's owners, which is what its keys are called there */
+  isSafeOwner?: boolean
   onCancel: () => void
   onRemoved: () => void
   onExportPress: () => void
@@ -45,13 +47,22 @@ const isSameKey = (a: Pick<Key, 'addr' | 'type'>, b: Pick<Key, 'addr' | 'type'>)
 
 type AffectedAccount = {
   account: Account
-  /** Keys this device can sign with that the account keeps after the removal */
+  /**
+   * Keys this device can sign with that the account keeps after the removal. For a Safe, its
+   * owners with such a key, as one owner can be imported with keys of several types
+   */
   keysLeft: number
   becomesViewOnly: boolean
 }
 
 /** Asks the user to confirm removing a key from every account it signs for. */
-const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress }) => {
+const RemoveKey: FC<Props> = ({
+  keyToRemove,
+  isSafeOwner = false,
+  onCancel,
+  onRemoved,
+  onExportPress
+}) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
@@ -74,7 +85,10 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
         .filter((account) => account.associatedKeys.includes(keyToRemove.addr))
         .map((account) => {
           const accountKeys = keys.filter((key) => account.associatedKeys.includes(key.addr))
-          const keysLeft = accountKeys.filter((key) => !isSameKey(key, keyToRemove)).length
+          const remainingKeys = accountKeys.filter((key) => !isSameKey(key, keyToRemove))
+          const keysLeft = account.safeCreation
+            ? new Set(remainingKeys.map((key) => key.addr)).size
+            : remainingKeys.length
 
           return { account, keysLeft, becomesViewOnly: !!accountKeys.length && !keysLeft }
         }),
@@ -135,7 +149,10 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
     <View>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
         {isWeb && <PanelBackButton onPress={onCancel} style={spacings.mrSm} />}
-        <PanelTitle title={t('Remove this key?')} style={isWeb ? text.left : text.center} />
+        <PanelTitle
+          title={isSafeOwner ? t('Remove this owner?') : t('Remove this key?')}
+          style={isWeb ? text.left : text.center}
+        />
       </View>
 
       <View
@@ -217,9 +234,13 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
                         // account select screen
                         style={{ backgroundColor: theme.primaryBackground }}
                         text={
-                          keysLeft === 1
-                            ? t('Will keep 1 key after removal')
-                            : t('Will keep {{count}} keys after removal', { count: keysLeft })
+                          account.safeCreation
+                            ? keysLeft === 1
+                              ? t('Will keep 1 owner after removal')
+                              : t('Will keep {{count}} owners after removal', { count: keysLeft })
+                            : keysLeft === 1
+                              ? t('Will keep 1 key after removal')
+                              : t('Will keep {{count}} keys after removal', { count: keysLeft })
                         }
                       />
                     )}
@@ -245,7 +266,7 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
           <Button
             type="secondary"
             size="small"
-            text={t('Export key')}
+            text={isSafeOwner ? t('Export owner') : t('Export key')}
             onPress={onExportPress}
             hasBottomSpacing={false}
             style={[spacings.mtSm, { alignSelf: 'flex-start', height: 32 }]}
