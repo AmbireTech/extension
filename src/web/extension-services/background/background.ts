@@ -606,8 +606,8 @@ const init = async () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
 
-  // Turning side panel mode off leaves nothing to show a pending app request (Chrome closes its
-  // panel, Firefox's sidebar shows the "mode off" notice), so it's moved to a request window
+  // Turning side panel mode off leaves nothing to show a pending app request (an open panel shows
+  // the "mode off" notice), so it's moved to a request window
   let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
   walletStateCtrl.onUpdate(() => {
     const isSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
