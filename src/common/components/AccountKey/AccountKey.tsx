@@ -9,8 +9,9 @@ import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import ImportIcon from '@common/assets/svg/ImportIcon'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
@@ -191,9 +192,23 @@ const AccountKey: React.FC<Props> = ({
             !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
           ]}
         >
+          {/* First in the row, like the expand arrow of the calls on the sign transaction screen */}
+          {!!isImported && !!canExportOrImportKey && (
+            <AnimatedPressable
+              onPress={handleToggleDetails}
+              style={[flexbox.center, spacings.mrTy, { width: 28, height: 24 }]}
+              accessibilityRole="button"
+              accessibilityLabel={isShowingDetails ? t('Hide key details') : t('Show key details')}
+              {...bindKeyDetailsAnim}
+            >
+              <Animated.View style={keyDetailsAnimStyles}>
+                {isShowingDetails ? <UpArrowIcon /> : <DownArrowIcon />}
+              </Animated.View>
+            </AnimatedPressable>
+          )}
           {!!isImported && (
-            <View style={spacings.mrTy}>
-              <AccountKeyIcon iconSize={20} type={type || 'internal'} color={keyIconColor} />
+            <View style={spacings.mrMi}>
+              <AccountKeyIcon iconSize={24} type={type || 'internal'} color={keyIconColor} />
             </View>
           )}
 
@@ -249,26 +264,8 @@ const AccountKey: React.FC<Props> = ({
           <View>
             {isImported ? (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                <AnimatedPressable
-                  onPress={handleToggleDetails}
-                  style={[flexbox.directionRow, flexbox.alignCenter]}
-                  {...bindKeyDetailsAnim}
-                >
-                  <Animated.View style={keyDetailsAnimStyles}>
-                    <RightArrowIcon
-                      width={16}
-                      height={16}
-                      color={theme.secondaryText}
-                      style={
-                        isShowingDetails
-                          ? { transform: [{ rotate: '270deg' }] }
-                          : { transform: [{ rotate: '90deg' }] }
-                      }
-                    />
-                  </Animated.View>
-                </AnimatedPressable>
                 {!!menuItems.length && (
-                  <View style={spacings.mlSm}>
+                  <View>
                     <Dropdown
                       data={menuItems}
                       externalPosition={menuPosition}

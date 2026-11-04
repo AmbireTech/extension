@@ -253,13 +253,21 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
               )}
             />
           )}
-          <Text fontSize={13} appearance="secondaryText" style={spacings.mbLg}>
-            {isPrivateKey
-              ? t('You can import it again from your saved recovery phrase.')
-              : t('The key stays on your {{device}} device. You can import it again at any time.', {
-                  device: deviceName
-                })}
-          </Text>
+          <Alert
+            type="info"
+            size="sm"
+            style={spacings.mbLg}
+            title={
+              <Text fontSize={13} weight="semiBold" appearance="primaryText">
+                {isPrivateKey
+                  ? t('You can import this key again from your saved recovery phrase.')
+                  : t(
+                      'The key stays on your {{device}} device. You can import it again at any time.',
+                      { device: deviceName }
+                    )}
+              </Text>
+            }
+          />
         </>
       )}
 
