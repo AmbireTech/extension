@@ -34,13 +34,16 @@ export class AccountKeysPage extends BasePage {
 
   private async findAndOpenAccountKeys(keyAddr: string, accountAddr: string): Promise<void> {
     // Filter the (potentially long) account list down to the owning account so we scan a
-    // handful of rows instead of every account. The options (kebab) button is keyed by the
-    // account address, so even if fuzzy search returns a few extra rows we target the exact
-    // one directly instead of guessing based on DOM position/structure.
+    // single row instead of every account. The options (kebab) button is keyed by the
+    // account address, so we target the exact one directly instead of guessing based on
+    // DOM position/structure.
     await this.entertext(selectors.searchInput, accountAddr)
 
+    // The search is debounced, and once it applies the list is swapped for a non-draggable one,
+    // which remounts the rows and closes an options menu opened before that. A full address
+    // matches exactly one account, so a single row means the search has applied.
     const accountRows = this.page.getByTestId('account')
-    await expect(accountRows.first()).toBeVisible({ timeout: PRESENCE_TIMEOUT })
+    await expect(accountRows).toHaveCount(1, { timeout: PRESENCE_TIMEOUT })
 
     const optionsBtn = this.page.getByTestId(selectors.settings.accountOptionsButton(accountAddr))
     await optionsBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
