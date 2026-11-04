@@ -1,32 +1,82 @@
-import React from 'react'
-import { View } from 'react-native'
+import React, { FC, useCallback } from 'react'
 
-import Text from '@common/components/Text'
+import Alert from '@common/components/Alert'
+import Pagination from '@common/components/Pagination'
+import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
+import ActivityPositionsSkeleton from '@common/modules/dashboard/components/Activity/ActivityPositionsSkeleton'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+import PrivacyPoolsHistoryItem from '@web/modules/privacy-pools/components/PrivacyPoolsHistoryItem'
+import PrivacyPoolsHistoryNotice from '@web/modules/privacy-pools/components/PrivacyPoolsHistoryNotice'
+import usePrivacyPoolsHistory from '@web/modules/privacy-pools/hooks/usePrivacyPoolsHistory'
 
-import getStyles from './styles'
+interface Props {
+  /** The settings screen's, so the background closes it with the window. */
+  sessionId: string
+}
+
+// Like the regular transaction history
+const ITEMS_PER_PAGE = 10
 
 /**
- * Placeholder until the Privacy Pools SDK can report the account's history from the pools. It is
- * not recorded locally instead, as such a log would link deposits to their withdrawals.
+ * A Privacy Pools account's history in Settings, in pages like the regular transaction history.
+ * Read from this device's copy of the pools' history. The network is asked only for the times of
+ * recent blocks, to date the entries, which says nothing about the account.
  */
-const PrivacyPoolsActivity = () => {
+const PrivacyPoolsActivity: FC<Props> = ({ sessionId }) => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { session, listState, unavailableReason, loadPage, retry } = usePrivacyPoolsHistory({
+    sessionId,
+    isEnabled: true,
+    chainId: null,
+    itemsPerPage: ITEMS_PER_PAGE
+  })
+  const result = session?.result
+
+  // From the session, as reopening it (e.g. on switching accounts) starts again from the first
+  const page = (session?.pagination.fromPage ?? 0) + 1
+  const setPage = useCallback((nextPage: number) => loadPage(nextPage - 1), [loadPage])
+
+  const renderList = () => {
+    if (listState === 'loading') return <ActivityPositionsSkeleton amount={4} />
+
+    if (listState !== 'ready')
+      return (
+        <PrivacyPoolsHistoryNotice listState={listState} unavailableReason={unavailableReason} />
+      )
+
+    return (
+      <ScrollableWrapper style={[spacings.mbXl, flexbox.flex1]}>
+        {(result?.items || []).map((entry) => (
+          <PrivacyPoolsHistoryItem key={entry.id} entry={entry} style={spacings.mbSm} />
+        ))}
+      </ScrollableWrapper>
+    )
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.emptyContainer}>
-        <Text fontSize={14} weight="medium" style={spacings.mbMi}>
-          {t('Activity is coming soon')}
-        </Text>
-        <Text fontSize={12} color={theme.secondaryText} style={styles.centeredText}>
-          {t('What you send to and from this account will show up here.')}
-        </Text>
-      </View>
-    </View>
+    <>
+      {!!session?.error && (
+        <Alert
+          type="error"
+          size="sm"
+          title={session.error}
+          buttonProps={{ text: t('Try again'), onPress: retry, type: 'secondary' }}
+          style={spacings.mbSm}
+        />
+      )}
+      {renderList()}
+      {listState === 'ready' && (
+        <Pagination
+          maxPages={result?.maxPages || 0}
+          isNextDisabled={page >= (result?.maxPages || 0)}
+          style={{ marginLeft: 'auto' }}
+          page={page}
+          setPage={setPage}
+        />
+      )}
+    </>
   )
 }
 

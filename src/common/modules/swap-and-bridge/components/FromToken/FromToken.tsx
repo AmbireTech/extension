@@ -6,8 +6,9 @@ import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
+import { SWITCH_TOKENS_BUTTON_OVERHANG } from '@common/modules/swap-and-bridge/components/SwitchTokensButton/styles'
 import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { getTokenId } from '@common/utils/token'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
@@ -93,9 +94,15 @@ const FromToken: FC<Props> = ({
 
   return (
     // The gap the switch tokens button centres itself on - see its own styles. While the amount
-    // shows a message, that message sits where the button reaches up to, so the panel is lifted
-    // above the button (zIndex 10) for the message to read over it rather than under it
-    <View style={[spacings.mbTy, !!validateFromAmount?.message && { zIndex: 11 }]}>
+    // shows a message, the gap grows for the button to clear it. Not a zIndex lift: reordering
+    // siblings on native remounts the amount input and drops its focus mid-typing
+    <View
+      style={
+        validateFromAmount?.message
+          ? { marginBottom: SPACING_TY + SWITCH_TOKENS_BUTTON_OVERHANG }
+          : spacings.mbTy
+      }
+    >
       {!isLoading ? (
         <SendToken
           label={t('You send')}

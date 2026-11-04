@@ -19,6 +19,7 @@ interface Props {
     prefix: number
     suffix: number
     color: 'errorText'
+    differingFrom?: string
   }
 }
 

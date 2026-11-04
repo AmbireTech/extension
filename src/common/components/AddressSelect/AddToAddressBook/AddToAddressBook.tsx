@@ -18,7 +18,7 @@ import getStyles from './styles'
 type PressableStateWithHover = PressableStateCallbackType & { hovered?: boolean }
 
 type Props = {
-  isRecipientAddressUnknown: boolean
+  isRecipientAddressSavable: boolean
   isRecipientHumanizerKnownTokenOrSmartContract: boolean
   addressValidationMsg: string
   domainVerificationMessage?: string
@@ -28,7 +28,7 @@ type Props = {
 
 const AddToAddressBook = ({
   isRecipientHumanizerKnownTokenOrSmartContract,
-  isRecipientAddressUnknown,
+  isRecipientAddressSavable,
   addressValidationMsg,
   domainVerificationMessage,
   isRecipientAddressSameAsSender,
@@ -39,7 +39,7 @@ const AddToAddressBook = ({
 
   const shouldShowAddToAddressBook =
     !isRecipientHumanizerKnownTokenOrSmartContract &&
-    !!isRecipientAddressUnknown &&
+    !!isRecipientAddressSavable &&
     !isRecipientAddressSameAsSender &&
     addressValidationMsg !== 'Invalid address.'
 
