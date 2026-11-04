@@ -9,11 +9,13 @@ import {
   PrivacyPoolsHistoryEntryType
 } from '@ambire-common/interfaces/privacyPools'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -28,6 +30,7 @@ import {
 import InteractionAddress from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/InteractionAddress'
 import getSummaryStyles from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/styles'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
@@ -41,7 +44,7 @@ interface Props {
   network: Network
 }
 
-const { isTab } = getUiType()
+const { isTab, isSidePanel } = getUiType()
 
 // As the regular activity's `SummaryDetailsSheet`, hoisted to keep `BottomSheet`'s memo
 const SHEET_STYLE = {
@@ -121,7 +124,7 @@ const PrivacyPoolsHistoryDetailsSheet: FC<Props> = ({
     if (!explorerLink) return undefined
 
     return (
-      <View style={styles.footer}>
+      <View style={[styles.footer, spacings.ptXl]}>
         <Alert
           type="warning"
           size="sm"
@@ -151,11 +154,22 @@ const PrivacyPoolsHistoryDetailsSheet: FC<Props> = ({
     [styles.sheetScrollContent]
   )
 
-  const renderRow = (label: string, value: ReactNode, testID: string) => (
+  const renderRow = (label: string, value: ReactNode, testID: string, labelTooltip?: string) => (
     <View style={[styles.modalStepRow, spacings.mbSm]} testID={testID}>
-      <Text appearance="tertiaryText" weight="medium" style={spacings.mrSm}>
-        {label}
-      </Text>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrSm]}>
+        <Text appearance="tertiaryText" weight="medium">
+          {label}
+        </Text>
+        {!!labelTooltip && (
+          <InfoIcon
+            width={16}
+            height={16}
+            color={theme.tertiaryText}
+            style={spacings.mlMi}
+            dataSet={createGlobalTooltipDataSet({ id: `${testID}-tooltip`, content: labelTooltip })}
+          />
+        )}
+      </View>
       <View style={[styles.modalStepRowRight, { flexShrink: 1 }]}>{value}</View>
     </View>
   )
@@ -183,7 +197,8 @@ const PrivacyPoolsHistoryDetailsSheet: FC<Props> = ({
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       type={isTab ? 'modal' : 'bottom-sheet'}
-      adjustToContentHeight={false}
+      // Its few rows left the full height mostly empty in the side panel
+      adjustToContentHeight={isSidePanel}
       HeaderComponent={headerComponent}
       FooterComponent={footerComponent}
       scrollViewProps={scrollViewProps}
@@ -216,18 +231,12 @@ const PrivacyPoolsHistoryDetailsSheet: FC<Props> = ({
               />
             </View>
           </>,
-          'privacy-pools-history-amount'
-        )}
-        {entry.type === 'withdrawal' && (
-          <Text
-            fontSize={12}
-            appearance="secondaryText"
-            style={[spacings.mbSm, { marginTop: -SPACING_TY }]}
-          >
-            {t(
-              'This is what left your account, including the fee. The recipient got a little less.'
-            )}
-          </Text>
+          'privacy-pools-history-amount',
+          entry.type === 'withdrawal'
+            ? t(
+                'This is what left your account, including the fee. The recipient got a little less.'
+              )
+            : undefined
         )}
         {!!reviewStatus &&
           renderRow(
