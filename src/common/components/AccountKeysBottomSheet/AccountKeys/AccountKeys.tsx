@@ -17,12 +17,11 @@ import BottomSheet from '@common/components/BottomSheet'
 import ExportKey from '@common/components/ExportKey'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { isMobile, isWeb } from '@common/config/env'
-import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { getUiType } from '@common/utils/uiType'
+import { selectKeys, selectUnsupportedKeys } from '@common/utils/keys'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 interface Props {
@@ -34,13 +33,12 @@ interface Props {
   /** Lets the user remove imported keys. Left off while signing, so a key can't vanish mid-flow */
   canRemoveKeys?: boolean
   chainId?: bigint
+  /** The sheet takes the full width, see `AccountKeysBottomSheet` */
+  isFullWidthSheet: boolean
 }
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) =>
   state.networks || []
-const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys || []
-const selectUnsupportedKeys = (state: AllControllersMappingType['KeystoreController']) =>
-  state.unsupportedKeys
 
 const AccountKeys: FC<Props> = ({
   account,
@@ -49,12 +47,11 @@ const AccountKeys: FC<Props> = ({
   keyIconColor,
   showExportImport,
   canRemoveKeys = false,
-  chainId
+  chainId,
+  isFullWidthSheet
 }) => {
   const { t } = useTranslation()
   // Full width in the popup and in a narrow window, like the keys sheet they open from
-  const { isNarrowWebLayout } = useCompactLayout()
-  const isFullWidthSheet = getUiType().isPopup || isNarrowWebLayout
   const sheetMaxWidth = isFullWidthSheet ? {} : { maxWidth: 432 }
   const selectAccountState = useCallback(
     (state: AllControllersMappingType['AccountsController']) =>
@@ -166,7 +163,7 @@ const AccountKeys: FC<Props> = ({
     // Keys this device can't sign with are imported all the same, so they are listed (and marked)
     const importedKeys = [
       ...keys.map((key) => ({ ...key, isSupported: true })),
-      ...(unsupportedKeys || []).map((key) => ({ ...key, isSupported: false }))
+      ...unsupportedKeys.map((key) => ({ ...key, isSupported: false }))
     ].filter(({ addr }) => associatedKeysSet.has(addr.toLowerCase()))
     const importedKeyAddrs = new Set(importedKeys.map(({ addr }) => addr.toLowerCase()))
     const notImportedKeys = associatedKeys.filter(

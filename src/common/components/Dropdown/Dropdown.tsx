@@ -89,6 +89,8 @@ const Dropdown: FC<Props> = ({
     if (!isWeb) return
     function handleClickOutside(event: MouseEvent) {
       if (position.x === 0 && position.y === 0) return
+      // A press on the button toggles the menu itself, or this would close it and the press reopen it
+      if ((DropdownButton.current as HTMLElement | null)?.contains?.(event.target as Node)) return
 
       if (modalRef.current && !modalRef.current?.contains(event.target)) {
         setPosition({ x: 0, y: 0 })

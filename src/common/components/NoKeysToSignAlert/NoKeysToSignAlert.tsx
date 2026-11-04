@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import NoKeysIcon from '@common/assets/svg/NoKeysIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import Alert from '@common/components/Alert'
@@ -15,6 +14,8 @@ import AddAccount from '@common/modules/account-select/components/AddAccount'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import joinNames from '@common/utils/joinNames'
+import { getKeyDeviceName, selectUnsupportedKeys } from '@common/utils/keys'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -27,8 +28,6 @@ interface Props {
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
-const selectUnsupportedKeys = (state: AllControllersMappingType['KeystoreController']) =>
-  state.unsupportedKeys
 
 const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long', chainId }) => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
@@ -46,21 +45,12 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
     if (!account || account.safeCreation)
       return { unsupportedDeviceNames: '', unsupportedDeviceCount: 0 }
     const types = new Set(
-      (unsupportedKeys || [])
+      unsupportedKeys
         .filter((key) => account.associatedKeys.includes(key.addr))
         .map((key) => key.type)
     )
-    const names = Array.from(types).map((type) =>
-      type === 'internal' ? type : HARDWARE_WALLET_DEVICE_NAMES[type]
-    )
-    const joinedNames =
-      names.length <= 1
-        ? names[0] || ''
-        : t('{{names}} and {{lastName}}', {
-            names: names.slice(0, -1).join(', '),
-            lastName: names[names.length - 1]
-          })
-    return { unsupportedDeviceNames: joinedNames, unsupportedDeviceCount: names.length }
+    const names = Array.from(types).map(getKeyDeviceName)
+    return { unsupportedDeviceNames: joinNames(names, t), unsupportedDeviceCount: names.length }
   }, [account, t, unsupportedKeys])
 
   // should never happen (selected account details are always present)

@@ -4,7 +4,6 @@ import { Animated, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
-import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -30,6 +29,7 @@ import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
+import { getKeyDeviceName } from '@common/utils/keys'
 import { getUiType } from '@common/utils/uiType'
 
 export type AccountKeyType = {
@@ -318,7 +318,7 @@ const AccountKey: React.FC<Props> = ({
           <WarningIcon width={14} height={14} color={theme.warningText} />
           <Text fontSize={12} weight="medium" color={theme.warningText} style={spacings.mlMi}>
             {t("{{device}} key can't sign on this device", {
-              device: type && type !== 'internal' ? HARDWARE_WALLET_DEVICE_NAMES[type] : type
+              device: type ? getKeyDeviceName(type) : ''
             })}
           </Text>
         </View>

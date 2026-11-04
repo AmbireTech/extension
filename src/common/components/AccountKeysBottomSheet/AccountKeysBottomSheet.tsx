@@ -68,6 +68,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
           showExportImport={showExportImport}
           canRemoveKeys={canRemoveKeys}
           chainId={chainId}
+          isFullWidthSheet={isFullWidth}
         />
       )}
     </BottomSheet>

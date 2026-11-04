@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -14,6 +13,7 @@ import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -24,6 +24,8 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import joinNames from '@common/utils/joinNames'
+import { getKeyDeviceName, selectKeys, selectUnsupportedKeys } from '@common/utils/keys'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -36,13 +38,16 @@ interface Props {
   onExportPress: () => void
 }
 
-const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+// Stable, so the selectors don't return a new array (and re-render) on every update
+const NO_ACCOUNTS: Account[] = []
+const NO_SEEDS: AllControllersMappingType['KeystoreController']['seeds'] = []
+
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts || NO_ACCOUNTS
 const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
   state.accountStates
-const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
-const selectUnsupportedKeys = (state: AllControllersMappingType['KeystoreController']) =>
-  state.unsupportedKeys
-const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
+const selectSeeds = (state: AllControllersMappingType['KeystoreController']) =>
+  state.seeds || NO_SEEDS
 
 const isSameKey = (a: Pick<Key, 'addr' | 'type'>, b: Pick<Key, 'addr' | 'type'>) =>
   a.addr === b.addr && a.type === b.type
@@ -128,28 +133,17 @@ const RemoveKey: FC<Props> = ({
     !!storedKey?.meta?.fromSeedId &&
     seeds.some((seed) => seed.id === storedKey.meta.fromSeedId)
   const isLostWithoutBackup = isPrivateKey && !isSavedAsRecoveryPhrase
-  const deviceName =
-    keyToRemove.type !== 'internal' ? HARDWARE_WALLET_DEVICE_NAMES[keyToRemove.type] : ''
-
-  const joinNames = useCallback(
-    (names: string[]) => {
-      if (names.length <= 1) return names[0] || ''
-      return t('{{names}} and {{lastName}}', {
-        names: names.slice(0, -1).join(', '),
-        lastName: names[names.length - 1]
-      })
-    },
-    [t]
-  )
+  const deviceName = getKeyDeviceName(keyToRemove.type)
 
   const viewOnlyNames = useMemo(
     () =>
       joinNames(
         affectedAccounts
           .filter(({ becomesViewOnly }) => becomesViewOnly)
-          .map(({ account }) => account.preferences.label)
+          .map(({ account }) => account.preferences.label),
+        t
       ),
-    [affectedAccounts, joinNames]
+    [affectedAccounts, t]
   )
 
   const handleRemove = useCallback(async () => {
@@ -171,6 +165,7 @@ const RemoveKey: FC<Props> = ({
     } catch (error) {
       // This only times out when the app doesn't reply
       console.error(error)
+      captureException(error)
       addToast(t('The key could not be removed. Please try again.'), { type: 'error' })
     }
     setPreviewBeforeRemoval(null)
