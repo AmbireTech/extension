@@ -219,14 +219,14 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
                   />
                   <View style={flexbox.directionRow}>
                     {becomesViewOnly ? (
-                      <Badge type="warning" text={t('Becomes view-only')} />
+                      <Badge type="warning" text={t('Will become view-only after removal')} />
                     ) : (
                       <Badge
                         type="default"
                         text={
                           keysLeft === 1
-                            ? t('Keeps 1 key')
-                            : t('Keeps {{count}} keys', { count: keysLeft })
+                            ? t('Will keep 1 key after removal')
+                            : t('Will keep {{count}} keys after removal', { count: keysLeft })
                         }
                       />
                     )}
