@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
 import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
@@ -41,7 +41,6 @@ const PrivacyPoolsDashboardScreen = () => {
   const { styles } = useTheme(getDashboardStyles)
   const {
     unavailableReason,
-    isAvailable,
     hasSyncedAnyChain,
     isSyncingAnyChain,
     hasSyncError,
@@ -51,10 +50,9 @@ const PrivacyPoolsDashboardScreen = () => {
     totalPrivateBalance,
     tokenBalances,
     getNetworkName,
-    syncAllChains,
-    syncIfStale
+    syncAllChains
   } = usePrivacyPools()
-  const { selectedAccountId, selectedAccount } = usePrivacyPoolsAccounts()
+  const { selectedAccount } = usePrivacyPoolsAccounts()
   const isBackedUp = !!selectedAccount?.isBackedUp
   const { t } = useTranslation()
   const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
@@ -73,16 +71,6 @@ const PrivacyPoolsDashboardScreen = () => {
     : null
 
   const { navigate } = useNavigation()
-
-  /**
-   * Reads stale networks on open, on switching accounts and once the phrase is backed up (hence
-   * `isBackedUp` in the deps). Syncs are queued, so a second account waits for the first.
-   */
-  useEffect(() => {
-    if (!isAvailable || !selectedAccountId) return
-
-    syncIfStale()
-  }, [isAvailable, isBackedUp, selectedAccountId, syncIfStale])
 
   // Includes queued networks, so the banner names them all at once
   const firstSyncNetworkNames = useMemo(
