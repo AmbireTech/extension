@@ -3,12 +3,14 @@ import { useCallback, useMemo } from 'react'
 
 import {
   getPrivacyPoolsPriceKey,
+  getPrivacyPoolsProjectedAmount,
   getPrivacyPoolsValuePerChain
 } from '@ambire-common/libs/privacyPools/prices'
 import {
   PrivacyPoolsChainState,
   PrivacyPoolsTokenBalance
 } from '@ambire-common/interfaces/privacyPools'
+import { TokenResult } from '@ambire-common/libs/portfolio'
 import useController from '@common/hooks/useController'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -32,16 +34,21 @@ export type PrivacyPoolsBalanceDisplay = {
   tokenAddress: string
   symbol: string
   decimals: number
-  /** The approved and the pending part together, formatted with the token's decimals. */
-  totalAmount: string
-  /** The privately spendable part, formatted with the token's decimals. */
-  approvedAmount: string
+  /**
+   * Shaped like a portfolio token, for the parts shared with the regular dashboard. There the
+   * pending amount is the one on its way: the amount the account will hold, against the latest
+   * amount the notes hold. It is not `pendingAmount` below, the part being verified.
+   */
+  token: TokenResult
+  /**
+   * The privately spendable part less what withdrawals on their way take out, formatted with the
+   * token's decimals.
+   */
+  approvedAmountPostSimulation: string
   /** The part still waiting on the association set, or null. Not spendable, so shown apart. */
   pendingAmount: string | null
   /** The same part in the token's smallest units. */
   pendingAmountRaw: bigint
-  /** USD value of the total amount, or null when the token has no known price. */
-  value: number | null
 }
 
 /**
@@ -56,6 +63,33 @@ export type PrivacyPoolsBalancesState = 'unavailable' | 'not-loaded' | 'loading'
 type PrivacyPoolsState = AllControllersMappingType['PrivacyPoolsController']
 
 const NO_CHAIN_IDS: string[] = []
+
+/**
+ * The balance shaped like a portfolio token, for the parts shared with the regular dashboard and
+ * token details. Priced by the Privacy Pools controller, as the account has no portfolio, and with
+ * no market data, which would be fetched.
+ */
+const getPortfolioToken = (
+  chainId: string,
+  balance: PrivacyPoolsTokenBalance,
+  price: number | null
+): TokenResult => {
+  const projectedAmount = getPrivacyPoolsProjectedAmount(balance)
+
+  return {
+    symbol: balance.symbol,
+    name: balance.symbol,
+    decimals: balance.decimals,
+    address: balance.tokenAddress,
+    chainId: BigInt(chainId),
+    amount: projectedAmount,
+    latestAmount: balance.totalAmount,
+    pendingAmount: projectedAmount,
+    priceIn: price === null ? [] : [{ baseCurrency: 'usd', price }],
+    marketDataIn: [],
+    flags: { onGasTank: false, rewardsType: null, canTopUpGasTank: false, isFeeToken: false }
+  }
+}
 
 const selectSupportedChainIds = (state: PrivacyPoolsState) => state.supportedChainIds
 const selectChains = (state: PrivacyPoolsState) => state.chains
@@ -148,32 +182,31 @@ const usePrivacyPools = () => {
   const balances: PrivacyPoolsBalanceDisplay[] = useMemo(
     () =>
       tokenBalances
-        .filter(({ balance }) => balance.totalAmount > 0n)
-        .map(({ chainId, balance }) => {
-          const price = getTokenPrice(chainId, balance.tokenAddress)
-          const total = Number(formatUnits(balance.totalAmount, balance.decimals))
-
-          return {
-            id: `${chainId}:${balance.tokenAddress}`,
-            chainId,
-            networkName: getNetworkName(chainId),
-            tokenAddress: balance.tokenAddress,
-            symbol: balance.symbol,
-            decimals: balance.decimals,
-            totalAmount: formatUnits(balance.totalAmount, balance.decimals),
-            approvedAmount: formatUnits(balance.approvedAmount, balance.decimals),
-            pendingAmount: balance.pendingAmount
-              ? formatUnits(balance.pendingAmount, balance.decimals)
-              : null,
-            pendingAmountRaw: balance.pendingAmount,
-            value: price === null ? null : total * price
-          }
-        }),
+        // A token with only a deposit on its way stays: its row tells what is arriving
+        .filter(({ balance }) => balance.totalAmount > 0n || balance.simulationAmount > 0n)
+        .map(({ chainId, balance }) => ({
+          id: `${chainId}:${balance.tokenAddress}`,
+          chainId,
+          networkName: getNetworkName(chainId),
+          tokenAddress: balance.tokenAddress,
+          symbol: balance.symbol,
+          decimals: balance.decimals,
+          token: getPortfolioToken(chainId, balance, getTokenPrice(chainId, balance.tokenAddress)),
+          approvedAmountPostSimulation: formatUnits(
+            balance.approvedAmountPostSimulation,
+            balance.decimals
+          ),
+          pendingAmount: balance.pendingAmount
+            ? formatUnits(balance.pendingAmount, balance.decimals)
+            : null,
+          pendingAmountRaw: balance.pendingAmount
+        })),
     [tokenBalances, getNetworkName, getTokenPrice]
   )
 
-  // The pending part too, like the rows: it shows how much the account holds, while the rows tell
-  // the pending part apart. Valued like the networks screen, so the two totals match
+  // The pending part and what is on its way too, like the rows: it shows how much the account will
+  // hold, while the rows tell the pending part apart. Valued like the networks screen, so the two
+  // totals match
   const totalPrivateBalance = useMemo(
     () =>
       Object.values(getPrivacyPoolsValuePerChain(balancesByChain || {}, prices || {})).reduce(
