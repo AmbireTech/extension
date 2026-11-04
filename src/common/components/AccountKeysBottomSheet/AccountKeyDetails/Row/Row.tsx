@@ -21,12 +21,17 @@ const Row: FC<Props> = ({ rowKey, value, tooltip, suffix }) => {
   const { theme } = useTheme()
   return (
     <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.mbMi]}>
-      <Text fontSize={14}>{rowKey}: </Text>
+      <Text fontSize={14} style={{ flexShrink: 0 }}>
+        {rowKey}:{' '}
+      </Text>
       <Text
         fontSize={12}
         selectable
         weight="medium"
         style={{
+          // Takes only the width left after the label, so a long value (a device ID) wraps
+          // instead of running past the edge on native, where `wordBreak` does nothing
+          flexShrink: 1,
           // @ts-ignore missing in the types, but React Native Web supports it
           wordBreak: 'break-all',
           textAlign: 'right'
