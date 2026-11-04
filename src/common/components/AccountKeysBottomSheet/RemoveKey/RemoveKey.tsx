@@ -213,6 +213,9 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
                     ) : (
                       <Badge
                         type="default"
+                        // Stands out from the card in either theme, like the balance badge on the
+                        // account select screen
+                        style={{ backgroundColor: theme.primaryBackground }}
                         text={
                           keysLeft === 1
                             ? t('Will keep 1 key after removal')
