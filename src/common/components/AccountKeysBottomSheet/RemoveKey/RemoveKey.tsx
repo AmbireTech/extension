@@ -102,16 +102,6 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
     [t]
   )
 
-  const removedFromText = useMemo(() => {
-    const names = affectedAccounts.map(({ account }) => account.preferences.label)
-    if (names.length === 2)
-      return t('Removing this key removes it from both {{first}} and {{second}}.', {
-        first: names[0],
-        second: names[1]
-      })
-    return t('Removing this key removes it from {{names}}.', { names: joinNames(names) })
-  }, [affectedAccounts, joinNames, t])
-
   const viewOnlyNames = useMemo(
     () =>
       joinNames(
@@ -243,8 +233,7 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
           type="error"
           size="sm"
           style={spacings.mbLg}
-          title={removedFromText}
-          text={
+          title={
             viewOnlyNames
               ? t("Without a backup, you'll lose access to {{names}}.", { names: viewOnlyNames })
               : t("Without a backup, you won't be able to add this key again.")
