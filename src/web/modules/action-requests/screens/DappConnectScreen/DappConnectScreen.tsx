@@ -33,7 +33,8 @@ const DappConnectScreen = () => {
     canBeTrustedByUser,
     isScamCheckerEnabled,
     handleEnableScamChecker,
-    toggleTrust
+    toggleTrust,
+    impersonation
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
   const accountSelectProps = useMemo(
@@ -105,13 +106,13 @@ const DappConnectScreen = () => {
               ]}
             >
               <DAppConnectHeader
-                name={dappToConnect.name}
                 id={dappToConnect.id}
                 icon={dappToConnect.icon!}
                 securityCheck={dappToConnect.blacklisted}
                 isTrustedByUser={isTrustedByUser}
                 isScamCheckerEnabled={isScamCheckerEnabled}
                 isInAppCatalog={!dappToConnect.isCustom}
+                isImpersonating={!!impersonation}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody
@@ -123,6 +124,8 @@ const DappConnectScreen = () => {
                 onEnableScamChecker={handleEnableScamChecker}
                 isScamCheckerEnabled={isScamCheckerEnabled}
                 websiteContentUpdate={websiteContentUpdate}
+                isInAppCatalog={!dappToConnect.isCustom}
+                impersonation={impersonation}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>

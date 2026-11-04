@@ -1,3 +1,5 @@
+import { AbiDecodingDataSizeTooSmallError } from 'viem'
+
 import {
   classifyCrashReport,
   CRASH_REPORT_SEVERITY,
@@ -112,6 +114,42 @@ describe('classifyCrashReport', () => {
         'tx-simulation-undecodable'
       ])
       expect(decoded.shouldSend && decoded.fingerprint).toEqual(['tx-simulation-failed'])
+    })
+
+    it('files every DeFi discovery failure as one issue, whatever the relayer reported', () => {
+      const relayerOutage = classifyCrashReport(
+        buildError('Defi discovery failed. Error: Ambire relayer error')
+      )
+      // The relayer's text would match tx-execution-reverted if that rule came first
+      const relayerRevert = classifyCrashReport(
+        buildError('Defi discovery failed. Error: execution reverted')
+      )
+
+      expect(relayerOutage.shouldSend && relayerOutage.fingerprint).toEqual([
+        'defi-discovery-failed'
+      ])
+      expect(relayerRevert).toEqual(relayerOutage)
+    })
+  })
+
+  describe('a contract call the RPC answered with too little data', () => {
+    const buildViemDecodingError = (data: `0x${string}`, size: number) =>
+      new AbiDecodingDataSizeTooSmallError({ data, params: [{ type: 'uint256' }], size })
+
+    it('drops the "0x0" answer of a broken RPC', () => {
+      expect(classifyCrashReport(buildViemDecodingError('0x0', 1)).shouldSend).toBe(false)
+    })
+
+    it('keeps other sizes, which can mean our ABI is wrong', () => {
+      const decision = classifyCrashReport(
+        buildViemDecodingError('0x0000000000000000000000000000000000000001', 20)
+      )
+
+      expect(decision).toEqual({
+        shouldSend: true,
+        level: CRASH_REPORT_SEVERITY.ERROR,
+        fingerprint: [DEFAULT_SENTRY_GROUPING]
+      })
     })
   })
 
