@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
+import { isNearIdenticalAddressMatch } from '@ambire-common/libs/transfer/address-poisoning'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
@@ -22,7 +23,9 @@ import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
+import NearIdenticalAddressSuggestion from '@common/components/AddressSelect/NearIdenticalAddressSuggestion'
 import { InputProps } from '@common/components/Input'
+import { INPUT_HEIGHT, INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import { SectionedSelect } from '@common/components/Select'
 import {
@@ -86,6 +89,7 @@ export interface AddressSelectProps extends InputProps {
 
 // Marks a Privacy Pools account option - see `setAddressWrapped`
 const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
+const NO_PRIVACY_POOLS_ACCOUNTS: PrivacyPoolsAccountDisplay[] = []
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
   severity: 'error', // Don't let the user submit, just in case there is an error
@@ -111,6 +115,7 @@ const SelectedMenuOption: React.FC<{
     prefix: number
     suffix: number
     color: 'errorText'
+    differingFrom?: string
   }
   inputBackgroundColor?: ColorValue
   plainAddressMaxLength?: number
@@ -170,6 +175,9 @@ const SelectedMenuOption: React.FC<{
   ])
 
   const isButtonMode = type === 'selected-menu-option' && isMobile
+  // On mobile the near-identical address wraps to show all of its mistyped chars, so the
+  // input grows to fit it instead of keeping its single line height
+  const shouldGrowInput = isMobile && !!addressHighlight?.differingFrom
 
   const content = useMemo(
     () => (
@@ -223,7 +231,15 @@ const SelectedMenuOption: React.FC<{
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
         buttonProps={{ onPress: () => setIsMenuOpen(true) }}
-        inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
+        inputWrapperStyle={{
+          ...(type === 'input' && { backgroundColor: theme.neutral400 }),
+          ...(shouldGrowInput && { height: 'auto', minHeight: INPUT_WRAPPER_HEIGHT })
+        }}
+        inputStyle={
+          shouldGrowInput
+            ? { height: 'auto', minHeight: INPUT_HEIGHT, ...spacings.pvTy }
+            : undefined
+        }
         buttonStyle={{
           ...spacings.pv0,
           // Even padding keeps the clear button's press area centered on its icon
@@ -249,6 +265,7 @@ const SelectedMenuOption: React.FC<{
       setIsMenuOpen,
       theme.neutral400,
       addressHighlight,
+      shouldGrowInput,
       inputBackgroundColor,
       plainAddressMaxLength,
       type,
@@ -364,16 +381,21 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     return results.map((result) => result.item.contact)
   }, [selectableContacts, actualAddress, searchableContacts])
 
+  // Mobile lists every account and contact; web narrows them to what's typed. Typing on mobile
+  // must not rebuild the options, or every row re-renders on each keystroke
+  const privacyPoolsSearch = isMobile ? '' : actualAddress
+  const listedContacts = isMobile ? selectableContacts : filteredContacts
+
   const filteredPrivacyPoolsAccounts = useMemo(
     () =>
       privacyPoolsAccounts && onSelectPrivacyPoolsAccount
         ? filterPrivacyPoolsAccountsBySearch(
             privacyPoolsAccounts,
-            isMobile ? '' : actualAddress,
+            privacyPoolsSearch,
             t('Privacy Pools')
           )
-        : [],
-    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, actualAddress, t]
+        : NO_PRIVACY_POOLS_ACCOUNTS,
+    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, privacyPoolsSearch, t]
   )
 
   // Looked up rather than parsed back from the option value
@@ -430,7 +452,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      (isMobile ? selectableContacts : filteredContacts)
+      listedContacts
         .filter((contact) => contact.isWalletAccount)
         .map((contact, index) => ({
           value: contact.address,
@@ -452,12 +474,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+    [listedContacts, contactAddressMaxLength]
   )
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      (isMobile ? selectableContacts : filteredContacts)
+      listedContacts
         .filter((contact) => !contact.isWalletAccount)
         .map((contact) => ({
           value: contact.address,
@@ -477,7 +499,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+    [listedContacts, contactAddressMaxLength]
   )
 
   const selectedOption = useMemo(
@@ -555,22 +577,38 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     [bindManageBtnAnim, manageBtnAnimStyle, onManagePress, t, theme.secondaryText]
   )
 
+  // A near-identical address is most likely a typo of a known recipient, not a poisoning lookalike
+  const nearIdenticalAddressMatch =
+    addressPoisoningMatch && isNearIdenticalAddressMatch(addressPoisoningMatch)
+      ? addressPoisoningMatch
+      : null
+
   const renderConfirmAddress = useCallback(
-    () => (
-      <AddToAddressBook
-        isRecipientHumanizerKnownTokenOrSmartContract={
-          isRecipientHumanizerKnownTokenOrSmartContract
-        }
-        isRecipientAddressUnknown={isRecipientAddressUnknown}
-        isRecipientAddressSameAsSender={actualAddress === account?.addr}
-        addressValidationMsg={addressValidationMsg}
-        domainVerificationMessage={domainVerificationMessage}
-        onAddToAddressBookPress={openBottomSheet}
-      />
-    ),
+    () =>
+      nearIdenticalAddressMatch ? (
+        // Saving a likely typo to the address book would only make it look trusted later
+        <NearIdenticalAddressSuggestion
+          suggestedAddress={nearIdenticalAddressMatch.matchedAddress}
+          setAddress={setAddress}
+        />
+      ) : (
+        <AddToAddressBook
+          isRecipientHumanizerKnownTokenOrSmartContract={
+            isRecipientHumanizerKnownTokenOrSmartContract
+          }
+          isRecipientAddressSavable={isRecipientAddressUnknown && !addressPoisoningMatch}
+          isRecipientAddressSameAsSender={actualAddress === account?.addr}
+          addressValidationMsg={addressValidationMsg}
+          domainVerificationMessage={domainVerificationMessage}
+          onAddToAddressBookPress={openBottomSheet}
+        />
+      ),
     [
+      nearIdenticalAddressMatch,
+      setAddress,
       isRecipientHumanizerKnownTokenOrSmartContract,
       isRecipientAddressUnknown,
+      addressPoisoningMatch,
       actualAddress,
       account,
       addressValidationMsg,
@@ -579,16 +617,19 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     ]
   )
 
+  // Highlights what differs from the known address: everything between the matching edges of a
+  // poisoning lookalike, or only the few mistyped chars of a near-identical address.
   const selectedAddressHighlight = useMemo(
     () =>
       addressPoisoningMatch
         ? {
             prefix: addressPoisoningMatch.matchedPrefixCharsCount,
             suffix: addressPoisoningMatch.matchedSuffixCharsCount,
-            color: 'errorText' as const
+            color: 'errorText' as const,
+            differingFrom: nearIdenticalAddressMatch?.matchedAddress
           }
         : undefined,
-    [addressPoisoningMatch]
+    [addressPoisoningMatch, nearIdenticalAddressMatch]
   )
 
   const renderSelectedOption = useCallback(
