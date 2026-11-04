@@ -289,16 +289,6 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
           display: 'block'
         }}
       />
-      {/* Blurs the whole camera view. Only what is shown is blurred - the scanner reads the
-          frames straight from the video */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          backdropFilter: 'blur(12px)'
-        }}
-      />
       <Svg
         pointerEvents="none"
         viewBox="0 0 238 238"
