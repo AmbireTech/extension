@@ -268,51 +268,45 @@ const Alert = ({
           }}
         />
       )}
+      {/* In a column of its own, so the title, the text, the buttons and the children all start
+          at the same left edge, after the icon */}
+      {!!withIcon && (
+        <View style={spacings.mrMi}>
+          {CustomIcon ? (
+            <CustomIcon width={24} height={24} />
+          ) : (
+            <Icon width={24} height={24} color={theme[`${type}Text`]} />
+          )}
+        </View>
+      )}
       <View style={flexbox.flex1}>
         {isButtonTopRight ? (
-          <View style={[flexbox.directionRow, flexbox.alignStart]}>
-            {!!withIcon && (
-              <View style={spacings.mrMi}>
-                {CustomIcon ? (
-                  <CustomIcon width={24} height={24} />
-                ) : (
-                  <Icon width={24} height={24} color={theme[`${type}Text`]} />
-                )}
-              </View>
-            )}
-            <View style={flexbox.flex1}>
-              <View style={[flexbox.directionRow, flexbox.alignStart, titleRowMarginBottom]}>
-                {!!title && (
-                  <View
-                    style={[flexbox.flex1, spacings.mrSm, !!withIcon && ICON_ALIGNED_TITLE_STYLE]}
-                  >
-                    {titleContent}
-                  </View>
-                )}
-                {renderButton({ flexShrink: 0 })}
-                {closeButton}
-              </View>
-              {textContent}
-            </View>
-          </View>
-        ) : (
           <>
             <View style={[flexbox.directionRow, flexbox.alignStart, titleRowMarginBottom]}>
-              {!!withIcon && (
-                <View style={spacings.mrMi}>
-                  {CustomIcon ? (
-                    <CustomIcon width={24} height={24} />
-                  ) : (
-                    <Icon width={24} height={24} color={theme[`${type}Text`]} />
-                  )}
+              {!!title && (
+                <View
+                  style={[flexbox.flex1, spacings.mrSm, !!withIcon && ICON_ALIGNED_TITLE_STYLE]}
+                >
+                  {titleContent}
                 </View>
               )}
-              <View style={[flexbox.flex1, !!withIcon && ICON_ALIGNED_TITLE_STYLE]}>
-                {titleContent}
-              </View>
+              {renderButton({ flexShrink: 0 })}
               {closeButton}
             </View>
             {textContent}
+          </>
+        ) : (
+          <>
+            {/* Without a title, the text takes its place next to the icon and the close button */}
+            <View
+              style={[flexbox.directionRow, flexbox.alignStart, !!title && titleRowMarginBottom]}
+            >
+              <View style={[flexbox.flex1, !!withIcon && ICON_ALIGNED_TITLE_STYLE]}>
+                {title ? titleContent : textContent}
+              </View>
+              {closeButton}
+            </View>
+            {!!title && textContent}
             {(!!buttonProps || !!secondaryButtonProps) && (
               <View style={[flexbox.directionRow, flexbox.wrap, flexbox.justifyEnd]}>
                 {secondaryButton}
