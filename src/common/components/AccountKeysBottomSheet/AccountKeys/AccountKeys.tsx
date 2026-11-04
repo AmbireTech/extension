@@ -17,10 +17,12 @@ import BottomSheet from '@common/components/BottomSheet'
 import ExportKey from '@common/components/ExportKey'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 interface Props {
@@ -50,6 +52,9 @@ const AccountKeys: FC<Props> = ({
   chainId
 }) => {
   const { t } = useTranslation()
+  // Full width in the popup and in a narrow window, like the keys sheet they open from
+  const { isNarrowWebLayout } = useCompactLayout()
+  const sheetMaxWidth = getUiType().isPopup || isNarrowWebLayout ? {} : { maxWidth: 432 }
   const selectAccountState = useCallback(
     (state: AllControllersMappingType['AccountsController']) =>
       state.accountStates?.[account.addr] || null,
@@ -290,7 +295,7 @@ const AccountKeys: FC<Props> = ({
         closeBottomSheet={closeExportKey}
         scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+        style={isWeb ? { ...sheetMaxWidth, minHeight: 432, ...spacings.pvLg } : undefined}
         onClosed={handleExportKeyClosed}
       >
         {!!selectedExportKey && (
@@ -307,7 +312,7 @@ const AccountKeys: FC<Props> = ({
         id="account-key-remove-bottom-sheet"
         type={isWeb ? 'modal' : 'bottom-sheet'}
         closeBottomSheet={closeRemoveKey}
-        style={isWeb ? { maxWidth: 432, ...spacings.pvLg } : undefined}
+        style={isWeb ? { ...sheetMaxWidth, ...spacings.pvLg } : undefined}
         onClosed={handleRemoveKeyClosed}
       >
         {!!keyToRemove && (

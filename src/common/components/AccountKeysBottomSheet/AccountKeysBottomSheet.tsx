@@ -5,7 +5,9 @@ import { Account } from '@ambire-common/interfaces/account'
 import AccountKeys from '@common/components/AccountKeysBottomSheet/AccountKeys'
 import BottomSheet from '@common/components/BottomSheet'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
+import { getUiType } from '@common/utils/uiType'
 import spacings from '@common/styles/spacings'
 
 interface Props {
@@ -33,6 +35,10 @@ const AccountKeysBottomSheet: FC<Props> = ({
     openAddAccountBottomSheet && openAddAccountBottomSheet()
   }, [closeBottomSheet, openAddAccountBottomSheet])
   const { theme } = useTheme()
+  // Full width in the popup and in a narrow window (e.g. a request window), which are only a
+  // little wider than the sheet, so it would be left hanging off one side
+  const { isNarrowWebLayout } = useCompactLayout()
+  const isFullWidth = getUiType().isPopup || isNarrowWebLayout
   return (
     <BottomSheet
       id="account-keys-bottom-sheet"
@@ -42,7 +48,11 @@ const AccountKeysBottomSheet: FC<Props> = ({
       scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
-      style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+      style={
+        isWeb
+          ? { ...(!isFullWidth && { maxWidth: 432 }), minHeight: 432, ...spacings.pvLg }
+          : undefined
+      }
       shouldBeClosableOnDrag={isMobile}
     >
       {!!account && (
