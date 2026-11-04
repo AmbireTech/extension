@@ -21,7 +21,8 @@ const ITEMS_PER_PAGE = 10
 
 /**
  * A Privacy Pools account's history in Settings, in pages like the regular transaction history.
- * Read from this device's copy of the pools' history, so nothing about it is asked of the network.
+ * Read from this device's copy of the pools' history. The network is asked only for the times of
+ * recent blocks, to date the entries, which says nothing about the account.
  */
 const PrivacyPoolsActivity: FC<Props> = ({ sessionId }) => {
   const { t } = useTranslation()
