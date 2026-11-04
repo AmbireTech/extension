@@ -66,7 +66,6 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
   // should never happen (selected account details are always present)
   if (!account) return null
 
-  const requestName = isTransaction ? t('transaction') : t('message')
   const unsupportedKeysTitle =
     unsupportedDeviceCount > 1
       ? t("Your {{devices}} keys can't sign on this device", { devices: unsupportedDeviceNames })
@@ -118,10 +117,15 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
           title={title}
           text={
             unsupportedDeviceNames
-              ? t(
-                  "This account's key was added on another device, and {{devices}} isn't supported here. Sign this {{request}} on the device where you use {{devices}}, or import another key for this account.",
-                  { devices: unsupportedDeviceNames, request: requestName }
-                )
+              ? unsupportedDeviceCount > 1
+                ? t(
+                    "This account's {{devices}} keys were synced from another device, but these types of keys aren't supported on this device. Import them from another source to sign here, or remove them in Manage keys.",
+                    { devices: unsupportedDeviceNames }
+                  )
+                : t(
+                    "This account's {{devices}} key was synced from another device, but {{devices}} keys aren't supported on this device. Import it from another source to sign here, or remove it in Manage keys.",
+                    { devices: unsupportedDeviceNames }
+                  )
               : t(
                   account.safeCreation
                     ? 'Import your Safe account owners'
@@ -129,10 +133,17 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
                 )
           }
           customIcon={() => <NoKeysIcon />}
+          // With a key this device can't use, the keys list would offer nothing to import,
+          // so Import goes straight to adding one and the list stays a step away to remove it
           buttonProps={{
-            onPress: () => openBottomSheet(),
+            onPress: () => (unsupportedDeviceNames ? openAddAccounts() : openBottomSheet()),
             text: !!account.safeCreation ? t('Import Owner') : t('Import Key')
           }}
+          secondaryButtonProps={
+            unsupportedDeviceNames
+              ? { type: 'secondary', onPress: () => openBottomSheet(), text: t('Manage keys') }
+              : undefined
+          }
         />
       )}
       <AccountKeysBottomSheet
@@ -140,6 +151,8 @@ const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'lon
         closeBottomSheet={closeBottomSheet}
         account={account}
         showExportImport
+        // Only to remove the keys this device can't sign with, see the Manage keys button
+        canRemoveKeys={!!unsupportedDeviceNames}
         openAddAccountBottomSheet={openAddAccounts}
         chainId={chainId}
       />
