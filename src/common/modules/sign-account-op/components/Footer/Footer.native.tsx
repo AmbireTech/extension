@@ -2,9 +2,11 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import { getCallsCount } from '@ambire-common/utils/userRequest'
+import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 
 import BatchButton, { COMPACT_SECONDARY_BUTTON_PADDING } from './BatchButton'
@@ -35,8 +37,10 @@ const Footer = ({
   shouldRejectOnchain,
   isRejectDisabled,
   holdToProceedButtonType = 'primary',
-  signButtonType = 'primary'
+  signButtonType = 'primary',
+  onClose
 }: Props) => {
+  const { t } = useTranslation()
   const { state: userRequests } = useController('RequestsController', selectUserRequests)
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const { accountOp } = useController('SignAccountOpController').state || {}
@@ -57,6 +61,20 @@ const Footer = ({
     // '0x' is a placeholder used by self-broadcast account ops, not a real signature.
     return !!signature && signature !== '0x'
   }, [signature])
+
+  if (onClose) {
+    return (
+      <Button
+        testID="transaction-button-close"
+        type="primary"
+        text={t('Close')}
+        onPress={onClose}
+        hasBottomSpacing={false}
+        size="regular"
+        style={{ width: '100%' }}
+      />
+    )
+  }
 
   return (
     <CompactFooterButtons

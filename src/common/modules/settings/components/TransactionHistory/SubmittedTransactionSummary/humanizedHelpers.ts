@@ -1,6 +1,7 @@
 import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { getCancelledNonce, isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
@@ -97,6 +98,24 @@ export const getDappInteractionsFromHumanizedCalls = (
     ]
   }
 
+  // A cancel of a pending transaction, by any account. Must come before the Safe check, as its
+  // empty call also looks like a Safe rejection, but the nonce it cancels may not be the
+  // account's own nonce (e.g. a 7702 EOA cancels by its transaction count)
+  if (isCancelAccountOp(submittedAccountOp)) {
+    const cancelledNonce = getCancelledNonce(submittedAccountOp)
+    // Only a Safe collects the signatures of its owners
+    const isSafeCancel = !!submittedAccountOp.signed?.length
+
+    return [
+      {
+        id: 'fallback:cancel',
+        name: 'Cancel',
+        iconType: isSafeCancel ? 'safe' : 'ambire',
+        ...(cancelledNonce !== null && { nonce: cancelledNonce })
+      }
+    ]
+  }
+
   if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
 
@@ -105,7 +124,7 @@ export const getDappInteractionsFromHumanizedCalls = (
         id: 'fallback:cancel',
         name: 'Cancel',
         iconType: 'safe',
-        ...(safeNonce !== null && safeNonce !== undefined && { safeNonce: BigInt(safeNonce) })
+        ...(safeNonce !== null && safeNonce !== undefined && { nonce: BigInt(safeNonce) })
       }
     ]
   }

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -29,14 +29,19 @@ const DappConnectScreen = () => {
     canBeTrustedByUser,
     isScamCheckerEnabled,
     handleEnableScamChecker,
-    toggleTrust
+    toggleTrust,
+    impersonation
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
+  const accountSelectProps = useMemo(
+    () => ({ dappToConnect: dappToConnect || undefined }),
+    [dappToConnect]
+  )
 
   return (
     <MobileLayoutContainer
       withHorizontalPadding
-      header={<ActionHeader />}
+      header={<ActionHeader accountSelectProps={accountSelectProps} />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
@@ -77,13 +82,13 @@ const DappConnectScreen = () => {
         <MobileLayoutWrapperMainContent withScroll withHorizontalPadding={false}>
           <View style={styles.content}>
             <DAppConnectHeader
-              name={dappToConnect.name}
               id={dappToConnect.id}
               icon={dappToConnect.icon!}
               securityCheck={dappToConnect.blacklisted}
               isTrustedByUser={isTrustedByUser}
               isScamCheckerEnabled={isScamCheckerEnabled}
               isInAppCatalog={!dappToConnect.isCustom}
+              isImpersonating={!!impersonation}
             />
             <DAppConnectBody
               securityCheck={dappToConnect.blacklisted}
@@ -92,6 +97,8 @@ const DappConnectScreen = () => {
               onToggleTrust={toggleTrust}
               onEnableScamChecker={handleEnableScamChecker}
               isScamCheckerEnabled={isScamCheckerEnabled}
+              isInAppCatalog={!dappToConnect.isCustom}
+              impersonation={impersonation}
             />
           </View>
         </MobileLayoutWrapperMainContent>

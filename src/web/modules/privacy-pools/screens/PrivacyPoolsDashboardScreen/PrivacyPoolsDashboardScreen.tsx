@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Animated, View } from 'react-native'
+import { View } from 'react-native'
 
 import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
 import Alert from '@common/components/Alert'
@@ -12,20 +12,25 @@ import useRoute from '@common/hooks/useRoute'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import RecoveryPhraseBackupBanner from '@common/modules/dashboard/components/DashboardBanners/RecoveryPhraseBackupBanner'
-import { OVERVIEW_CONTENT_MAX_HEIGHT } from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
+import DashboardPagesCarousel from '@common/modules/dashboard/components/DashboardPagesCarousel'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import getDashboardStyles from '@common/modules/dashboard/screens/styles'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import PrivacyPoolsActivityPage from '@web/modules/privacy-pools/components/PrivacyPoolsActivityPage'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
-import PrivacyPoolsTokensPage from '@web/modules/privacy-pools/components/PrivacyPoolsTokensPage'
+import PrivacyPoolsTokensPage, {
+  PRIVACY_POOLS_TABS
+} from '@web/modules/privacy-pools/components/PrivacyPoolsTokensPage'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const SESSION_ID = 'privacy-pools-dashboard'
+
+// Both pages read what they show from the Privacy Pools hooks, so there is nothing to populate
+const noop = () => {}
 
 const selectDashboardNetworkFilter = (
   state: AllControllersMappingType['SelectedAccountController']
@@ -59,8 +64,6 @@ const PrivacyPoolsDashboardScreen = () => {
   const [openTab, setOpenTab] = useState<TabType>(() =>
     new URLSearchParams(route?.search).get('tab') === 'activity' ? 'activity' : 'tokens'
   )
-  // Nothing collapses here, but the dashboard's page lists expect this value
-  const animatedOverviewHeight = useMemo(() => new Animated.Value(OVERVIEW_CONTENT_MAX_HEIGHT), [])
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
     selectDashboardNetworkFilter
@@ -124,7 +127,7 @@ const PrivacyPoolsDashboardScreen = () => {
     )
   }, [depositableSymbols, t])
 
-  // Above the tabs of both pages, like the regular dashboard's banners
+  // Above the tabs row, in place of the regular dashboard's banners
   const banners = useMemo(
     () => (
       <View>
@@ -172,25 +175,25 @@ const PrivacyPoolsDashboardScreen = () => {
           onRefresh={syncAllChains}
           onSend={openSend}
         />
-        <PrivacyPoolsTokensPage
+        {/* Nothing collapses here, so the overview stays above the pages */}
+        <DashboardPagesCarousel
+          tabs={PRIVACY_POOLS_TABS}
+          banners={banners}
           openTab={openTab}
           setOpenTab={setOpenTab}
           sessionId={SESSION_ID}
-          animatedOverviewHeight={animatedOverviewHeight}
-          banners={banners}
-          balances={balances}
-          state={balancesState}
-          unavailableReason={unavailableReason}
-          isWaitingForBackup={!!selectedAccount && !isBackedUp}
-          networkFilterName={networkFilterName}
-        />
-        <PrivacyPoolsActivityPage
-          openTab={openTab}
-          setOpenTab={setOpenTab}
-          sessionId={SESSION_ID}
-          animatedOverviewHeight={animatedOverviewHeight}
-          banners={banners}
-        />
+          initAllTabs={noop}
+        >
+          <PrivacyPoolsTokensPage
+            openTab={openTab}
+            balances={balances}
+            state={balancesState}
+            unavailableReason={unavailableReason}
+            isWaitingForBackup={!!selectedAccount && !isBackedUp}
+            networkFilterName={networkFilterName}
+          />
+          <PrivacyPoolsActivityPage openTab={openTab} />
+        </DashboardPagesCarousel>
       </View>
     </LayoutWrapper>
   )

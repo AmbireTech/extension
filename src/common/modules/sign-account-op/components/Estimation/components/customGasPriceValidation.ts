@@ -8,8 +8,14 @@ export type CustomGasPriceField = 'maxFeePerGas' | 'maxPriorityFeePerGas' | 'gas
  * - `invalid` - the value is empty, is not a number, or is not greater than 0
  * - `tooManyDecimals` - the fee has more decimals than gwei allows (the smallest unit is 1 wei)
  * - `aboveMaxFee` - the max priority fee is higher than the max fee per gas
+ * - `belowSpeedUpMinimum` - when speeding up a transaction, the fee is lower than the minimum
+ *   the network needs to accept the replacement (see `speedUpMinFees`)
  */
-export type CustomGasPriceErrorReason = 'invalid' | 'tooManyDecimals' | 'aboveMaxFee'
+export type CustomGasPriceErrorReason =
+  | 'invalid'
+  | 'tooManyDecimals'
+  | 'aboveMaxFee'
+  | 'belowSpeedUpMinimum'
 
 /** The validation errors, one per field, so that each input shows only its own error. */
 export type CustomGasPriceErrors = Partial<Record<CustomGasPriceField, CustomGasPriceErrorReason>>
@@ -30,6 +36,8 @@ type CustomGasPriceInput = {
   gas: string
   is1559: boolean
   canSetCustomGas: boolean
+  /** When speeding up a transaction, the lowest fees (in wei) the network accepts as a replacement */
+  speedUpMinFees?: { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint }
 }
 
 /** The max number of decimals a fee in gwei can have, because 1 gwei = 10^9 wei. */
@@ -79,13 +87,18 @@ export const validateCustomGasPrice = ({
   maxPriorityFeePerGas,
   gas,
   is1559,
-  canSetCustomGas
+  canSetCustomGas,
+  speedUpMinFees
 }: CustomGasPriceInput): { errors: CustomGasPriceErrors; values: CustomGasPriceValues | null } => {
   const errors: CustomGasPriceErrors = {}
 
   const normalizedMaxFeePerGas = normalizeCustomGasValue(maxFeePerGas)
   const parsedMaxFeePerGas = parsePositiveGwei(normalizedMaxFeePerGas)
-  if (parsedMaxFeePerGas === null) errors.maxFeePerGas = getGweiErrorReason(normalizedMaxFeePerGas)
+  if (parsedMaxFeePerGas === null) {
+    errors.maxFeePerGas = getGweiErrorReason(normalizedMaxFeePerGas)
+  } else if (speedUpMinFees && parsedMaxFeePerGas < speedUpMinFees.maxFeePerGas) {
+    errors.maxFeePerGas = 'belowSpeedUpMinimum'
+  }
 
   const normalizedMaxPriorityFeePerGas = normalizeCustomGasValue(maxPriorityFeePerGas)
   const parsedMaxPriorityFeePerGas = is1559 ? parsePositiveGwei(normalizedMaxPriorityFeePerGas) : 0n
@@ -93,6 +106,12 @@ export const validateCustomGasPrice = ({
     errors.maxPriorityFeePerGas = getGweiErrorReason(normalizedMaxPriorityFeePerGas)
   } else if (parsedMaxFeePerGas !== null && parsedMaxPriorityFeePerGas > parsedMaxFeePerGas) {
     errors.maxPriorityFeePerGas = 'aboveMaxFee'
+  } else if (
+    is1559 &&
+    speedUpMinFees &&
+    parsedMaxPriorityFeePerGas < speedUpMinFees.maxPriorityFeePerGas
+  ) {
+    errors.maxPriorityFeePerGas = 'belowSpeedUpMinimum'
   }
 
   const parsedGas = canSetCustomGas ? parsePositiveWholeNumber(normalizeCustomGasValue(gas)) : null

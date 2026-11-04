@@ -67,6 +67,7 @@ Option.displayName = 'Option'
 const MenuOption = React.memo(
   ({
     item,
+    sectionIndex,
     index,
     height,
     isSelected,
@@ -78,19 +79,22 @@ const MenuOption = React.memo(
     size,
     mode
   }: {
+    sectionIndex: number
     index: number
     item: SelectValue
     height?: number
     isSelected: boolean
     isHighlighted: boolean
     onPress: (item: SelectValue) => void
-    onHoverIn: (index: number) => void
+    // Stable across rows; the row builds its own call so the list does not pass a new handler
+    // per row on every render, which would defeat this `React.memo`
+    onHoverIn: (index: { sectionIndex: number; optionIndex: number }) => void
     onHoverOut: () => void
     disabled?: boolean
     size: SelectProps['size']
     mode: SelectProps['mode']
   }) => {
-    const { theme, styles, themeType } = useTheme(getStyles)
+    const { theme, styles } = useTheme(getStyles)
 
     const onPressWrapped = useCallback(() => {
       if (disabled) return
@@ -99,8 +103,8 @@ const MenuOption = React.memo(
     }, [onPress, item, disabled])
 
     const handleHoverIn = useCallback(() => {
-      !!onHoverIn && onHoverIn(index)
-    }, [index, onHoverIn])
+      !!onHoverIn && onHoverIn({ sectionIndex, optionIndex: index })
+    }, [sectionIndex, index, onHoverIn])
 
     return (
       <Pressable
