@@ -167,9 +167,10 @@ const PrivacyPoolsHistoryDetailsSheet: FC<Props> = ({
   )
 
   const getReviewStatus = () => {
-    if (entry.isUnderReview)
+    if (entry.status === 'pending')
       return { text: t('Being verified'), appearance: 'warningText' as const }
-    if (entry.isApproved) return { text: t('Approved'), appearance: 'successText' as const }
+    if (entry.status === 'approved')
+      return { text: t('Approved'), appearance: 'successText' as const }
 
     // Taken back, or newer than the notes it was checked against: not known yet
     return null

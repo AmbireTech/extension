@@ -103,7 +103,7 @@ const PrivacyPoolsHistoryItem: FC<Props> = ({ entry, style }) => {
         {...bindAnim}
       >
         <View style={[styles.header, spacings.phSm]}>
-          {entry.isUnderReview ? (
+          {entry.status === 'pending' ? (
             <Badge
               size="md"
               type="warning"
