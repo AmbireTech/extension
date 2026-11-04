@@ -1,0 +1,3 @@
+import PrivacyPoolsTokenDetailsScreen from './PrivacyPoolsTokenDetailsScreen'
+
+export default PrivacyPoolsTokenDetailsScreen
