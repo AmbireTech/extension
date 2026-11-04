@@ -6,7 +6,9 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
-import useCallSignAccountOpMethod, { getSignAccountOpType } from '@common/hooks/useCallSignAccountOpMethod'
+import useCallSignAccountOpMethod, {
+  getSignAccountOpType
+} from '@common/hooks/useCallSignAccountOpMethod'
 import useController from '@common/hooks/useController'
 import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
@@ -302,11 +304,7 @@ const useSign = ({
         // Pass the id of the accountOp the user is reviewing on screen. The
         // background compares it against the live accountOp before signing to
         // reject signing calls that were appended after this review.
-        args: [
-          signAccountOpType,
-          signAccountOpState.fromRequestId,
-          signAccountOpState.accountOp.id
-        ]
+        args: [signAccountOpType, signAccountOpState.fromRequestId, signAccountOpState.accountOp.id]
       }
     })
   }, [mainControllerDispatch, signAccountOpState, signAccountOpType])
