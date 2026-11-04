@@ -140,7 +140,7 @@ const SendToken: FC<Props> = ({
     [amountAdjustmentInfo]
   )
 
-  const nonEmptySections = sections?.filter((s) => s.data.length > 0)
+  const nonEmptySections = useMemo(() => sections?.filter((s) => s.data.length > 0), [sections])
 
   // The slider moves whichever amount the field is currently showing, so its axis is the token's
   // own balance in token mode and that same balance priced in USD in fiat mode.
