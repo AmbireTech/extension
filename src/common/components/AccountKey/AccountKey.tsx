@@ -317,7 +317,7 @@ const AccountKey: React.FC<Props> = ({
         >
           <WarningIcon width={14} height={14} color={theme.warningText} />
           <Text fontSize={12} weight="medium" color={theme.warningText} style={spacings.mlMi}>
-            {t("{{device}} can't sign on this device", {
+            {t("{{device}} key can't sign on this device", {
               device: type && type !== 'internal' ? HARDWARE_WALLET_DEVICE_NAMES[type] : type
             })}
           </Text>
