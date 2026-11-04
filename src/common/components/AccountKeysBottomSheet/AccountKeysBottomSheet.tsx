@@ -45,12 +45,16 @@ const AccountKeysBottomSheet: FC<Props> = ({
       sheetRef={sheetRef}
       animationDuration={isWeb ? 0 : undefined}
       closeBottomSheet={closeBottomSheet}
-      scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+      // A sheet as tall as its keys in the popup and narrow windows, so a single key doesn't
+      // leave it mostly empty. In a wide tab it keeps a fixed minimum height
+      scrollViewProps={isWeb && !isFullWidth ? { contentContainerStyle: { flex: 1 } } : undefined}
       isScrollEnabled={false}
-      containerInnerWrapperStyles={{ flex: 1 }}
+      containerInnerWrapperStyles={isWeb && isFullWidth ? undefined : { flex: 1 }}
       style={
         isWeb
-          ? { ...(!isFullWidth && { maxWidth: 432 }), minHeight: 432, ...spacings.pvLg }
+          ? isFullWidth
+            ? spacings.pvLg
+            : { maxWidth: 432, minHeight: 432, ...spacings.pvLg }
           : undefined
       }
       shouldBeClosableOnDrag={isMobile}

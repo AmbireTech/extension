@@ -54,7 +54,8 @@ const AccountKeys: FC<Props> = ({
   const { t } = useTranslation()
   // Full width in the popup and in a narrow window, like the keys sheet they open from
   const { isNarrowWebLayout } = useCompactLayout()
-  const sheetMaxWidth = getUiType().isPopup || isNarrowWebLayout ? {} : { maxWidth: 432 }
+  const isFullWidthSheet = getUiType().isPopup || isNarrowWebLayout
+  const sheetMaxWidth = isFullWidthSheet ? {} : { maxWidth: 432 }
   const selectAccountState = useCallback(
     (state: AllControllersMappingType['AccountsController']) =>
       state.accountStates?.[account.addr] || null,
@@ -235,7 +236,9 @@ const AccountKeys: FC<Props> = ({
   }, [closeRemoveKey, handleExportKeyPress, keyToRemove, keys])
 
   return (
-    <View style={isWeb ? { maxHeight: 384, flex: 1 } : undefined}>
+    // In a full width web sheet, the sheet takes the height of this view rather than filling
+    // a fixed one, see `AccountKeysBottomSheet`
+    <View style={isWeb ? { maxHeight: 384, ...(!isFullWidthSheet && flexbox.flex1) } : undefined}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
         {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
         <PanelTitle
@@ -249,7 +252,7 @@ const AccountKeys: FC<Props> = ({
       </View>
       <ScrollView
         bounces={isMobile}
-        style={[!!withAlert && spacings.mb, isWeb && flexbox.flex1]}
+        style={[!!withAlert && spacings.mb, isWeb && !isFullWidthSheet && flexbox.flex1]}
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={isWeb}
       >
