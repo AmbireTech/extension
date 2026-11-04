@@ -310,7 +310,7 @@ const SendForm = ({
       <View>
         {!isTopUp && !!privacyPoolsRecipient && (
           <PrivacyPoolsRecipient
-            label={privacyPoolsRecipientAccount?.label || t('Privacy Pools account')}
+            label={privacyPoolsRecipientAccount?.name || t('Privacy Pools account')}
             onClear={clearPrivacyPoolsRecipient}
           />
         )}

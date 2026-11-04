@@ -114,9 +114,9 @@ const PrivacyPoolsAccountRow = ({
           <PrivacyPoolsAccountAvatar size={ACCOUNT_AVATAR_SIZE} style={spacings.mrTy} />
           <View style={[flexbox.flex1, flexbox.justifyCenter]}>
             <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
-              {t('Private account')}
+              {account.name}
             </Text>
-            {/* The account has no name or address of its own, so its recovery phrase tells it apart */}
+            {/* The account has no address of its own, so its recovery phrase tells it apart */}
             <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
               {t('Added from {{seedLabel}}', { seedLabel: account.label })}
             </Text>

@@ -24,19 +24,18 @@ const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => 
 type Props = {
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
-  /** Called once the new account is added and selected. */
-  onAdded: () => void
 }
 
-/** Adds a Privacy Pools account from a stored recovery phrase (one per phrase) or a new one. */
-const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded }: Props) => {
+/**
+ * Adds a Privacy Pools account from a stored recovery phrase (one per phrase) or a new one, by
+ * way of the personalize step.
+ */
+const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { state: seeds } = useController('KeystoreController', selectSeeds)
   const { accounts } = usePrivacyPoolsAccounts()
-  const { addFromStoredSeed, addFromNewSeed, pending, canAdd } = useAddPrivacyPoolsAccount({
-    onAdded
-  })
+  const { addFromStoredSeed, addFromNewSeed } = useAddPrivacyPoolsAccount()
 
   const seedIdsWithAccount = useMemo(
     () => new Set(accounts.map(({ seedId }) => seedId)),
@@ -48,20 +47,15 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
       <View style={styles.footer}>
         <View style={styles.footerDivider} />
         <Option
-          text={
-            pending?.kind === 'new-seed'
-              ? t('Creating a new recovery phrase...')
-              : t('Create new recovery phrase for it')
-          }
+          text={t('Create new recovery phrase for it')}
           icon={AddCircularIcon}
           onPress={addFromNewSeed}
-          disabled={!canAdd}
           testID="add-privacy-pools-account-new-seed"
           status="none"
         />
       </View>
     ),
-    [addFromNewSeed, canAdd, pending, styles.footer, styles.footerDivider, t]
+    [addFromNewSeed, styles.footer, styles.footerDivider, t]
   )
 
   return (
@@ -80,7 +74,6 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
 
       {(seeds || []).map((seed) => {
         const hasAccount = seedIdsWithAccount.has(seed.id)
-        const isAddingThis = pending?.kind === 'stored-seed' && pending.seedId === seed.id
 
         return (
           <View key={seed.id} style={[styles.seedRow, hasAccount && styles.seedRowWithAccount]}>
@@ -100,13 +93,12 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
             ) : (
               <Button
                 testID={`add-privacy-pools-account-${seed.id}`}
-                text={isAddingThis ? t('Adding...') : t('Add')}
+                text={t('Add')}
                 size="small"
                 type="outline"
                 style={styles.addButton}
                 textStyle={styles.addButtonText}
                 hasBottomSpacing={false}
-                disabled={!canAdd}
                 onPress={() => addFromStoredSeed(seed.id)}
               />
             )}

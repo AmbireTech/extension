@@ -24,7 +24,10 @@ export const ACCOUNT_NAME_MAX_LENGTH = 40
 const WIDE_MODAL_STYLE: ViewStyle = { maxWidth: 400, ...spacings.pvLg, ...spacings.phLg }
 
 type Props = {
-  account: Account
+  /** Missing for an account without an address (Privacy Pools), which `identity` shows instead */
+  account?: Account
+  /** Shown in place of the account's avatar and address */
+  identity?: React.ReactNode
   /** The name as currently stored, which the input starts with */
   currentName: string
   /**
@@ -43,6 +46,7 @@ type Props = {
  */
 const EditAccountNameBottomSheet = ({
   account,
+  identity,
   currentName,
   onSave,
   onClosed,
@@ -136,16 +140,22 @@ const EditAccountNameBottomSheet = ({
         {t('Edit account name')}
       </Text>
       <View style={[flexbox.alignCenter, spacings.mbXl]}>
-        <Avatar
-          address={account.addr}
-          pfp={account.preferences.pfp}
-          smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
-          size={48}
-          style={spacings.mbSm}
-        />
-        <Text fontSize={12} appearance="secondaryText" selectable style={text.center}>
-          {account.addr}
-        </Text>
+        {account ? (
+          <>
+            <Avatar
+              address={account.addr}
+              pfp={account.preferences.pfp}
+              smartAccountType={(account.creation && 'Ambire') || (account.safeCreation && 'Safe')}
+              size={48}
+              style={spacings.mbSm}
+            />
+            <Text fontSize={12} appearance="secondaryText" selectable style={text.center}>
+              {account.addr}
+            </Text>
+          </>
+        ) : (
+          identity
+        )}
       </View>
       <Input
         defaultValue={currentName}

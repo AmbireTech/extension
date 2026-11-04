@@ -8,13 +8,15 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 /** A Privacy Pools account resolved against its recovery phrase, for display. */
 export type PrivacyPoolsAccountDisplay = {
   seedId: string
-  /** Its recovery phrase's label - the account has no name or address of its own. */
+  /** The name the user gave it, or "Private account" for one added before accounts had names */
+  name: string
+  /** Its recovery phrase's label - the account has no address of its own. */
   label: string
   /** Whether its recovery phrase is backed up - the only way to recover the account. */
   isBackedUp: boolean
 }
 
-/** Filters accounts by label and kind - they have no address or key to search by. */
+/** Filters accounts by name, label and kind - they have no address or key to search by. */
 export const filterPrivacyPoolsAccountsBySearch = (
   accounts: PrivacyPoolsAccountDisplay[],
   search: string,
@@ -24,7 +26,9 @@ export const filterPrivacyPoolsAccountsBySearch = (
   const query = search.trim().toLowerCase()
   if (!query) return accounts
 
-  return accounts.filter(({ label }) => `${label} ${kindLabel}`.toLowerCase().includes(query))
+  return accounts.filter(({ name, label }) =>
+    `${name} ${label} ${kindLabel}`.toLowerCase().includes(query)
+  )
 }
 
 const selectPrivacyPoolsAccounts = (state: AllControllersMappingType['PrivacyPoolsController']) =>
@@ -52,11 +56,12 @@ const usePrivacyPoolsAccounts = () => {
 
   const accounts: PrivacyPoolsAccountDisplay[] = useMemo(
     () =>
-      (privacyPoolsAccounts || []).map(({ seedId }) => {
+      (privacyPoolsAccounts || []).map(({ seedId, label: name }) => {
         const seed = (seeds || []).find(({ id }) => id === seedId)
 
         return {
           seedId,
+          name: name || t('Private account'),
           label: seed?.label || t('Privacy Pools account'),
           isBackedUp: !seed?.notBackedUp
         }

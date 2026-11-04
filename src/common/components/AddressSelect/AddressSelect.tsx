@@ -427,9 +427,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const privacyPoolsAccountOptions = useMemo(
     () =>
-      filteredPrivacyPoolsAccounts.map(({ seedId, label }) => ({
+      filteredPrivacyPoolsAccounts.map(({ seedId, name, label }) => ({
         value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
-        // Named like in the accounts list: the account has no name or address of its own
+        // Named like in the accounts list: the account has no address of its own
         label: (
           <View
             testID={`address-book-privacy-pools-account-${seedId}`}
@@ -438,7 +438,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
             <View style={flexbox.flex1}>
               <Text fontSize={14} weight="medium" numberOfLines={1}>
-                {t('Private account')}
+                {name}
               </Text>
               <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
                 {t('Added from {{seedLabel}}', { seedLabel: label })}

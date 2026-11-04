@@ -24,7 +24,6 @@ import Option from '@common/components/Option'
 import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useNavigation from '@common/hooks/useNavigation'
 import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
@@ -86,13 +85,6 @@ const AddAccount = ({
     close: closePrivacyPoolsBottomSheet
   } = useModalize()
   const { state: seeds } = useController('KeystoreController', selectSeeds)
-  const { navigate } = useNavigation()
-
-  const handlePrivacyPoolsAccountAdded = useCallback(() => {
-    closePrivacyPoolsBottomSheet()
-    closeBottomSheet()
-    navigate(ROUTES.dashboard)
-  }, [closeBottomSheet, closePrivacyPoolsBottomSheet, navigate])
 
   const optionsHW = useMemo(() => {
     if (isMobile)
@@ -326,7 +318,6 @@ const AddAccount = ({
         <AddPrivacyPoolsAccountBottomSheet
           sheetRef={privacyPoolsSheetRef}
           closeBottomSheet={closePrivacyPoolsBottomSheet}
-          onAdded={handlePrivacyPoolsAccountAdded}
         />
       )}
       <SavedSeedPhrasesBottomSheet

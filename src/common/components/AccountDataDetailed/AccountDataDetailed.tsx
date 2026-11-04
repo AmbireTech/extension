@@ -71,7 +71,7 @@ const AccountDataDetailed = () => {
               numberOfLines={1}
               style={[spacings.mrTy, isNarrowWebLayout && { flexShrink: 1, minWidth: 0 }]}
             >
-              {privacyPoolsAccount.label}
+              {privacyPoolsAccount.name}
             </Text>
             <BadgeWithPreset preset="privacy-pools" withRightSpacing={false} />
           </View>
