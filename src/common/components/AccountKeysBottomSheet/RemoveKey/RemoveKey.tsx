@@ -37,6 +37,8 @@ interface Props {
 }
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 const selectUnsupportedKeys = (state: AllControllersMappingType['KeystoreController']) =>
   state.unsupportedKeys
@@ -55,6 +57,12 @@ type AffectedAccount = {
   becomesViewOnly: boolean
 }
 
+/** What the sheet shows, kept as it was before the removal while the sheet closes */
+type RemovalPreview = {
+  storedKey: Key | undefined
+  affectedAccounts: AffectedAccount[]
+}
+
 /** Asks the user to confirm removing a key from every account it signs for. */
 const RemoveKey: FC<Props> = ({
   keyToRemove,
@@ -67,24 +75,36 @@ const RemoveKey: FC<Props> = ({
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const { state: keys } = useController('KeystoreController', selectKeys)
   const { state: unsupportedKeys } = useController('KeystoreController', selectUnsupportedKeys)
   const { state: seeds } = useController('KeystoreController', selectSeeds)
   const { dispatchAndWait: mainDispatchAndWait } = useController('MainController')
   const [hasBackup, setHasBackup] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
+  const [previewBeforeRemoval, setPreviewBeforeRemoval] = useState<RemovalPreview | null>(null)
 
-  const storedKey = useMemo(
+  const liveStoredKey = useMemo(
     () => [...keys, ...unsupportedKeys].find((key) => isSameKey(key, keyToRemove)),
     [keyToRemove, keys, unsupportedKeys]
   )
 
-  const affectedAccounts: AffectedAccount[] = useMemo(
+  const liveAffectedAccounts: AffectedAccount[] = useMemo(
     () =>
       accounts
-        .filter((account) => account.associatedKeys.includes(keyToRemove.addr))
         .map((account) => {
-          const accountKeys = keys.filter((key) => account.associatedKeys.includes(key.addr))
+          // The on-chain signers too, like the keys sheet, as a Safe can get owners after import
+          const onchainKeyAddrs = Object.values(accountStates?.[account.addr] || {}).flatMap(
+            (state) => state.associatedKeys
+          )
+          const keyAddrs = new Set(
+            [...account.associatedKeys, ...onchainKeyAddrs].map((addr) => addr.toLowerCase())
+          )
+          return { account, keyAddrs }
+        })
+        .filter(({ keyAddrs }) => keyAddrs.has(keyToRemove.addr.toLowerCase()))
+        .map(({ account, keyAddrs }) => {
+          const accountKeys = keys.filter((key) => keyAddrs.has(key.addr.toLowerCase()))
           const remainingKeys = accountKeys.filter((key) => !isSameKey(key, keyToRemove))
           const keysLeft = account.safeCreation
             ? new Set(remainingKeys.map((key) => key.addr)).size
@@ -92,8 +112,14 @@ const RemoveKey: FC<Props> = ({
 
           return { account, keysLeft, becomesViewOnly: !!accountKeys.length && !keysLeft }
         }),
-    [accounts, keyToRemove, keys]
+    [accounts, accountStates, keyToRemove, keys]
   )
+
+  // Once removed, the key is gone from the state while the sheet is still closing
+  const { storedKey, affectedAccounts } = previewBeforeRemoval || {
+    storedKey: liveStoredKey,
+    affectedAccounts: liveAffectedAccounts
+  }
 
   const isPrivateKey = keyToRemove.type === 'internal'
   // A key derived from a recovery phrase saved in the app can be added again from it
@@ -128,22 +154,36 @@ const RemoveKey: FC<Props> = ({
 
   const handleRemove = useCallback(async () => {
     setIsRemoving(true)
+    setPreviewBeforeRemoval({ storedKey: liveStoredKey, affectedAccounts: liveAffectedAccounts })
     try {
       const isRemoved = await mainDispatchAndWait<'deleteKey', boolean>({
         type: 'method',
         params: { method: 'deleteKey', args: [keyToRemove.addr, keyToRemove.type] }
       })
-      if (!isRemoved) return
-      addToast(t('Key removed'), { type: 'success' })
-      onRemoved()
+      // Stays disabled while the sheet closes, so the key can't be removed twice
+      if (isRemoved) {
+        addToast(t('Key removed'), { type: 'success' })
+        onRemoved()
+        return
+      }
+      // The keystore's error is silent in production, e.g. when another keystore action is running
+      addToast(t('The key could not be removed. Please try again.'), { type: 'error' })
     } catch (error) {
-      // The keystore emits its own error. This only times out when the app doesn't reply
+      // This only times out when the app doesn't reply
       console.error(error)
       addToast(t('The key could not be removed. Please try again.'), { type: 'error' })
-    } finally {
-      setIsRemoving(false)
     }
-  }, [addToast, keyToRemove, mainDispatchAndWait, onRemoved, t])
+    setPreviewBeforeRemoval(null)
+    setIsRemoving(false)
+  }, [
+    addToast,
+    keyToRemove,
+    liveAffectedAccounts,
+    liveStoredKey,
+    mainDispatchAndWait,
+    onRemoved,
+    t
+  ])
 
   return (
     <View>
