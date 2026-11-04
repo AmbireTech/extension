@@ -5,12 +5,16 @@ import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import RetryIcon from '@common/assets/svg/RetryIcon'
 import Alert from '@common/components/Alert'
-import useCallSignAccountOpMethod from '@common/hooks/useCallSignAccountOpMethod'
+import useCallSignAccountOpMethod, {
+  getSignAccountOpType
+} from '@common/hooks/useCallSignAccountOpMethod'
+import type { Props as EstimationProps } from '@common/modules/sign-account-op/components/Estimation/types'
 import spacings from '@common/styles/spacings'
 
 const BundlerWarning = ({
   signAccountOpState,
   bundlerNonceDiscrepancy,
+  updateType,
   hasMarginTop
 }: {
   signAccountOpState: ISignAccountOpController | null
@@ -19,9 +23,10 @@ const BundlerWarning = ({
     title: string
     text?: string
   }
+  updateType: EstimationProps['updateType']
   hasMarginTop?: boolean
 }) => {
-  const callSignAccountOpMethod = useCallSignAccountOpMethod(signAccountOpState?.type)
+  const callSignAccountOpMethod = useCallSignAccountOpMethod(getSignAccountOpType(updateType))
   const { t } = useTranslation()
 
   if (!bundlerNonceDiscrepancy || !signAccountOpState) return null
@@ -39,9 +44,7 @@ const BundlerWarning = ({
         text: t('Retry'),
         childrenPosition: 'left',
         children: <RetryIcon width={14} height={14} style={spacings.mrMi} />,
-        onPress: () => {
-          callSignAccountOpMethod('retry', ['simulate'])
-        },
+        onPress: () => callSignAccountOpMethod('retry', ['simulate']),
         disabled: signAccountOpState.estimation.status === EstimationStatus.Loading
       }}
     />

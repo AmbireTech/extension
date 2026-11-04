@@ -1,9 +1,7 @@
 import React, { Suspense, useCallback } from 'react'
 import { useModalize } from 'react-native-modalize'
 
-import { Key } from '@ambire-common/interfaces/keystore'
-import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
-import useCallSignAccountOpMethod from '@common/hooks/useCallSignAccountOpMethod'
+import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
 import OneClickEstimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 
@@ -20,17 +18,6 @@ type Props = {
  */
 const SafeOwnerApprovalSheet = ({ approval, onClose, Modals }: Props) => {
   const { ref: sheetRef, close: closeSheet } = useModalize()
-  const callApprovalMethod = useCallSignAccountOpMethod('safe-owner-approval')
-
-  const handleUpdateStatus = useCallback(
-    (status: SigningStatus) => callApprovalMethod('updateStatus', [status]),
-    [callApprovalMethod]
-  )
-  const updateController = useCallback(
-    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) =>
-      callApprovalMethod('update', [params]),
-    [callApprovalMethod]
-  )
   const handleClose = useCallback(() => {
     closeSheet()
     onClose()
@@ -44,8 +31,6 @@ const SafeOwnerApprovalSheet = ({ approval, onClose, Modals }: Props) => {
       estimationModalRef={sheetRef}
       closeEstimationModal={handleClose}
       onEstimationModalClosed={onClose}
-      updateController={updateController}
-      handleUpdateStatus={handleUpdateStatus}
       hasProceeded
       signAccountOpController={approval}
       shouldShowTxnDetails

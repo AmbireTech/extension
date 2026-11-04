@@ -1,6 +1,7 @@
 import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
+import { getDomain } from 'tldts'
 
 import { DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
@@ -12,7 +13,6 @@ import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import useWindowSize from '@common/hooks/useWindowSize'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -21,6 +21,8 @@ import getStyles from './styles'
 import TrustedIcon from './TrustedIcon'
 
 type Props = Partial<DappProviderRequest['session']> & {
+  /** Defaults to "Connection request from" */
+  title?: string
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
   isTrustedByUser?: boolean
@@ -31,17 +33,35 @@ type Props = Partial<DappProviderRequest['session']> & {
    * the app isn't known to be malicious, not that it's verified.
    */
   isInAppCatalog?: boolean
+  /** Whether the site pretends to be a well-known app it is not */
+  isImpersonating?: boolean
+}
+
+/**
+ * Splits a hostname into its subdomain part and its root domain (e.g. "app." and "uniswap.org"),
+ * so the root domain - the part a phishing site can't fake in the browser - can be shown more
+ * prominently.
+ * When there is no root domain (localhost, IP address, internal), the whole id is the root domain.
+ */
+const splitByRootDomain = (id: string) => {
+  const rootDomain = getDomain(id)
+  if (!rootDomain || rootDomain === id || !id.endsWith(`.${rootDomain}`)) {
+    return { subdomainPrefix: '', rootDomain: id }
+  }
+
+  return { subdomainPrefix: id.slice(0, id.length - rootDomain.length), rootDomain }
 }
 
 const DAppConnectHeader: FC<Props> = ({
   id,
-  name = 'Unknown App',
   icon,
+  title,
   responsiveSizeMultiplier = 1,
   securityCheck,
   isTrustedByUser = false,
   isScamCheckerEnabled = true,
-  isInAppCatalog
+  isInAppCatalog,
+  isImpersonating = false
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -52,8 +72,9 @@ const DAppConnectHeader: FC<Props> = ({
     isScamCheckerEnabled && securityCheck === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
   const isBlacklisted = isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
   const hasFailedToGet = isScamCheckerEnabled && securityCheck === 'FAILED_TO_GET'
+  const hasWarning = isSuspiciousHosting || hasFailedToGet || isImpersonating
 
-  const { minHeightSize } = useWindowSize()
+  const { subdomainPrefix, rootDomain } = useMemo(() => splitByRootDomain(id ?? ''), [id])
 
   const spacingsStyle = useMemo(() => {
     return {
@@ -70,7 +91,7 @@ const DAppConnectHeader: FC<Props> = ({
         {
           backgroundColor: isBlacklisted
             ? theme.errorBackground
-            : isSuspiciousHosting || hasFailedToGet
+            : hasWarning
               ? theme.warningBackground
               : theme.tertiaryBackground
         },
@@ -88,7 +109,7 @@ const DAppConnectHeader: FC<Props> = ({
           isMobile && text.center
         ]}
       >
-        {t('Connection request from')}
+        {title ?? t('Connection request from')}
       </Text>
       <View style={[isWeb && flexbox.directionRow, flexbox.alignCenter]}>
         <View style={[isWeb && spacings.mr, isMobile && spacings.mbTy]}>
@@ -138,7 +159,7 @@ const DAppConnectHeader: FC<Props> = ({
               <ErrorFilledIcon width={18} height={18} />
             </View>
           )}
-          {(isSuspiciousHosting || hasFailedToGet) && (
+          {hasWarning && (
             <View
               style={{
                 position: 'absolute',
@@ -151,25 +172,30 @@ const DAppConnectHeader: FC<Props> = ({
           )}
         </View>
         <View style={isWeb ? flexbox.flex1 : { flexGrow: 1 }}>
+          {/* Only the domain is shown - the name is chosen by the site itself, so a phishing site
+              can simply copy it. In the browser the domain can't be faked, but over WalletConnect
+              it is declared by the app itself as well */}
           <Text
-            style={[
-              isWeb && !minHeightSize('m') && spacings.mbMi,
-              isWeb && flexbox.flex1,
-              { lineHeight: 23 },
-              isMobile && text.center
-            ]}
             fontSize={responsiveSizeMultiplier * 20}
             weight="semiBold"
-            numberOfLines={2}
+            style={[
+              isWeb && {
+                // @ts-expect-error web-only style for wrapping long domains
+                wordBreak: 'break-all'
+              },
+              isMobile && text.center
+            ]}
           >
-            {name}
-          </Text>
-          <Text
-            fontSize={14 * responsiveSizeMultiplier}
-            appearance="secondaryText"
-            style={isMobile && text.center}
-          >
-            {id}
+            {!!subdomainPrefix && (
+              <Text
+                fontSize={responsiveSizeMultiplier * 20}
+                weight="medium"
+                appearance="secondaryText"
+              >
+                {subdomainPrefix}
+              </Text>
+            )}
+            {rootDomain}
           </Text>
         </View>
       </View>

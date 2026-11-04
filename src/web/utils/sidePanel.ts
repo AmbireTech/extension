@@ -81,6 +81,45 @@ export const openFirefoxSidebarFromUserGesture = async () => {
   await getFirefoxSidebarApi()?.open()
 }
 
+/**
+ * Whether the toolbar action opens the Chrome side panel (side panel mode). False outside Chrome
+ * and where the browser can't tell.
+ */
+export const isChromeSidePanelModeEnabled = async () => {
+  const behavior = await getChromeSidePanelApi()?.getPanelBehavior?.()
+
+  return !!behavior?.openPanelOnActionClick
+}
+
+// Chrome 116+, missing from the installed `chrome` types
+type ChromeRuntimeWithContexts = {
+  getContexts?: (filter: {
+    contextTypes: 'SIDE_PANEL'[]
+    windowIds: number[]
+  }) => Promise<unknown[]>
+}
+
+/**
+ * Opens the Chrome side panel in this page's window, unless it is open there already. Chrome
+ * allows opening it from an extension page only shortly after a user gesture there, so this must
+ * be called from the UI soon after the click.
+ */
+export const openChromeSidePanelFromPage = async () => {
+  const sidePanelApi = getChromeSidePanelApi()
+  if (!sidePanelApi) return
+
+  const { id: windowId } = await browser.windows.getCurrent()
+  if (windowId === undefined) return
+
+  const openPanels = await (chrome.runtime as ChromeRuntimeWithContexts).getContexts?.({
+    contextTypes: ['SIDE_PANEL'],
+    windowIds: [windowId]
+  })
+  if (openPanels?.length) return
+
+  await sidePanelApi.open({ windowId })
+}
+
 export const EXTENSION_OVERLAY_PORT_NAMES = ['popup', 'side-panel'] as const
 
 export type ExtensionOverlayPortName = (typeof EXTENSION_OVERLAY_PORT_NAMES)[number]

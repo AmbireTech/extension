@@ -2,10 +2,10 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
-import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -33,20 +33,19 @@ const StakingApy = () => {
 
   const stakingApyTooltipContent = useMemo(
     () => (
-      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap]}>
-        <Text fontSize={14} appearance="secondaryText">
-          {t('Currently')}{' '}
-        </Text>
-        <HoverablePressable onPress={handleOpenStakingApyProposal}>
-          <Text fontSize={14} weight="medium" appearance="primary">
-            {t('voted by the DAO')}
-          </Text>
-        </HoverablePressable>
-        <Text fontSize={14} appearance="secondaryText">
-          {' '}
-          {t('as a fair staking incentive')}
-        </Text>
-      </View>
+      <Text fontSize={14} appearance="secondaryText">
+        {t('Currently')}{' '}
+        <Text
+          fontSize={14}
+          weight="medium"
+          appearance="primary"
+          onPress={handleOpenStakingApyProposal}
+          style={isWeb ? { cursor: 'pointer' } : undefined}
+        >
+          {t('voted by the DAO')}
+        </Text>{' '}
+        {t('as a fair staking incentive')}
+      </Text>
     ),
     [handleOpenStakingApyProposal, t]
   )

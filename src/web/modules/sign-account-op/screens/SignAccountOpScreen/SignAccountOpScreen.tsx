@@ -21,6 +21,7 @@ import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwnerApprovalSheet, {
   useSafeOwnerApproval
@@ -184,6 +185,8 @@ const SignAccountOpScreen = () => {
 
   const shouldRejectOnchain = useMemo(() => {
     if (!signAccountOpState?.account.safeCreation) return false
+    // re-sending an already sent transaction is simply dropped, the sent one stays as it is
+    if (signAccountOpState.accountOp.meta?.isResend) return false
     // A speed up reuses the signatures of the pending transaction it replaces, and a cancel
     // replaces it with an empty transaction, so rejecting either only closes the request.
     // The pending transaction itself is left as it is
@@ -581,6 +584,7 @@ const SignAccountOpScreen = () => {
                     chainId={signAccountOpState?.accountOp?.chainId}
                   />
                 )}
+                <EarlierPendingTransaction style={spacings.mt} />
               </>
             ) : (
               // The Hashes/Parsed/Raw sub-tabs are flattened into SafeAccountTabs above, so the

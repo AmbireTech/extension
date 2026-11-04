@@ -1,3 +1,4 @@
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 import { ActivityResponse } from '@legends/contexts/activityContext/types'
 
@@ -6,7 +7,7 @@ const getRecentActivity = async (connectedAccount: string) => {
   try {
     if (!connectedAccount) return null
 
-    const activityResponse = await fetch(
+    const activityResponse = await fetchWithRelayerCustomHeaders(
       `${RELAYER_URL}/legends/activity/${connectedAccount}?page=${page}`
     )
 

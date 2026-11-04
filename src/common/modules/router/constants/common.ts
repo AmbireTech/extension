@@ -56,12 +56,14 @@ const MOBILE_ROUTES = {
   dappWebView: 'explore/webview',
   qrReader: 'qr-reader',
   migrationOnboarding: 'migration-onboarding',
-  importFromExtension: 'import-from-extension'
+  importFromExtension: 'import-from-extension',
+  accountSmartSettings: 'settings/accounts/smart-settings'
 }
 
 const WEB_ROUTES = {
   ...COMMON_ROUTES,
   privacyPoolsSend: 'privacy-pools-send',
+  privacyPoolsTokenDetails: 'privacy-pools-token-details',
   earn: 'earn',
   transactions: 'transactions',
   signedMessages: 'signed-messages',

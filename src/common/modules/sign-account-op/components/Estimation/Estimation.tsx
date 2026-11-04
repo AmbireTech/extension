@@ -17,6 +17,8 @@ import {
 } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
+import { findPendingAccountOpById } from '@ambire-common/libs/accountOp/earlierPendingAccountOp'
+import { getReplacementAccountOp } from '@ambire-common/libs/accountOp/replacement'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { getMinReplacementFees } from '@ambire-common/libs/gasPrice/speedUp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
@@ -24,6 +26,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import AssetIcon from '@common/assets/svg/AssetIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import FeeIcon from '@common/assets/svg/FeeIcon'
 import GaugeIcon from '@common/assets/svg/GaugeIcon'
 import LinkIcon from '@common/assets/svg/LinkIcon'
@@ -70,8 +73,12 @@ export const SPEED_TEST_IDS = {
   slow: 'option-slow',
   medium: 'option-medium',
   fast: 'option-fast',
-  ape: 'option-ape'
+  ape: 'option-ape',
+  custom: 'option-custom'
 }
+
+// Not a real fee speed. Marks the speed select while custom gas prices are in use
+const CUSTOM_FEE_SPEED_VALUE = 'custom'
 
 const getFeeSpeedLabelText = (speed: SpeedCalc) =>
   speed.type.charAt(0).toUpperCase() + speed.type.slice(1)
@@ -117,6 +124,8 @@ const FeeSpeedLabel = ({
   )
 }
 
+const selectBroadcastedButNotConfirmed = (state: AllControllersMappingType['ActivityController']) =>
+  state.broadcastedButNotConfirmed
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const Estimation = ({
@@ -134,6 +143,10 @@ const Estimation = ({
 }: Props) => {
   const { state } = useController('AddressBookController')
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: broadcastedButNotConfirmed } = useController(
+    'ActivityController',
+    selectBroadcastedButNotConfirmed
+  )
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
   const {
@@ -267,22 +280,27 @@ const Estimation = ({
     })
   }, [dispatchUpdate, payValue, selectedFeeOption, selectedFeeSpeed])
 
-  const feeSpeeds = useMemo(() => {
-    if (!signAccountOpState?.selectedOption) return []
+  const selectedOption = signAccountOpState?.selectedOption
+  const selectedOptionIdentifier =
+    selectedOption && signAccountOpState
+      ? getFeeSpeedIdentifier(selectedOption, signAccountOpState.accountOp.accountAddr)
+      : null
 
-    const identifier = getFeeSpeedIdentifier(
-      signAccountOpState.selectedOption,
-      signAccountOpState.accountOp.accountAddr
-    )
+  const feeSpeeds = useMemo(() => {
+    if (!selectedOptionIdentifier) return []
 
     // The fallback array covers a corner case, that I could not reproduce,
     // but theoretically is possible - fan speed with this identifier to be missing
-    return signAccountOpState.feeSpeeds[identifier] || []
-  }, [
-    signAccountOpState?.feeSpeeds,
-    signAccountOpState?.selectedOption,
-    signAccountOpState?.accountOp.accountAddr
-  ])
+    return signAccountOpState?.feeSpeeds[selectedOptionIdentifier] || []
+  }, [signAccountOpState?.feeSpeeds, selectedOptionIdentifier])
+
+  // What each speed costs at the network gas prices, also while custom gas is set. The speed menu
+  // shows them, as picking a speed drops the custom gas, and the custom fee warnings compare with them
+  const networkFeeSpeeds = useMemo(() => {
+    if (!selectedOptionIdentifier) return []
+
+    return signAccountOpState?.networkFeeSpeeds[selectedOptionIdentifier] || []
+  }, [signAccountOpState?.networkFeeSpeeds, selectedOptionIdentifier])
 
   const isGaslessTransaction = useMemo(() => {
     return (
@@ -336,7 +354,7 @@ const Estimation = ({
   }, [dismissEnableErc4337Prompt, enableErc4337AndReestimate, shouldShowEnableErc4337Prompt, t])
 
   const feeSpeedOptions = useMemo(() => {
-    return feeSpeeds.map((speed) => ({
+    return networkFeeSpeeds.map((speed) => ({
       label: (
         <FeeSpeedLabel
           speed={speed}
@@ -348,7 +366,7 @@ const Estimation = ({
       speed,
       disabled: speed.disabled
     }))
-  }, [feeSpeeds, feeTokenPriceUnavailableWarning, payValue])
+  }, [networkFeeSpeeds, feeTokenPriceUnavailableWarning, payValue])
 
   const selectedFee = useMemo(
     () =>
@@ -365,8 +383,23 @@ const Estimation = ({
         return
       }
 
-      dispatchUpdate({ speed: value as FeeSpeed, shouldPersistSpeed: true })
+      // Picking a speed replaces the custom gas the user has set
+      dispatchUpdate({
+        speed: value as FeeSpeed,
+        shouldPersistSpeed: true,
+        shouldResetCustomGas: true
+      })
     },
+    [dispatchUpdate]
+  )
+
+  const customFeeSpeedOption = useMemo(
+    () => ({ value: CUSTOM_FEE_SPEED_VALUE, label: t('Custom') }),
+    [t]
+  )
+
+  const resetCustomGas = useCallback(
+    () => dispatchUpdate({ shouldResetCustomGas: true }),
     [dispatchUpdate]
   )
 
@@ -521,11 +554,31 @@ const Estimation = ({
   const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
   const isCancelTransaction =
     !!signAccountOpState && isCancelAccountOp(signAccountOpState.accountOp)
-  const speedUpMinFees = useMemo(() => {
-    if (!speedUpMeta?.enabled || !speedUpMeta.replacedFees) return undefined
+  const isReplacingPendingAccountOp = !!signAccountOpState?.earlierPendingAccountOp?.isReplacing
+  const earlierPendingAccountOpId = signAccountOpState?.earlierPendingAccountOp?.id
+  // The fees of the transaction that this one speeds up, or replaces while in replace mode
+  const replacedFees = useMemo(() => {
+    if (speedUpMeta?.enabled && speedUpMeta.replacedFees) return speedUpMeta.replacedFees
+    if (!isReplacingPendingAccountOp) return undefined
 
-    return getMinReplacementFees(speedUpMeta.replacedFees)
-  }, [speedUpMeta])
+    const pendingAccountOp = findPendingAccountOpById(
+      broadcastedButNotConfirmed,
+      earlierPendingAccountOpId
+    )
+    return pendingAccountOp
+      ? getReplacementAccountOp(pendingAccountOp, 'speedUp')?.meta?.speedUp?.replacedFees
+      : undefined
+  }, [
+    broadcastedButNotConfirmed,
+    earlierPendingAccountOpId,
+    isReplacingPendingAccountOp,
+    speedUpMeta
+  ])
+  // A Replace must pay at least as much more as a speed up of the pending transaction would
+  const speedUpMinFees = useMemo(
+    () => (replacedFees ? getMinReplacementFees(replacedFees) : undefined),
+    [replacedFees]
+  )
 
   const v1warning = useMemo(() => {
     return signAccountOpState?.warnings.find((w) => w.id === 'v1Acc')
@@ -566,12 +619,12 @@ const Estimation = ({
   const selectBackgroundColor =
     isOneClick || isMobile ? theme.secondaryBackground : theme.primaryBackground
   // The replacement must be paid the same way as the pending transaction it replaces
-  const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled
+  const isFeeTokenLockedBySpeedUp = !!speedUpMeta?.enabled || isReplacingPendingAccountOp
   // Not compared once the speed up is no longer needed, as the new fee won't be paid
-  const speedUpOriginalFeeAmount =
-    speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded
-      ? speedUpMeta.replacedFees?.amount
-      : undefined
+  const isFeeComparisonNeeded =
+    isReplacingPendingAccountOp ||
+    (!!speedUpMeta?.enabled && signAccountOpState?.status?.type !== SigningStatus.SpeedUpNotNeeded)
+  const speedUpOriginalFeeAmount = isFeeComparisonNeeded ? replacedFees?.amount : undefined
   const selectedFeeSpeedAmount = feeSpeeds.find(
     (speed) => speed.type === signAccountOpState?.selectedFeeSpeed
   )?.amount
@@ -653,9 +706,7 @@ const Estimation = ({
     return t('Network fee')
   }, [signAccountOpState?.canAccountBroadcastByItself, t])
 
-  // A fee set in the advanced options is used for every speed, so picking one changes nothing
-  const isFeeSpeedLockedByCustomGasPrices = !!signAccountOpState?.hasCustomGasPrices
-  const isFeeSpeedSelectDisabled = !!disabled || isFeeSpeedLockedByCustomGasPrices
+  const isCustomFeeSpeedSelected = !!signAccountOpState?.hasCustomGasPrices
 
   const renderFeeSpeedSelectedOption = useCallback(
     ({ toggleMenu, isMenuOpen, selectRef }: RenderSelectedOptionParams) => {
@@ -664,23 +715,32 @@ const Estimation = ({
       return (
         <HoverablePressable
           onPress={toggleMenu}
-          disabled={isFeeSpeedSelectDisabled}
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            isFeeSpeedSelectDisabled && { opacity: 0.6 }
-          ]}
+          disabled={disabled}
+          style={[flexbox.directionRow, flexbox.alignCenter, disabled && { opacity: 0.6 }]}
           testID="fee-speed-select-trigger"
         >
           <View ref={selectRef} style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <GaugeIcon width={15} height={18} style={spacings.mrTy} />
+            {isCustomFeeSpeedSelected ? (
+              <EditPenIcon width={18} height={18} style={spacings.mrTy} />
+            ) : (
+              <GaugeIcon
+                width={15}
+                height={18}
+                speed={selectedFee.speed.type}
+                style={spacings.mrTy}
+              />
+            )}
             <Text
               fontSize={14}
               weight="medium"
               numberOfLines={1}
-              testID={SPEED_TEST_IDS[selectedFee.speed.type]}
+              testID={
+                isCustomFeeSpeedSelected
+                  ? SPEED_TEST_IDS.custom
+                  : SPEED_TEST_IDS[selectedFee.speed.type]
+              }
             >
-              {t(getFeeSpeedLabelText(selectedFee.speed))}
+              {isCustomFeeSpeedSelected ? t('Custom') : t(getFeeSpeedLabelText(selectedFee.speed))}
             </Text>
             <View style={spacings.mlTy}>
               {isMenuOpen ? (
@@ -693,48 +753,40 @@ const Estimation = ({
         </HoverablePressable>
       )
     },
-    [isFeeSpeedSelectDisabled, selectedFee, t]
+    [disabled, isCustomFeeSpeedSelected, selectedFee, t]
   )
 
   const renderFeeSpeedSelect = useCallback(() => {
     if (!selectedFee) return null
 
     return (
-      <View
-        dataSet={createGlobalTooltipDataSet({
-          id: 'fee-speed-select-custom-gas-prices',
-          content: t(
-            'You set the fee yourself in the advanced options, so the same fee is used for every speed'
-          ),
-          hidden: !isFeeSpeedLockedByCustomGasPrices
-        })}
-      >
-        <Select
-          value={selectedFee}
-          // @ts-expect-error TODO: types mismatch
-          setValue={onFeeSelect}
-          options={feeSpeedOptions}
-          renderSelectedOption={renderFeeSpeedSelectedOption}
-          menuOptionHeight={isWeb ? 40 : undefined}
-          // Grows the menu to the left, as the select sits at the right of the row.
-          // Wider still if the fee token price is unavailable as the token amount takes up more space
-          menuLeftHorizontalOffset={
-            FEE_SPEED_MENU_EXTRA_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
-          }
-          menuPosition="top"
-          bottomSheetTitle={t('Transaction speed')}
-          withSearch={false}
-          containerStyle={{ ...spacings.mb0, width: 'auto' }}
-          disabled={isFeeSpeedSelectDisabled}
-          testID="fee-speed-select"
-        />
-      </View>
+      <Select
+        // No speed is highlighted in the menu while custom gas prices are in use
+        value={isCustomFeeSpeedSelected ? customFeeSpeedOption : selectedFee}
+        // @ts-expect-error TODO: types mismatch
+        setValue={onFeeSelect}
+        options={feeSpeedOptions}
+        renderSelectedOption={renderFeeSpeedSelectedOption}
+        menuOptionHeight={isWeb ? 40 : undefined}
+        // Grows the menu to the left, as the select sits at the right of the row.
+        // Wider still if the fee token price is unavailable as the token amount takes up more space
+        menuLeftHorizontalOffset={
+          FEE_SPEED_MENU_EXTRA_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
+        }
+        menuPosition="top"
+        bottomSheetTitle={t('Transaction speed')}
+        withSearch={false}
+        containerStyle={{ ...spacings.mb0, width: 'auto' }}
+        disabled={disabled}
+        testID="fee-speed-select"
+      />
     )
   }, [
-    isFeeSpeedLockedByCustomGasPrices,
-    isFeeSpeedSelectDisabled,
+    customFeeSpeedOption,
+    disabled,
     feeSpeedOptions,
     feeTokenPriceUnavailableWarning,
+    isCustomFeeSpeedSelected,
     onFeeSelect,
     renderFeeSpeedSelectedOption,
     selectedFee,
@@ -830,6 +882,10 @@ const Estimation = ({
         sheetRef={customGasPriceSheetRef}
         speedUpMinFees={speedUpMinFees}
         isCancel={isCancelTransaction}
+        networkSpeeds={networkFeeSpeeds}
+        hasCustomGasPrices={isCustomFeeSpeedSelected}
+        onResetCustomGas={resetCustomGas}
+        isEstimationLoading={signAccountOpState.estimation.status === EstimationStatus.Loading}
       />
       <View>
         {!isViewOnly && (
@@ -841,6 +897,7 @@ const Estimation = ({
         <BundlerWarning
           signAccountOpState={signAccountOpState}
           bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+          updateType={updateType}
         />
         {enableErc4337Prompt}
       </View>
@@ -877,9 +934,11 @@ const Estimation = ({
       <View
         dataSet={createGlobalTooltipDataSet({
           id: 'fee-option-select-speed-up-locked',
-          content: isCancelTransaction
-            ? t('To cancel, the fee is paid the same way as your original transaction')
-            : t('To speed up, the fee is paid the same way as your original transaction'),
+          content: isReplacingPendingAccountOp
+            ? t('To replace the earlier transaction, the fee is paid the same way as for it')
+            : isCancelTransaction
+              ? t('To cancel, the fee is paid the same way as your original transaction')
+              : t('To speed up, the fee is paid the same way as your original transaction'),
           hidden: !isFeeTokenLockedBySpeedUp
         })}
       >

@@ -2,7 +2,9 @@ import React, { FC, useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { DappWebsiteContentUpdate } from '@ambire-common/interfaces/dapp'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
+import { Impersonation } from '@ambire-common/libs/dapps/impersonation'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
@@ -12,14 +14,17 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TrustAppButton from '@common/components/TrustAppButton'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING, SPACING_LG, SPACING_MI } from '@common/styles/spacings'
+import { isMobile } from '@common/config/env'
+import spacings, { SPACING, SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import DAppPermissions from './DAppPermissions'
+import DAppWebsiteContentUpdate from './DAppWebsiteContentUpdate'
 import getStyles from './styles'
 
 const DAppConnectBody: FC<{
+  id: string
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
   isTrustedByUser?: boolean
@@ -27,13 +32,25 @@ const DAppConnectBody: FC<{
   onToggleTrust?: () => void
   onEnableScamChecker?: () => void
   isScamCheckerEnabled?: boolean
+  websiteContentUpdate?: DappWebsiteContentUpdate | null
+  /**
+   * Whether the app is part of the default Ambire app catalog. Passing the security checks only
+   * means the app isn't known to be malicious, so only catalog apps get the "Passed" badge.
+   */
+  isInAppCatalog?: boolean
+  /** Set when the site pretends to be a well-known app it is not */
+  impersonation?: Impersonation | null
 }> = ({
+  id,
   securityCheck,
   isTrustedByUser = false,
   canBeTrustedByUser = false,
   onToggleTrust,
   onEnableScamChecker,
   isScamCheckerEnabled = true,
+  websiteContentUpdate,
+  isInAppCatalog = false,
+  impersonation = null,
   responsiveSizeMultiplier = 1
 }) => {
   const { t } = useTranslation()
@@ -46,15 +63,70 @@ const DAppConnectBody: FC<{
   const isScamCheckerDisabled = !isScamCheckerEnabled
   const isBlacklisted = isScamCheckerEnabled && securityCheck === 'BLACKLISTED'
   const hasFailedToGet = isScamCheckerEnabled && securityCheck === 'FAILED_TO_GET'
+  const isImpersonating = !!impersonation
+  // A site pretending to be another app passes the scam lists only because it is not on them yet
+  const isVerified = isScamCheckerEnabled && securityCheck === 'VERIFIED' && !isImpersonating
 
   // The trust action takes the severity badge's slot; the warning text below and the box's own
-  // border still carry the severity, so nothing is lost by swapping them.
-  const shouldOfferTrust = isSuspiciousHosting && canBeTrustedByUser
-  const shouldShowWarningBadge = !shouldOfferTrust && (isSuspiciousHosting || hasFailedToGet)
+  // border still carry the severity, so nothing is lost by swapping them. Not offered to a site
+  // that pretends to be another app - trusting it would hide the warning about its hosting on
+  // every later visit, while it is the copy that should be avoided.
+  const shouldOfferTrust = isSuspiciousHosting && canBeTrustedByUser && !isImpersonating
+  // A site trusted before it was found to pretend to be another app shows the warning badge instead
+  const shouldShowTrustedBadge = isScamCheckerEnabled && isTrustedByUser && !isImpersonating
+  // When the scam checker is off, the "Activate" button takes the badge's slot
+  const shouldShowWarningBadge =
+    !shouldOfferTrust &&
+    !isScamCheckerDisabled &&
+    (isSuspiciousHosting || hasFailedToGet || isImpersonating)
+  const hasWarning = isSuspiciousHosting || hasFailedToGet || isImpersonating
+
+  const impersonationWarning = useMemo(() => {
+    if (!impersonation) return ''
+
+    const { appName, appDomain, reason, isConnectedApp } = impersonation
+    const params = { appName, appDomain }
+    if (isConnectedApp) {
+      if (reason === 'icon') {
+        return t(
+          "This site uses the logo of {{appName}}, but it isn't the {{appName}} website you connected to before ({{appDomain}}). Scam sites often copy apps people use - only connect if you are sure you are on the right website.",
+          params
+        )
+      }
+      if (reason === 'name') {
+        return t(
+          "This site calls itself {{appName}}, but it isn't the {{appName}} website you connected to before ({{appDomain}}). Scam sites often copy apps people use - only connect if you are sure you are on the right website.",
+          params
+        )
+      }
+
+      return t(
+        "This site's address looks like the {{appName}} website you connected to before ({{appDomain}}), but it is a different website. Scam sites often copy apps people use - only connect if you are sure you are on the right website.",
+        params
+      )
+    }
+    if (reason === 'icon') {
+      return t(
+        "This site uses the logo of {{appName}}, but it isn't the official {{appName}} website ({{appDomain}}). Scam sites often copy well-known apps - only connect if you are sure you are on the right website.",
+        params
+      )
+    }
+    if (reason === 'name') {
+      return t(
+        "This site calls itself {{appName}}, but it isn't the official {{appName}} website ({{appDomain}}). Scam sites often copy well-known apps - only connect if you are sure you are on the right website.",
+        params
+      )
+    }
+
+    return t(
+      "This site's address looks like the official {{appName}} website ({{appDomain}}), but it is a different website. Scam sites often copy well-known apps - only connect if you are sure you are on the right website.",
+      params
+    )
+  }, [impersonation, t])
 
   const spacingsStyle = useMemo(() => {
     return {
-      paddingHorizontal: SPACING_LG * responsiveSizeMultiplier,
+      paddingHorizontal: (isMobile ? SPACING_SM : SPACING) * responsiveSizeMultiplier,
       paddingTop: SPACING * responsiveSizeMultiplier,
       paddingBottom: SPACING * responsiveSizeMultiplier
     }
@@ -69,7 +141,7 @@ const DAppConnectBody: FC<{
             marginBottom: SPACING * responsiveSizeMultiplier
           },
           isBlacklisted && { borderColor: theme.errorDecorative },
-          (isSuspiciousHosting || hasFailedToGet) && {
+          hasWarning && {
             borderColor: theme.warningDecorative
           }
         ]}
@@ -88,10 +160,21 @@ const DAppConnectBody: FC<{
           {isScamCheckerEnabled && securityCheck === 'LOADING' && (
             <Spinner style={{ width: 18, height: 18 }} />
           )}
-          {isScamCheckerEnabled && securityCheck === 'VERIFIED' && (
+          {isVerified && isInAppCatalog && (
             <Badge type="success" text={t('Passed')} testId="dapp-security-check-passed">
               <CheckIcon width={12} height={12} style={{ marginLeft: SPACING_MI }} />
             </Badge>
+          )}
+          {/* Not on a scam list, but not a known app either - shown as neutral, not as a success */}
+          {isVerified && !isInAppCatalog && (
+            <Badge
+              type="default"
+              text={t('No known issues')}
+              tooltipText={t(
+                "This site isn't on any list of known scams, but it isn't on our list of known apps either. Make sure the website address is the one you expect."
+              )}
+              testId="dapp-security-check-passed"
+            />
           )}
           {isScamCheckerEnabled && securityCheck === 'BLACKLISTED' && (
             <Badge type="error" text={t('Danger')}>
@@ -103,7 +186,7 @@ const DAppConnectBody: FC<{
               />
             </Badge>
           )}
-          {isScamCheckerEnabled && isTrustedByUser && (
+          {shouldShowTrustedBadge && (
             <Badge
               type="warning"
               text={t('Trusted by you')}
@@ -139,16 +222,16 @@ const DAppConnectBody: FC<{
             </Badge>
           )}
         </View>
-        {(isScamCheckerDisabled || isBlacklisted || isSuspiciousHosting || hasFailedToGet) && (
+        {(isScamCheckerDisabled || isBlacklisted || hasWarning) && (
           <View style={spacings.ptTy}>
-            {!isScamCheckerDisabled && (
+            {(!isScamCheckerDisabled || isImpersonating) && (
               <Text
                 fontSize={18 * responsiveSizeMultiplier}
                 weight="semiBold"
                 color={
                   isBlacklisted
                     ? theme.errorDecorative
-                    : isScamCheckerDisabled
+                    : isScamCheckerDisabled && !isImpersonating
                       ? theme.primaryText
                       : theme.warningDecorative
                 }
@@ -221,11 +304,30 @@ const DAppConnectBody: FC<{
                 {t("We couldn't check this domain for malicious activity. Proceed with caution.")}
               </Text>
             )}
+            {isImpersonating && (
+              <Text
+                fontSize={12 * responsiveSizeMultiplier}
+                color={theme.warningDecorative}
+                style={[
+                  (hasFailedToGet || isSuspiciousHosting || isScamCheckerDisabled) && spacings.ptTy,
+                  { lineHeight: 18 * responsiveSizeMultiplier }
+                ]}
+              >
+                {impersonationWarning}
+              </Text>
+            )}
           </View>
         )}
       </View>
+      {!!websiteContentUpdate && (
+        <DAppWebsiteContentUpdate
+          id={id}
+          websiteContentUpdate={websiteContentUpdate}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+        />
+      )}
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
-      {!(isBlacklisted || isSuspiciousHosting || hasFailedToGet) && (
+      {!(isBlacklisted || hasWarning) && (
         <Text
           style={{
             opacity: 0.64,

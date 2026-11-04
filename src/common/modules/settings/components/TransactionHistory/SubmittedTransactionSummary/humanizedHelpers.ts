@@ -78,16 +78,6 @@ export const getDappInteractionsFromHumanizedCalls = (
   submittedAccountOp: SubmittedAccountOpLike,
   humanizedCalls: IrCall[]
 ): DappInteraction[] => {
-  if (submittedAccountOp.meta?.isSafeDeploy) {
-    return [
-      {
-        id: 'fallback:safeDeploy',
-        name: 'Activate Safe account',
-        iconType: 'safe'
-      }
-    ]
-  }
-
   // Must come before the Safe cancellation check: a delegation change is also an empty,
   // 0-value call and would otherwise be mistaken for a cancellation
   if (submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta) {
@@ -95,6 +85,16 @@ export const getDappInteractionsFromHumanizedCalls = (
       submittedAccountOp.meta.setDelegation === false
         ? { id: 'fallback:revoke', name: 'Revoke delegation', iconType: 'ambire' }
         : { id: 'fallback:delegation', name: 'Enable smart settings', iconType: 'ambire' }
+    ]
+  }
+
+  if (submittedAccountOp.meta?.isSafeDeploy) {
+    return [
+      {
+        id: 'fallback:safeDeploy',
+        name: 'Activate Safe account',
+        iconType: 'safe'
+      }
     ]
   }
 
@@ -163,7 +163,11 @@ export const getDappInteractionsFromHumanizedCalls = (
     })
   })
 
-  const isSwap = !!submittedAccountOp.meta?.swapTxn
+  // Only swap/bridge calls have an `activeRouteId`. Checked as well as `meta.swapTxn`, as a
+  // swap repeated from the activity has only the calls - it's not linked to a swap route
+  const isSwap =
+    !!submittedAccountOp.meta?.swapTxn ||
+    submittedAccountOp.calls.some((call) => !!call.activeRouteId)
   if (isSwap) {
     addInteraction({
       id: 'fallback:swap',
