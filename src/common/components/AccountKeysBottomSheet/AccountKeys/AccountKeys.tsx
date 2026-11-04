@@ -5,8 +5,13 @@ import { useModalize } from 'react-native-modalize'
 
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
 import { Account } from '@ambire-common/interfaces/account'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
-import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
+import AccountKey, {
+  AccountKeyMenuTarget,
+  AccountKeyType
+} from '@common/components/AccountKey/AccountKey'
+import RemoveKey from '@common/components/AccountKeysBottomSheet/RemoveKey'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ExportKey from '@common/components/ExportKey'
@@ -24,12 +29,16 @@ interface Props {
   closeBottomSheet: () => void
   keyIconColor?: string
   showExportImport?: boolean
+  /** Lets the user remove imported keys. Left off while signing, so a key can't vanish mid-flow */
+  canRemoveKeys?: boolean
   chainId?: bigint
 }
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) =>
   state.networks || []
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys || []
+const selectUnsupportedKeys = (state: AllControllersMappingType['KeystoreController']) =>
+  state.unsupportedKeys
 
 const AccountKeys: FC<Props> = ({
   account,
@@ -37,6 +46,7 @@ const AccountKeys: FC<Props> = ({
   closeBottomSheet,
   keyIconColor,
   showExportImport,
+  canRemoveKeys = false,
   chainId
 }) => {
   const { t } = useTranslation()
@@ -51,6 +61,7 @@ const AccountKeys: FC<Props> = ({
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: unsupportedKeys } = useController('KeystoreController', selectUnsupportedKeys)
   const accountStateRefreshRef = useRef<{ accountAddr: string | null; chainIds: Set<string> }>({
     accountAddr: null,
     chainIds: new Set()
@@ -60,6 +71,8 @@ const AccountKeys: FC<Props> = ({
     label?: string
   } | null>(null)
   const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useModalize()
+  const [keyToRemove, setKeyToRemove] = useState<{ addr: string; type: Key['type'] } | null>(null)
+  const { ref: sheetRefRemoveKey, open: openRemoveKey, close: closeRemoveKey } = useModalize()
 
   const usedNetworks = useMemo(() => {
     return account.safeCreation && chainId
@@ -144,7 +157,11 @@ const AccountKeys: FC<Props> = ({
 
   const accountKeys: AccountKeyType[] = useMemo(() => {
     const associatedKeysSet = new Set(associatedKeys.map((addr) => addr.toLowerCase()))
-    const importedKeys = keys.filter(({ addr }) => associatedKeysSet.has(addr.toLowerCase()))
+    // Keys this device can't sign with are imported all the same, so they are listed (and marked)
+    const importedKeys = [
+      ...keys.map((key) => ({ ...key, isSupported: true })),
+      ...(unsupportedKeys || []).map((key) => ({ ...key, isSupported: false }))
+    ].filter(({ addr }) => associatedKeysSet.has(addr.toLowerCase()))
     const importedKeyAddrs = new Set(importedKeys.map(({ addr }) => addr.toLowerCase()))
     const notImportedKeys = associatedKeys.filter(
       (keyAddr) => !importedKeyAddrs.has(keyAddr.toLowerCase())
@@ -171,7 +188,7 @@ const AccountKeys: FC<Props> = ({
         dedicatedToOneSA: false
       }))
     ]
-  }, [associatedKeys, keys])
+  }, [associatedKeys, keys, unsupportedKeys])
 
   const withAlert = useMemo(
     () => associatedKeys.length > 1 && isAmbireV1LinkedAccount(account.creation?.factoryAddr),
@@ -190,6 +207,28 @@ const AccountKeys: FC<Props> = ({
     setSelectedExportKey(null)
   }, [])
 
+  const handleRemoveKeyPress = useCallback(
+    ({ addr, type }: AccountKeyMenuTarget) => {
+      if (!type) return
+      setKeyToRemove({ addr, type })
+      openRemoveKey()
+    },
+    [openRemoveKey]
+  )
+
+  const handleRemoveKeyClosed = useCallback(() => {
+    setKeyToRemove(null)
+  }, [])
+
+  const handleExportFromRemoveKey = useCallback(() => {
+    if (!keyToRemove) return
+    const label = keys.find(
+      ({ addr, type }) => addr === keyToRemove.addr && type === keyToRemove.type
+    )?.label
+    closeRemoveKey()
+    handleExportKeyPress({ addr: keyToRemove.addr, label })
+  }, [closeRemoveKey, handleExportKeyPress, keyToRemove, keys])
+
   return (
     <View style={isWeb ? { maxHeight: 384, flex: 1 } : undefined}>
       <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
@@ -205,7 +244,8 @@ const AccountKeys: FC<Props> = ({
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={isWeb}
       >
-        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA }, index) => {
+        {accountKeys.map((accountKey, index) => {
+          const { type, addr, isImported, meta, dedicatedToOneSA } = accountKey
           const isLast = index === accountKeys.length - 1
           const accountKeyProps = { addr, type, isLast, isImported }
 
@@ -221,6 +261,8 @@ const AccountKeys: FC<Props> = ({
               keyIconColor={keyIconColor}
               showExportImport={showExportImport}
               onExportKeyPress={handleExportKeyPress}
+              onRemoveKeyPress={canRemoveKeys && isImported ? handleRemoveKeyPress : undefined}
+              isSupported={accountKey.isSupported}
               onChains={safeOwnersByNetwork[addr]}
             />
           )
@@ -253,6 +295,23 @@ const AccountKeys: FC<Props> = ({
             keyAddr={selectedExportKey.addr}
             keyLabel={selectedExportKey.label}
             onBackButtonPress={closeExportKey}
+          />
+        )}
+      </BottomSheet>
+      <BottomSheet
+        sheetRef={sheetRefRemoveKey}
+        id="account-key-remove-bottom-sheet"
+        type={isWeb ? 'modal' : 'bottom-sheet'}
+        closeBottomSheet={closeRemoveKey}
+        style={isWeb ? { maxWidth: 432, ...spacings.pvLg } : undefined}
+        onClosed={handleRemoveKeyClosed}
+      >
+        {!!keyToRemove && (
+          <RemoveKey
+            keyToRemove={keyToRemove}
+            onCancel={closeRemoveKey}
+            onRemoved={closeRemoveKey}
+            onExportPress={handleExportFromRemoveKey}
           />
         )}
       </BottomSheet>

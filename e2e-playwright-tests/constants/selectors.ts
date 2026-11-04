@@ -359,7 +359,7 @@ const selectors = {
     recoveryPhrasePassphraseValue: 'recovery-phrase-passphrase-value',
     revealRecoveryPhraseButton: 'reveal-recovery-phrase-button',
     copyRecoveryPhraseButton: 'copy-recovery-phrase-button',
-    exportKeyButton: (addr: string) => `export-key-button-${addr}`,
+    keyOptionsButton: (addr: string, type: string) => `key-options-${addr}-${type}`,
     privateKeyValue: 'private-key-value',
     revealPrivateKeyButton: 'reveal-private-key-button',
     copyPrivateKeyButton: 'copy-private-key-button'

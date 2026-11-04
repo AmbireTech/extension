@@ -3,6 +3,8 @@ import { FlatList, ListRenderItemInfo, Pressable, TextStyle, View } from 'react-
 import { SvgProps } from 'react-native-svg'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
+import { openBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
+import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
@@ -61,6 +63,17 @@ const Dropdown: FC<Props> = ({
   )
 
   const isOpen = useMemo(() => position.x !== 0 || position.y !== 0, [position.x, position.y])
+
+  // Bottom sheets are portalled into the same "global" host with a zIndex of their own, so a
+  // dropdown opened from a sheet sits one step above the topmost sheet open at that time.
+  // Read non-reactively, or a sheet opened later would move the dropdown above it too.
+  const zIndex = useMemo(
+    () =>
+      isOpen && openBottomSheetsCount.value > 0
+        ? BOTTOM_SHEET_Z_INDEX + (openBottomSheetsCount.value - 1) * 2 + 1
+        : undefined,
+    [isOpen]
+  )
 
   const dropdownTop = useMemo(
     () =>
@@ -170,7 +183,8 @@ const Dropdown: FC<Props> = ({
               {
                 right: windowWidth - position.x,
                 top: dropdownTop,
-                maxHeight: dropdownHeight
+                maxHeight: dropdownHeight,
+                zIndex
               }
             ]}
             ref={modalRef}

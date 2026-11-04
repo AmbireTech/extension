@@ -1,20 +1,22 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
+import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import ExportIcon from '@common/assets/svg/ExportIcon'
 import ImportIcon from '@common/assets/svg/ImportIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import Dropdown from '@common/components/Dropdown'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -23,7 +25,7 @@ import { isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -37,7 +39,12 @@ export type AccountKeyType = {
   meta?: Key['meta']
   label?: string
   onChains?: bigint[]
+  /** False for an imported key of a type this device can't sign with (synced from another device) */
+  isSupported?: boolean
 }
+
+/** The key a row's menu acts on */
+export type AccountKeyMenuTarget = { addr: Key['addr']; type?: Key['type']; label?: string }
 
 type Props = AccountKeyType & {
   isLast?: boolean
@@ -51,8 +58,12 @@ type Props = AccountKeyType & {
   tooltipContent?: string
   itemHeight?: number
   onExportKeyPress?: ({ addr, label }: { addr: string; label?: string }) => void
+  /** Adds "Remove key" to the menu of imported keys */
+  onRemoveKeyPress?: (key: AccountKeyMenuTarget) => void
   singleLineLabel?: boolean
 }
+
+const MENU_VALUES = { export: 'export', remove: 'remove' } as const
 
 const { isPopup } = getUiType()
 
@@ -75,7 +86,9 @@ const AccountKey: React.FC<Props> = ({
   tooltipContent,
   itemHeight = 48,
   onExportKeyPress,
-  singleLineLabel = false
+  onRemoveKeyPress,
+  singleLineLabel = false,
+  isSupported = true
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -93,6 +106,7 @@ const AccountKey: React.FC<Props> = ({
   const isKeyAmbireV1 = addr === AMBIRE_V1_QUICK_ACC_MANAGER
   const canExportOrImportKey = showExportImport && !isKeyAmbireV1
   const [isShowingDetails, setIsShowingDetails] = useState<boolean>(false)
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
 
   const handleCopy = useCallback(async () => {
     try {
@@ -124,6 +138,27 @@ const AccountKey: React.FC<Props> = ({
   const handleToggleDetails = useCallback(() => {
     setIsShowingDetails((p) => !p)
   }, [])
+
+  // Hardware wallet keys never leave the device, so only private keys can be exported
+  const menuItems = useMemo(() => {
+    const items: { label: string; value: string; style?: { color: string } }[] = []
+    if (canExportKey) items.push({ label: t('Export key'), value: MENU_VALUES.export })
+    if (onRemoveKeyPress)
+      items.push({
+        label: t('Remove key'),
+        value: MENU_VALUES.remove,
+        style: { color: theme.errorDecorative as string }
+      })
+    return items
+  }, [canExportKey, onRemoveKeyPress, t, theme.errorDecorative])
+
+  const handleMenuSelect = useCallback(
+    ({ value }: { value: string }) => {
+      if (value === MENU_VALUES.export) handleExportKeyPress()
+      if (value === MENU_VALUES.remove) onRemoveKeyPress?.({ addr, type, label })
+    },
+    [addr, handleExportKeyPress, label, onRemoveKeyPress, type]
+  )
 
   return (
     <View
@@ -214,41 +249,9 @@ const AccountKey: React.FC<Props> = ({
           <View>
             {isImported ? (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                <View>
-                  {/*
-                When making the Pressable disabled, it disables literally everything in it.
-                So even the tooltip will not work.
-                The workaround is to set a wrapping <View> and make it the tooltip target
-              */}
-                  <View
-                    dataSet={createGlobalTooltipDataSet({
-                      id: `export-${addr}-${type}-tooltip`,
-                      content: t('Export unavailable as this is a hardware wallet key'),
-                      hidden: canExportKey
-                    })}
-                  >
-                    <Button
-                      testID={`export-key-button-${addr}`}
-                      style={{ height: 32 }}
-                      hasBottomSpacing={false}
-                      onPress={handleExportKeyPress}
-                      size="small"
-                      disabled={!canExportKey}
-                      type="secondary"
-                      text={t('Export')}
-                    >
-                      <ExportIcon
-                        style={spacings.mlTy}
-                        color={theme.iconPrimary}
-                        width={16}
-                        height={16}
-                      />
-                    </Button>
-                  </View>
-                </View>
                 <AnimatedPressable
                   onPress={handleToggleDetails}
-                  style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}
+                  style={[flexbox.directionRow, flexbox.alignCenter]}
                   {...bindKeyDetailsAnim}
                 >
                   <Animated.View style={keyDetailsAnimStyles}>
@@ -264,6 +267,18 @@ const AccountKey: React.FC<Props> = ({
                     />
                   </Animated.View>
                 </AnimatedPressable>
+                {!!menuItems.length && (
+                  <View style={spacings.mlSm}>
+                    <Dropdown
+                      data={menuItems}
+                      externalPosition={menuPosition}
+                      setExternalPosition={setMenuPosition}
+                      onSelect={handleMenuSelect}
+                      kebabIconProps={{ width: 24, height: 24 }}
+                      testID={`key-options-${addr}-${type}`}
+                    />
+                  </View>
+                )}
               </View>
             ) : (
               <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -287,6 +302,24 @@ const AccountKey: React.FC<Props> = ({
           </View>
         )}
       </View>
+      {!!isImported && !isSupported && (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.phSm,
+            spacings.mbTy,
+            { marginTop: -SPACING_MI }
+          ]}
+        >
+          <WarningIcon width={14} height={14} color={theme.warningText} />
+          <Text fontSize={12} weight="medium" color={theme.warningText} style={spacings.mlMi}>
+            {t("{{device}} can't sign on this device", {
+              device: type && type !== 'internal' ? HARDWARE_WALLET_DEVICE_NAMES[type] : type
+            })}
+          </Text>
+        </View>
+      )}
       {!!isKeyAmbireV1 && (
         <View style={[spacings.phSm, spacings.mbTy]}>
           <Text appearance="secondaryText" weight="medium" fontSize={14} numberOfLines={2}>

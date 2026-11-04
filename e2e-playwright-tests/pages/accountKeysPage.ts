@@ -50,10 +50,10 @@ export class AccountKeysPage extends BasePage {
     await manageKeys.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
     await manageKeys.click()
 
-    // Only locate the export button here — the caller asserts enabled/disabled, since HW
-    // keys render the same button in a disabled state.
-    const exportBtn = this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
-    await exportBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+    // Only locate the key's options (⋮) button here — the caller decides which key type's
+    // menu to open, since one address can be imported as several key types.
+    const keyOptionsBtn = this.page.locator(`[data-testid^="key-options-${keyAddr}-"]`).first()
+    await keyOptionsBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
   }
 
   async exportPrivateKey({
@@ -68,9 +68,12 @@ export class AccountKeysPage extends BasePage {
     await this.open()
     await this.findAndOpenAccountKeys(keyAddr, accountAddr)
 
-    const exportBtn = this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
-    await exportBtn.scrollIntoViewIfNeeded()
-    await exportBtn.click()
+    const keyOptionsBtn = this.page.getByTestId(
+      selectors.keystoreMigration.keyOptionsButton(keyAddr, 'internal')
+    )
+    await keyOptionsBtn.scrollIntoViewIfNeeded()
+    await keyOptionsBtn.click()
+    await this.page.getByText('Export key', { exact: true }).click()
 
     const revealBtn = this.page.getByTestId(selectors.keystoreMigration.revealPrivateKeyButton)
     await revealBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
@@ -127,11 +130,17 @@ export class AccountKeysPage extends BasePage {
     await this.open()
     await this.findAndOpenAccountKeys(keyAddr, accountAddr)
 
-    // The Button renders as a <div aria-disabled="true"> (not a native control), so
-    // toBeDisabled() doesn't recognize it — assert the ARIA attribute directly.
-    await expect(
-      this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
-    ).toHaveAttribute('aria-disabled', 'true', { timeout: PRESENCE_TIMEOUT })
+    // HW keys never leave the device, so their options (⋮) menu has no Export at all
+    const keyOptionsBtn = this.page
+      .locator(`[data-testid^="key-options-${keyAddr}-"]:not([data-testid$="-internal"])`)
+      .first()
+    await keyOptionsBtn.click()
+    await expect(this.page.getByText('Remove key', { exact: true })).toBeVisible({
+      timeout: PRESENCE_TIMEOUT
+    })
+    await expect(this.page.getByText('Export key', { exact: true })).toHaveCount(0)
+    // A second press closes the menu
+    await keyOptionsBtn.click()
 
     await this.closeTopSheet()
   }
