@@ -9,6 +9,7 @@ import ExportIcon from '@common/assets/svg/ExportIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import Alert from '@common/components/Alert'
 import Avatar from '@common/components/Avatar'
+import Badge from '@common/components/Badge'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -18,6 +19,7 @@ import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import { ACCOUNT_AVATAR_SIZE } from '@common/modules/account-select/components/Account/styles'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -177,40 +179,59 @@ const RemoveKey: FC<Props> = ({ keyToRemove, onCancel, onRemoved, onExportPress 
               ? t('Will be removed from 1 account')
               : t('Will be removed from {{count}} accounts', { count: affectedAccounts.length })}
           </Text>
+          {/* Each account as a card, like on the account select screen */}
           {affectedAccounts.map(({ account, keysLeft, becomesViewOnly }) => (
             <View
               key={account.addr}
-              style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbTy]}
+              style={[
+                spacings.plSm,
+                spacings.prTy,
+                spacings.pvTy,
+                spacings.mbTy,
+                common.borderRadiusPrimary,
+                { backgroundColor: theme.secondaryBackground }
+              ]}
             >
-              <Avatar
-                pfp={account.preferences.pfp}
-                address={account.addr}
-                size={32}
-                style={spacings.prTy}
-                smartAccountType={
-                  (account.creation && 'Ambire') || (account.safeCreation && 'Safe') || undefined
-                }
-              />
-              <View style={[flexbox.flex1, spacings.mrTy]}>
-                <Text fontSize={14} weight="medium" numberOfLines={1}>
-                  {account.preferences.label}
-                </Text>
-                <Text fontSize={12} appearance="secondaryText">
-                  {shortenAddress(account.addr, 10)}
-                </Text>
-              </View>
-              {becomesViewOnly ? (
-                <Text fontSize={12} weight="medium" color={theme.warningText}>
-                  {t('Becomes view-only')}
-                </Text>
-              ) : (
-                !!keysLeft && (
-                  <Text fontSize={12} appearance="secondaryText">
-                    {keysLeft === 1
-                      ? t('Keeps 1 key')
-                      : t('Keeps {{count}} keys', { count: keysLeft })}
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <Avatar
+                  pfp={account.preferences.pfp}
+                  address={account.addr}
+                  size={ACCOUNT_AVATAR_SIZE}
+                  smartAccountType={
+                    (account.creation && 'Ambire') || (account.safeCreation && 'Safe') || undefined
+                  }
+                  typeBadgeRingColor={theme.secondaryBackground}
+                />
+                <View style={flexbox.flex1}>
+                  <Text fontSize={14} weight="medium" numberOfLines={1}>
+                    {account.preferences.label}
                   </Text>
-                )
+                  <Text fontSize={12} appearance="secondaryText">
+                    {shortenAddress(account.addr, 10)}
+                  </Text>
+                </View>
+              </View>
+              {(becomesViewOnly || !!keysLeft) && (
+                <>
+                  {/* A view rather than a border, as per-side borders can leave stray lines on native */}
+                  <View
+                    style={[spacings.mvTy, { height: 1, backgroundColor: theme.secondaryBorder }]}
+                  />
+                  <View style={flexbox.directionRow}>
+                    {becomesViewOnly ? (
+                      <Badge type="warning" text={t('Becomes view-only')} />
+                    ) : (
+                      <Badge
+                        type="default"
+                        text={
+                          keysLeft === 1
+                            ? t('Keeps 1 key')
+                            : t('Keeps {{count}} keys', { count: keysLeft })
+                        }
+                      />
+                    )}
+                  </View>
+                </>
               )}
             </View>
           ))}
