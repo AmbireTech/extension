@@ -291,18 +291,15 @@ const useSelectKeyboardControl = ({
         })
       }
 
-      let onHoverIn = () => {}
+      let sectionIndex = -1
       let isHighlighted = false
 
       try {
-        let sectionIndex: number
-
         if (sections.length === 1 && sections[0]?.key === 'default') {
           sectionIndex = 0
         } else {
           sectionIndex = sections.findIndex((s) => s.key === (section as any)?.key)
         }
-        onHoverIn = () => handleSetHoverIn({ sectionIndex, optionIndex })
 
         if (
           highlightedItemIndexForRender &&
@@ -316,13 +313,14 @@ const useSelectKeyboardControl = ({
       }
       return (
         <MenuOption
+          sectionIndex={sectionIndex}
           index={optionIndex}
           item={item}
           height={optionHeight}
           isSelected={item.value === value?.value}
           isHighlighted={isHighlighted}
           onPress={handleOptionSelect}
-          onHoverIn={onHoverIn}
+          onHoverIn={handleSetHoverIn}
           onHoverOut={handleSetHoverOut}
           disabled={!!item?.disabled}
           size={size}
