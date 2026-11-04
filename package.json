@@ -193,6 +193,7 @@
     "pako": "2.1.0",
     "path-browserify": "0.0.0",
     "process": "0.11.10",
+    "punycode": "2.3.0",
     "purify-ts": "2.1.0",
     "qr-scanner": "1.4.2",
     "querystring-es3": "0.2.1",
@@ -343,7 +344,8 @@
     "@onekeyfe/hd-shared": "1.1.0",
     "@onekeyfe/hd-transport": "1.1.0",
     "@onekeyfe/hd-transport-http": "1.1.0",
-    "@onekeyfe/hd-transport-web-device": "1.1.0"
+    "@onekeyfe/hd-transport-web-device": "1.1.0",
+    "react-native-url-polyfill": "4.0.0"
   },
   "private": true,
   "lavamoat": {

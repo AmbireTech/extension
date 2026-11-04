@@ -36,7 +36,7 @@ const styles = StyleSheet.create<Styles>({
   measuredValue: {
     alignSelf: 'flex-start'
   },
-  // Sits on the value's baseline rather than a pixel below it
+  // Web only: sits on the value's baseline rather than a pixel below it
   fiatSign: {
     transform: [{ translateY: -1 }]
   },
