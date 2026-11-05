@@ -6,6 +6,7 @@ import Banner from '@common/components/Banner'
 import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import spacings from '@common/styles/spacings'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -47,9 +48,13 @@ const SafeActivationBanner = () => {
           isAccent
           CustomIcon={SafeIcon}
           title={t('Activate your Safe account')}
-          text={t("It isn't active on any network yet. Activate it where you want to use it.")}
+          // One line, as the dashboard lets a short page scroll as far as its banners are tall
+          singleRow
           buttonText={t('Activate')}
           onPress={openBottomSheet as () => void}
+          // The same as the top padding, so the single row sits in the middle (web pads the
+          // bottom more, for a banner with text under its title)
+          style={spacings.pbTy}
         />
       )}
       <SafeActivationBottomSheet
