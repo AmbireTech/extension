@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import { useMemo } from 'react'
 
 import type { TFunction } from 'i18next'
@@ -34,19 +35,40 @@ export const getPrivacyPoolsSourceLabel = (
     ? t('{{seedLabel}} · Passphrase {{passphraseLabel}}', { seedLabel, passphraseLabel })
     : seedLabel
 
-/** Filters accounts by name, where they are from and kind - they have no address or key to search by. */
+// Matches the regular accounts' search in `useAccountsList`, so a typo hides neither group
+const FUSE_OPTIONS = {
+  keys: [
+    { name: 'label', weight: 0.5 },
+    { name: 'sourceLabel', weight: 0.3 },
+    { name: 'kindLabels', weight: 0.2 }
+  ],
+  threshold: 0.3,
+  ignoreLocation: false,
+  distance: 1000
+}
+
+/**
+ * Filters accounts by name, where they are from and kind - they have no address or key to search
+ * by. Fuzzy like the regular accounts' search, so pass it the same (debounced) search value.
+ */
 export const filterPrivacyPoolsAccountsBySearch = (
   accounts: PrivacyPoolsAccountDisplay[],
   search: string,
-  /** Translated account kind, e.g. "Privacy Pools". */
-  kindLabel: string
+  t: TFunction
 ) => {
-  const query = search.trim().toLowerCase()
+  const query = search.trim()
   if (!query) return accounts
 
-  return accounts.filter(({ label, sourceLabel }) =>
-    `${label} ${sourceLabel} ${kindLabel}`.toLowerCase().includes(query)
-  )
+  // Both names the UI calls them by
+  const kindLabels = `${t('Private account')} ${t('Privacy Pools')}`
+  const searchableAccounts = accounts.map((account) => ({
+    account,
+    label: account.label,
+    sourceLabel: account.sourceLabel,
+    kindLabels
+  }))
+
+  return new Fuse(searchableAccounts, FUSE_OPTIONS).search(query).map(({ item }) => item.account)
 }
 
 const selectPrivacyPoolsAccounts = (state: AllControllersMappingType['PrivacyPoolsController']) =>

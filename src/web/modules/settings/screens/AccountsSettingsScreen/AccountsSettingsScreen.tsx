@@ -92,7 +92,7 @@ const AccountsSettingsScreen = () => {
   const {
     accounts,
     control,
-    search,
+    debouncedSearch,
     isFiltered,
     keyExtractor,
     getItemLayout,
@@ -265,12 +265,11 @@ const AccountsSettingsScreen = () => {
     draggedPrivacyPoolsOrder?.from === privacyPoolsAccounts
       ? draggedPrivacyPoolsOrder.order
       : privacyPoolsAccounts
-  // Filtered by the search as typed, unlike the regular ones, so this follows the same value
-  const isPrivacyPoolsFiltered = !!search.trim()
+  // Filtered by the debounced search, like the regular ones, so this follows the same value
+  const isPrivacyPoolsFiltered = !!debouncedSearch.trim()
   const filteredPrivacyPoolsAccounts = useMemo(
-    () =>
-      filterPrivacyPoolsAccountsBySearch(displayedPrivacyPoolsAccounts, search, t('Privacy Pools')),
-    [displayedPrivacyPoolsAccounts, search, t]
+    () => filterPrivacyPoolsAccountsBySearch(displayedPrivacyPoolsAccounts, debouncedSearch, t),
+    [displayedPrivacyPoolsAccounts, debouncedSearch, t]
   )
 
   const handlePrivacyPoolsAccountDragEnd = useCallback(

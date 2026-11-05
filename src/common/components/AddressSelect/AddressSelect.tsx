@@ -403,11 +403,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const filteredPrivacyPoolsAccounts = useMemo(
     () =>
       privacyPoolsAccounts && onSelectPrivacyPoolsAccount
-        ? filterPrivacyPoolsAccountsBySearch(
-            privacyPoolsAccounts,
-            privacyPoolsSearch,
-            t('Privacy Pools')
-          )
+        ? filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, privacyPoolsSearch, t)
         : NO_PRIVACY_POOLS_ACCOUNTS,
     [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, privacyPoolsSearch, t]
   )
