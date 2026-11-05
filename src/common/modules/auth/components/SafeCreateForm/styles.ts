@@ -1,4 +1,4 @@
-import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
+import { StyleSheet, ViewStyle } from 'react-native'
 
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
@@ -14,11 +14,14 @@ interface Style {
   stepperButton: ViewStyle
   stepperButtonDisabled: ViewStyle
   stepperDivider: ViewStyle
-  minusSign: TextStyle
+  minusSign: ViewStyle
+  minusSignBar: ViewStyle
 }
 
 const ADD_OWNER_ICON_SIZE = 32
 const STEPPER_HEIGHT = 36
+/** The size of the icons in the stepper buttons */
+export const STEPPER_ICON_SIZE = 18
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
@@ -63,12 +66,18 @@ const getStyles = (theme: ThemeProps) =>
       height: STEPPER_HEIGHT / 2,
       backgroundColor: theme.secondaryBorder
     },
+    // The size of the plus icon in the other stepper button, so both buttons are as wide
     minusSign: {
-      // Sized and centered to match the 18px plus icon in the other stepper button
-      fontSize: 22,
-      lineHeight: 22,
-      textAlign: 'center',
-      color: theme.primaryText
+      ...flexbox.center,
+      width: STEPPER_ICON_SIZE,
+      height: STEPPER_ICON_SIZE
+    },
+    // As long and thick as an arm of the plus icon at that size, with the same round ends
+    minusSignBar: {
+      width: 12,
+      height: 1.5,
+      borderRadius: 0.75,
+      backgroundColor: theme.primaryText
     }
   })
 

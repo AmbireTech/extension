@@ -14,7 +14,7 @@ import useSafeCreate from '@common/modules/auth/hooks/useSafeCreate'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import getStyles from './styles'
+import getStyles, { STEPPER_ICON_SIZE } from './styles'
 
 type Props = Pick<
   ReturnType<typeof useSafeCreate>,
@@ -151,8 +151,11 @@ const SafeCreateForm = ({
               accessibilityLabel={t('Decrease required confirmations')}
               testID="safe-create-decrease-confirmations"
             >
-              {/* There is no minus icon in src/common/assets/svg, so a text minus sign stands in for it */}
-              <Text style={styles.minusSign}>−</Text>
+              {/* There is no minus icon in src/common/assets/svg, so a bar drawn like the plus
+              icon's stands in for it - a text minus sign sits off center on iOS */}
+              <View style={styles.minusSign}>
+                <View style={styles.minusSignBar} />
+              </View>
             </HoverablePressable>
             <View style={styles.stepperDivider} />
             <HoverablePressable
@@ -165,7 +168,11 @@ const SafeCreateForm = ({
               accessibilityLabel={t('Increase required confirmations')}
               testID="safe-create-increase-confirmations"
             >
-              <AddIcon width={18} height={18} color={theme.primaryText} />
+              <AddIcon
+                width={STEPPER_ICON_SIZE}
+                height={STEPPER_ICON_SIZE}
+                color={theme.primaryText}
+              />
             </HoverablePressable>
           </View>
         </View>
