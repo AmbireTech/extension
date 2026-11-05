@@ -78,21 +78,22 @@ const useSafeCreate = () => {
   const handleCreate = useCallback(async () => {
     if (isCreateButtonDisabled) return
 
-    const newSafeAccount = getNewSafeAccount(ownerAddresses, requiredConfirmations, accounts)
-    // Case-insensitive, in case an account was stored without a checksum (e.g. by an older version)
-    const newSafeAddress = newSafeAccount.addr.toLowerCase()
-    if (accounts.some(({ addr }) => addr.toLowerCase() === newSafeAddress)) {
-      addToast(
-        t(
-          'This Safe account is already in your wallet. The same owners and required confirmations always lead to the same account.'
-        ),
-        { type: 'error' }
-      )
-      return
-    }
-
     setIsSubmitting(true)
     try {
+      // Throws on an owner setup Safe rejects, which the add owner sheet already prevents
+      const newSafeAccount = getNewSafeAccount(ownerAddresses, requiredConfirmations, accounts)
+      // Case-insensitive, in case an account was stored without a checksum (e.g. by an older version)
+      const newSafeAddress = newSafeAccount.addr.toLowerCase()
+      if (accounts.some(({ addr }) => addr.toLowerCase() === newSafeAddress)) {
+        addToast(
+          t(
+            'This Safe account is already in your wallet. The same owners and required confirmations always lead to the same account.'
+          ),
+          { type: 'error' }
+        )
+        return
+      }
+
       await accountPickerDispatchAndWait({
         type: 'method',
         params: { method: 'prepareAccounts', args: [{ accounts: [newSafeAccount] }] }
@@ -109,7 +110,8 @@ const useSafeCreate = () => {
       captureException(error)
       addToast(t("We couldn't create the Safe account. Please try again."), { type: 'error' })
     } finally {
-      // Going back from the personalize step adds nothing, so the form is usable again
+      // Also when the Safe is in the wallet already. Going back from the personalize step adds
+      // nothing, so the form is usable again
       setIsSubmitting(false)
     }
   }, [

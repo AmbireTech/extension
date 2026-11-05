@@ -6,6 +6,7 @@ import { Modalize } from 'react-native-modalize'
 
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { Hex } from '@ambire-common/interfaces/hex'
+import { isAllowedSafeOwner } from '@ambire-common/libs/safe/safe'
 import { Validation } from '@ambire-common/services/validations'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddressInput from '@common/components/AddressInput'
@@ -21,7 +22,9 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import SafeCreateOwnerRow from '@common/modules/auth/components/SafeCreateOwnerRow'
 import SafeCreateSectionLabel from '@common/modules/auth/components/SafeCreateSectionLabel'
-import useSafeOwnerDetails, { SafeOwnerDetails } from '@common/modules/auth/hooks/useSafeOwnerDetails'
+import useSafeOwnerDetails, {
+  SafeOwnerDetails
+} from '@common/modules/auth/hooks/useSafeOwnerDetails'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -123,14 +126,21 @@ const SafeCreateAddOwnerBottomSheet = ({
   const isEnteredAddressValid = isAddress(enteredAddress)
   const isEnteredAddressAnOwner =
     isEnteredAddressValid && ownerAddressSet.has(enteredAddress.toLowerCase())
+  // Safe can't be set up with it, so the Safe could never be activated
+  const isEnteredAddressRejectedBySafe =
+    isEnteredAddressValid && !isAllowedSafeOwner(enteredAddress)
 
-  const overwriteValidation = useMemo<Validation | null>(
-    () =>
-      isEnteredAddressAnOwner
-        ? { severity: 'error', message: t('You already added this owner.') }
-        : null,
-    [isEnteredAddressAnOwner, t]
-  )
+  const overwriteValidation = useMemo<Validation | null>(() => {
+    if (isEnteredAddressAnOwner)
+      return { severity: 'error', message: t('You already added this owner.') }
+    if (isEnteredAddressRejectedBySafe)
+      return {
+        severity: 'error',
+        message: t('This address cannot be an owner of a Safe account.')
+      }
+
+    return null
+  }, [isEnteredAddressAnOwner, isEnteredAddressRejectedBySafe, t])
   const { validation } = useAddressInput({ addressState, setAddressState, overwriteValidation })
   const canAddEnteredAddress =
     isEnteredAddressValid && !addressState.isDomainResolving && validation.severity !== 'error'
