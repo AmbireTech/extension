@@ -13,6 +13,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 type Props = {
+  name: string
   /** Where the account was added from, shown like in the recipient options */
   sourceLabel?: string
   /** Goes back to entering an address. */
@@ -20,7 +21,7 @@ type Props = {
 }
 
 /** Replaces the address field once a Privacy Pools account is picked. Laid out like `Recipient`. */
-const PrivacyPoolsRecipient = ({ sourceLabel, onClear }: Props) => {
+const PrivacyPoolsRecipient = ({ name, sourceLabel, onClear }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -49,7 +50,7 @@ const PrivacyPoolsRecipient = ({ sourceLabel, onClear }: Props) => {
         <PrivacyPoolsAccountAvatar size={36} style={spacings.mrTy} />
         <View style={flexbox.flex1}>
           <Text fontSize={14} weight="medium" numberOfLines={1}>
-            {t('Private account')}
+            {name}
           </Text>
           {!!sourceLabel && (
             <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
