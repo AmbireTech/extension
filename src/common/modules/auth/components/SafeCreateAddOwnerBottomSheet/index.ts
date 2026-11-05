@@ -1,3 +1,0 @@
-import SafeCreateAddOwnerBottomSheet from './SafeCreateAddOwnerBottomSheet'
-
-export default SafeCreateAddOwnerBottomSheet

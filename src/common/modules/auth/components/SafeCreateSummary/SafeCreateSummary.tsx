@@ -150,7 +150,6 @@ const SafeCreateSummary = () => {
           <SafeCreateOwnerRow
             key={owner.address}
             owner={owner}
-            withSigningBadge
             withDivider={index < owners.length - 1}
             testID={`safe-create-summary-owner-${owner.address}`}
           />

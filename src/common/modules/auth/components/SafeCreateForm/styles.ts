@@ -9,6 +9,7 @@ interface Style {
   card: ViewStyle
   divider: ViewStyle
   addOwnerIcon: ViewStyle
+  addOwnerDisabled: ViewStyle
   stepper: ViewStyle
   stepperButton: ViewStyle
   stepperButtonDisabled: ViewStyle
@@ -31,6 +32,9 @@ const getStyles = (theme: ThemeProps) =>
     divider: {
       height: 1,
       backgroundColor: theme.secondaryBorder
+    },
+    addOwnerDisabled: {
+      opacity: 0.4
     },
     addOwnerIcon: {
       ...flexbox.center,

@@ -1,15 +1,14 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
+import { Hex } from '@ambire-common/interfaces/hex'
 import AddIcon from '@common/assets/svg/AddIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import SafeCreateAddOwnerBottomSheet from '@common/modules/auth/components/SafeCreateAddOwnerBottomSheet'
-import SafeCreateOwnerRow from '@common/modules/auth/components/SafeCreateOwnerRow'
+import SafeCreateOwnerField from '@common/modules/auth/components/SafeCreateOwnerField'
 import SafeCreateSectionLabel from '@common/modules/auth/components/SafeCreateSectionLabel'
 import useSafeCreate from '@common/modules/auth/hooks/useSafeCreate'
 import spacings from '@common/styles/spacings'
@@ -19,9 +18,16 @@ import getStyles from './styles'
 
 type Props = Pick<
   ReturnType<typeof useSafeCreate>,
-  | 'owners'
-  | 'addOwner'
-  | 'removeOwner'
+  | 'control'
+  | 'setValue'
+  | 'trigger'
+  | 'ownerFields'
+  | 'addOwnerField'
+  | 'canAddOwnerField'
+  | 'removeOwnerField'
+  | 'ownerFieldValidations'
+  | 'ownerAddressesByField'
+  | 'ownersCount'
   | 'requiredConfirmations'
   | 'canDecreaseRequiredConfirmations'
   | 'canIncreaseRequiredConfirmations'
@@ -30,9 +36,16 @@ type Props = Pick<
 >
 
 const SafeCreateForm = ({
-  owners,
-  addOwner,
-  removeOwner,
+  control,
+  setValue,
+  trigger,
+  ownerFields,
+  addOwnerField,
+  canAddOwnerField,
+  removeOwnerField,
+  ownerFieldValidations,
+  ownerAddressesByField,
+  ownersCount,
   requiredConfirmations,
   canDecreaseRequiredConfirmations,
   canIncreaseRequiredConfirmations,
@@ -41,13 +54,17 @@ const SafeCreateForm = ({
 }: Props) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const {
-    ref: addOwnerSheetRef,
-    open: openAddOwnerSheet,
-    close: closeAddOwnerSheet
-  } = useModalize()
-  const ownersCount = owners.length
-  const ownerAddresses = useMemo(() => owners.map(({ address }) => address), [owners])
+
+  // Each field leaves out the owners entered in the other fields, but not its own
+  const hiddenAddressesByField = useMemo(
+    () =>
+      ownerAddressesByField.map((_, index) =>
+        ownerAddressesByField.filter(
+          (address, otherIndex): address is Hex => !!address && otherIndex !== index
+        )
+      ),
+    [ownerAddressesByField]
+  )
 
   const confirmationsDescription = useMemo(() => {
     if (!ownersCount) return t('Add at least one owner first.')
@@ -69,19 +86,30 @@ const SafeCreateForm = ({
         {ownersCount ? t('Owners · {{ownersCount}}', { ownersCount }) : t('Owners')}
       </SafeCreateSectionLabel>
       <View style={styles.card}>
-        {owners.map((owner) => (
-          <SafeCreateOwnerRow
-            key={owner.address}
-            owner={owner}
-            onRemove={removeOwner}
-            withDivider
-            testID={`safe-create-owner-${owner.address}`}
+        {ownerFields.map((field, index) => (
+          <SafeCreateOwnerField
+            key={field.id}
+            control={control}
+            setValue={setValue}
+            trigger={trigger}
+            index={index}
+            onRemove={removeOwnerField}
+            overwriteValidation={ownerFieldValidations[index] ?? null}
+            hiddenAddresses={hiddenAddressesByField[index] ?? []}
           />
         ))}
+        {/* Under the owners, so the new field shows up where the user just clicked and the
+        button moves down with it. Unusable while a field still has no owner */}
         <HoverablePressable
           testID="safe-create-add-owner"
-          onPress={openAddOwnerSheet as () => void}
-          style={[flexbox.directionRow, flexbox.alignCenter, spacings.pvSm]}
+          onPress={addOwnerField}
+          disabled={!canAddOwnerField}
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.pvSm,
+            !canAddOwnerField && styles.addOwnerDisabled
+          ]}
         >
           <View style={styles.addOwnerIcon}>
             <AddIcon width={18} height={18} color={theme.primary} />
@@ -149,13 +177,6 @@ const SafeCreateForm = ({
           </Text>
         </View>
       </View>
-
-      <SafeCreateAddOwnerBottomSheet
-        sheetRef={addOwnerSheetRef}
-        closeBottomSheet={closeAddOwnerSheet}
-        ownerAddresses={ownerAddresses}
-        onAdd={addOwner}
-      />
     </View>
   )
 }
