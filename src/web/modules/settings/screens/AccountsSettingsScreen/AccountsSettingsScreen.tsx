@@ -237,6 +237,7 @@ const AccountsSettingsScreen = () => {
         <PrivacyPoolsAccountRow
           account={privacyPoolsAccount}
           onRemove={setPrivacyPoolsAccountToRemove}
+          withRename
           containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
         />
       </View>

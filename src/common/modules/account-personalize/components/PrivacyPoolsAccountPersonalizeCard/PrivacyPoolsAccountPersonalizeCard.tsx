@@ -3,12 +3,12 @@ import { View } from 'react-native'
 
 import EditableAccountName from '@common/components/EditableAccountName'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
+import PrivacyPoolsAccountIdentity from '@common/components/PrivacyPoolsAccountIdentity'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import getStyles from '@common/modules/account-personalize/components/AccountPersonalizeCard/styles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import text from '@common/styles/utils/text'
 
 const NAME_TEXT_PROPS = { weight: 'medium' } as const
 
@@ -30,16 +30,8 @@ const PrivacyPoolsAccountPersonalizeCard = ({
 }: Props) => {
   const { styles } = useTheme(getStyles)
 
-  // The rename sheet shows it the way it shows an account's avatar and address
   const identity = useMemo(
-    () => (
-      <>
-        <PrivacyPoolsAccountAvatar size={48} style={spacings.mbSm} />
-        <Text fontSize={12} appearance="secondaryText" style={text.center}>
-          {sourceText}
-        </Text>
-      </>
-    ),
+    () => <PrivacyPoolsAccountIdentity sourceText={sourceText} />,
     [sourceText]
   )
 
