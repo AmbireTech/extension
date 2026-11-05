@@ -1,4 +1,9 @@
-import { formatUnits } from 'ethers'
+import { formatUnits, parseUnits } from 'ethers'
+
+import { convertTokenPriceToBigInt } from '@ambire-common/utils/numbers/formatters'
+
+/** The precision a slider moving a USD amount works in - whole cents. */
+export const SLIDER_FIAT_DECIMALS = 2
 
 // The step is the smallest 1-2-5 multiple of a power of ten that leaves at most this many amounts
 // along the track - fine enough to pick an approximate amount, coarse enough to stay round.
@@ -49,4 +54,39 @@ export const getSliderAmountFieldValue = (amount: bigint, decimals: number) => {
 
   // formatUnits always keeps a decimal, which reads as noise on a whole amount ("413.0")
   return formattedAmount.endsWith('.0') ? formattedAmount.slice(0, -2) : formattedAmount
+}
+
+/**
+ * An amount field's text as a slider amount in the unit's smallest denomination. The field holds
+ * whatever was typed into it, so it can carry more decimals than the unit allows. `parseUnits`
+ * rejects those outright, and the slider is better off sitting at the truncated amount than
+ * snapping back to zero mid-typing.
+ */
+export const parseSliderAmount = (value: string, decimals: number) => {
+  const [whole, fraction] = (value || '0').split('.')
+  const fractionDigits = fraction ? fraction.slice(0, decimals) : ''
+  const truncated = fractionDigits ? `${whole || '0'}.${fractionDigits}` : whole || '0'
+
+  try {
+    return parseUnits(truncated, decimals)
+  } catch {
+    return 0n
+  }
+}
+
+/**
+ * A token amount priced in USD, in `SLIDER_FIAT_DECIMALS` units - the axis a slider moves on while
+ * the field shows USD. Uses the controllers' bigint math and rounds down, so a slider's range never
+ * reaches past what the account actually holds. Zero without a price.
+ */
+export const toFiatSliderAmount = (amount: bigint, decimals: number, tokenUsdPrice?: number) => {
+  if (!tokenUsdPrice) return 0n
+
+  const { tokenPriceBigInt, tokenPriceDecimals } = convertTokenPriceToBigInt(tokenUsdPrice)
+  const fiatAmount = amount * tokenPriceBigInt
+  const excessDecimals = decimals + tokenPriceDecimals - SLIDER_FIAT_DECIMALS
+
+  return excessDecimals >= 0
+    ? fiatAmount / 10n ** BigInt(excessDecimals)
+    : fiatAmount * 10n ** BigInt(-excessDecimals)
 }

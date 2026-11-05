@@ -36,7 +36,12 @@ import {
 } from '@ambire-common/libs/walletStaking/pendingWithdrawal'
 import usePendingWalletWithdrawal from '@common/modules/wallet-staking/hooks/usePendingWalletWithdrawal'
 import useXWalletShareValue from '@common/modules/wallet-staking/hooks/useXWalletShareValue'
-import { getSliderAmountFieldValue } from '@common/utils/amountSlider'
+import {
+  getSliderAmountFieldValue,
+  parseSliderAmount,
+  SLIDER_FIAT_DECIMALS,
+  toFiatSliderAmount
+} from '@common/utils/amountSlider'
 import { storage } from '@common/services/storage'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
 import { THEME_TYPES } from '@common/styles/theme/types'
@@ -496,13 +501,81 @@ const useWalletStakingForm = () => {
     [hasPendingWithdrawalLoadFailed, reloadPendingWithdrawal, setTokenAmount]
   )
 
-  const handleSliderValueChange = useCallback(
-    (nextAmount: bigint) => setTokenAmount(getSliderAmountFieldValue(nextAmount, TOKEN_DECIMALS)),
-    [setTokenAmount]
-  )
   const handleMaxPress = useCallback(() => {
     setTokenAmount(formatUnits(balance, TOKEN_DECIMALS))
   }, [balance, setTokenAmount])
+  // The slider moves whichever amount the field is showing, like SendToken's: the token itself in
+  // token mode and its USD value in fiat mode, so a drag lands on round dollars there.
+  const isFiatSlider = amountFieldMode === 'fiat' && walletPrice > 0
+  const toSliderAmount = useCallback(
+    (tokenAmount: bigint) =>
+      isFiatSlider ? toFiatSliderAmount(tokenAmount, TOKEN_DECIMALS, walletPrice) : tokenAmount,
+    [isFiatSlider, walletPrice]
+  )
+  const sliderTierOffset = mode === 'stake' ? stkWalletBalance : 0n
+  const sliderMaximum = toSliderAmount(balance)
+  // Priced in USD, a tier mark is rounded to the cent, so converting its USD value back to tokens
+  // could miss the tier by a fraction. Each one is looked up instead by the amount the slider
+  // emits when it is pressed, and set as its exact token amount.
+  const sliderTierMarkTokenAmounts = useMemo(
+    () =>
+      new Map(
+        sliderTierMarks.map(({ value }) => [
+          toSliderAmount(value) - toSliderAmount(sliderTierOffset),
+          value - sliderTierOffset
+        ])
+      ),
+    [sliderTierMarks, sliderTierOffset, toSliderAmount]
+  )
+  const handleSliderValueChange = useCallback(
+    (nextAmount: bigint) => {
+      if (!isFiatSlider) {
+        setTokenAmount(getSliderAmountFieldValue(nextAmount, TOKEN_DECIMALS))
+        return
+      }
+
+      const tierMarkTokenAmount = sliderTierMarkTokenAmounts.get(nextAmount)
+      if (tierMarkTokenAmount !== undefined) {
+        setTokenAmount(getSliderAmountFieldValue(tierMarkTokenAmount, TOKEN_DECIMALS))
+        return
+      }
+      // Sliding all the way is the same as pressing Max: the exact balance, rather than its USD
+      // value converted back to tokens
+      if (nextAmount >= sliderMaximum) {
+        handleMaxPress()
+        return
+      }
+
+      handleFiatAmountChange(getSliderAmountFieldValue(nextAmount, SLIDER_FIAT_DECIMALS))
+    },
+    [
+      handleFiatAmountChange,
+      handleMaxPress,
+      isFiatSlider,
+      setTokenAmount,
+      sliderMaximum,
+      sliderTierMarkTokenAmounts
+    ]
+  )
+  const slider = useMemo(
+    () => ({
+      value: isFiatSlider ? parseSliderAmount(fiatAmount, SLIDER_FIAT_DECIMALS) : amountInWei,
+      maximumValue: sliderMaximum,
+      onValueChange: handleSliderValueChange,
+      tierOffset: toSliderAmount(sliderTierOffset),
+      marks: sliderTierMarks.map((mark) => ({ ...mark, value: toSliderAmount(mark.value) }))
+    }),
+    [
+      amountInWei,
+      fiatAmount,
+      handleSliderValueChange,
+      isFiatSlider,
+      sliderMaximum,
+      sliderTierMarks,
+      sliderTierOffset,
+      toSliderAmount
+    ]
+  )
   const handleFindWithdrawalByTxnId = useCallback(() => {
     setCheckedWithdrawalTxnId(withdrawalTxnId.trim())
     findWithdrawalByTxnId(withdrawalTxnId)
@@ -715,8 +788,7 @@ const useWalletStakingForm = () => {
     hasInsufficientBalance,
     hasZeroAmount,
     onMaxPress: handleMaxPress,
-    onSliderValueChange: handleSliderValueChange,
-    sliderTierMarks,
+    slider,
     balanceRatioSegments,
     shouldShowBalanceRatioProgress,
     currentFeePercent,

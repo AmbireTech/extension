@@ -1,6 +1,12 @@
 import { parseUnits } from 'ethers'
 
-import { getNiceSliderStep, getSliderAmountFieldValue, snapSliderAmount } from './amountSlider'
+import {
+  getNiceSliderStep,
+  getSliderAmountFieldValue,
+  parseSliderAmount,
+  snapSliderAmount,
+  toFiatSliderAmount
+} from './amountSlider'
 
 describe('getNiceSliderStep', () => {
   it('picks a 1-2-5 step that splits the range into at most 100 amounts', () => {
@@ -59,5 +65,27 @@ describe('getSliderAmountFieldValue', () => {
   })
   it('keeps an exact amount exact', () => {
     expect(getSliderAmountFieldValue(parseUnits('1274747.643219', 18), 18)).toBe('1274747.643219')
+  })
+})
+
+describe('parseSliderAmount', () => {
+  it('parses the field text in the unit given', () => {
+    expect(parseSliderAmount('12.5', 2)).toBe(1250n)
+    expect(parseSliderAmount('', 18)).toBe(0n)
+  })
+  it('drops the decimals the unit has no room for instead of failing', () => {
+    expect(parseSliderAmount('12.567', 2)).toBe(1256n)
+    expect(parseSliderAmount('.5', 2)).toBe(50n)
+  })
+})
+
+describe('toFiatSliderAmount', () => {
+  it('prices a token amount in cents, rounding down', () => {
+    expect(toFiatSliderAmount(parseUnits('2', 18), 18, 3660.27)).toBe(732054n)
+    expect(toFiatSliderAmount(parseUnits('1', 6), 6, 0.99785)).toBe(99n)
+  })
+  it('is zero without a price', () => {
+    expect(toFiatSliderAmount(parseUnits('2', 18), 18, undefined)).toBe(0n)
+    expect(toFiatSliderAmount(parseUnits('2', 18), 18, 0)).toBe(0n)
   })
 })

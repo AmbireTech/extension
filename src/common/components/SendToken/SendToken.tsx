@@ -1,13 +1,9 @@
-import { parseUnits } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
-import {
-  convertTokenPriceToBigInt,
-  textToValidDecimal
-} from '@ambire-common/utils/numbers/formatters'
+import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import TokenAndAmountSelector from '@common/components/TokenAndAmountSelector'
 import Select, { SectionedSelect } from '@common/components/Select'
@@ -17,7 +13,12 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getSliderAmountFieldValue } from '@common/utils/amountSlider'
+import {
+  getSliderAmountFieldValue,
+  parseSliderAmount,
+  SLIDER_FIAT_DECIMALS,
+  toFiatSliderAmount
+} from '@common/utils/amountSlider'
 
 import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
@@ -25,36 +26,6 @@ import type { TokenResult } from '@ambire-common/libs/portfolio'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const SECTION_MENU_HEADER_HEIGHT = 50
-const FIAT_DECIMALS = 2
-
-/** The amount field holds whatever was typed into it, so it can carry more decimals than the unit
- * it is in allows. `parseUnits` rejects those outright, and the slider is better off sitting at the
- * truncated amount than snapping back to zero mid-typing. */
-const toAmountWei = (value: string, decimals: number) => {
-  const [whole, fraction] = (value || '0').split('.')
-  const fractionDigits = fraction ? fraction.slice(0, decimals) : ''
-  const truncated = fractionDigits ? `${whole || '0'}.${fractionDigits}` : whole || '0'
-
-  try {
-    return parseUnits(truncated, decimals)
-  } catch {
-    return 0n
-  }
-}
-
-/** The balance priced in USD, in `FIAT_DECIMALS` units. Uses the controllers' bigint math and
- * rounds down, so the slider's range never reaches past what the account can actually send. */
-const toMaxFiatAmountWei = (maxAmount: string, decimals: number, tokenUsdPrice?: number) => {
-  if (!tokenUsdPrice) return 0n
-
-  const { tokenPriceBigInt, tokenPriceDecimals } = convertTokenPriceToBigInt(tokenUsdPrice)
-  const fiatAmountWei = toAmountWei(maxAmount, decimals) * tokenPriceBigInt
-  const excessDecimals = decimals + tokenPriceDecimals - FIAT_DECIMALS
-
-  return excessDecimals >= 0
-    ? fiatAmountWei / 10n ** BigInt(excessDecimals)
-    : fiatAmountWei * 10n ** BigInt(-excessDecimals)
-}
 
 type Props = {
   label: string
@@ -144,16 +115,17 @@ const SendToken: FC<Props> = ({
 
   // The slider moves whichever amount the field is currently showing, so its axis is the token's
   // own balance in token mode and that same balance priced in USD in fiat mode.
-  const sliderDecimals =
-    fromAmountFieldMode === 'fiat' ? FIAT_DECIMALS : (fromSelectedToken?.decimals ?? 0)
+  const tokenDecimals = fromSelectedToken?.decimals ?? 0
+  const sliderDecimals = fromAmountFieldMode === 'fiat' ? SLIDER_FIAT_DECIMALS : tokenDecimals
   const tokenUsdPrice = fromSelectedToken?.priceIn.find(
     ({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd'
   )?.price
+  const maxTokenAmount = parseSliderAmount(maxFromAmount, tokenDecimals)
   const maxSliderAmount =
-    fromAmountFieldMode !== 'fiat'
-      ? toAmountWei(maxFromAmount, sliderDecimals)
-      : toMaxFiatAmountWei(maxFromAmount, fromSelectedToken?.decimals ?? 0, tokenUsdPrice)
-  const sliderAmount = toAmountWei(fromAmountValue, sliderDecimals)
+    fromAmountFieldMode === 'fiat'
+      ? toFiatSliderAmount(maxTokenAmount, tokenDecimals, tokenUsdPrice)
+      : maxTokenAmount
+  const sliderAmount = parseSliderAmount(fromAmountValue, sliderDecimals)
   const handleSliderValueChange = useCallback(
     (nextAmount: bigint) => {
       // Sliding all the way is the same as pressing Max, so the controller sets the exact max
