@@ -3,9 +3,8 @@ import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
-import HasPassphraseToggle from '@common/components/HasPassphraseToggle'
 import InputPassword from '@common/components/InputPassword'
-import SavePassphraseToggle from '@common/components/SavePassphraseToggle'
+import PassphraseToggle from '@common/components/PassphraseToggle'
 import { useTranslation } from '@common/config/localization'
 import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
@@ -26,9 +25,9 @@ const SeedPhraseImportScreen = () => {
     control,
     isValid,
     enablePassphrase,
-    setEnablePassphrase,
+    toggleEnablePassphrase,
     shouldSavePassphrase,
-    setShouldSavePassphrase,
+    toggleShouldSavePassphrase,
     seedPhraseStatus,
     seedPhraseError,
     seedCaretPosition,
@@ -82,10 +81,12 @@ const SeedPhraseImportScreen = () => {
             </View>
           )}
         />
-        <HasPassphraseToggle
+        <PassphraseToggle
           testID="enable-passphrase-toggle"
+          title={t('I have a passphrase')}
+          description={t('Not sure? Leave it off.')}
           isOn={enablePassphrase}
-          onToggle={() => setEnablePassphrase((prev) => !prev)}
+          onToggle={toggleEnablePassphrase}
         />
         {enablePassphrase ? (
           <>
@@ -108,10 +109,12 @@ const SeedPhraseImportScreen = () => {
                 name="passphrase"
               />
             </View>
-            <SavePassphraseToggle
+            <PassphraseToggle
               testID="save-passphrase-toggle"
+              title={t('Save passphrase')}
+              description={t("You won't be asked for it next time you add accounts.")}
               isOn={shouldSavePassphrase}
-              onToggle={() => setShouldSavePassphrase((prev) => !prev)}
+              onToggle={toggleShouldSavePassphrase}
             />
           </>
         ) : null}

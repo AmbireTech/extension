@@ -7,7 +7,7 @@ import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import InputPassword from '@common/components/InputPassword'
 import PassphraseBadge from '@common/components/PassphraseBadge'
-import SavePassphraseToggle from '@common/components/SavePassphraseToggle'
+import PassphraseToggle from '@common/components/PassphraseToggle'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
@@ -50,6 +50,16 @@ const EnterSeedPassphraseBottomSheet = ({
   const [isWrongPassphrase, setIsWrongPassphrase] = useState(false)
   const [isChecking, setIsChecking] = useState(false)
 
+  const toggleShouldSavePassphrase = useCallback(() => setShouldSavePassphrase((prev) => !prev), [])
+
+  // The action the passphrase is entered for can't be called back once sent, so the sheet stays
+  // open until it settles
+  const handleClose = useCallback(() => {
+    if (isChecking) return
+
+    close()
+  }, [close, isChecking])
+
   const handleChangePassphrase = useCallback((value: string) => {
     setPassphrase(value)
     setIsWrongPassphrase(false)
@@ -76,10 +86,11 @@ const EnterSeedPassphraseBottomSheet = ({
     <BottomSheet
       id="enter-seed-passphrase"
       sheetRef={sheetRef}
-      closeBottomSheet={close}
+      closeBottomSheet={handleClose}
+      shouldBeClosableOnDrag={!isChecking}
       onClosed={onClosed}
       autoOpen
-      HeaderComponent={<ModalHeader handleClose={close} title={t('Enter passphrase')} />}
+      HeaderComponent={<ModalHeader handleClose={handleClose} title={t('Enter passphrase')} />}
       FooterComponent={
         <ButtonWithLoader
           type="primary"
@@ -131,10 +142,12 @@ const EnterSeedPassphraseBottomSheet = ({
         autoFocus
         testID="enter-seed-passphrase-input"
       />
-      <SavePassphraseToggle
+      <PassphraseToggle
         testID="enter-seed-passphrase-save-toggle"
+        title={t('Save passphrase')}
+        description={t("You won't be asked for it next time you add accounts.")}
         isOn={shouldSavePassphrase}
-        onToggle={() => setShouldSavePassphrase((prev) => !prev)}
+        onToggle={toggleShouldSavePassphrase}
         style={spacings.mbLg}
       />
     </BottomSheet>
