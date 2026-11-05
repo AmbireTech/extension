@@ -40,7 +40,7 @@ const getStyles = (theme: ThemeProps) =>
       width: NETWORKS_ICON_SIZE,
       height: NETWORKS_ICON_SIZE,
       borderRadius: NETWORKS_ICON_SIZE / 2,
-      backgroundColor: theme.tertiaryBackground
+      backgroundColor: theme.hoverBackground
     }
   })
 

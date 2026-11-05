@@ -21,6 +21,8 @@ import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+import useSafeActivationProgress from './useSafeActivationProgress'
+
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
@@ -67,6 +69,7 @@ const SafeActivationBottomSheet: FC<Props> = ({
     selectAreAccountStatesLoading
   )
   const { dispatchAndWait: requestsDispatchAndWait } = useController('RequestsController')
+  const activationProgress = useSafeActivationProgress(account)
   const accountStateCheckedForRef = useRef<string | null>(null)
   const deploymentRowsInProgressRef = useRef(new Set<string>())
   // The account the sheet is open for, so replies arriving after it was closed (or unmounted)
@@ -211,7 +214,7 @@ const SafeActivationBottomSheet: FC<Props> = ({
         style={[
           common.borderRadiusPrimary,
           spacings.phSm,
-          { backgroundColor: theme.tertiaryBackground }
+          { backgroundColor: theme.secondaryBackground }
         ]}
       >
         {listedNetworks.map((network, index) => {
@@ -221,6 +224,14 @@ const SafeActivationBottomSheet: FC<Props> = ({
           // Until the state is known the user can't tell if the Safe is already active there
           const isStateLoading = !state && areAccountStatesLoading
           const canActivate = !state?.isDeployed && !isStateLoading
+          const progress = activationProgress[chainId]
+          const getButtonText = () => {
+            if (rowState?.isLoading) return t('Preparing...')
+            if (progress === 'signing') return t('Waiting for signature...')
+            if (progress === 'activating') return t('Activating...')
+
+            return t('Activate')
+          }
 
           return (
             <View
@@ -243,9 +254,11 @@ const SafeActivationBottomSheet: FC<Props> = ({
                     type="primary"
                     size="tiny"
                     style={[spacings.mb0, { minWidth: 88, height: 32, borderRadius: 16 }]}
-                    disabled={rowState?.isLoading}
+                    // While it waits for the signature, pressing it brings the signing window
+                    // back (the controller focuses the request it already has)
+                    disabled={rowState?.isLoading || progress === 'activating'}
                     onPress={() => deploy(network.chainId)}
-                    text={rowState?.isLoading ? t('Preparing...') : t('Activate')}
+                    text={getButtonText()}
                   />
                 )}
               </View>

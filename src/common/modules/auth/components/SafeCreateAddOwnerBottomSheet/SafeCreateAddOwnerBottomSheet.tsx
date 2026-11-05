@@ -69,7 +69,7 @@ const OwnersCard = React.memo(
         style={[
           common.borderRadiusPrimary,
           spacings.phSm,
-          { backgroundColor: theme.tertiaryBackground }
+          { backgroundColor: theme.secondaryBackground }
         ]}
       >
         {owners.map((owner, index) => (
@@ -100,6 +100,10 @@ const SafeCreateAddOwnerBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const inputWrapperStyle = useMemo(
+    () => ({ backgroundColor: theme.secondaryBackground }),
+    [theme.secondaryBackground]
+  )
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { state: contacts } = useController('AddressBookController', selectContacts)
   const getOwnerDetails = useSafeOwnerDetails()
@@ -230,9 +234,9 @@ const SafeCreateAddOwnerBottomSheet = ({
         resolvedAddressType={addressState.resolvedAddressType}
         isRecipientDomainResolving={addressState.isDomainResolving}
         placeholder={t('Address or ENS name')}
-        // The sheet has the same color as the default input background, so use the focused
-        // input color to keep the input visible and the same before and after focus
-        backgroundColor={theme.tertiaryBackground}
+        // The sheet has the same color as the default input background, so a lighter one keeps
+        // the input visible, also while focused (the wrapper style wins over the focused one)
+        inputWrapperStyle={inputWrapperStyle}
         containerStyle={spacings.mb0}
       />
       {!!addressState.fieldValue && (
@@ -266,6 +270,7 @@ const SafeCreateAddOwnerBottomSheet = ({
                 placeholder={t('Search')}
                 height={SEARCH_HEIGHT}
                 containerStyle={{ width: SEARCH_WIDTH }}
+                inputWrapperStyle={inputWrapperStyle}
                 testID="safe-create-add-owner-search"
               />
             )}

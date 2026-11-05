@@ -89,7 +89,8 @@ const SafeCreateOwnerRow = ({
               width: REMOVE_BUTTON_SIZE,
               height: REMOVE_BUTTON_SIZE,
               borderRadius: REMOVE_BUTTON_SIZE / 2,
-              backgroundColor: theme.tertiaryBackground
+              // Sits on a card, so it's a shade lighter than it to stay visible
+              backgroundColor: theme.hoverBackground
             }
           ]}
         >

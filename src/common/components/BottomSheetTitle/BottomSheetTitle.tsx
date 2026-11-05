@@ -42,7 +42,7 @@ const BottomSheetTitle = ({ title, subtitle, onClose, closeButtonTestID }: Props
               width: CLOSE_BUTTON_SIZE,
               height: CLOSE_BUTTON_SIZE,
               borderRadius: CLOSE_BUTTON_SIZE / 2,
-              backgroundColor: theme.tertiaryBackground
+              backgroundColor: theme.secondaryBackground
             }
           ]}
         >

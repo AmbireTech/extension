@@ -44,7 +44,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.alignCenter,
       height: STEPPER_HEIGHT,
       borderRadius: STEPPER_HEIGHT / 2,
-      backgroundColor: theme.tertiaryBackground
+      backgroundColor: theme.hoverBackground
     },
     stepperButton: {
       ...flexbox.center,
