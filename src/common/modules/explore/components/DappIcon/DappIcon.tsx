@@ -10,6 +10,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
 import flexbox from '@common/styles/utils/flexbox'
+import { getLoadableDappIcon } from '@common/utils/dappIcon'
 
 import NotConnected from './NotConnected'
 
@@ -23,6 +24,11 @@ const DappIcon: FC<Props> = ({ dapp, isDashboard = false }) => {
   const { theme } = useTheme()
   const isBlacklisted = dapp.blacklisted === 'BLACKLISTED'
   const isConnected = !!dapp.isConnected
+  const icon = useMemo(
+    () =>
+      getLoadableDappIcon({ icon: dapp.icon, siteUrl: dapp.url, isInAppCatalog: !dapp.isCustom }),
+    [dapp.icon, dapp.url, dapp.isCustom]
+  )
 
   const dappInitials = useMemo(() => {
     const fullName = dapp?.name || ''
@@ -113,7 +119,7 @@ const DappIcon: FC<Props> = ({ dapp, isDashboard = false }) => {
       )}
       <ManifestImage
         skeletonAppearance="primaryBackground"
-        uri={dapp.icon || ''}
+        uri={icon}
         size={24}
         fallback={fallbackIcon}
       />

@@ -6,6 +6,7 @@ import HumanizerAddress from '@common/components/HumanizerAddress'
 import RequestingDappInfo from '@common/components/RequestingDappInfo'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
+import useLoadableDappIcon from '@common/hooks/useLoadableDappIcon'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
@@ -21,12 +22,13 @@ const Info: FC<Props> = () => {
   const { styles } = useTheme(getStyles)
   const { dapp, messageToSign } = useController('SignMessageController').state
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
+  const dappIcon = useLoadableDappIcon({ icon: dapp?.icon, siteUrl: dapp?.url })
 
   return (
     <View>
       <RequestingDappInfo
         name={dapp?.name}
-        icon={dapp?.icon}
+        icon={dappIcon}
         intentText={
           messageToSign?.content.kind === 'siwe'
             ? t('wants to prove you own this account ')

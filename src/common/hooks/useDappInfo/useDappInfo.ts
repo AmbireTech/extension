@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
 import { UserRequest } from '@ambire-common/interfaces/userRequest'
+import useLoadableDappIcon from '@common/hooks/useLoadableDappIcon'
 
 interface DappInfo {
   name: string
@@ -8,18 +9,14 @@ interface DappInfo {
 }
 
 /**
- * Hook to extract dapp name and icon the userRequest session data.
+ * Hook to extract dapp name and icon the userRequest session data. The icon is left empty when it
+ * can't be loaded without a request to a host other than the site (see `canLoadDappIcon`).
  */
 const useDappInfo = (userRequest?: UserRequest): DappInfo => {
-  return useMemo(() => {
-    if (!userRequest) return { name: '', icon: '' }
+  const session = userRequest?.dappPromises[0]?.session
+  const icon = useLoadableDappIcon({ icon: session?.icon, siteUrl: session?.origin })
 
-    const session = userRequest.dappPromises[0]?.session
-    const name = session?.name || ''
-    const icon = session?.icon || ''
-
-    return { name, icon }
-  }, [userRequest])
+  return useMemo(() => ({ name: session?.name || '', icon }), [session?.name, icon])
 }
 
 export default useDappInfo

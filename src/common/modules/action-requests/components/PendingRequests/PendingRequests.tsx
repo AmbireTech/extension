@@ -19,6 +19,7 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
+import useLoadableDappIcon from '@common/hooks/useLoadableDappIcon'
 import useTheme from '@common/hooks/useTheme'
 import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls/lazyCompactHumanizedCalls'
 import spacings from '@common/styles/spacings'
@@ -71,6 +72,10 @@ const RequestIcon = React.memo(function RequestIcon({
 }) {
   const { t } = useTranslation()
   const { icon } = useMemo(() => getRequestDappInfo(request, t), [request, t])
+  const loadableIcon = useLoadableDappIcon({
+    icon,
+    siteUrl: request.dappPromises[0]?.session?.origin
+  })
 
   if (getIsSafeRequest(request)) return <SafeIcon width={size} height={size} />
 
@@ -80,7 +85,7 @@ const RequestIcon = React.memo(function RequestIcon({
 
   return (
     <ManifestImage
-      uri={icon}
+      uri={loadableIcon}
       size={size}
       isRound
       fallback={() => <ManifestFallbackIcon width={size} height={size} />}

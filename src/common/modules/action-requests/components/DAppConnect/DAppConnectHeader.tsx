@@ -16,6 +16,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_LG, SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getLoadableDappIcon } from '@common/utils/dappIcon'
 
 import getStyles from './styles'
 import TrustedIcon from './TrustedIcon'
@@ -75,6 +76,10 @@ const DAppConnectHeader: FC<Props> = ({
   const hasWarning = isSuspiciousHosting || hasFailedToGet || isImpersonating
 
   const { subdomainPrefix, rootDomain } = useMemo(() => splitByRootDomain(id ?? ''), [id])
+  const loadableIcon = useMemo(
+    () => getLoadableDappIcon({ icon, siteUrl: id, isInAppCatalog: !!isInAppCatalog }),
+    [icon, id, isInAppCatalog]
+  )
 
   const spacingsStyle = useMemo(() => {
     return {
@@ -114,8 +119,8 @@ const DAppConnectHeader: FC<Props> = ({
       <View style={[isWeb && flexbox.directionRow, flexbox.alignCenter]}>
         <View style={[isWeb && spacings.mr, isMobile && spacings.mbTy]}>
           <ManifestImage
-            key={icon}
-            uri={icon}
+            key={loadableIcon}
+            uri={loadableIcon}
             size={responsiveSizeMultiplier * 56}
             fallback={() => (
               <ManifestFallbackIcon
