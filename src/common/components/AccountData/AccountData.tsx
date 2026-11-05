@@ -238,7 +238,9 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
               <>
                 <Text
                   color="#B9BFC9"
-                  style={[isWeb ? spacings.mrTy : undefined]}
+                  numberOfLines={1}
+                  // Keeps its width on one row, so the name next to it is what gives way
+                  style={[{ flexShrink: 0 }, isWeb ? spacings.mrTy : undefined]}
                   weight={account ? 'mono_regular' : 'regular'}
                   fontSize={12}
                 >
