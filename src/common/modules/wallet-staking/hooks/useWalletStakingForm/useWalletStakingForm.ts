@@ -497,9 +497,8 @@ const useWalletStakingForm = () => {
   )
 
   const handleSliderValueChange = useCallback(
-    (nextAmount: bigint) =>
-      setTokenAmount(getSliderAmountFieldValue(nextAmount, balance, TOKEN_DECIMALS)),
-    [balance, setTokenAmount]
+    (nextAmount: bigint) => setTokenAmount(getSliderAmountFieldValue(nextAmount, TOKEN_DECIMALS)),
+    [setTokenAmount]
   )
   const handleMaxPress = useCallback(() => {
     setTokenAmount(formatUnits(balance, TOKEN_DECIMALS))

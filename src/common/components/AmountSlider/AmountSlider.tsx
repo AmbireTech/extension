@@ -11,6 +11,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
 import { THEME_TYPES } from '@common/styles/theme/types'
+import { snapSliderAmount } from '@common/utils/amountSlider'
 
 import { getSliderMarks, Mark, SLIDER_STEPS } from './getSliderMarks'
 import getStyles, { MARK_SIZE } from './styles'
@@ -21,7 +22,8 @@ const EDGE_MARK_INSET = 1
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
 // A press is a deliberate "give me that mark", so pressing within this many px of a dot (or of
-// either end of the track) lands exactly on it. A drag never snaps - it is a fine adjustment.
+// either end of the track) lands exactly on it. A drag never snaps to a dot - it is a fine
+// adjustment, rounded only to the nearest nice amount (see snapSliderAmount).
 const PRESS_SNAP_RADIUS = 24
 // Linearly maps x from [fromStart, fromEnd] onto [toStart, toEnd].
 const interpolate = (
@@ -246,7 +248,7 @@ const AmountSlider = ({
     (position: number) => {
       const rawStep = Math.round((position / width) * Number(SLIDER_STEPS))
       const nextStep = BigInt(Math.min(Math.max(rawStep, 0), Number(SLIDER_STEPS)))
-      emitValueChange((maximumValue * nextStep) / SLIDER_STEPS)
+      emitValueChange(snapSliderAmount((maximumValue * nextStep) / SLIDER_STEPS, maximumValue))
     },
     [emitValueChange, maximumValue, width]
   )
@@ -368,7 +370,7 @@ const AmountSlider = ({
       const direction = event.nativeEvent.actionName === 'increment' ? 1n : -1n
       const nextStep = sliderStep + ACCESSIBILITY_STEP * direction
       const clampedStep = nextStep < 0n ? 0n : nextStep > SLIDER_STEPS ? SLIDER_STEPS : nextStep
-      emitValueChange((maximumValue * clampedStep) / SLIDER_STEPS)
+      emitValueChange(snapSliderAmount((maximumValue * clampedStep) / SLIDER_STEPS, maximumValue))
     },
     [emitValueChange, isDisabled, maximumValue, sliderStep]
   )

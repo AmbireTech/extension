@@ -163,7 +163,7 @@ const SendToken: FC<Props> = ({
         return
       }
 
-      onFromAmountChange(getSliderAmountFieldValue(nextAmount, maxSliderAmount, sliderDecimals))
+      onFromAmountChange(getSliderAmountFieldValue(nextAmount, sliderDecimals))
     },
     [handleSetMaxFromAmount, maxSliderAmount, onFromAmountChange, sliderDecimals]
   )
