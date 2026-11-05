@@ -482,6 +482,11 @@ const useWalletStakingForm = () => {
   )
   // Without a price there's nothing to convert to, so the field stays on the token it stakes.
   const isAmountFieldModeSwitchDisabled = walletPrice <= 0
+  // A USD field whose price went away (e.g. a portfolio update that came back without one) can't
+  // convert anything either, and the disabled switch would leave it stuck there, so it falls back
+  // to the token - like Send and Swap & Bridge do for a token without a price. Switched during
+  // render rather than in an effect, so the stuck USD field is never shown.
+  if (isAmountFieldModeSwitchDisabled && amountFieldMode === 'fiat') setAmountFieldMode('token')
   const switchAmountFieldMode = useCallback(() => {
     setAmountFieldMode((prevMode) => (prevMode === 'token' ? 'fiat' : 'token'))
     // Converted here rather than only on every keystroke, so an amount typed before the price
