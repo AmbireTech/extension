@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ethErrors } from 'eth-rpc-errors'
+import { EthereumRpcError, ethErrors } from 'eth-rpc-errors'
 import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
@@ -131,7 +131,24 @@ export class ProviderController {
     }
     if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
 
-    return provider.send(method, params)
+    try {
+      return await provider.send(method, params)
+    } catch (error: any) {
+      // ethers wraps the RPC node's error into its own (e.g. CALL_EXCEPTION), which doesn't
+      // survive the trip to the dapp in the EIP-1193 `{ code, message, data }` shape - dapps
+      // lose the revert data of an `eth_call` (needed for CCIP-Read, custom errors, etc.).
+      // Forward the node's original error instead, the way it would come from a direct RPC call.
+      const nodeError = error?.info?.error ?? error?.error
+      if (
+        Number.isInteger(nodeError?.code) &&
+        typeof nodeError?.message === 'string' &&
+        nodeError.message
+      ) {
+        throw new EthereumRpcError(nodeError.code, nodeError.message, nodeError.data)
+      }
+
+      throw error
+    }
   }
 
   ethRequestAccounts = async ({ session }: DappProviderRequest) => {

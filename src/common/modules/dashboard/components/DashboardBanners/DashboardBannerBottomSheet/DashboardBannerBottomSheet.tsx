@@ -17,11 +17,14 @@ import type { FC } from 'react'
 
 type Props = {
   id: string
+  // Every swap or bridge has its own banner, so its sheet shows only that one
+  activeRouteId?: string
   sheetRef: RefObject<any>
   closeBottomSheet: () => void
 }
 
-const WITH_BOTTOM_SHEET = ['update-available', 'bridge-in-progress']
+const BRIDGE_IN_PROGRESS = 'bridge-in-progress'
+const WITH_BOTTOM_SHEET = ['update-available', BRIDGE_IN_PROGRESS]
 const RENDER_AS_MODAL = ['update-available']
 
 const style: {
@@ -36,14 +39,21 @@ const style: {
   }
 }
 
-const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet }) => {
+const DashboardBannerBottomSheet: FC<Props> = ({
+  id,
+  activeRouteId,
+  sheetRef,
+  closeBottomSheet
+}) => {
   const { t } = useTranslation()
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { state: activeRoutes } = useController('SwapAndBridgeController', 'activeRoutes')
+  const sheetKind = activeRouteId ? BRIDGE_IN_PROGRESS : id
   const intentRoutes = useMemo(
     () =>
       activeRoutes.filter(
         (activeRoute) =>
+          (!activeRouteId || activeRoute.activeRouteId === activeRouteId) &&
           activeRoute.route &&
           getIsIntentRoute(activeRoute.route) &&
           (activeRoute.routeStatus === 'in-progress' ||
@@ -51,20 +61,20 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
             activeRoute.routeStatus === 'refunded' ||
             activeRoute.routeStatus === 'failed')
       ),
-    [activeRoutes]
+    [activeRoutes, activeRouteId]
   )
 
-  if (!WITH_BOTTOM_SHEET.includes(id)) return null
+  if (!WITH_BOTTOM_SHEET.includes(sheetKind)) return null
 
   return (
     <BottomSheet
       id={`${id}-bottom-sheet`}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      style={style[id]}
-      type={RENDER_AS_MODAL.includes(id) ? 'modal' : undefined}
+      style={style[sheetKind]}
+      type={RENDER_AS_MODAL.includes(sheetKind) ? 'modal' : undefined}
     >
-      {id === 'update-available' && (
+      {sheetKind === 'update-available' && (
         <DualChoiceModal
           title={t('Are you sure you want to reload the extension?') as string}
           description={
@@ -86,7 +96,7 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
           onSecondaryButtonPress={closeBottomSheet}
         />
       )}
-      {id === 'bridge-in-progress' && (
+      {sheetKind === BRIDGE_IN_PROGRESS && (
         <View style={[flexbox.flex1, spacings.ptSm]}>
           <Text
             fontSize={isMobile ? 20 : 16}

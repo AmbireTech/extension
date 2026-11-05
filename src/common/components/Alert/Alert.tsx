@@ -100,6 +100,9 @@ const { isPopup } = getUiType()
 
 const DEFAULT_SM_FONT_SIZE = 14
 const DEFAULT_MD_FONT_SIZE = 16
+// The title is at least as tall as the icon and centered in that height, so a one-line
+// title lines up with the icon's middle, and a longer one keeps the icon on its first line
+const ICON_ALIGNED_TITLE_STYLE: ViewStyle = { minHeight: 24, justifyContent: 'center' }
 
 interface AlertTextProps extends TextProps {
   children: React.ReactNode
@@ -279,7 +282,13 @@ const Alert = ({
             )}
             <View style={flexbox.flex1}>
               <View style={[flexbox.directionRow, flexbox.alignStart, titleRowMarginBottom]}>
-                {!!title && <View style={[flexbox.flex1, spacings.mrSm]}>{titleContent}</View>}
+                {!!title && (
+                  <View
+                    style={[flexbox.flex1, spacings.mrSm, !!withIcon && ICON_ALIGNED_TITLE_STYLE]}
+                  >
+                    {titleContent}
+                  </View>
+                )}
                 {renderButton({ flexShrink: 0 })}
                 {closeButton}
               </View>
@@ -288,7 +297,7 @@ const Alert = ({
           </View>
         ) : (
           <>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, titleRowMarginBottom]}>
+            <View style={[flexbox.directionRow, flexbox.alignStart, titleRowMarginBottom]}>
               {!!withIcon && (
                 <View style={spacings.mrMi}>
                   {CustomIcon ? (
@@ -298,7 +307,9 @@ const Alert = ({
                   )}
                 </View>
               )}
-              <View style={flexbox.flex1}>{titleContent}</View>
+              <View style={[flexbox.flex1, !!withIcon && ICON_ALIGNED_TITLE_STYLE]}>
+                {titleContent}
+              </View>
               {closeButton}
             </View>
             {textContent}

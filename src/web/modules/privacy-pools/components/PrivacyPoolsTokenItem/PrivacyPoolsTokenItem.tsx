@@ -24,7 +24,7 @@ const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPri
 /**
  * A Privacy Pools token, laid out like the regular dashboard's token row. While part of it is
  * still being verified, that part and the part that can already be sent are shown below it.
- * Pressing it opens Send for the token, unless none of it can be sent yet.
+ * Pressing it opens the token's details, with Send and Rage quit.
  */
 const PrivacyPoolsTokenItem: FC<{ balance: PrivacyPoolsBalanceDisplay }> = ({ balance }) => {
   const { t } = useTranslation()
@@ -49,25 +49,24 @@ const PrivacyPoolsTokenItem: FC<{ balance: PrivacyPoolsBalanceDisplay }> = ({ ba
     value
   } = balance
 
-  const canSend = Number(approvedAmount) > 0
   const containerStyle = useMemo(
-    () => [styles.container, { borderRadius: BORDER_RADIUS_PRIMARY }, canSend && animStyle],
-    [styles.container, canSend, animStyle]
+    () => [styles.container, { borderRadius: BORDER_RADIUS_PRIMARY }, animStyle],
+    [styles.container, animStyle]
   )
 
-  // Like the regular Send, the token goes in the URL - see `PrivacyPoolsSendFormState`
-  const openSend = useCallback(
-    () => navigate(`${WEB_ROUTES.privacyPoolsSend}?chainId=${chainId}&address=${tokenAddress}`),
+  // Like Send, the token goes in the URL, so a reopened popup lands on the same token
+  const openDetails = useCallback(
+    () =>
+      navigate(`${WEB_ROUTES.privacyPoolsTokenDetails}?chainId=${chainId}&address=${tokenAddress}`),
     [chainId, navigate, tokenAddress]
   )
 
   return (
     <AnimatedPressable
       style={containerStyle}
-      onPress={openSend}
-      disabled={!canSend}
+      onPress={openDetails}
       testID={`privacy-pools-token-${balance.id}`}
-      {...(canSend ? bindAnim : {})}
+      {...bindAnim}
     >
       <View style={flexbox.flex1}>
         <View style={[flexbox.directionRow, flexbox.flex1]}>

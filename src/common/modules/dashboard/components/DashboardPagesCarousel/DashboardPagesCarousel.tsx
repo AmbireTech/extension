@@ -202,7 +202,7 @@ export interface DashboardPagesCarouselProps {
   /**
    * How far the open overview pushes the pager down. The pager slides over the collapsing
    * part of the overview while the open page is scrolled down. Left out when nothing
-   * collapses, as above a Privacy Pools account's pages.
+   * collapses.
    */
   overviewHeight?: number
   /**

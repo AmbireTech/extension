@@ -316,7 +316,10 @@ const init = async () => {
 
   pm = new PortMessenger()
   ledgerCtrl = new LedgerController(
-    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
+    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports'),
+    (addr, deviceModel) => {
+      void mainCtrl?.keystore.updateUnknownKeyDeviceModel({ addr, type: 'ledger', deviceModel })
+    }
   )
   trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   oneKeyCtrl = new OneKeyController()
@@ -437,8 +440,7 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            // mainCtrl may not exist yet - WalletStateController is created and loads before it
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl?.name }
+            params: { errors: ctrl.emittedErrors, controller: ctrl.name }
           })
           reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
