@@ -556,7 +556,7 @@ const AccountsSettingsScreen = () => {
           <PanelBackButton onPress={cancelRemovePrivacyPoolsAccount} style={spacings.mrSm} />
           <PanelTitle
             title={t('Remove {{ label }}', {
-              label: privacyPoolsAccountToRemove?.name || t('account')
+              label: privacyPoolsAccountToRemove?.label || t('account')
             })}
             style={text.left}
           />

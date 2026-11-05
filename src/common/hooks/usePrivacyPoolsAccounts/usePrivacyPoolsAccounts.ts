@@ -11,7 +11,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 export type PrivacyPoolsAccountDisplay = {
   seedId: string
   /** The name the user gave it, or "Private account" for one added before accounts had names */
-  name: string
+  label: string
   /**
    * Its recovery phrase's label, with the passphrase's name for a phrase added with one - the
    * account has no address of its own
@@ -44,8 +44,8 @@ export const filterPrivacyPoolsAccountsBySearch = (
   const query = search.trim().toLowerCase()
   if (!query) return accounts
 
-  return accounts.filter(({ name, sourceLabel }) =>
-    `${name} ${sourceLabel} ${kindLabel}`.toLowerCase().includes(query)
+  return accounts.filter(({ label, sourceLabel }) =>
+    `${label} ${sourceLabel} ${kindLabel}`.toLowerCase().includes(query)
   )
 }
 
@@ -74,12 +74,12 @@ const usePrivacyPoolsAccounts = () => {
 
   const accounts: PrivacyPoolsAccountDisplay[] = useMemo(
     () =>
-      (privacyPoolsAccounts || []).map(({ seedId, label: name }) => {
+      (privacyPoolsAccounts || []).map(({ seedId, label }) => {
         const seed = (seeds || []).find(({ id }) => id === seedId)
 
         return {
           seedId,
-          name: name || t('Private account'),
+          label: label || t('Private account'),
           sourceLabel: getPrivacyPoolsSourceLabel(
             seed?.label || t('Privacy Pools account'),
             seed?.passphraseLabel,

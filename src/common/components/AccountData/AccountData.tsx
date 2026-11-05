@@ -114,7 +114,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
   }, [account, isNarrowWebLayout])
 
   // A Privacy Pools account has no address of its own, so its kind stands in for one
-  const label = account ? account.preferences.label : privacyPoolsAccount?.name
+  const label = account ? account.preferences.label : privacyPoolsAccount?.label
   const subtitle = account ? `(${formattedAddress})` : `(${t('Privacy Pools')})`
   const canCopyAddress = isWeb && !!account
 

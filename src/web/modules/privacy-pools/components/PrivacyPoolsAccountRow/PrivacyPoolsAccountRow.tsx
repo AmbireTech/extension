@@ -143,7 +143,7 @@ const PrivacyPoolsAccountRow = ({
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
                 <EditableAccountName
                   identity={identity}
-                  name={account.name}
+                  name={account.label}
                   onSave={handleSaveName}
                   textProps={NAME_TEXT_PROPS}
                   testID={`privacy-pools-account-name-${account.seedId}`}
@@ -151,7 +151,7 @@ const PrivacyPoolsAccountRow = ({
               </View>
             ) : (
               <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
-                {account.name}
+                {account.label}
               </Text>
             )}
             <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
