@@ -84,25 +84,20 @@ const useSafeCreate = () => {
       const newSafeAccount = getNewSafeAccount(ownerAddresses, requiredConfirmations, accounts)
       // Case-insensitive, in case an account was stored without a checksum (e.g. by an older version)
       const newSafeAddress = newSafeAccount.addr.toLowerCase()
-      if (accounts.some(({ addr }) => addr.toLowerCase() === newSafeAddress)) {
-        addToast(
-          t(
-            'This Safe account is already in your wallet. The same owners and required confirmations always lead to the same account.'
-          ),
-          { type: 'error' }
-        )
-        return
+      const isAlreadyInWallet = accounts.some(({ addr }) => addr.toLowerCase() === newSafeAddress)
+      // A Safe in the wallet already isn't prepared again - the personalize step only shows it
+      if (!isAlreadyInWallet) {
+        await accountPickerDispatchAndWait({
+          type: 'method',
+          params: { method: 'prepareAccounts', args: [{ accounts: [newSafeAccount] }] }
+        })
       }
-
-      await accountPickerDispatchAndWait({
-        type: 'method',
-        params: { method: 'prepareAccounts', args: [{ accounts: [newSafeAccount] }] }
-      })
       // Set before moving on, so the personalize step shows the details of this Safe
       setSafeCreateDraft({
         ownerAddresses,
         requiredConfirmations,
-        safeAddress: newSafeAccount.addr as Hex
+        safeAddress: newSafeAccount.addr as Hex,
+        isAlreadyInWallet
       })
       goToNextRoute(WEB_ROUTES.accountPersonalize)
     } catch (error) {
@@ -110,8 +105,7 @@ const useSafeCreate = () => {
       captureException(error)
       addToast(t("We couldn't create the Safe account. Please try again."), { type: 'error' })
     } finally {
-      // Also when the Safe is in the wallet already. Going back from the personalize step adds
-      // nothing, so the form is usable again
+      // Going back from the personalize step adds nothing, so the form is usable again
       setIsSubmitting(false)
     }
   }, [

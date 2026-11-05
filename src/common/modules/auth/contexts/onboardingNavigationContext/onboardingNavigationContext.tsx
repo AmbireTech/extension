@@ -43,6 +43,11 @@ export type SafeCreateDraft = {
   requiredConfirmations: number
   /** The address of the Safe these owners and required confirmations lead to */
   safeAddress: Hex
+  /**
+   * The Safe is in the wallet already (the same owners and required confirmations always
+   * lead to the same Safe), so personalize only shows it instead of adding it
+   */
+  isAlreadyInWallet: boolean
 }
 
 const OnboardingNavigationContext = createContext<{
@@ -187,6 +192,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const [syncedAccountAddrs, setSyncedAccountAddrs] = useState<string[]>([])
   const hasSyncedAccounts = !!syncedAccountAddrs.length
   const [safeCreateDraft, setSafeCreateDraft] = useState<SafeCreateDraft | null>(null)
+  const isSafeAlreadyInWallet = !!safeCreateDraft?.isAlreadyInWallet
 
   const onboardingRoutesTree = useMemo(() => {
     // on mobile, we skip onboardingCompleted and go straight to the dashboard ('/')
@@ -198,7 +204,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           route('/')
         ]
     // Nothing to add or name, so the flow skips it
-    const isPersonalizeDisabled = !hasAccountAddingFlow && !hasSyncedAccounts
+    const isPersonalizeDisabled =
+      !hasAccountAddingFlow && !hasSyncedAccounts && !isSafeAlreadyInWallet
 
     const accountPickerRoutes =
       subType === 'hw'
@@ -247,7 +254,14 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       ],
       { disabled: authStatus !== AUTH_STATUS.NOT_AUTHENTICATED }
     )
-  }, [hasPasswordSecret, authStatus, subType, hasAccountAddingFlow, hasSyncedAccounts])
+  }, [
+    hasPasswordSecret,
+    authStatus,
+    subType,
+    hasAccountAddingFlow,
+    hasSyncedAccounts,
+    isSafeAlreadyInWallet
+  ])
 
   const [history, setHistory] = useState<string[]>(loadHistory)
 
