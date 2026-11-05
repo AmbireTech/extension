@@ -60,7 +60,8 @@ const PrivacyPoolsAccountRow = ({
   const { dispatchAndWait: privacyPoolsDispatchAndWait } = useController('PrivacyPoolsController')
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
-    values: { from: theme.primaryBackground, to: theme.secondaryBackground }
+    // The same as the regular account
+    values: { from: theme.secondaryBackground, to: theme.hoverBackground }
   })
 
   // The same as the selected regular account
@@ -72,7 +73,7 @@ const PrivacyPoolsAccountRow = ({
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
 
   // The account has no address of its own, so its recovery phrase tells it apart
-  const sourceText = t('Added from {{seedLabel}}', { seedLabel: account.label })
+  const sourceText = t('From {{seedLabel}}', { seedLabel: account.sourceLabel })
   const identity = useMemo(
     () => <PrivacyPoolsAccountIdentity sourceText={sourceText} />,
     [sourceText]

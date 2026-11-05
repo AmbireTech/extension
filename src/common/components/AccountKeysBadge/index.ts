@@ -1,3 +1,4 @@
-import AccountKeysBadge from './AccountKeysBadge'
+import AccountKeysBadge, { ViewOnlyBadge } from './AccountKeysBadge'
 
+export { ViewOnlyBadge }
 export default AccountKeysBadge

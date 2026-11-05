@@ -4,6 +4,7 @@ import { PrivacyPoolsAccountToAdd } from '@ambire-common/interfaces/privacyPools
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import { getPrivacyPoolsSourceLabel } from '@common/hooks/usePrivacyPoolsAccounts'
 import { ReplyTimeoutError } from '@common/hooks/useController/waitForReply'
 import { ADD_ACCOUNTS_TIMEOUT_MS } from '@common/modules/account-personalize/constants/timeouts'
 import { selectHasAccountAddingFlow } from '@common/modules/auth/contexts/onboardingNavigationContext'
@@ -82,10 +83,13 @@ export default function usePrivacyPoolsAccountPersonalize() {
 
   const account = accountToAdd ?? addingAccount ?? addedAccount
   const name = rename ?? account?.label ?? ''
-  const seedLabel =
+  const seed =
     account && !account.isNewSeed
-      ? (seeds || []).find(({ id }) => id === account.seedId)?.label
+      ? (seeds || []).find(({ id }) => id === account.seedId)
       : undefined
+  const sourceLabel = seed
+    ? getPrivacyPoolsSourceLabel(seed.label, seed.passphraseLabel, t)
+    : undefined
   // Main drops an add while it is still switching accounts, so the button waits for it
   const canProceed =
     !isAdding && (selectAccountStatus === 'INITIAL' || selectAccountStatus === 'SUCCESS')
@@ -148,9 +152,9 @@ export default function usePrivacyPoolsAccountPersonalize() {
       ? {
           name,
           // It has no address, so its recovery phrase tells it apart
-          sourceText: seedLabel
-            ? t('Added from {{seedLabel}}', { seedLabel })
-            : t('Added from a new recovery phrase')
+          sourceText: sourceLabel
+            ? t('From {{seedLabel}}', { seedLabel: sourceLabel })
+            : t('From a new recovery phrase')
         }
       : null,
     isAdding,

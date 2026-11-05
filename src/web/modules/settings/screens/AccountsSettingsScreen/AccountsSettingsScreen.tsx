@@ -563,7 +563,9 @@ const AccountsSettingsScreen = () => {
         </View>
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Text fontSize={16} weight="medium" style={{ ...spacings.mbSm, textAlign: 'center' }}>
-            {t('Are you sure you want to remove this Privacy Pools account?')}
+            {t('Are you sure you want to remove the Private account from {{seedLabel}}?', {
+              seedLabel: privacyPoolsAccountToRemove?.sourceLabel
+            })}
           </Text>
           <Text fontSize={14} appearance="secondaryText" style={{ textAlign: 'center' }}>
             {t(

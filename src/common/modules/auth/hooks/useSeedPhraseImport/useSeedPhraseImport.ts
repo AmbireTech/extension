@@ -31,6 +31,10 @@ export default function useSeedPhraseImport() {
   const [importButtonPressed, setImportButtonPressed] = useState(false)
 
   const [enablePassphrase, setEnablePassphrase] = useState(false)
+  // Off by default, so a passphrase is only kept on the device when the user asks for it
+  const [shouldSavePassphrase, setShouldSavePassphrase] = useState(false)
+  const toggleEnablePassphrase = useCallback(() => setEnablePassphrase((prev) => !prev), [])
+  const toggleShouldSavePassphrase = useCallback(() => setShouldSavePassphrase((prev) => !prev), [])
   const seedValue = useWatch({ control, name: 'seed' })
   // `null` while the seed input is not focused
   const [seedCaretPosition, setSeedCaretPosition] = useState<number | null>(null)
@@ -65,6 +69,7 @@ export default function useSeedPhraseImport() {
             {
               seed: formattedSeed,
               seedPassphrase: passphrase || null,
+              shouldSavePassphrase: !!passphrase && shouldSavePassphrase,
               hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE
             }
           ]
@@ -87,7 +92,7 @@ export default function useSeedPhraseImport() {
         setImportButtonPressed(false)
       }
     })()
-  }, [mainDispatchAndWait, keystoreDispatch, handleSubmit, goToNextRoute])
+  }, [mainDispatchAndWait, keystoreDispatch, handleSubmit, goToNextRoute, shouldSavePassphrase])
 
   useEffect(() => {
     if (!enablePassphrase) {
@@ -105,7 +110,9 @@ export default function useSeedPhraseImport() {
     control,
     isValid,
     enablePassphrase,
-    setEnablePassphrase,
+    toggleEnablePassphrase,
+    shouldSavePassphrase,
+    toggleShouldSavePassphrase,
     seedPhraseStatus,
     seedPhraseError,
     seedCaretPosition,

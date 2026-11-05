@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 
+import type { TFunction } from 'i18next'
+
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 
@@ -10,13 +12,29 @@ export type PrivacyPoolsAccountDisplay = {
   seedId: string
   /** The name the user gave it, or "Private account" for one added before accounts had names */
   name: string
-  /** Its recovery phrase's label - the account has no address of its own. */
-  label: string
+  /**
+   * Its recovery phrase's label, with the passphrase's name for a phrase added with one - the
+   * account has no address of its own
+   */
+  sourceLabel: string
   /** Whether its recovery phrase is backed up - the only way to recover the account. */
   isBackedUp: boolean
 }
 
-/** Filters accounts by name, label and kind - they have no address or key to search by. */
+/**
+ * Where a Privacy Pools account is from: its recovery phrase's label, with the passphrase's name
+ * for a phrase added with one
+ */
+export const getPrivacyPoolsSourceLabel = (
+  seedLabel: string,
+  passphraseLabel: string | undefined,
+  t: TFunction
+) =>
+  passphraseLabel
+    ? t('{{seedLabel}} · Passphrase {{passphraseLabel}}', { seedLabel, passphraseLabel })
+    : seedLabel
+
+/** Filters accounts by name, where they are from and kind - they have no address or key to search by. */
 export const filterPrivacyPoolsAccountsBySearch = (
   accounts: PrivacyPoolsAccountDisplay[],
   search: string,
@@ -26,8 +44,8 @@ export const filterPrivacyPoolsAccountsBySearch = (
   const query = search.trim().toLowerCase()
   if (!query) return accounts
 
-  return accounts.filter(({ name, label }) =>
-    `${name} ${label} ${kindLabel}`.toLowerCase().includes(query)
+  return accounts.filter(({ name, sourceLabel }) =>
+    `${name} ${sourceLabel} ${kindLabel}`.toLowerCase().includes(query)
   )
 }
 
@@ -62,7 +80,11 @@ const usePrivacyPoolsAccounts = () => {
         return {
           seedId,
           name: name || t('Private account'),
-          label: seed?.label || t('Privacy Pools account'),
+          sourceLabel: getPrivacyPoolsSourceLabel(
+            seed?.label || t('Privacy Pools account'),
+            seed?.passphraseLabel,
+            t
+          ),
           isBackedUp: !seed?.notBackedUp
         }
       }),
