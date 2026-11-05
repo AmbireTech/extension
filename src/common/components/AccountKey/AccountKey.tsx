@@ -17,6 +17,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HumanizerAddress from '@common/components/HumanizerAddress'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -104,6 +105,9 @@ const AccountKey: React.FC<Props> = ({
   }, [addr, addToast, t])
 
   const shortAddr = shortenAddress(addr, 13)
+  // Safe owners get their account label / contact name resolved, like in the Safe signing screen
+  const safeOwnerChainId = account.safeCreation ? onChains?.[0] : undefined
+  const shouldResolveSafeOwnerName = !!safeOwnerChainId && !label && !dedicatedToOneSA
 
   const isInternal = !type || type === 'internal'
   const canExportKey = isImported && isInternal
@@ -153,6 +157,8 @@ const AccountKey: React.FC<Props> = ({
             flexbox.directionRow,
             flexbox.alignCenter,
             singleLineLabel && { flex: 1, minWidth: 0 },
+            // Lets a long resolved name truncate instead of pushing out the action buttons
+            shouldResolveSafeOwnerName && { flexShrink: 1, minWidth: 0 },
             !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
           ]}
         >
@@ -164,27 +170,43 @@ const AccountKey: React.FC<Props> = ({
 
           <>
             <View
-              style={singleLineLabel && { flex: 1, minWidth: 0 }}
+              style={[
+                singleLineLabel && { flex: 1, minWidth: 0 },
+                shouldResolveSafeOwnerName && { flexShrink: 1, minWidth: 0 },
+                shouldResolveSafeOwnerName && isImported && spacings.mlMi
+              ]}
               dataSet={createGlobalTooltipDataSet({
                 id: `key-${addr}-${type}-tooltip`,
                 content: tooltipContent ?? addr
               })}
             >
-              <Text
-                color={dedicatedToOneSA ? theme.infoDecorative : theme.primaryText}
-                fontSize={fontSize - 1}
-                weight={dedicatedToOneSA ? 'semiBold' : 'regular'}
-                numberOfLines={singleLineLabel ? 1 : undefined}
-                ellipsizeMode={singleLineLabel ? 'middle' : undefined}
-                style={[
-                  label || isImported ? spacings.mlMi : {},
-                  // Reduce the letter spacing as a hack to be able to fit all elements
-                  // on the row, even for the extreme case when the key label is max length
-                  dedicatedToOneSA && { letterSpacing: -0.2 }
-                ]}
-              >
-                {dedicatedToOneSA ? t('(dedicated key)') : label ? `${label}` : shortAddr}
-              </Text>
+              {shouldResolveSafeOwnerName ? (
+                <HumanizerAddress
+                  address={addr}
+                  chainId={safeOwnerChainId}
+                  fontSize={fontSize - 1}
+                  numberOfLines={1}
+                  hideActions
+                  actionsMode="inline"
+                  shouldWrapInlineActions={false}
+                />
+              ) : (
+                <Text
+                  color={dedicatedToOneSA ? theme.infoDecorative : theme.primaryText}
+                  fontSize={fontSize - 1}
+                  weight={dedicatedToOneSA ? 'semiBold' : 'regular'}
+                  numberOfLines={singleLineLabel ? 1 : undefined}
+                  ellipsizeMode={singleLineLabel ? 'middle' : undefined}
+                  style={[
+                    label || isImported ? spacings.mlMi : {},
+                    // Reduce the letter spacing as a hack to be able to fit all elements
+                    // on the row, even for the extreme case when the key label is max length
+                    dedicatedToOneSA && { letterSpacing: -0.2 }
+                  ]}
+                >
+                  {dedicatedToOneSA ? t('(dedicated key)') : label ? `${label}` : shortAddr}
+                </Text>
+              )}
             </View>
             {!!showCopyAddr && (
               <AnimatedPressable
