@@ -70,21 +70,26 @@ const SavedSeedPhrasesBottomSheet = ({
       setPreparingSeedId(id)
       try {
         // Sets the picker up with the phrase - personalize prepares its next account
-        await mainDispatchAndWait({
+        const reply = await mainDispatchAndWait<
+          'accountPickerSetInitParamsFromSavedSeed',
+          { isWrongPassphrase: boolean }
+        >({
           type: 'method',
           params: {
             method: 'accountPickerSetInitParamsFromSavedSeed',
             args: [{ id, ...passphrase }]
           }
         })
+        if (reply.isWrongPassphrase) return true
+
         goToNextRoute(WEB_ROUTES.accountPersonalize)
       } catch (error) {
-        // The controller reports its own failures (e.g. a wrong passphrase), here the button only
-        // becomes usable again
+        // The controller reports its own failures, here the button only becomes usable again
         console.error('Failed to prepare an account from the saved recovery phrase', error)
       } finally {
         setPreparingSeedId(null)
       }
+      return false
     },
     [mainDispatchAndWait, goToNextRoute]
   )
@@ -92,7 +97,7 @@ const SavedSeedPhrasesBottomSheet = ({
   const {
     seedToEnterPassphraseFor,
     requestSeed: handleAddAddressFromSeed,
-    handlePassphraseConfirmed,
+    handlePassphraseSubmit,
     unmountPassphraseSheet
   } = useSeedPassphraseGate(initAccountPickerFromSeed)
 
@@ -211,7 +216,7 @@ const SavedSeedPhrasesBottomSheet = ({
         <EnterSeedPassphraseBottomSheet
           seed={seedToEnterPassphraseFor}
           accountsCount={getAccountsForSeed(seedToEnterPassphraseFor.id).length}
-          onConfirmed={handlePassphraseConfirmed}
+          onSubmit={handlePassphraseSubmit}
           onClosed={unmountPassphraseSheet}
         />
       )}

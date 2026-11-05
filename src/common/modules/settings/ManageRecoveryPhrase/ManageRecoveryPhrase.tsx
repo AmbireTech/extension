@@ -75,7 +75,6 @@ const ManageRecoveryPhrase = ({
     [keystoreState.seeds, recoveryPhrase.id]
   )
   const label = savedSeed?.label ?? recoveryPhrase.label
-  const isPassphraseNotSaved = !!savedSeed?.withPassphrase && !savedSeed.isPassphraseSaved
   // Removed along with the phrase, the only way to recover it
   const hasPrivacyPoolsAccount = useMemo(
     () => privacyPoolsAccounts.some(({ seedId }) => seedId === recoveryPhrase.id),
@@ -243,7 +242,7 @@ const ManageRecoveryPhrase = ({
             />
           )}
         </View>
-        {isSeedRevealed && isPassphraseNotSaved && (
+        {isSeedRevealed && !!savedSeed?.isPassphraseNeeded && (
           <Alert
             type="info"
             isTypeLabelHidden

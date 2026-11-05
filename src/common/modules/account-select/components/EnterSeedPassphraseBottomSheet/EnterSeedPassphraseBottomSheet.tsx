@@ -11,9 +11,7 @@ import SavePassphraseToggle from '@common/components/SavePassphraseToggle'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useToast from '@common/hooks/useToast'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,28 +22,29 @@ type Props = {
   accountsCount?: number
   /** What the passphrase is needed for. Defaults to adding accounts */
   description?: string
-  /** Called with the passphrase once it is confirmed to be the one the phrase was added with */
-  onConfirmed: (params: { seedPassphrase: string; shouldSavePassphrase: boolean }) => void
+  /**
+   * Runs the action the passphrase is needed for, which checks it. Resolves with whether it was
+   * wrong, to show inline. Reports its own failures, after which the sheet closes.
+   */
+  onSubmit: (params: { seedPassphrase: string; shouldSavePassphrase: boolean }) => Promise<boolean>
   /** Called once the closing animation ends, so the caller can unmount the sheet */
   onClosed: () => void
 }
 
 /**
  * Asks for the passphrase of a saved recovery phrase whose passphrase isn't saved, before adding
- * accounts from it. Opens itself on mount and closes itself once the passphrase is confirmed.
+ * accounts from it. Opens itself on mount and closes itself once the action is done.
  */
 const EnterSeedPassphraseBottomSheet = ({
   seed,
   accountsCount,
   description,
-  onConfirmed,
+  onSubmit,
   onClosed
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { addToast } = useToast()
   const { ref: sheetRef, close } = useModalize()
-  const { dispatchAndWait } = useController('KeystoreController')
   const [passphrase, setPassphrase] = useState('')
   const [shouldSavePassphrase, setShouldSavePassphrase] = useState(false)
   const [isWrongPassphrase, setIsWrongPassphrase] = useState(false)
@@ -61,35 +60,17 @@ const EnterSeedPassphraseBottomSheet = ({
 
     setIsChecking(true)
     try {
-      const isCorrect = await dispatchAndWait<'isSeedPassphraseCorrectAndSendResToUi', boolean>({
-        type: 'method',
-        params: { method: 'isSeedPassphraseCorrectAndSendResToUi', args: [seed.id, passphrase] }
-      })
-      if (!isCorrect) {
+      const isWrong = await onSubmit({ seedPassphrase: passphrase, shouldSavePassphrase })
+      if (isWrong) {
         setIsWrongPassphrase(true)
         return
       }
 
-      onConfirmed({ seedPassphrase: passphrase, shouldSavePassphrase })
       close()
-    } catch (error) {
-      // Not reported here, as the controller already reports the failed check
-      console.error('Checking the passphrase failed', error)
-      addToast(t("Couldn't check the passphrase. Please try again."), { type: 'error' })
     } finally {
       setIsChecking(false)
     }
-  }, [
-    addToast,
-    close,
-    dispatchAndWait,
-    isChecking,
-    onConfirmed,
-    passphrase,
-    seed.id,
-    shouldSavePassphrase,
-    t
-  ])
+  }, [close, isChecking, onSubmit, passphrase, shouldSavePassphrase])
 
   return (
     <BottomSheet

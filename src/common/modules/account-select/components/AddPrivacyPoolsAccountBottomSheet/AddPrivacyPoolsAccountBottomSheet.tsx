@@ -45,7 +45,7 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
   const {
     seedToEnterPassphraseFor,
     requestSeed: handleAdd,
-    handlePassphraseConfirmed,
+    handlePassphraseSubmit,
     unmountPassphraseSheet
   } = useSeedPassphraseGate(addFromStoredSeed)
 
@@ -141,7 +141,7 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onAdded
           description={t(
             'To add a Privacy Pools account from this recovery phrase, enter its passphrase.'
           )}
-          onConfirmed={handlePassphraseConfirmed}
+          onSubmit={handlePassphraseSubmit}
           onClosed={unmountPassphraseSheet}
         />
       )}

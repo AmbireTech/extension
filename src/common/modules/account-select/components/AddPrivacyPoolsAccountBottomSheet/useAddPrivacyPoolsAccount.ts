@@ -24,10 +24,11 @@ type PendingAddition =
  * `canAdd` is false while an add or another account selection is running.
  */
 const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
-  const { state: statuses, dispatch: mainDispatch } = useController(
-    'MainController',
-    selectMainStatuses
-  )
+  const {
+    state: statuses,
+    dispatch: mainDispatch,
+    dispatchAndWait: mainDispatchAndWait
+  } = useController('MainController', selectMainStatuses)
   const { state: privacyPoolsAccountId } = useController(
     'SelectedAccountController',
     selectPrivacyPoolsAccountId
@@ -37,21 +38,41 @@ const useAddPrivacyPoolsAccount = ({ onAdded }: { onAdded: () => void }) => {
   // The status may be left from an earlier selection, so it counts only after this one loads
   const hasSeenLoading = useRef(false)
 
-  /** A phrase whose passphrase isn't saved needs it, entered by the user */
+  /**
+   * A phrase whose passphrase isn't saved needs it, entered by the user. Resolves with whether it
+   * was wrong, which the passphrase sheet shows.
+   */
   const addFromStoredSeed = useCallback(
-    (seedId: string, passphrase?: { seedPassphrase: string; shouldSavePassphrase: boolean }) => {
+    async (
+      seedId: string,
+      passphrase?: { seedPassphrase: string; shouldSavePassphrase: boolean }
+    ) => {
       hasSeenLoading.current = false
       setPending({ kind: 'stored-seed', seedId })
-      mainDispatch({
-        type: 'method',
-        // Left out when not needed, as messaging turns undefined into null, which skips the default
-        params: {
-          method: 'addPrivacyPoolsAccount',
-          args: passphrase ? [seedId, passphrase] : [seedId]
-        }
-      })
+      if (!passphrase) {
+        mainDispatch({
+          type: 'method',
+          params: { method: 'addPrivacyPoolsAccount', args: [seedId] }
+        })
+        return false
+      }
+
+      try {
+        const reply = await mainDispatchAndWait<
+          'addPrivacyPoolsAccount',
+          { isWrongPassphrase: boolean }
+        >({
+          type: 'method',
+          params: { method: 'addPrivacyPoolsAccount', args: [seedId, passphrase] }
+        })
+        return reply.isWrongPassphrase
+      } catch (error) {
+        // The background reports its own failures, here the sheet only closes
+        console.error('Failed to add the Privacy Pools account', error)
+        return false
+      }
     },
-    [mainDispatch]
+    [mainDispatch, mainDispatchAndWait]
   )
 
   const addFromNewSeed = useCallback(() => {
