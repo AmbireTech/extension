@@ -482,10 +482,9 @@ const useWalletStakingForm = () => {
   )
   // Without a price there's nothing to convert to, so the field stays on the token it stakes.
   const isAmountFieldModeSwitchDisabled = walletPrice <= 0
-  // A USD field whose price went away (e.g. a portfolio update that came back without one) can't
-  // convert anything either, and the disabled switch would leave it stuck there, so it falls back
-  // to the token - like Send and Swap & Bridge do for a token without a price. Switched during
-  // render rather than in an effect, so the stuck USD field is never shown.
+  // A USD field whose price went away would be stuck behind the disabled switch, so it falls back
+  // to the token, like Send and Swap & Bridge do. Switched during render rather than in an effect,
+  // so the stuck field is never shown.
   if (isAmountFieldModeSwitchDisabled && amountFieldMode === 'fiat') setAmountFieldMode('token')
   const switchAmountFieldMode = useCallback(() => {
     setAmountFieldMode((prevMode) => (prevMode === 'token' ? 'fiat' : 'token'))
@@ -511,7 +510,7 @@ const useWalletStakingForm = () => {
   }, [balance, setTokenAmount])
   // The slider moves whichever amount the field is showing, like SendToken's: the token itself in
   // token mode and its USD value in fiat mode, so a drag lands on round dollars there.
-  const isFiatSlider = amountFieldMode === 'fiat' && walletPrice > 0
+  const isFiatSlider = amountFieldMode === 'fiat'
   const toSliderAmount = useCallback(
     (tokenAmount: bigint) =>
       isFiatSlider ? toFiatSliderAmount(tokenAmount, TOKEN_DECIMALS, walletPrice) : tokenAmount,

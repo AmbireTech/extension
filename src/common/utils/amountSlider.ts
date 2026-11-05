@@ -45,9 +45,9 @@ export const snapSliderAmount = (amount: bigint, maximumValue: bigint) => {
 }
 
 /**
- * The amount the amount slider writes into the field. The slider already rounds what it emits (see
- * `snapSliderAmount`), and the amounts it doesn't round - the maximum and the caller's own marks -
- * have to stay exact, so this only formats the amount.
+ * A slider amount as amount field text. Only formats it: the slider already rounds what it emits
+ * (see `snapSliderAmount`), and what it doesn't round - the maximum, the caller's own marks - must
+ * stay exact.
  */
 export const getSliderAmountFieldValue = (amount: bigint, decimals: number) => {
   const formattedAmount = formatUnits(amount, decimals)
