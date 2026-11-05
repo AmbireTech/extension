@@ -115,7 +115,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
 
   // A Privacy Pools account has no address of its own, so its kind stands in for one
   const label = account ? account.preferences.label : privacyPoolsAccount?.name
-  const subtitle = account ? `(${formattedAddress})` : t('Privacy Pools')
+  const subtitle = account ? `(${formattedAddress})` : `(${t('Privacy Pools')})`
   const canCopyAddress = isWeb && !!account
 
   if (!account && !privacyPoolsAccount) return null
@@ -222,7 +222,13 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
                 weight={isMobile ? 'medium' : 'semiBold'}
                 style={[
                   spacings.mrMi,
-                  { maxWidth: isPopup ? 112 : 160, flexShrink: 1, minWidth: 0 }
+                  // Capped to leave room for the address. A Privacy Pools account has none, so its
+                  // name takes the room and gives way only once the header runs out of it.
+                  {
+                    maxWidth: account ? (isPopup ? 112 : 160) : undefined,
+                    flexShrink: 1,
+                    minWidth: 0
+                  }
                 ]}
                 color="#FFFFFF"
                 fontSize={14}
