@@ -24,18 +24,22 @@ const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => 
 type Props = {
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
+  /** Called as a flow starts, before moving on to the personalize step */
+  onFlowStart: () => void
 }
 
 /**
  * Adds a Privacy Pools account from a stored recovery phrase (one per phrase) or a new one, by
  * way of the personalize step.
  */
-const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
+const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onFlowStart }: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { state: seeds } = useController('KeystoreController', selectSeeds)
   const { accounts } = usePrivacyPoolsAccounts()
-  const { addFromStoredSeed, addFromNewSeed } = useAddPrivacyPoolsAccount()
+  const { addFromStoredSeed, addFromNewSeed, handleSheetClosed } = useAddPrivacyPoolsAccount({
+    onStart: onFlowStart
+  })
 
   const seedIdsWithAccount = useMemo(
     () => new Set(accounts.map(({ seedId }) => seedId)),
@@ -63,6 +67,7 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet }: Props
       id="add-privacy-pools-account-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
+      onClosed={handleSheetClosed}
       FooterComponent={footer}
     >
       <ModalHeader handleClose={closeBottomSheet} title={t('Add a Privacy Pools account')} />

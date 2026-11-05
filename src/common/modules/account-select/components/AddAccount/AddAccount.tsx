@@ -86,6 +86,12 @@ const AddAccount = ({
   } = useModalize()
   const { state: seeds } = useController('KeystoreController', selectSeeds)
 
+  // Both sheets close as the flow moves on to the personalize step
+  const handlePrivacyPoolsFlowStart = useCallback(() => {
+    closePrivacyPoolsBottomSheet()
+    closeBottomSheet()
+  }, [closeBottomSheet, closePrivacyPoolsBottomSheet])
+
   const optionsHW = useMemo(() => {
     if (isMobile)
       return [
@@ -318,6 +324,7 @@ const AddAccount = ({
         <AddPrivacyPoolsAccountBottomSheet
           sheetRef={privacyPoolsSheetRef}
           closeBottomSheet={closePrivacyPoolsBottomSheet}
+          onFlowStart={handlePrivacyPoolsFlowStart}
         />
       )}
       <SavedSeedPhrasesBottomSheet

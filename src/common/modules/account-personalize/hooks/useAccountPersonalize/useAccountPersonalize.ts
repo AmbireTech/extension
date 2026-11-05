@@ -7,14 +7,12 @@ import { useTranslation } from '@common/config/localization'
 import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import useController from '@common/hooks/useController'
 import { ReplyTimeoutError } from '@common/hooks/useController/waitForReply'
+import { ADD_ACCOUNTS_TIMEOUT_MS } from '@common/modules/account-personalize/constants/timeouts'
 import usePrivacyPoolsAccountPersonalize from '@common/modules/account-personalize/hooks/usePrivacyPoolsAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-// Adding writes the accounts and keys, and the smart accounts' identities are created on the
-// Relayer, which can take a while on a slow connection - so it gets more room than the default.
-const ADD_ACCOUNTS_TIMEOUT_MS = 60_000
 // Finding the next unused account derives the accounts page by page
 const PREPARE_ACCOUNTS_TIMEOUT_MS = 30_000
 // The loading state stays up at least this long, so it reads as a step rather than a
@@ -374,7 +372,7 @@ export default function useAccountPersonalize() {
     removedAccounts,
     isRemovalOnly,
     canProceed: privacyPoolsAccount
-      ? !privacyPools.isAdding
+      ? privacyPools.canProceed
       : (!!fields.length || !!accountsToRemove.length) && !isAdding,
     handleSaveAccountName,
     handleProceed: privacyPoolsAccount ? privacyPools.handleProceed : handleProceed,

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
@@ -8,23 +8,34 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 /**
  * Sets a Privacy Pools account flow up, from a stored recovery phrase or a new one, and moves on
  * to the personalize step at once - it prepares the account behind its loading state, lets the
- * user name it, and adds it once the user proceeds.
+ * user name it, and adds it once the user proceeds. `onStart` runs as it moves on (e.g. closing
+ * the sheets), and `handleSheetClosed` lets the sheet start a flow again once it has closed.
  */
-const useAddPrivacyPoolsAccount = () => {
+const useAddPrivacyPoolsAccount = ({ onStart }: { onStart: () => void }) => {
   const { dispatch: accountPickerDispatch } = useController('AccountPickerController')
   const { goToNextRoute } = useOnboardingNavigation()
   const { getExtraEntropy } = useExtraEntropy()
+  // A second tap landing before the sheet closes would start the flow, and open personalize, twice
+  const isStartingRef = useRef(false)
 
   const startFlow = useCallback(
     (params: { seedId?: string; extraEntropy?: string }) => {
+      if (isStartingRef.current) return
+      isStartingRef.current = true
+
       accountPickerDispatch({
         type: 'method',
         params: { method: 'setPrivacyPoolsInitParams', args: [params] }
       })
+      onStart()
       goToNextRoute(WEB_ROUTES.accountPersonalize)
     },
-    [accountPickerDispatch, goToNextRoute]
+    [accountPickerDispatch, goToNextRoute, onStart]
   )
+
+  const handleSheetClosed = useCallback(() => {
+    isStartingRef.current = false
+  }, [])
 
   const addFromStoredSeed = useCallback((seedId: string) => startFlow({ seedId }), [startFlow])
 
@@ -33,7 +44,7 @@ const useAddPrivacyPoolsAccount = () => {
     [getExtraEntropy, startFlow]
   )
 
-  return { addFromStoredSeed, addFromNewSeed }
+  return { addFromStoredSeed, addFromNewSeed, handleSheetClosed }
 }
 
 export default useAddPrivacyPoolsAccount

@@ -132,9 +132,13 @@ const selectRecoverKeyStoreStatus = (state: AllControllersMappingType['EmailVaul
   state.statuses?.recoverKeyStore
 const selectPickerSubType = (state: AllControllersMappingType['AccountPickerController']) =>
   state.subType
-// A flow is under way - set up (personalize prepares its accounts) or prepared already, which
-// can be removals only (e.g. Safes deselected on import by owner), or a Privacy Pools account
-const selectHasAccountAddingFlow = (state: AllControllersMappingType['AccountPickerController']) =>
+/**
+ * A flow is under way - set up (personalize prepares its accounts) or prepared already, which
+ * can be removals only (e.g. Safes deselected on import by owner), or a Privacy Pools account
+ */
+export const selectHasAccountAddingFlow = (
+  state: AllControllersMappingType['AccountPickerController']
+) =>
   !!state.isInitialized ||
   !!state.initParams ||
   !!state.readyToAddAccounts?.length ||
