@@ -52,7 +52,8 @@ const PrivacyPoolsAccountRow = ({
   )
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
-    values: { from: theme.primaryBackground, to: theme.secondaryBackground }
+    // The same as the regular account
+    values: { from: theme.secondaryBackground, to: theme.hoverBackground }
   })
 
   // The same as the selected regular account
@@ -118,7 +119,7 @@ const PrivacyPoolsAccountRow = ({
             </Text>
             {/* The account has no name or address of its own, so its recovery phrase tells it apart */}
             <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-              {t('Added from {{seedLabel}}', { seedLabel: account.label })}
+              {t('From {{seedLabel}}', { seedLabel: account.sourceLabel })}
             </Text>
           </View>
           {!!onRemove && (

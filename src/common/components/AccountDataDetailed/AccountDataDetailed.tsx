@@ -71,12 +71,13 @@ const AccountDataDetailed = () => {
               numberOfLines={1}
               style={[spacings.mrTy, isNarrowWebLayout && { flexShrink: 1, minWidth: 0 }]}
             >
-              {privacyPoolsAccount.label}
+              {t('Private account')}
             </Text>
             <BadgeWithPreset preset="privacy-pools" withRightSpacing={false} />
           </View>
+          {/* The account has no name or address of its own, so its recovery phrase tells it apart */}
           <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-            {t('Private account, no public address')}
+            {t('From {{seedLabel}}', { seedLabel: privacyPoolsAccount.sourceLabel })}
           </Text>
         </View>
       </View>

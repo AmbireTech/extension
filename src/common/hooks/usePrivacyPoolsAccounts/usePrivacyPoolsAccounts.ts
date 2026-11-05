@@ -8,13 +8,16 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 /** A Privacy Pools account resolved against its recovery phrase, for display. */
 export type PrivacyPoolsAccountDisplay = {
   seedId: string
-  /** Its recovery phrase's label - the account has no name or address of its own. */
-  label: string
+  /**
+   * Its recovery phrase's label, with the passphrase's name for a phrase added with one - the
+   * account has no name or address of its own
+   */
+  sourceLabel: string
   /** Whether its recovery phrase is backed up - the only way to recover the account. */
   isBackedUp: boolean
 }
 
-/** Filters accounts by label and kind - they have no address or key to search by. */
+/** Filters accounts by where they are from and kind - they have no address or key to search by. */
 export const filterPrivacyPoolsAccountsBySearch = (
   accounts: PrivacyPoolsAccountDisplay[],
   search: string,
@@ -24,7 +27,9 @@ export const filterPrivacyPoolsAccountsBySearch = (
   const query = search.trim().toLowerCase()
   if (!query) return accounts
 
-  return accounts.filter(({ label }) => `${label} ${kindLabel}`.toLowerCase().includes(query))
+  return accounts.filter(({ sourceLabel }) =>
+    `${sourceLabel} ${kindLabel}`.toLowerCase().includes(query)
+  )
 }
 
 const selectPrivacyPoolsAccounts = (state: AllControllersMappingType['PrivacyPoolsController']) =>
@@ -55,9 +60,16 @@ const usePrivacyPoolsAccounts = () => {
       (privacyPoolsAccounts || []).map(({ seedId }) => {
         const seed = (seeds || []).find(({ id }) => id === seedId)
 
+        const label: string = seed?.label || t('Privacy Pools account')
+
         return {
           seedId,
-          label: seed?.label || t('Privacy Pools account'),
+          sourceLabel: seed?.passphraseLabel
+            ? t('{{seedLabel}} · Passphrase {{passphraseLabel}}', {
+                seedLabel: label,
+                passphraseLabel: seed.passphraseLabel
+              })
+            : label,
           isBackedUp: !seed?.notBackedUp
         }
       }),
