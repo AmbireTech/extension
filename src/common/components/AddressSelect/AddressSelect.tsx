@@ -40,11 +40,11 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrevious from '@common/hooks/usePrevious'
 import {
   filterPrivacyPoolsAccountsBySearch,
   PrivacyPoolsAccountDisplay
 } from '@common/hooks/usePrivacyPoolsAccounts'
-import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -55,6 +55,7 @@ import styles from './styles'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 export interface AddressSelectProps extends InputProps {
   setAddress: (text: string) => void
@@ -305,6 +306,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
   const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const canSendToPrivacyPoolsAccounts = useMemo(
     () => !account || !getIsViewOnly(keys, account.associatedKeys),
     [account, keys]
@@ -347,6 +349,18 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       ...contacts
     ]
   }, [account, contacts, includeSelectedAccount])
+
+  // Computed once for the whole list, so the rows don't each subscribe to the keystore.
+  // Safe accounts are left out, like in the accounts list
+  const viewOnlyAccountAddresses = useMemo(
+    () =>
+      new Set(
+        accounts
+          .filter((acc) => !acc.safeCreation && getIsViewOnly(keys, acc.associatedKeys))
+          .map((acc) => acc.addr)
+      ),
+    [accounts, keys]
+  )
 
   const onManagePress = useCallback(() => {
     navigate(ROUTES.addressBook)
@@ -471,10 +485,11 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
               plainAddressMaxLength={contactAddressMaxLength}
               // Tapping a row selects the address, so a copy icon is not needed on mobile
               withCopy={isWeb}
+              isViewOnly={viewOnlyAccountAddresses.has(contact.address)}
             />
           )
         })),
-    [listedContacts, contactAddressMaxLength]
+    [listedContacts, contactAddressMaxLength, viewOnlyAccountAddresses]
   )
 
   const manuallyAddedContactOptions = useMemo(
