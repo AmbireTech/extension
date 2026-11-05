@@ -189,7 +189,8 @@ const AccountPersonalizeScreen = () => {
                 </Text>
               )}
               {privacyPoolsAccount ? (
-                <View style={spacings.mbLg}>
+                // Fills the panel like the accounts list does, so Proceed sits at its bottom
+                <View style={[flexbox.flex1, spacings.mbLg]}>
                   <PrivacyPoolsAccountPersonalizeCard
                     name={privacyPoolsAccount.name}
                     sourceText={privacyPoolsAccount.sourceText}
