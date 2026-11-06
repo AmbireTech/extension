@@ -106,9 +106,9 @@ type DappsControllerRemoveConnectedSiteAction = {
   params: {
     id: Dapp['id']
     url: Dapp['url']
-    // Optional: only these channels are torn down, in one action so the autoLogin revoke runs
-    // once. Omitting it disconnects every source (web/extension and "Disconnect both" on mobile).
-    sources?: ConnectionSource[]
+    // Optional: when set, only the matching connection channel is torn down. Omitting
+    // it disconnects every active source (web/extension, and ManageApp's Disconnect on mobile).
+    source?: ConnectionSource
   }
 }
 

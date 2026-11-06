@@ -177,14 +177,12 @@ export const handleActions = async (
           (s) =>
             s.id === params.id &&
             !!s.wcTopic &&
-            (!params.sources || params.sources.includes(getSessionConnectionSource(s)))
+            (!params.source || getSessionConnectionSource(s) === params.source)
         )
         .map((s) => s.wcTopic as string)
 
-      if (params.sources) {
-        for (const source of params.sources) {
-          await mainCtrl.dapps.disconnectDappSource(params.id, source)
-        }
+      if (params.source) {
+        await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
       } else {
         await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
         mainCtrl.dapps.updateDapp(params.id, {
@@ -202,6 +200,19 @@ export const handleActions = async (
       const stillConnected = mainCtrl.dapps.hasPermission(params.id)
       if (!stillConnected) {
         await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+      }
+
+      break
+    }
+
+    case 'DISCONNECT_WC_SESSION': {
+      const session = mainCtrl.dapps.getDappSessionByWcTopic(params.topic)
+      // The wallet ending a session gets no `session_delete` back, so drop it here
+      mainCtrl.dapps.disconnectWcSessionByTopic(params.topic)
+      await terminateWcSession(params.topic)
+
+      if (session && !mainCtrl.dapps.hasPermission(session.id)) {
+        await mainCtrl.autoLogin.revokeAllPoliciesForDomain(session.id, session.origin)
       }
 
       break
@@ -480,6 +491,7 @@ export const handleActions = async (
           console.error('[Worker] Failed to restore WC session for topic:', topic, e)
         }
       }
+      await mainCtrl.dapps.dropWcSourcesWithoutSessions()
       break
     }
 

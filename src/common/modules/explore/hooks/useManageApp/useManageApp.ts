@@ -11,13 +11,20 @@ const useManageApp = (dapp: Dapp) => {
   const { state: networks } = useController('NetworksController', 'networks')
 
   const onDisconnect = useCallback(
-    (sources?: ConnectionSource[]) => {
+    (source?: ConnectionSource) => {
       dispatch({
         type: 'DAPPS_CONTROLLER_DISCONNECT_DAPP',
-        params: { id: dapp.id, url: dapp.url, sources }
+        params: { id: dapp.id, url: dapp.url, source }
       })
     },
     [dispatch, dapp.id, dapp.url]
+  )
+
+  const onDisconnectWcSession = useCallback(
+    (topic: string) => {
+      dispatch({ type: 'DISCONNECT_WC_SESSION', params: { topic } })
+    },
+    [dispatch]
   )
 
   const onToggleTrust = useCallback(() => {
@@ -45,6 +52,7 @@ const useManageApp = (dapp: Dapp) => {
   return {
     networks,
     onDisconnect,
+    onDisconnectWcSession,
     onSelectNetwork,
     onToggleTrust
   }

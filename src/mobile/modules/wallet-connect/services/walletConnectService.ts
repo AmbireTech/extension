@@ -430,19 +430,29 @@ export const initWalletConnect = async (
         }
       })
 
-      walletKit.on('session_delete', (event: WalletKitTypes.SessionDelete) => {
+      const forgetEndedSession = (topic: string) => {
         dispatch({
           type: 'method',
           params: {
             method: 'disconnectWcSessionByTopic',
             ctrlName: 'DappsController',
-            args: [event.topic]
+            args: [topic]
           }
         })
 
-        const sessionInfo = sessionInfoByTopic.get(event.topic)
-        sessionInfoByTopic.delete(event.topic)
+        const sessionInfo = sessionInfoByTopic.get(topic)
+        sessionInfoByTopic.delete(topic)
         void forgetPairing(sessionInfo?.pairingTopic)
+        return sessionInfo
+      }
+
+      // WalletKit doesn't type it, but its sign client emits it when a session runs out
+      walletKit.engine.signClient.events.on('session_expire', ({ topic }: { topic: string }) => {
+        forgetEndedSession(topic)
+      })
+
+      walletKit.on('session_delete', (event: WalletKitTypes.SessionDelete) => {
+        const sessionInfo = forgetEndedSession(event.topic)
         addToast(
           sessionInfo?.name
             ? `${sessionInfo.name} disconnected from your wallet.`
@@ -566,7 +576,8 @@ export const initWalletConnect = async (
             }
           })
         )
-        if (sessionsToRestore.length > 0) pendingRestoreSessions = sessionsToRestore
+        // Handed over even when empty, so connections whose session is gone get dropped
+        pendingRestoreSessions = sessionsToRestore
       } catch (e) {
         console.error('[WalletConnect] Failed to get persisted sessions:', e)
       }

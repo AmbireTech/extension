@@ -65,7 +65,8 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!isStoreReady || !isInitialized) return
 
     const sessionsToRestore = getPendingRestoreSessions()
-    if (sessionsToRestore && sessionsToRestore.length > 0) {
+    // Dispatched even when empty, so connections whose session is gone get dropped
+    if (sessionsToRestore) {
       dispatch(
         {
           type: 'RESTORE_WC_SESSIONS',
