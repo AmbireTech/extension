@@ -451,7 +451,13 @@ const init = async () => {
   })
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
-  const pq1Ctrl = new PQ1Controller(eventEmitterRegistry)
+  // Created before mainCtrl, which takes it as an external signer controller. The callbacks
+  // only run once the user imports PQ1 accounts from a view, long after mainCtrl exists.
+  const pq1Ctrl = new PQ1Controller(eventEmitterRegistry, {
+    getImportedAccounts: () => mainCtrl.accounts.accounts,
+    onPrepareAccounts: (prepared) => mainCtrl.accountPicker.prepareAccounts(prepared),
+    sendUiMessage: (params) => mainCtrl.ui.message.sendUiMessage(params)
+  })
 
   // Created before mainCtrl, whose UI manager reads the side panel mode. It doesn't need mainCtrl
   // itself - the log level callback only runs on a log level change, long after both exist.

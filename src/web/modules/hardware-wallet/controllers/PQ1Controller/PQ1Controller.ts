@@ -3,14 +3,36 @@ import { Pq1DeviceManager } from 'pq1-sdk/extension'
 
 import EmittableError from '@ambire-common/classes/EmittableError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
+import { Account } from '@ambire-common/interfaces/account'
 import { IEventEmitterRegistryController, Statuses } from '@ambire-common/interfaces/eventEmitter'
-import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
+import { ExternalSignerController, ReadyToAddKeys } from '@ambire-common/interfaces/keystore'
 
 import { pq1InitCodeCache, pq1Logger } from '../../libs/pq1/context'
 import { toUserFacingPq1Error } from '../../libs/pq1/errors'
+import { buildPQ1AccountsToImport } from '../../libs/pq1/importAccounts'
 
 /** How many of the device's accounts the connect screen offers. */
 const ACCOUNTS_OFFERED = 5
+
+/** What `PQ1Controller` needs from the rest of the wallet to prepare an import. The
+ *  controller is created before `MainController` (which takes it as an external signer
+ *  controller), so these are callbacks that reach `MainController` once it exists. */
+export type PQ1ControllerOptions = {
+  /** The accounts already in the wallet, to name the new ones after them and keep the
+   *  names of those being re-imported. */
+  getImportedAccounts: () => Account[]
+  /** Hands the accounts and keys to the account picker's `prepareAccounts`, for the
+   *  personalize step to add. */
+  onPrepareAccounts: (prepared: { accounts: Account[]; keys: ReadyToAddKeys }) => Promise<void>
+  /** Replies to a UI request made with `dispatchAndWait`. */
+  sendUiMessage: (reply: UiRequestReply) => void
+}
+
+/** The reply `dispatchAndWait` waits for: resolves it when `ok`, rejects it with `error`
+ *  otherwise. */
+type UiRequestReply =
+  | { requestId: string; ok: true }
+  | { requestId: string; ok: false; error: string }
 
 export const STATUS_WRAPPED_METHODS = {
   loadAccounts: 'INITIAL'
@@ -54,8 +76,20 @@ class PQ1Controller extends EventEmitter implements ExternalSignerController {
 
   #manager: Pq1DeviceManager
 
-  constructor(eventEmitterRegistry: IEventEmitterRegistryController) {
+  #getImportedAccounts: PQ1ControllerOptions['getImportedAccounts']
+
+  #onPrepareAccounts: PQ1ControllerOptions['onPrepareAccounts']
+
+  #sendUiMessage: PQ1ControllerOptions['sendUiMessage']
+
+  constructor(
+    eventEmitterRegistry: IEventEmitterRegistryController,
+    { getImportedAccounts, onPrepareAccounts, sendUiMessage }: PQ1ControllerOptions
+  ) {
     super(eventEmitterRegistry)
+    this.#getImportedAccounts = getImportedAccounts
+    this.#onPrepareAccounts = onPrepareAccounts
+    this.#sendUiMessage = sendUiMessage
     this.#manager = new Pq1DeviceManager({
       // Never left to the SDK's default, which reads chrome.storage.local itself
       cache: pq1InitCodeCache,
@@ -108,10 +142,53 @@ class PQ1Controller extends EventEmitter implements ExternalSignerController {
     })
   }
 
+  /**
+   * Prepares the accounts the user selected on the connect screen (by their number on the
+   * device) for the personalize step, which adds them - nothing is written here. The
+   * addresses and the device id come from what this controller read from the device, never
+   * from the UI. Replies to `requestId` once they are prepared, or with the error.
+   */
+  async prepareAccountsToImport(accountIndices: number[], requestId?: string) {
+    const selectedAccounts = this.accounts.filter(({ index }) => accountIndices.includes(index))
+    // The accounts are dropped when the device goes away, so there is nothing to import from
+    if (!this.deviceId || !selectedAccounts.length) {
+      const message = 'The PQ1 was disconnected. Plug it in and connect again.'
+      this.emitError({ level: 'major', message, error: new Error(message) })
+      this.#replyToRequest(requestId, message)
+      return
+    }
+
+    try {
+      const { accounts, keys } = buildPQ1AccountsToImport(
+        selectedAccounts.map(({ index, address }) => ({ accountIndex: index, addr: address })),
+        this.deviceId,
+        this.#getImportedAccounts()
+      )
+      await this.#onPrepareAccounts({ accounts, keys: { internal: [], external: keys } })
+    } catch (error: any) {
+      const message = "Couldn't prepare the PQ1 accounts for import. Please try again."
+      this.emitError({ level: 'major', message, error })
+      this.#replyToRequest(requestId, message)
+      return
+    }
+
+    this.#replyToRequest(requestId)
+  }
+
   /** Forget the accounts read for the connect screen. */
   resetAccounts() {
     this.accounts = []
     this.emitUpdate()
+  }
+
+  /**
+   * Replies to the UI request behind a call (if there is one), so the UI can await it
+   * instead of watching state.
+   */
+  #replyToRequest(requestId?: string, error?: string) {
+    if (!requestId) return
+
+    this.#sendUiMessage(error ? { requestId, ok: false, error } : { requestId, ok: true })
   }
 }
 

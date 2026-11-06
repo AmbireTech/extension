@@ -20,12 +20,8 @@ import {
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { toUserFacingPq1Error } from '@web/modules/hardware-wallet/libs/pq1/errors'
-import { buildPQ1AccountsToImport } from '@web/modules/hardware-wallet/libs/pq1/importAccounts'
-
-const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 const selectPq1Accounts = (state: AllControllersMappingType['PQ1Controller']) => state.accounts
-const selectPq1DeviceId = (state: AllControllersMappingType['PQ1Controller']) => state.deviceId
 const selectPq1IsConnected = (state: AllControllersMappingType['PQ1Controller']) =>
   state.isConnected
 const selectLoadAccountsStatus = (state: AllControllersMappingType['PQ1Controller']) =>
@@ -72,26 +68,25 @@ const DiscoveredAccountRow = React.memo(function DiscoveredAccountRow({
  * picker) needs a user gesture in a page, so that is all this screen does
  * with the device. The background's `PQ1Controller`, which owns the only
  * connection, then opens the PQ1 through that permission and reads its
- * accounts. The selected ones are prepared with the account picker's
- * `prepareAccounts`, like the view-only, Safe and JSON imports: nothing is
- * written here. The personalize step adds the keys and accounts, which comes
- * after the password, so a first-time setup abandoned on the password step
- * leaves no accounts without their keys behind.
+ * accounts. The selected ones are prepared by the controller's
+ * `prepareAccountsToImport` with the account picker's `prepareAccounts`, like
+ * the view-only, Safe and JSON imports: nothing is written here. The
+ * personalize step adds the keys and accounts, which comes after the password,
+ * so a first-time setup abandoned on the password step leaves no accounts
+ * without their keys behind.
  */
 const PQ1ConnectScreen = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { state: pq1Accounts, dispatch: pq1Dispatch } = useController(
-    'PQ1Controller',
-    selectPq1Accounts
-  )
-  const { state: deviceId } = useController('PQ1Controller', selectPq1DeviceId)
+  const {
+    state: pq1Accounts,
+    dispatch: pq1Dispatch,
+    dispatchAndWait: pq1DispatchAndWait
+  } = useController('PQ1Controller', selectPq1Accounts)
   const { state: isConnected } = useController('PQ1Controller', selectPq1IsConnected)
   const { state: loadAccountsStatus } = useController('PQ1Controller', selectLoadAccountsStatus)
-  const { state: accounts } = useController('AccountsController', selectAccounts)
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [selectedIndices, setSelectedIndices] = useState<number[]>([0])
@@ -148,27 +143,19 @@ const PQ1ConnectScreen = () => {
   }, [])
 
   const onPressImport = useCallback(async () => {
-    const entries = pq1Accounts.filter((account) => selectedIndices.includes(account.index))
-    if (entries.length === 0) {
+    if (selectedIndices.length === 0) {
       addToast(t('Select at least one PQ1 account to import.'), { type: 'error' })
       return
     }
-    const { accounts: accountsToAdd, keys } = buildPQ1AccountsToImport(
-      entries.map(({ index, address }) => ({ accountIndex: index, addr: address })),
-      deviceId,
-      accounts
-    )
 
     setIsImporting(true)
     try {
       // Prepared for the personalize step, which adds the accounts and their keys once the
-      // user proceeds (after setting a password, on a first-time setup)
-      await accountPickerDispatchAndWait({
+      // user proceeds (after setting a password, on a first-time setup). Only the account
+      // numbers are sent: the controller takes the addresses from what it read off the device.
+      await pq1DispatchAndWait({
         type: 'method',
-        params: {
-          method: 'prepareAccounts',
-          args: [{ accounts: accountsToAdd, keys: { internal: [], external: keys } }]
-        }
+        params: { method: 'prepareAccountsToImport', args: [selectedIndices] }
       })
       goToNextRoute(WEB_ROUTES.accountPersonalize)
     } catch (error) {
@@ -177,16 +164,7 @@ const PQ1ConnectScreen = () => {
     } finally {
       setIsImporting(false)
     }
-  }, [
-    pq1Accounts,
-    selectedIndices,
-    deviceId,
-    accounts,
-    accountPickerDispatchAndWait,
-    goToNextRoute,
-    addToast,
-    t
-  ])
+  }, [selectedIndices, pq1DispatchAndWait, goToNextRoute, addToast, t])
 
   const isConnecting = isGrantingPermission || loadAccountsStatus === 'LOADING'
 
