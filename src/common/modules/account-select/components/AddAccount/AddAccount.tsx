@@ -11,6 +11,7 @@ import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
+import PQ1BadgeIcon from '@common/assets/svg/PQ1BadgeIcon'
 import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
@@ -169,6 +170,15 @@ const AddAccount = ({
           goToNextRoute(WEB_ROUTES.qrConnect)
         },
         testID: 'qr-option'
+      },
+      {
+        key: 'pq1',
+        text: t('PQ1 (post-quantum)'),
+        icon: PQ1BadgeIcon,
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.pq1Connect)
+        },
+        testID: 'pq1-option'
       }
     ]
   }, [connectHardwareWallet, goToNextRoute, t])

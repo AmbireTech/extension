@@ -28,7 +28,7 @@ import getStyles from './styles'
 
 const AsyncMainRoute = lazy(() => import('@web/modules/router/components/MainRoutes'))
 
-const { isPopup, isFirefoxSidebar } = getUiType()
+const { isPopup, isSidePanel } = getUiType()
 
 const TIME_TO_LAND_ON_A_ROUTE = 3000
 
@@ -102,11 +102,12 @@ const Router = () => {
   const canRenderCurrentRoute =
     areAllControllerStatesLoaded || (isRouteWithCriticalControllers && canRenderRoute)
 
-  // Firefox can't hide the extension's sidebar from its sidebar switcher, so it can be opened
-  // while the wallet is set to open as a popup - show a notice there instead of a second wallet UI.
+  // The side panel stays available while the wallet is set to open as a popup (Chrome's toolbar
+  // icon context menu and side panel menu, Firefox's sidebar switcher, which can't hide it) - show
+  // a notice there instead of a second wallet UI.
   // The mode reads as off until the stored settings load, so the splash is kept until then -
   // otherwise the notice could flash before the wallet, or the wallet before the notice.
-  if (isFirefoxSidebar && sidePanelModeStatus !== 'on') {
+  if (isSidePanel && sidePanelModeStatus !== 'on') {
     return sidePanelModeStatus === 'off' ? <SidePanelModeDisabledScreen /> : <Splash />
   }
 

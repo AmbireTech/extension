@@ -36,9 +36,10 @@ export const handleFirefoxActionClicked = async () => {
 
 /**
  * Routes the toolbar action to the side panel instead of the extension popup (or back).
- * On Chrome the side panel is also disabled while the mode is off, which removes the wallet from
- * Chrome's own side panel menu and closes a panel that is open - otherwise the wallet could still
- * be opened there, and dapp requests would be routed to it instead of a request window.
+ * On Chrome the side panel itself stays enabled while the mode is off, so it's still offered in
+ * the toolbar icon's context menu ("Open side panel") and in Chrome's own side panel menu. Opened
+ * that way it shows the "mode off" notice instead of the wallet (like the Firefox sidebar), and
+ * dapp requests still go to a request window, as isPanelOpen requires the mode to be on.
  */
 export const applyPanelMode = async (enabled: boolean) => {
   if (isGecko) {
@@ -59,9 +60,8 @@ export const applyPanelMode = async (enabled: boolean) => {
   if (!sidePanelApi) return
 
   try {
-    // Enabled before the toolbar action starts opening it, so a click in between doesn't land on
-    // a disabled panel
-    await sidePanelApi.setOptions?.({ enabled })
+    // Re-enables the panel on installs where an older version disabled it while the mode was off
+    await sidePanelApi.setOptions?.({ enabled: true })
     await sidePanelApi.setPanelBehavior({ openPanelOnActionClick: enabled })
     await chrome.action.setPopup({ popup: enabled ? '' : POPUP_PATH })
   } catch (error) {
@@ -188,8 +188,8 @@ export const forgetPanelWindowId = (portId: string) => {
 
 /**
  * Whether a side panel can show requests: a side-panel port is connected (Chrome can't be asked)
- * and panel mode is on - with the mode off, Firefox's sidebar shows the "mode off" notice and
- * Chrome's panel is closing. With a `windowId`, only a panel that has reported that window counts.
+ * and panel mode is on - with the mode off, the panel shows the "mode off" notice. With a
+ * `windowId`, only a panel that has reported that window counts.
  */
 const isPanelOpen = (
   pm: PortMessenger,

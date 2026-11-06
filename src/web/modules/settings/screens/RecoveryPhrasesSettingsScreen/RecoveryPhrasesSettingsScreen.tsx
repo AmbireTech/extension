@@ -4,6 +4,7 @@ import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -48,7 +49,7 @@ const RecoveryPhraseSettingsScreen = () => {
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
-      const keysFromSeed = keys.filter((k) => k.meta.fromSeedId === seedId)
+      const keysFromSeed = keys.filter((k) => getKeySeedId(k) === seedId)
       const keysFromSeedAddr = keysFromSeed.map(({ addr }) => addr)
       return accounts.filter((a) => a.associatedKeys.some((k) => keysFromSeedAddr.includes(k)))
     },

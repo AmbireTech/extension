@@ -8,7 +8,7 @@ import {
 } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
+import { HdExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
@@ -24,11 +24,11 @@ import { NfcSignature } from '@common/modules/hardware-wallets/nfc/types'
  * and delegates only the elliptic curve part to the card, through the controller.
  */
 class NfcHardwareSigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: NfcControllerInterface | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: HdExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 
