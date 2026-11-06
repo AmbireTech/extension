@@ -80,9 +80,8 @@ const ConnectionCard = ({ title, wcTopic, onDisconnect, children }: ConnectionCa
         {wcTopic ? (
           <WalletConnectIcon width={22} height={22} />
         ) : (
-          <View style={[flexbox.center, { width: 22, height: 22 }]}>
-            <AmbireLogo width={14} height={22} />
-          </View>
+          // Square like its other uses: the artwork overflows its viewBox and a tight box clips it
+          <AmbireLogo width={22} height={22} />
         )}
         <Text
           fontSize={14}
@@ -117,8 +116,8 @@ const WcSessionCard = React.memo(({ session, details, onDisconnect }: WcSessionC
 
   const statusLabels: Record<WcSessionStatus, string> = {
     checking: t('Checking…'),
-    active: t('Active'),
-    inactive: t('Inactive')
+    active: t('Online'),
+    inactive: t('Offline')
   }
 
   return (
@@ -212,7 +211,7 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
             <DetailLine label={t('Expires')} value={t('Never')} />
             <DetailLine
               label={t('Status')}
-              value={injectedStatus === 'active' ? t('Active') : t('Inactive')}
+              value={injectedStatus === 'active' ? t('Online') : t('Offline')}
               valueAppearance={STATUS_APPEARANCE[injectedStatus]}
             />
           </ConnectionCard>
