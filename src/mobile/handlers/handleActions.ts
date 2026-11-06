@@ -49,6 +49,19 @@ const syncWcDappChainId = (mainCtrl: MainController, dappId: string, chainId: nu
   mainCtrl.dapps.updateDapp(dappId, { chainId })
 }
 
+/**
+ * Drops an ended WalletConnect session and, once the app has no connection left, its auto-login
+ * policies - the same as disconnecting the app.
+ */
+const forgetWcSession = async (mainCtrl: MainController, wcTopic: string) => {
+  const session = mainCtrl.dapps.getDappSessionByWcTopic(wcTopic)
+  mainCtrl.dapps.disconnectWcSessionByTopic(wcTopic)
+
+  if (session && !mainCtrl.dapps.hasPermission(session.id)) {
+    await mainCtrl.autoLogin.revokeAllPoliciesForDomain(session.id, session.origin)
+  }
+}
+
 export const handleActions = async (
   action: MethodAction | Action,
   {
@@ -206,15 +219,14 @@ export const handleActions = async (
     }
 
     case 'DISCONNECT_WC_SESSION': {
-      const session = mainCtrl.dapps.getDappSessionByWcTopic(params.topic)
       // The wallet ending a session gets no `session_delete` back, so drop it here
-      mainCtrl.dapps.disconnectWcSessionByTopic(params.topic)
+      await forgetWcSession(mainCtrl, params.topic)
       await terminateWcSession(params.topic)
+      break
+    }
 
-      if (session && !mainCtrl.dapps.hasPermission(session.id)) {
-        await mainCtrl.autoLogin.revokeAllPoliciesForDomain(session.id, session.origin)
-      }
-
+    case 'WC_SESSION_ENDED': {
+      await forgetWcSession(mainCtrl, params.topic)
       break
     }
 

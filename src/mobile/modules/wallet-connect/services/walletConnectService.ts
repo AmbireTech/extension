@@ -477,14 +477,7 @@ export const initWalletConnect = async (
       })
 
       const forgetEndedSession = (topic: string) => {
-        dispatch({
-          type: 'method',
-          params: {
-            method: 'disconnectWcSessionByTopic',
-            ctrlName: 'DappsController',
-            args: [topic]
-          }
-        })
+        dispatch({ type: 'WC_SESSION_ENDED', params: { topic } })
 
         const sessionInfo = sessionInfoByTopic.get(topic)
         sessionInfoByTopic.delete(topic)

@@ -240,6 +240,14 @@ type DisconnectWcSessionAction = {
   }
 }
 
+/** A WalletConnect session that ended on its own: deleted by the app or expired */
+type WcSessionEndedAction = {
+  type: 'WC_SESSION_ENDED'
+  params: {
+    topic: string
+  }
+}
+
 type DispatchDappTabFocusAction = {
   type: 'DISPATCH_DAPP_TAB_FOCUS'
   params: {
@@ -310,6 +318,7 @@ export type Action =
   | SetupWcSessionMessengerAction
   | RestoreWcSessionsAction
   | DisconnectWcSessionAction
+  | WcSessionEndedAction
   | DispatchDappTabFocusAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction
