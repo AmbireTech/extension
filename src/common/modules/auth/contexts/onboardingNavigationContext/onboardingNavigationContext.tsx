@@ -224,6 +224,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             importMethod(WEB_ROUTES.safeImportByOwner)
           ]),
           importMethod(WEB_ROUTES.qrConnect),
+          importMethod(WEB_ROUTES.pq1Connect),
           importMethod(WEB_ROUTES.importSmartAccountJson),
           // "Already an Ambire user" - a sync from the other app
           importMethod(WEB_ROUTES.importFromMobile),
