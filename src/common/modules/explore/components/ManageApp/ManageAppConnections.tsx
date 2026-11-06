@@ -206,7 +206,7 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
       </Text>
       <View style={{ rowGap: SPACING_SM }}>
         {isConnectedViaInjected && (
-          <ConnectionCard title={t('Ambire provider')} onDisconnect={handleDisconnect}>
+          <ConnectionCard title={t('Ambire')} onDisconnect={handleDisconnect}>
             <DetailLine label={t('Connected from')} value={t('In-app browser')} />
             <DetailLine label={t('Expires')} value={t('Never')} />
             <DetailLine
