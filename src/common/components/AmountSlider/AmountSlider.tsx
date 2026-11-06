@@ -118,7 +118,19 @@ const AmountSlider = ({
   const [width, setWidth] = useState(0)
   const isDisabled = disabled || maximumValue <= 0n
   const clampedValue = value < 0n ? 0n : value > maximumValue ? maximumValue : value
-  const sliderStep = maximumValue > 0n ? (clampedValue * SLIDER_STEPS) / maximumValue : 0n
+  // Every dot on the track, on the slider's own axis - the same list a press snaps onto.
+  const sliderMarks = useMemo(
+    () => getSliderMarks({ marks, maximumValue, tierOffset }),
+    [marks, maximumValue, tierOffset]
+  )
+  // A quarter dot sets a rounded amount but stays drawn at its exact quarter, so on a dot's amount
+  // the thumb sits on the dot itself rather than wherever that rounded amount would put it.
+  const sliderStep = useMemo(() => {
+    const markAtValue = sliderMarks.find((mark) => mark.amount === clampedValue)
+    if (markAtValue) return markAtValue.steps
+
+    return maximumValue > 0n ? (clampedValue * SLIDER_STEPS) / maximumValue : 0n
+  }, [clampedValue, maximumValue, sliderMarks])
   // Values live on the track's own axis, edge to edge, so a mark and the thumb picking it out
   // always land on the same spot.
   const fractionOfWidth = useCallback(
@@ -177,9 +189,8 @@ const AmountSlider = ({
     return segments
   }, [clampedValue, maximumValue, tierBoundaries, tierOffset])
   const progressWidth = Math.max(fractionOfWidth(sliderStep), 0)
-  // Every dot on the track, on the slider's own axis - the same list the drag snaps onto.
   const markers = useMemo(() => {
-    return getSliderMarks({ marks, maximumValue, tierOffset }).map((mark) => {
+    return sliderMarks.map((mark) => {
       const position = fractionOfWidth(mark.steps)
       // Every dot but one sitting at either end of the track is centered on its own position.
       // Those are pulled fully inside the track instead, so they sit flush with its rounded caps
@@ -197,7 +208,7 @@ const AmountSlider = ({
         left: position + edgeOffset
       }
     })
-  }, [fractionOfWidth, marks, maximumValue, tierOffset, width])
+  }, [fractionOfWidth, sliderMarks, width])
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width: nextWidth } = event.nativeEvent.layout
