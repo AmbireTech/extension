@@ -2,18 +2,25 @@ import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { getSessionConnectionSource } from '@ambire-common/classes/session'
+import { getSessionConnectionSource, Session } from '@ambire-common/classes/session'
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import WalletConnectIcon from '@common/assets/svg/WalletConnectIcon'
 import Button from '@common/components/Button'
-import Text from '@common/components/Text'
+import Text, { TextAppearance } from '@common/components/Text'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import useWcSessionsDetails from '@common/modules/explore/hooks/useWcSessionsDetails'
+import type {
+  WcSessionDetails,
+  WcSessionStatus
+} from '@common/modules/explore/hooks/useWcSessionsDetails/types'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
+import formatDateTime from '@common/utils/formatDateTime'
+import formatTime from '@common/utils/formatTime'
 
 const selectDappSessions = (state: AllControllersMappingType['DappsController']) =>
   state.dappSessions
@@ -22,44 +29,67 @@ const selectDappSessions = (state: AllControllersMappingType['DappsController'])
 const isLiveWcTopic = (wcTopic?: string): wcTopic is string =>
   !!wcTopic && !wcTopic.startsWith('temp_')
 
-interface ConnectionRowProps {
+type WcSession = Session & { wcTopic: string }
+
+const STATUS_APPEARANCE: Record<WcSessionStatus, TextAppearance> = {
+  checking: 'secondaryText',
+  active: 'successText',
+  inactive: 'warningText'
+}
+
+interface DetailLineProps {
+  label: string
+  value: string
+  valueAppearance?: TextAppearance
+}
+
+const DetailLine = ({ label, value, valueAppearance = 'primaryText' }: DetailLineProps) => (
+  <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.mtMi]}>
+    <Text fontSize={12} appearance="secondaryText">
+      {label}
+    </Text>
+    <Text fontSize={12} weight="medium" appearance={valueAppearance}>
+      {value}
+    </Text>
+  </View>
+)
+
+interface ConnectionCardProps {
   title: string
-  subtitle: string
   /** Set for a WalletConnect session, unset for the in-app browser's injected provider */
   wcTopic?: string
   onDisconnect: (wcTopic?: string) => void
+  children: React.ReactNode
 }
 
-const ConnectionRow = React.memo(
-  ({ title, subtitle, wcTopic, onDisconnect }: ConnectionRowProps) => {
-    const { theme } = useTheme()
-    const { t } = useTranslation()
-    const handleDisconnect = useCallback(() => onDisconnect(wcTopic), [onDisconnect, wcTopic])
+const ConnectionCard = ({ title, wcTopic, onDisconnect, children }: ConnectionCardProps) => {
+  const { theme } = useTheme()
+  const { t } = useTranslation()
+  const handleDisconnect = useCallback(() => onDisconnect(wcTopic), [onDisconnect, wcTopic])
 
-    return (
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          common.borderRadiusPrimary,
-          spacings.ph,
-          spacings.pvTy,
-          { backgroundColor: theme.secondaryBackground, minHeight: 50 }
-        ]}
-      >
+  return (
+    <View
+      style={[
+        common.borderRadiusPrimary,
+        spacings.ph,
+        spacings.pvTy,
+        { backgroundColor: theme.secondaryBackground }
+      ]}
+    >
+      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         {wcTopic ? (
           <WalletConnectIcon width={22} height={22} />
         ) : (
           <GlobeIcon width={20} height={20} />
         )}
-        <View style={[flexbox.flex1, spacings.mlTy]}>
-          <Text fontSize={14} weight="medium" numberOfLines={1}>
-            {title}
-          </Text>
-          <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-            {subtitle}
-          </Text>
-        </View>
+        <Text
+          fontSize={14}
+          weight="medium"
+          numberOfLines={1}
+          style={[flexbox.flex1, spacings.mlTy]}
+        >
+          {title}
+        </Text>
         <Button
           type="danger"
           size="small"
@@ -68,9 +98,57 @@ const ConnectionRow = React.memo(
           hasBottomSpacing={false}
         />
       </View>
-    )
+      {children}
+    </View>
+  )
+}
+
+interface WcSessionCardProps {
+  session: WcSession
+  details?: WcSessionDetails
+  onDisconnect: (wcTopic?: string) => void
+}
+
+const WcSessionCard = React.memo(({ session, details, onDisconnect }: WcSessionCardProps) => {
+  const { t } = useTranslation()
+  const { connectedAt, expiresInSeconds, status = 'checking' } = details ?? {}
+
+  const statusLabels: Record<WcSessionStatus, string> = {
+    checking: t('Checking…'),
+    active: t('Active'),
+    inactive: t('Inactive')
   }
-)
+
+  return (
+    <ConnectionCard
+      title={t('WalletConnect')}
+      wcTopic={session.wcTopic}
+      onDisconnect={onDisconnect}
+    >
+      <DetailLine
+        label={t('Type')}
+        value={
+          getSessionConnectionSource(session) === 'wc-in-app' ? t('In-app browser') : t('External')
+        }
+      />
+      <DetailLine
+        label={t('Connected at')}
+        value={connectedAt ? formatDateTime(connectedAt) : t('Unknown')}
+      />
+      {expiresInSeconds !== undefined && (
+        <DetailLine
+          label={t('Expires')}
+          value={t('in {{time}}', { time: formatTime(expiresInSeconds) })}
+        />
+      )}
+      <DetailLine
+        label={t('Status')}
+        value={statusLabels[status]}
+        valueAppearance={STATUS_APPEARANCE[status]}
+      />
+    </ConnectionCard>
+  )
+})
 
 interface Props {
   dapp: Dapp
@@ -86,9 +164,23 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
   const { t } = useTranslation()
   const { state: dappSessions } = useController('DappsController', selectDappSessions)
 
-  const wcSessions = useMemo(
-    () => Object.values(dappSessions).filter((s) => s.id === dapp.id && isLiveWcTopic(s.wcTopic)),
+  const dappWcSessions = useMemo(
+    () =>
+      Object.values(dappSessions).filter(
+        (s): s is WcSession => s.id === dapp.id && isLiveWcTopic(s.wcTopic)
+      ),
     [dappSessions, dapp.id]
+  )
+  const detailsByTopic = useWcSessionsDetails(dappWcSessions.map((s) => s.wcTopic))
+  // Most recently connected first; sessions without a recorded time go last
+  const wcSessions = useMemo(
+    () =>
+      [...dappWcSessions].sort(
+        (a, b) =>
+          (detailsByTopic[b.wcTopic]?.connectedAt ?? 0) -
+          (detailsByTopic[a.wcTopic]?.connectedAt ?? 0)
+      ),
+    [dappWcSessions, detailsByTopic]
   )
   const isConnectedViaInjected = !!dapp.connectedSources?.includes('injected')
 
@@ -107,22 +199,15 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
       </Text>
       <View style={{ rowGap: SPACING_SM }}>
         {isConnectedViaInjected && (
-          <ConnectionRow
-            title={t('In-app browser')}
-            subtitle={t('Direct connection')}
-            onDisconnect={handleDisconnect}
-          />
+          <ConnectionCard title={t('In-app browser')} onDisconnect={handleDisconnect}>
+            <DetailLine label={t('Type')} value={t('Direct connection')} />
+          </ConnectionCard>
         )}
         {wcSessions.map((session) => (
-          <ConnectionRow
+          <WcSessionCard
             key={session.sessionId}
-            title={t('WalletConnect')}
-            subtitle={
-              getSessionConnectionSource(session) === 'wc-in-app'
-                ? t('In-app browser')
-                : t('External')
-            }
-            wcTopic={session.wcTopic}
+            session={session}
+            details={detailsByTopic[session.wcTopic]}
             onDisconnect={handleDisconnect}
           />
         ))}

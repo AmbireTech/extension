@@ -238,7 +238,8 @@ const ManageApp = ({
           </View>
         )}
 
-        {connectedSources.length > 0 && (
+        {/* On mobile each connection is disconnected from its own row above */}
+        {!isMobile && connectedSources.length > 0 && (
           <Button
             type="danger"
             text={t('Disconnect')}
