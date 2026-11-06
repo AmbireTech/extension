@@ -55,7 +55,10 @@ const PrivacyPoolsBalances: FC<Props> = ({
       'unsupported-network': t(
         'Privacy Pools is not available on any of the networks you have added. It runs on Ethereum.'
       ),
-      locked: t('Unlock your wallet to see what you have in Privacy Pools.')
+      locked: t('Unlock your wallet to see what you have in Privacy Pools.'),
+      'passphrase-needed': t(
+        'This account needs its passphrase again. Remove it and add it again with the passphrase - your funds stay where they are.'
+      )
     }
 
     return renderNotice(

@@ -3,7 +3,9 @@ import { View, ViewStyle } from 'react-native'
 
 import BadgeWithPreset from '@common/components/BadgeWithPreset'
 import Dropdown from '@common/components/Dropdown'
+import EditableAccountName from '@common/components/EditableAccountName'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
+import PrivacyPoolsAccountIdentity from '@common/components/PrivacyPoolsAccountIdentity'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -20,6 +22,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectMainStatuses = (state: AllControllersMappingType['MainController']) => state.statuses
+// The same as the name of a regular account row with settings
+const NAME_TEXT_PROPS = { weight: 'medium' } as const
 
 type Props = {
   account: PrivacyPoolsAccountDisplay
@@ -28,6 +32,8 @@ type Props = {
   onSelect?: (seedId: string) => void
   /** Adds a "Remove account" option to the row's menu. */
   onRemove?: (account: PrivacyPoolsAccountDisplay) => void
+  /** Shows a pencil next to the name, which renames the account - like `withSettings` of `Account` */
+  withRename?: boolean
   containerStyle?: ViewStyle
 }
 
@@ -42,6 +48,7 @@ const PrivacyPoolsAccountRow = ({
   isSelected = false,
   onSelect,
   onRemove,
+  withRename = false,
   containerStyle
 }: Props) => {
   const { t } = useTranslation()
@@ -50,9 +57,11 @@ const PrivacyPoolsAccountRow = ({
     'MainController',
     selectMainStatuses
   )
+  const { dispatchAndWait: privacyPoolsDispatchAndWait } = useController('PrivacyPoolsController')
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
-    values: { from: theme.primaryBackground, to: theme.secondaryBackground }
+    // The same as the regular account
+    values: { from: theme.secondaryBackground, to: theme.hoverBackground }
   })
 
   // The same as the selected regular account
@@ -62,6 +71,23 @@ const PrivacyPoolsAccountRow = ({
   )
 
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 })
+
+  // The account has no address of its own, so its recovery phrase tells it apart
+  const sourceText = t('From {{seedLabel}}', { seedLabel: account.sourceLabel })
+  const identity = useMemo(
+    () => <PrivacyPoolsAccountIdentity sourceText={sourceText} />,
+    [sourceText]
+  )
+
+  const handleSaveName = useCallback(
+    async (name: string) => {
+      await privacyPoolsDispatchAndWait({
+        type: 'method',
+        params: { method: 'updateAccountLabel', args: [account.seedId, name] }
+      })
+    },
+    [account.seedId, privacyPoolsDispatchAndWait]
+  )
 
   const handlePress = useCallback(() => {
     if (!onSelect) return
@@ -113,12 +139,23 @@ const PrivacyPoolsAccountRow = ({
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           <PrivacyPoolsAccountAvatar size={ACCOUNT_AVATAR_SIZE} style={spacings.mrTy} />
           <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-            <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
-              {t('Private account')}
-            </Text>
-            {/* The account has no name or address of its own, so its recovery phrase tells it apart */}
+            {withRename ? (
+              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mrTy]}>
+                <EditableAccountName
+                  identity={identity}
+                  name={account.label}
+                  onSave={handleSaveName}
+                  textProps={NAME_TEXT_PROPS}
+                  testID={`privacy-pools-account-name-${account.seedId}`}
+                />
+              </View>
+            ) : (
+              <Text fontSize={14} weight="medium" numberOfLines={1} style={styles.label}>
+                {account.label}
+              </Text>
+            )}
             <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-              {t('Added from {{seedLabel}}', { seedLabel: account.label })}
+              {sourceText}
             </Text>
           </View>
           {!!onRemove && (
