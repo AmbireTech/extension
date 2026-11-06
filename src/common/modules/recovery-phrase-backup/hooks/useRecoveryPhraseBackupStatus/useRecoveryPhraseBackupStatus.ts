@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 
+import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import useController from '@common/hooks/useController'
 
 /**
@@ -37,9 +38,10 @@ export default function useRecoveryPhraseBackupStatus() {
     if (!selectedAccount || portfolio.totalBalance <= 0) return null
 
     const selectedAccountKeyAddrs = selectedAccount.associatedKeys
-    const seedIdOfSelectedAccount = keys.find(
-      ({ addr, meta }) => !!meta.fromSeedId && selectedAccountKeyAddrs.includes(addr)
-    )?.meta.fromSeedId
+    const seedIdOfSelectedAccount = keys
+      .filter(({ addr }) => selectedAccountKeyAddrs.includes(addr))
+      .map(getKeySeedId)
+      .find(Boolean)
 
     if (!seedIdOfSelectedAccount) return null
 
