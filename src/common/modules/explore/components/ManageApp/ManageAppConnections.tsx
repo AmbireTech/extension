@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { getSessionConnectionSource, Session } from '@ambire-common/classes/session'
-import { Dapp } from '@ambire-common/interfaces/dapp'
+import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import WalletConnectIcon from '@common/assets/svg/WalletConnectIcon'
 import Button from '@common/components/Button'
@@ -56,16 +56,20 @@ const DetailLine = ({ label, value, valueAppearance = 'primaryText' }: DetailLin
 
 interface ConnectionCardProps {
   title: string
-  /** Set for a WalletConnect session, unset for the in-app browser's injected provider */
-  wcTopic?: string
-  onDisconnect: (wcTopic?: string) => void
+  /** False for the in-app browser's injected provider */
+  isWalletConnect: boolean
+  onDisconnect: () => void
   children: React.ReactNode
 }
 
-const ConnectionCard = ({ title, wcTopic, onDisconnect, children }: ConnectionCardProps) => {
+const ConnectionCard = ({
+  title,
+  isWalletConnect,
+  onDisconnect,
+  children
+}: ConnectionCardProps) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const handleDisconnect = useCallback(() => onDisconnect(wcTopic), [onDisconnect, wcTopic])
 
   return (
     <View
@@ -77,7 +81,7 @@ const ConnectionCard = ({ title, wcTopic, onDisconnect, children }: ConnectionCa
       ]}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        {wcTopic ? (
+        {isWalletConnect ? (
           <WalletConnectIcon width={22} height={22} />
         ) : (
           // Square like its other uses: the artwork overflows its viewBox and a tight box clips it
@@ -95,7 +99,7 @@ const ConnectionCard = ({ title, wcTopic, onDisconnect, children }: ConnectionCa
           type="danger"
           size="small"
           text={t('Disconnect')}
-          onPress={handleDisconnect}
+          onPress={onDisconnect}
           hasBottomSpacing={false}
         />
       </View>
@@ -104,15 +108,30 @@ const ConnectionCard = ({ title, wcTopic, onDisconnect, children }: ConnectionCa
   )
 }
 
+const WcConnectedFromLine = ({ source }: { source: ConnectionSource }) => {
+  const { t } = useTranslation()
+
+  return (
+    <DetailLine
+      label={t('Connected from')}
+      value={source === 'wc-in-app' ? t('In-app browser') : t('External browser')}
+    />
+  )
+}
+
 interface WcSessionCardProps {
   session: WcSession
   details?: WcSessionDetails
-  onDisconnect: (wcTopic?: string) => void
+  onDisconnect: (wcTopic: string) => void
 }
 
 const WcSessionCard = React.memo(({ session, details, onDisconnect }: WcSessionCardProps) => {
   const { t } = useTranslation()
   const { connectedAt, expiresInSeconds, status = 'checking' } = details ?? {}
+  const handleDisconnect = useCallback(
+    () => onDisconnect(session.wcTopic),
+    [onDisconnect, session.wcTopic]
+  )
 
   const statusLabels: Record<WcSessionStatus, string> = {
     checking: t('Checking…'),
@@ -121,19 +140,8 @@ const WcSessionCard = React.memo(({ session, details, onDisconnect }: WcSessionC
   }
 
   return (
-    <ConnectionCard
-      title={t('WalletConnect')}
-      wcTopic={session.wcTopic}
-      onDisconnect={onDisconnect}
-    >
-      <DetailLine
-        label={t('Connected from')}
-        value={
-          getSessionConnectionSource(session) === 'wc-in-app'
-            ? t('In-app browser')
-            : t('External browser')
-        }
-      />
+    <ConnectionCard title={t('WalletConnect')} isWalletConnect onDisconnect={handleDisconnect}>
+      <WcConnectedFromLine source={getSessionConnectionSource(session)} />
       <DetailLine
         label={t('Connected at')}
         value={connectedAt ? formatDateTime(connectedAt) : t('Unknown')}
@@ -153,17 +161,46 @@ const WcSessionCard = React.memo(({ session, details, onDisconnect }: WcSessionC
   )
 })
 
+interface WcSourceWithoutSessionCardProps {
+  source: ConnectionSource
+  onDisconnectSource: (source: ConnectionSource) => void
+}
+
+/** A WalletConnect connection the wallet holds no live session for, so it can still be removed */
+const WcSourceWithoutSessionCard = ({
+  source,
+  onDisconnectSource
+}: WcSourceWithoutSessionCardProps) => {
+  const { t } = useTranslation()
+  const handleDisconnect = useCallback(
+    () => onDisconnectSource(source),
+    [onDisconnectSource, source]
+  )
+
+  return (
+    <ConnectionCard title={t('WalletConnect')} isWalletConnect onDisconnect={handleDisconnect}>
+      <WcConnectedFromLine source={source} />
+      <DetailLine
+        label={t('Status')}
+        value={t('Offline')}
+        valueAppearance={STATUS_APPEARANCE.inactive}
+      />
+    </ConnectionCard>
+  )
+}
+
 interface Props {
   dapp: Dapp
-  onDisconnectInjected: () => void
+  onDisconnectSource: (source: ConnectionSource) => void
   onDisconnectWcSession: (wcTopic: string) => void
 }
 
 /**
  * The app's live connections, each disconnected on its own: the in-app browser's injected
- * provider and every WalletConnect session, read from the sessions the wallet holds.
+ * provider, every WalletConnect session the wallet holds, and any WalletConnect source left
+ * without one.
  */
-const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSession }: Props) => {
+const ManageAppConnections = ({ dapp, onDisconnectSource, onDisconnectWcSession }: Props) => {
   const { t } = useTranslation()
   const { state: dappSessions } = useController('DappsController', selectDappSessions)
 
@@ -185,6 +222,17 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
       ),
     [dappWcSessions, detailsByTopic]
   )
+  // Sources still listed after their sessions are gone (e.g. a failed setup) - without a card
+  // for them, the app would show as connected with nothing to disconnect it
+  const wcSourcesWithoutSession = useMemo(
+    () =>
+      (dapp.connectedSources ?? []).filter(
+        (source) =>
+          source !== 'injected' &&
+          !dappWcSessions.some((s) => getSessionConnectionSource(s) === source)
+      ),
+    [dapp.connectedSources, dappWcSessions]
+  )
   const isConnectedViaInjected = !!dapp.connectedSources?.includes('injected')
   // Active while the wallet holds a session of the page in the in-app browser
   const injectedStatus: WcSessionStatus = Object.values(dappSessions).some(
@@ -193,12 +241,13 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
     ? 'active'
     : 'inactive'
 
-  const handleDisconnect = useCallback(
-    (wcTopic?: string) => (wcTopic ? onDisconnectWcSession(wcTopic) : onDisconnectInjected()),
-    [onDisconnectInjected, onDisconnectWcSession]
+  const handleDisconnectInjected = useCallback(
+    () => onDisconnectSource('injected'),
+    [onDisconnectSource]
   )
 
-  const connectionsCount = wcSessions.length + (isConnectedViaInjected ? 1 : 0)
+  const connectionsCount =
+    wcSessions.length + wcSourcesWithoutSession.length + (isConnectedViaInjected ? 1 : 0)
   if (!connectionsCount) return null
 
   return (
@@ -208,7 +257,11 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
       </Text>
       <View style={{ rowGap: SPACING_SM }}>
         {isConnectedViaInjected && (
-          <ConnectionCard title={t('Ambire')} onDisconnect={handleDisconnect}>
+          <ConnectionCard
+            title={t('Ambire')}
+            isWalletConnect={false}
+            onDisconnect={handleDisconnectInjected}
+          >
             <DetailLine label={t('Connected from')} value={t('In-app browser')} />
             <DetailLine label={t('Expires')} value={t('Never')} />
             <DetailLine
@@ -223,7 +276,14 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
             key={session.sessionId}
             session={session}
             details={detailsByTopic[session.wcTopic]}
-            onDisconnect={handleDisconnect}
+            onDisconnect={onDisconnectWcSession}
+          />
+        ))}
+        {wcSourcesWithoutSession.map((source) => (
+          <WcSourceWithoutSessionCard
+            key={source}
+            source={source}
+            onDisconnectSource={onDisconnectSource}
           />
         ))}
       </View>

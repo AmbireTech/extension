@@ -69,8 +69,6 @@ const ManageApp = ({
     open()
   }, [open])
 
-  const onDisconnectInjected = useCallback(() => onDisconnect('injected'), [onDisconnect])
-
   const onPressDisconnect = useCallback(() => {
     onDisconnect()
     close()
@@ -174,7 +172,7 @@ const ManageApp = ({
         {isMobile && hasOpened && (
           <ManageAppConnections
             dapp={dapp}
-            onDisconnectInjected={onDisconnectInjected}
+            onDisconnectSource={onDisconnect}
             onDisconnectWcSession={onDisconnectWcSession}
           />
         )}
