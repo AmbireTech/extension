@@ -196,11 +196,6 @@ const usePrivacyPools = () => {
     dispatch({ type: 'method', params: { method: 'sync', args: [] } })
   }, [dispatch])
 
-  /** On open: reads networks not read in 10 minutes, once the phrase is backed up. */
-  const syncIfStale = useCallback(() => {
-    dispatch({ type: 'method', params: { method: 'syncIfStale', args: [] } })
-  }, [dispatch])
-
   const prepareWithdrawal = useCallback(
     (params: { chainId: string; tokenAddress: string; amount: bigint; recipient: string }) => {
       dispatch({ type: 'method', params: { method: 'prepareWithdrawal', args: [params] } })
@@ -236,7 +231,6 @@ const usePrivacyPools = () => {
     getNetworkName,
     getTokenPrice,
     syncAllChains,
-    syncIfStale,
     prepareWithdrawal,
     recheckWithdrawal,
     broadcastWithdrawal,

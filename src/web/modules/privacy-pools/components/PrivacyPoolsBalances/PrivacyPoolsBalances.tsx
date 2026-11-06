@@ -22,7 +22,7 @@ interface Props {
   state: PrivacyPoolsBalancesState
   /** Why the account cannot use Privacy Pools, explained while the state is 'unavailable'. */
   unavailableReason: PrivacyPoolsUnavailableReason | null
-  /** Whether reading waits for the recovery phrase backup - see `syncIfStale`. */
+  /** Whether reading waits for the recovery phrase backup - see `PrivacyPoolsController`. */
   isWaitingForBackup: boolean
 }
 
