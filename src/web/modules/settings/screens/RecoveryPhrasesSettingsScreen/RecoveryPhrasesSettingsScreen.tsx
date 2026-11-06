@@ -8,6 +8,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel/Panel'
+import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -81,13 +82,18 @@ const RecoveryPhraseSettingsScreen = () => {
             !!associatedAccounts.length && spacings.mbMd
           ]}
         >
-          <Text weight="medium" numberOfLines={1} style={flexbox.flex1}>
-            {item.label}
-          </Text>
+          <View style={[flexbox.flex1, flexbox.alignStart, spacings.mrSm]}>
+            <Text weight="medium" numberOfLines={1}>
+              {item.label}
+            </Text>
+            {item.withPassphrase && (
+              <PassphraseBadge passphraseLabel={item.passphraseLabel} style={spacings.mtMi} />
+            )}
+          </View>
           <Button
             testID={`manage-recovery-phrase-${item.id}`}
             size="small"
-            type="ghost"
+            type="secondary"
             childrenPosition="left"
             text={t('Manage')}
             hasBottomSpacing={false}
