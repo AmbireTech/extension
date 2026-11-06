@@ -427,6 +427,9 @@ const Estimation = ({
     () => (safeFeePayerLinks ? groupSafeFeeOptions(payOptionsPaidByEOA, safeFeePayerLinks) : null),
     [payOptionsPaidByEOA, safeFeePayerLinks]
   )
+  const hasSafeLinkedFeePayerGroups =
+    !!safeFeeOptionGroups &&
+    (!!safeFeeOptionGroups.owners.length || !!safeFeeOptionGroups.linked.length)
 
   const feeOptionSelectSections = useMemo(() => {
     if (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length)
@@ -449,6 +452,17 @@ const Estimation = ({
     // Paying from an EOA publicly links it to the Safe, so the ones that reveal nothing new come first
     if (safeFeeOptionGroups) {
       const { owners, linked, notLinked } = safeFeeOptionGroups
+      // "Other" only makes sense next to the owners and linked groups. Alone, it gets no title,
+      // unless the account's own tokens are listed above it and need to be told apart from it
+      let notLinkedTitle: { icon: typeof AssetIcon; text: string } | undefined = {
+        icon: VisibilityIcon,
+        text: t('Other')
+      }
+      if (!hasSafeLinkedFeePayerGroups) {
+        notLinkedTitle = payOptionsPaidByUsOrGasTank.length
+          ? { icon: AssetIcon, text: t('Native tokens from my EOAs') }
+          : undefined
+      }
 
       return [
         accountTokensSection,
@@ -463,7 +477,7 @@ const Estimation = ({
           key: 'safe-linked'
         },
         {
-          title: { icon: VisibilityIcon, text: t('Other') },
+          title: notLinkedTitle,
           data: notLinked,
           key: 'safe-not-linked'
         }
@@ -481,7 +495,13 @@ const Estimation = ({
         key: 'eoa-tokens'
       }
     ]
-  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, safeFeeOptionGroups, t])
+  }, [
+    hasSafeLinkedFeePayerGroups,
+    payOptionsPaidByEOA,
+    payOptionsPaidByUsOrGasTank,
+    safeFeeOptionGroups,
+    t
+  ])
 
   // Derived from payValue instead of the controller flag, which lags behind a local payer pick
   // until the update round-trip completes and would briefly name the wrong payer
@@ -654,12 +674,23 @@ const Estimation = ({
     const nativeSymbol = network?.nativeAssetSymbol || ''
     // A smart account pays its own fee through a service that sets it, so only another account can.
     // An upgraded basic account (7702) can set it when paying in the native token itself.
-    // A Safe lists the other accounts split by how they relate to it, so it names those sections
-    if (safeFeeOptionGroups) {
+    // A Safe lists the other accounts split by how they relate to it, so it names those sections.
+    // Without owner or linked groups the "Other" section loses its title, so none are named
+    if (hasSafeLinkedFeePayerGroups) {
       return {
         title,
         text: t(
           'This Safe’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}} from one of your other accounts, listed under "Safe owners", "Used in Ambire for this Safe" or "Other".',
+          { nativeSymbol }
+        )
+      }
+    }
+
+    if (safeFeeOptionGroups) {
+      return {
+        title,
+        text: t(
+          'This Safe’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}} from one of your other accounts.',
           { nativeSymbol }
         )
       }
@@ -684,6 +715,7 @@ const Estimation = ({
     }
   }, [
     canSetCustomGasPrices,
+    hasSafeLinkedFeePayerGroups,
     network?.nativeAssetSymbol,
     safeFeeOptionGroups,
     signAccountOpState?.account,
