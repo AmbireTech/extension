@@ -33,11 +33,9 @@ const StakingAmountCard = ({ form }: Props) => {
     amountFieldMode,
     amountInUsd,
     amountInToken,
-    amountInWei,
     balance,
     tokenSymbol,
-    stkWalletBalance,
-    sliderTierMarks,
+    slider,
     balanceRatioSegments,
     shouldShowBalanceRatioProgress,
     isAmountFieldModeSwitchDisabled,
@@ -45,7 +43,6 @@ const StakingAmountCard = ({ form }: Props) => {
     onFiatAmountChange,
     switchAmountFieldMode,
     onMaxPress,
-    onSliderValueChange,
     hasInsufficientBalance,
     hasZeroAmount
   } = form
@@ -68,17 +65,6 @@ const StakingAmountCard = ({ form }: Props) => {
       switchAmountFieldMode,
       isAmountFieldModeSwitchDisabled
     ]
-  )
-
-  const slider = useMemo(
-    () => ({
-      value: amountInWei,
-      maximumValue: balance,
-      onValueChange: onSliderValueChange,
-      tierOffset: mode === 'stake' ? stkWalletBalance : 0n,
-      marks: sliderTierMarks
-    }),
-    [amountInWei, balance, onSliderValueChange, mode, stkWalletBalance, sliderTierMarks]
   )
 
   const errorText = hasInsufficientBalance
