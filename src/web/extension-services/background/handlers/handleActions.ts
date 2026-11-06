@@ -18,7 +18,6 @@ import {
 } from '@web/extension-services/background/webapi/panel'
 import { MessageMeta, Port, PortMessenger } from '@web/extension-services/messengers'
 import LatticeKeyIterator from '@web/modules/hardware-wallet/libs/latticeKeyIterator'
-import { buildPQ1AccountsToImport } from '@web/modules/hardware-wallet/libs/pq1/importAccounts'
 
 import sessionStorage from '../webapi/sessionStorage'
 import {
@@ -137,17 +136,6 @@ export const handleActions = async (
         params.payload,
         params.requestId
       )
-    }
-    case 'IMPORT_PQ1_ACCOUNTS': {
-      const { accounts, keys } = buildPQ1AccountsToImport(
-        params.entries,
-        params.deviceId,
-        mainCtrl.accounts.accounts
-      )
-      // Keys first, then accounts, in the account picker's order. Each call
-      // reports its own failure to the UI.
-      await mainCtrl.keystore.addKeysExternallyStored(keys)
-      return await mainCtrl.accounts.addAccounts(accounts)
     }
     case 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE': {
       mainCtrl.signMessage.setSigners(params.signers)

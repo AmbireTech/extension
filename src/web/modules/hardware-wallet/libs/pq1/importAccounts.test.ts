@@ -36,4 +36,18 @@ describe('buildPQ1AccountsToImport', () => {
       ['pq1', 3, 'c972799008cf']
     ])
   })
+
+  it('keeps the name of an account already in the wallet (e.g. added as view-only)', () => {
+    const viewOnlyAddr = '0x00000000000000000000000000000000000AbC25'
+    const viewOnlyPreferences = { label: 'My PQ1 savings', pfp: viewOnlyAddr }
+    const { accounts: reimported, keys: reimportedKeys } = buildPQ1AccountsToImport(
+      [{ accountIndex: 0, addr: viewOnlyAddr.toLowerCase() }],
+      'c972799008cf',
+      [{ addr: viewOnlyAddr, preferences: viewOnlyPreferences }] as Account[]
+    )
+
+    expect(reimported.map((a) => a.preferences)).toEqual([viewOnlyPreferences])
+    // The key is added either way: that is what turns the view-only account into a signing one
+    expect(reimportedKeys.map((k) => [k.addr, k.type])).toEqual([[viewOnlyAddr, 'pq1']])
+  })
 })

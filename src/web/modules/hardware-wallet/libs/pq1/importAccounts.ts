@@ -10,12 +10,14 @@ import { getDefaultKeyLabel } from '@ambire-common/libs/keys/keys'
 /**
  * Build the `Account` + `ExternalKey` records for PQ1 accounts already read
  * from the device (account number + address) by `PQ1Controller` for the
- * connect screen.
+ * connect screen, which prepares them with the account picker's
+ * `prepareAccounts` - nothing is written until the personalize step adds them.
  *
  * A PQ1 account is a smart contract wallet imported with `creation: null`, so
  * Ambire's account model treats it as a plain address. Its transactions go
  * through `PQ1Signer.broadcastAccountOp`, never through Ambire's relayer or
- * ERC-4337 flow. Names follow the account picker: "Account N" and "PQ1 Key 1".
+ * ERC-4337 flow. Names follow the account picker: "Account N" and "PQ1 Key 1",
+ * and an account already in the wallet (e.g. added as view-only) keeps its own.
  */
 export function buildPQ1AccountsToImport(
   entries: Array<{ accountIndex: number; addr: string }>,
@@ -27,12 +29,15 @@ export function buildPQ1AccountsToImport(
 
   entries.forEach(({ accountIndex, addr: rawAddr }, i) => {
     const addr = getAddress(rawAddr)
+    const alreadyImportedAccount = existingAccounts.find((account) => account.addr === addr)
     accounts.push({
       addr,
       associatedKeys: [addr],
       initialPrivileges: [],
       creation: null,
-      preferences: getDefaultAccountPreferences(addr, existingAccounts, i),
+      preferences:
+        alreadyImportedAccount?.preferences ||
+        getDefaultAccountPreferences(addr, existingAccounts, i),
       newlyAdded: true
     })
     // Each PQ1 account is controlled by exactly one key: its own.

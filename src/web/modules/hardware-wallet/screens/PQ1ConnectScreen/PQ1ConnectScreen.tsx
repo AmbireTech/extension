@@ -10,16 +10,17 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import {
   TabLayoutContainer,
   TabLayoutWrapperMainContent
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import { toUserFacingPq1Error } from '@web/modules/hardware-wallet/libs/pq1/errors'
+import { buildPQ1AccountsToImport } from '@web/modules/hardware-wallet/libs/pq1/importAccounts'
 
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
@@ -29,11 +30,6 @@ const selectPq1IsConnected = (state: AllControllersMappingType['PQ1Controller'])
   state.isConnected
 const selectLoadAccountsStatus = (state: AllControllersMappingType['PQ1Controller']) =>
   state.statuses.loadAccounts
-
-/** How long to wait for the background import to show up in the
- *  AccountsController state before treating it as failed. Generous —
- *  the write path is local (storage), not network-bound. */
-const IMPORT_CONFIRM_TIMEOUT_MS = 15000
 
 const ACCOUNT_LIST_STYLE = { maxHeight: 240 }
 const ACCOUNT_LABEL_PROPS = { fontSize: 14, appearance: 'primaryText' } as const
@@ -76,14 +72,17 @@ const DiscoveredAccountRow = React.memo(function DiscoveredAccountRow({
  * picker) needs a user gesture in a page, so that is all this screen does
  * with the device. The background's `PQ1Controller`, which owns the only
  * connection, then opens the PQ1 through that permission and reads its
- * accounts. The selected ones are dispatched to the background via
- * `IMPORT_PQ1_ACCOUNTS`, which writes the keys and accounts.
+ * accounts. The selected ones are prepared with the account picker's
+ * `prepareAccounts`, like the view-only, Safe and JSON imports: nothing is
+ * written here. The personalize step adds the keys and accounts, which comes
+ * after the password, so a first-time setup abandoned on the password step
+ * leaves no accounts without their keys behind.
  */
 const PQ1ConnectScreen = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
+  const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { state: pq1Accounts, dispatch: pq1Dispatch } = useController(
     'PQ1Controller',
@@ -96,9 +95,6 @@ const PQ1ConnectScreen = () => {
   const [isGrantingPermission, setIsGrantingPermission] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [selectedIndices, setSelectedIndices] = useState<number[]>([0])
-  /** Lowercased addresses whose background import we're waiting to see
-   *  reflected in the AccountsController state. Null = no import pending. */
-  const [pendingImportAddrs, setPendingImportAddrs] = useState<string[] | null>(null)
 
   useEffect(() => {
     // Forget the accounts read for this screen when the user leaves it.
@@ -151,52 +147,46 @@ const PQ1ConnectScreen = () => {
     )
   }, [])
 
-  const onPressImport = useCallback(() => {
+  const onPressImport = useCallback(async () => {
     const entries = pq1Accounts.filter((account) => selectedIndices.includes(account.index))
     if (entries.length === 0) {
       addToast(t('Select at least one PQ1 account to import.'), { type: 'error' })
       return
     }
+    const { accounts: accountsToAdd, keys } = buildPQ1AccountsToImport(
+      entries.map(({ index, address }) => ({ accountIndex: index, addr: address })),
+      deviceId,
+      accounts
+    )
+
     setIsImporting(true)
-    // Fire-and-forget per the controller lifecycle — dispatch reports
-    // nothing back, so a local try/catch can never observe a background
-    // failure. Success is confirmed by watching the AccountsController
-    // state (effects below), and only then does the flow navigate on, so a
-    // failed import never lands the user on the next screen with no accounts.
-    dispatch({
-      type: 'IMPORT_PQ1_ACCOUNTS',
-      params: {
-        entries: entries.map(({ index, address }) => ({ accountIndex: index, addr: address })),
-        deviceId
-      }
-    })
-    setPendingImportAddrs(entries.map(({ address }) => address.toLowerCase()))
-  }, [pq1Accounts, selectedIndices, deviceId, dispatch, addToast, t])
-
-  // Guards the one-shot success transition so a late accounts-state update
-  // (or the timeout below firing during navigation) can't double-run it.
-  const hasImportSucceededRef = useRef(false)
-
-  useEffect(() => {
-    if (!pendingImportAddrs || hasImportSucceededRef.current) return
-    const imported = new Set(accounts.map((a) => a.addr.toLowerCase()))
-    if (!pendingImportAddrs.every((addr) => imported.has(addr))) return
-    hasImportSucceededRef.current = true
-    goToNextRoute()
-  }, [accounts, pendingImportAddrs, goToNextRoute])
-
-  useEffect(() => {
-    if (!pendingImportAddrs) return undefined
-    const timer = setTimeout(() => {
-      if (hasImportSucceededRef.current) return
-      setPendingImportAddrs(null)
-      setIsImporting(false)
-      addToast(t('Importing PQ1 accounts failed or timed out. Please try again.'), {
-        type: 'error'
+    try {
+      // Prepared for the personalize step, which adds the accounts and their keys once the
+      // user proceeds (after setting a password, on a first-time setup)
+      await accountPickerDispatchAndWait({
+        type: 'method',
+        params: {
+          method: 'prepareAccounts',
+          args: [{ accounts: accountsToAdd, keys: { internal: [], external: keys } }]
+        }
       })
-    }, IMPORT_CONFIRM_TIMEOUT_MS)
-    return () => clearTimeout(timer)
-  }, [pendingImportAddrs, addToast, t])
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
+    } catch (error) {
+      // The controller reports its own failures, here the button only becomes usable again
+      console.error('Failed to prepare the PQ1 accounts', error)
+    } finally {
+      setIsImporting(false)
+    }
+  }, [
+    pq1Accounts,
+    selectedIndices,
+    deviceId,
+    accounts,
+    accountPickerDispatchAndWait,
+    goToNextRoute,
+    addToast,
+    t
+  ])
 
   const isConnecting = isGrantingPermission || loadAccountsStatus === 'LOADING'
 
