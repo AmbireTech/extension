@@ -18,9 +18,9 @@ import {
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import {
-  ExternalKey,
   ExternalSignerController,
   KeystoreSignerInterface,
+  Pq1ExternalKey,
   SignMessageContext
 } from '@ambire-common/interfaces/keystore'
 
@@ -55,11 +55,11 @@ const isAccountIndex = (n: unknown): n is number =>
  * a SPHINCS+ signature is not ECDSA-recoverable.
  */
 class PQ1Signer implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: Pq1ExternalKey & { isExternallyStored: boolean }
 
   controller: PQ1Controller | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: Pq1ExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 

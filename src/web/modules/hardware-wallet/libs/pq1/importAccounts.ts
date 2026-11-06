@@ -1,14 +1,13 @@
 import { getAddress } from 'ethers'
 
-import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { Account } from '@ambire-common/interfaces/account'
-import { ExternalKey, Key } from '@ambire-common/interfaces/keystore'
+import { Key, Pq1ExternalKey } from '@ambire-common/interfaces/keystore'
 import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
 import { getDefaultKeyLabel } from '@ambire-common/libs/keys/keys'
 
 /**
- * Build the `Account` + `ExternalKey` records for PQ1 accounts already read
+ * Build the `Account` + `Pq1ExternalKey` records for PQ1 accounts already read
  * from the device (account number + address) by `PQ1Controller` for the
  * connect screen, which prepares them with the account picker's
  * `prepareAccounts` - nothing is written until the personalize step adds them.
@@ -23,9 +22,9 @@ export function buildPQ1AccountsToImport(
   entries: Array<{ accountIndex: number; addr: string }>,
   deviceId: string,
   existingAccounts: Account[]
-): { accounts: Account[]; keys: ExternalKey[] } {
+): { accounts: Account[]; keys: Pq1ExternalKey[] } {
   const accounts: Account[] = []
-  const keys: ExternalKey[] = []
+  const keys: Pq1ExternalKey[] = []
 
   entries.forEach(({ accountIndex, addr: rawAddr }, i) => {
     const addr = getAddress(rawAddr)
@@ -50,11 +49,8 @@ export function buildPQ1AccountsToImport(
       meta: {
         deviceId,
         deviceModel: 'pq1',
-        // PQ1 has no HD derivation: `index` is the account number on the
-        // device (0-255), which `PQ1Signer` signs with. The keystore type
-        // requires a template, so the standard one is stored; the key details
-        // screen doesn't show an HD path for PQ1 keys.
-        hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE,
+        // PQ1 has no HD derivation, so the key has no HD path: `index` is the
+        // account number on the device (0-255), which `PQ1Signer` signs with.
         index: accountIndex,
         createdAt: Date.now()
       }

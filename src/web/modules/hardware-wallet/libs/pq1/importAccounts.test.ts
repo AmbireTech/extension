@@ -37,6 +37,10 @@ describe('buildPQ1AccountsToImport', () => {
     ])
   })
 
+  it('stores no HD path, as PQ1 has no BIP-32 derivation', () => {
+    keys.forEach((key) => expect(key.meta).not.toHaveProperty('hdPathTemplate'))
+  })
+
   it('keeps the name of an account already in the wallet (e.g. added as view-only)', () => {
     const viewOnlyAddr = '0x00000000000000000000000000000000000AbC25'
     const viewOnlyPreferences = { label: 'My PQ1 savings', pfp: viewOnlyAddr }

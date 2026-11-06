@@ -67,9 +67,10 @@ const AccountKeyDetails: FC<Props> = ({ details }) => {
       {
         key: t('HD Path'),
         // PQ1 keys have no HD path: their `index` is the account number on the
-        // device, shown below.
+        // device, shown below. Checked by type too, as PQ1 keys added by early
+        // builds still store a placeholder `hdPathTemplate`.
         value:
-          meta?.hdPathTemplate && type !== 'pq1'
+          type !== 'pq1' && meta && 'hdPathTemplate' in meta && meta.hdPathTemplate
             ? getHdPathFromTemplate(meta.hdPathTemplate, meta.index)
             : '-',
         tooltip: dedicatedToOneSA
