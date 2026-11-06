@@ -91,7 +91,7 @@ const QrSigningFlowScreen = ({
         <Button
           size="regular"
           hasBottomSpacing={false}
-          type="secondary"
+          type="tertiary"
           text={t('Back')}
           onPress={handleOnRejectPressed}
           style={[flexbox.flex1, spacings.mrSm]}
@@ -156,7 +156,7 @@ const QrSigningFlowScreen = ({
               onPress={() => close()}
               size={withMobileLayout ? 'regular' : 'smaller'}
               hasBottomSpacing={false}
-              type="secondary"
+              type={withMobileLayout ? 'tertiary' : 'secondary'}
             />
           </FooterGlassView>
         </View>

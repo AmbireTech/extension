@@ -1,2 +1,6 @@
-export { default, filterPrivacyPoolsAccountsBySearch } from './usePrivacyPoolsAccounts'
+export {
+  default,
+  filterPrivacyPoolsAccountsBySearch,
+  getPrivacyPoolsSourceLabel
+} from './usePrivacyPoolsAccounts'
 export type { PrivacyPoolsAccountDisplay } from './usePrivacyPoolsAccounts'
