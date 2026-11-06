@@ -106,10 +106,9 @@ type DappsControllerRemoveConnectedSiteAction = {
   params: {
     id: Dapp['id']
     url: Dapp['url']
-    // Optional: when set, only the matching connection channel is torn down. Omitting
-    // it disconnects every active source (backwards-compatible with web/extension and
-    // with the "Disconnect both" choice on mobile).
-    source?: ConnectionSource
+    // Optional: only these channels are torn down, in one action so the autoLogin revoke runs
+    // once. Omitting it disconnects every source (web/extension and "Disconnect both" on mobile).
+    sources?: ConnectionSource[]
   }
 }
 
@@ -197,6 +196,8 @@ type HandleProviderRequestAction = {
     tabId?: number
     /** The chain a WalletConnect request targets - WC dapps switch chains without telling the wallet */
     chainId?: number
+    /** Whether the WalletConnect session was paired by an app opened in the in-app browser */
+    isWcFromInAppBrowser?: boolean
   }
 }
 
@@ -211,6 +212,8 @@ type SetupWcSessionMessengerAction = {
     name?: string
     icon?: string
     tempSessionTopic?: string
+    /** Whether the WalletConnect session was paired by an app opened in the in-app browser */
+    isWcFromInAppBrowser?: boolean
   }
 }
 
@@ -224,6 +227,8 @@ type RestoreWcSessionsAction = {
       candidateChainIds?: number[]
       name?: string
       icon?: string
+      /** Whether the WalletConnect session was paired by an app opened in the in-app browser */
+      isWcFromInAppBrowser?: boolean
     }[]
   }
 }

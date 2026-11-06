@@ -1,4 +1,4 @@
-import { getSessionId, Session } from '@ambire-common/classes/session'
+import { getSessionConnectionSource, getSessionId, Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { getDappIdFromUrl, getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
@@ -172,15 +172,19 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      const wcTopicsToTerminate =
-        params.source === 'injected'
-          ? []
-          : (Object.values(mainCtrl.dapps.dappSessions) as Session[])
-              .filter((s) => s.id === params.id && !!s.wcTopic)
-              .map((s) => s.wcTopic as string)
+      const wcTopicsToTerminate = (Object.values(mainCtrl.dapps.dappSessions) as Session[])
+        .filter(
+          (s) =>
+            s.id === params.id &&
+            !!s.wcTopic &&
+            (!params.sources || params.sources.includes(getSessionConnectionSource(s)))
+        )
+        .map((s) => s.wcTopic as string)
 
-      if (params.source) {
-        await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
+      if (params.sources) {
+        for (const source of params.sources) {
+          await mainCtrl.dapps.disconnectDappSource(params.id, source)
+        }
       } else {
         await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
         mainCtrl.dapps.updateDapp(params.id, {
@@ -206,12 +210,11 @@ export const handleActions = async (
     case 'DAPPS_CONTROLLER_DISCONNECT_ALL_DAPPS': {
       // Capture the WC topics up front — broadcasting `disconnect` tears down the WC sessions,
       // so they'd be gone by the time `disconnectAllDapps` returns.
-      const wcTopicsToTerminate =
-        params.source === 'injected'
-          ? []
-          : (Object.values(mainCtrl.dapps.dappSessions) as Session[])
-              .filter((s) => !!s.wcTopic)
-              .map((s) => s.wcTopic as string)
+      const wcTopicsToTerminate = (Object.values(mainCtrl.dapps.dappSessions) as Session[])
+        .filter(
+          (s) => !!s.wcTopic && (!params.source || getSessionConnectionSource(s) === params.source)
+        )
+        .map((s) => s.wcTopic as string)
 
       const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
 
@@ -295,7 +298,8 @@ export const handleActions = async (
         .values()
         .find((c: any) => c.name === 'WalletStateController') as any
       const notificationManager = mainCtrl.ui.notification
-      const { tabId, isWalletConnect, isWcAuthenticate, request, topic } = params
+      const { tabId, isWalletConnect, isWcAuthenticate, isWcFromInAppBrowser, request, topic } =
+        params
       // temp_wc_auth_ is reused for both account-selection (eth_requestAccounts) and
       // the subsequent personal_sign. Only treat it as a temp/handshake session for
       // the account-selection step — personal_sign must go through the signing path.
@@ -307,7 +311,8 @@ export const handleActions = async (
         const session = await mainCtrl.dapps.getOrCreateDappSession({
           url: request.origin,
           tabId,
-          wcTopic: isWalletConnect ? topic : undefined
+          wcTopic: isWalletConnect ? topic : undefined,
+          isWcFromInAppBrowser
         })
 
         if (!isWalletConnect) {
@@ -413,7 +418,8 @@ export const handleActions = async (
       const session = await mainCtrl.dapps.getOrCreateDappSession({
         url: params.url,
         tabId: params.tabId,
-        wcTopic: params.topic
+        wcTopic: params.topic,
+        isWcFromInAppBrowser: params.isWcFromInAppBrowser
       })
       const resolvedChainId =
         mainCtrl.dapps.pickWalletConnectChainId(params.candidateChainIds) ?? params.chainId
@@ -431,7 +437,7 @@ export const handleActions = async (
           chainId: params.chainId,
           candidateChainIds: params.candidateChainIds
         },
-        'wc'
+        params.isWcFromInAppBrowser ? 'wc-in-app' : 'wc'
       )
 
       break
@@ -442,13 +448,15 @@ export const handleActions = async (
       // can land first - and `addDappFromIdentity` below no-ops until it is. Idempotent.
       await mainCtrl.dapps.init()
       for (const wcSession of params.sessions) {
-        const { topic, name, icon, url, chainId, candidateChainIds } = wcSession
+        const { topic, name, icon, url, chainId, candidateChainIds, isWcFromInAppBrowser } =
+          wcSession
         try {
           const wcTabId = getWcTabIdFromTopic(topic)
           const session = await mainCtrl.dapps.getOrCreateDappSession({
             url,
             tabId: wcTabId,
-            wcTopic: topic
+            wcTopic: topic,
+            isWcFromInAppBrowser
           })
           const resolvedChainId =
             mainCtrl.dapps.pickWalletConnectChainId(candidateChainIds) ?? chainId
@@ -466,7 +474,7 @@ export const handleActions = async (
               chainId,
               candidateChainIds
             },
-            'wc'
+            isWcFromInAppBrowser ? 'wc-in-app' : 'wc'
           )
         } catch (e) {
           console.error('[Worker] Failed to restore WC session for topic:', topic, e)

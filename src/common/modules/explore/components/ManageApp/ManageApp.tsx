@@ -27,6 +27,9 @@ import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { sortNetworksByBalance } from '@common/utils/sorting'
 
+// Both are WalletConnect, so they are disconnected together
+const WC_SOURCES: ConnectionSource[] = ['wc', 'wc-in-app']
+
 // The same footprint the sheet's other row action ("Manage") has, with a floor on the width so
 // flipping between "Trust" and "Untrust" cannot shift the row. Both labels sit well below it.
 const TRUST_BUTTON_STYLE: ViewStyle = { ...spacings.mlSm, height: 50, minWidth: 90 }
@@ -68,7 +71,9 @@ const ManageApp = ({
   )
 
   const connectedSources = dapp.connectedSources ?? []
-  const hasMultipleSources = connectedSources.length > 1
+  const hasMultipleChannels =
+    connectedSources.includes('injected') &&
+    connectedSources.some((source) => WC_SOURCES.includes(source))
 
   const handleOpen = useCallback(() => {
     setHasOpened(true)
@@ -76,8 +81,8 @@ const ManageApp = ({
   }, [open])
 
   const handleDisconnect = useCallback(
-    (source?: ConnectionSource) => {
-      onDisconnect(source)
+    (sources?: ConnectionSource[]) => {
+      onDisconnect(sources)
       closeDisconnectChooser()
       close()
     },
@@ -85,13 +90,13 @@ const ManageApp = ({
   )
 
   const onPressDisconnect = useCallback(() => {
-    if (hasMultipleSources) {
+    if (hasMultipleChannels) {
       openDisconnectChooser()
       return
     }
     onDisconnect()
     close()
-  }, [hasMultipleSources, openDisconnectChooser, onDisconnect, close])
+  }, [hasMultipleChannels, openDisconnectChooser, onDisconnect, close])
 
   const networksOptions: SelectValue[] = useMemo(
     () =>
@@ -154,7 +159,13 @@ const ManageApp = ({
             <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
               {t(connectedSources.length > 1 ? 'Connections' : 'Connection')}
             </Text>
-            <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.wrap,
+                { columnGap: SPACING_SM, rowGap: SPACING_SM }
+              ]}
+            >
               {connectedSources.includes('injected') && (
                 <View
                   style={[
@@ -196,7 +207,30 @@ const ManageApp = ({
                       weight="medium"
                       appearance="secondaryText"
                     >
-                      {t('WC')}
+                      {t('WalletConnect (external)')}
+                    </Text>
+                  </View>
+                </View>
+              )}
+              {connectedSources.includes('wc-in-app') && (
+                <View
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    common.borderRadiusPrimary,
+                    { backgroundColor: theme.secondaryBackground, height: 50 },
+                    spacings.ph
+                  ]}
+                >
+                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                    <WalletConnectIcon width={22} height={22} />
+                    <Text
+                      fontSize={14}
+                      style={spacings.mlTy}
+                      weight="medium"
+                      appearance="secondaryText"
+                    >
+                      {t('WalletConnect (in-app browser)')}
                     </Text>
                   </View>
                 </View>
@@ -333,14 +367,14 @@ const ManageApp = ({
         <Button
           type="secondary"
           text={t('Disconnect In-app browser')}
-          onPress={() => handleDisconnect('injected')}
+          onPress={() => handleDisconnect(['injected'])}
           hasBottomSpacing={false}
           style={spacings.mtTy}
         />
         <Button
           type="secondary"
           text={t('Disconnect WalletConnect')}
-          onPress={() => handleDisconnect('wc')}
+          onPress={() => handleDisconnect(WC_SOURCES)}
           hasBottomSpacing={false}
           style={spacings.mtTy}
         />

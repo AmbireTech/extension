@@ -172,10 +172,16 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      const tabTargets = getDappTabTargetsFromDappId(mainCtrl, params.id, params.source)
+      const tabTargets = params.sources
+        ? params.sources.flatMap((source) =>
+            getDappTabTargetsFromDappId(mainCtrl, params.id, source)
+          )
+        : getDappTabTargetsFromDappId(mainCtrl, params.id)
 
-      if (params.source) {
-        await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
+      if (params.sources) {
+        for (const source of params.sources) {
+          await mainCtrl.dapps.disconnectDappSource(params.id, source)
+        }
       } else {
         await mainCtrl.dapps.broadcastDappSessionEvent('disconnect', undefined, params.id)
         mainCtrl.dapps.updateDapp(params.id, {

@@ -4,7 +4,7 @@ import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
-import { Session } from '@ambire-common/classes/session'
+import { getSessionConnectionSource, Session } from '@ambire-common/classes/session'
 import { Account } from '@ambire-common/interfaces/account'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { IMainController } from '@ambire-common/interfaces/main'
@@ -36,13 +36,9 @@ import { openInTab } from '@common/utils/links'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 type ProviderRequest = DappProviderRequest & { requestRes: RequestRes }
 
-// Derive the connection source from the session, mirroring rpcFlow.ts: WC sessions carry a
-// wcTopic, injected (in-app browser / extension content script) ones don't. Each source has its
-// own permission entry, so connection checks must be scoped to the channel the request came from -
-// otherwise a dapp connected only via WalletConnect would auto-connect in the in-app browser
-// (eth_accounts/getProviderState would return the account list and the dapp would skip the connect prompt).
-const getRequestSource = (session: Session): ConnectionSource =>
-  session.wcTopic ? 'wc' : 'injected'
+// Each source has its own permission entry, so checks are scoped to the request's channel -
+// otherwise a dapp connected only via WalletConnect would auto-connect in the in-app browser.
+const getRequestSource = (session: Session): ConnectionSource => getSessionConnectionSource(session)
 
 const handleSignMessage = (requestRes: RequestRes) => {
   if (requestRes) {

@@ -34,6 +34,7 @@ import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import useEdgeSwipeBackGesture from '@mobile/hooks/useEdgeSwipeBackGesture'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
+import { markWcLinkFromInAppBrowser } from '@mobile/modules/wallet-connect/services/walletConnectService'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
@@ -438,6 +439,8 @@ const DappWebViewScreen = () => {
         // to trigger the Linking event within the app.
         if (protocol === 'wc' || protocol === 'metamask' || protocol === 'ethereum') {
           console.log('[DappWebView] Handing off wallet deep link to OS:', url)
+          // So the session it creates counts as an in-app browser connection, not an external one
+          if (protocol === 'wc') markWcLinkFromInAppBrowser(url)
           Linking.openURL(url).catch((err) => {
             console.warn('[DappWebView] Failed to open wallet deep link:', err)
           })
@@ -1177,9 +1180,9 @@ const DappWebViewScreen = () => {
         domStorageEnabled={true}
         allowFileAccessFromFileURLs={false}
         allowUniversalAccessFromFileURLs={false}
-        // On iOS every frame's navigation is checked against this list, and Cloudflare
-        // Turnstile renders its widget inside about:srcdoc iframes.
-        originWhitelist={['https://*', 'blob:*', 'about:srcdoc']}
+        // On iOS every frame's navigation is checked against this list (Turnstile uses about:srcdoc
+        // iframes). `wc:` must pass, or the WebView opens it itself and our handler never sees it.
+        originWhitelist={['https://*', 'blob:*', 'about:srcdoc', 'wc:*']}
         setSupportMultipleWindows={false}
         onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onLoadStart={handleLoadStart}
