@@ -129,7 +129,9 @@ const WcSessionCard = React.memo(({ session, details, onDisconnect }: WcSessionC
       <DetailLine
         label={t('Connected from')}
         value={
-          getSessionConnectionSource(session) === 'wc-in-app' ? t('In-app browser') : t('External')
+          getSessionConnectionSource(session) === 'wc-in-app'
+            ? t('In-app browser')
+            : t('External browser')
         }
       />
       <DetailLine
