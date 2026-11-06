@@ -11,6 +11,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
 import PersonalizeAccountsList from '@common/modules/account-personalize/components/PersonalizeAccountsList'
+import PrivacyPoolsAccountPersonalizeCard from '@common/modules/account-personalize/components/PrivacyPoolsAccountPersonalizeCard'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { FORWARD_NAVIGATION_STATE, WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -40,6 +41,8 @@ const AccountPersonalizeScreen = () => {
     canProceed,
     handleSaveAccountName,
     handleProceed,
+    privacyPoolsAccount,
+    handleSavePrivacyPoolsAccountName,
     title,
     proceedText,
     removalOnlyText,
@@ -124,16 +127,25 @@ const AccountPersonalizeScreen = () => {
                 {removalOnlyText}
               </Text>
             )}
-            <PersonalizeAccountsList
-              fields={fields}
-              control={control}
-              accountsToRemove={accountsToRemove}
-              isAdding={isAdding}
-              onSaveName={handleSaveAccountName}
-              removalNote={removalNote}
-              ListEmptyComponent={listEmpty}
-              style={flexbox.flex1}
-            />
+            {privacyPoolsAccount ? (
+              <PrivacyPoolsAccountPersonalizeCard
+                name={privacyPoolsAccount.name}
+                sourceText={privacyPoolsAccount.sourceText}
+                disableEdit={isAdding}
+                onSaveName={handleSavePrivacyPoolsAccountName}
+              />
+            ) : (
+              <PersonalizeAccountsList
+                fields={fields}
+                control={control}
+                accountsToRemove={accountsToRemove}
+                isAdding={isAdding}
+                onSaveName={handleSaveAccountName}
+                removalNote={removalNote}
+                ListEmptyComponent={listEmpty}
+                style={flexbox.flex1}
+              />
+            )}
           </>
         )}
       </MobileLayoutWrapperMainContent>

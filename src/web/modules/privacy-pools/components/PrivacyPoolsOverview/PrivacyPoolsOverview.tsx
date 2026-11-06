@@ -7,8 +7,14 @@ import DashboardBalance, {
   BALANCE_HEIGHT
 } from '@common/modules/dashboard/components/DashboardBalance'
 import DashboardHeader from '@common/modules/dashboard/components/DashboardHeader'
+import {
+  OVERVIEW_CARD_GAP,
+  OVERVIEW_CARD_INSET_STYLE
+} from '@common/modules/dashboard/components/DashboardOverview/DashboardOverview'
+import OverviewCollapsible from '@common/modules/dashboard/components/DashboardOverview/OverviewCollapsible'
+import type { OverviewCollapsibleProps } from '@common/modules/dashboard/components/DashboardOverview/OverviewCollapsible/OverviewCollapsible'
 import RefreshIcon from '@common/modules/dashboard/components/DashboardOverview/RefreshIcon'
-import spacings, { SPACING } from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -29,6 +35,11 @@ interface Props {
   canSend: boolean
   onRefresh: () => void
   onSend: () => void
+  /**
+   * The balance and the actions collapse as on the regular dashboard: the pages slide over them,
+   * see `DashboardOverview`.
+   */
+  onCollapsibleHeightChange?: OverviewCollapsibleProps['onHeightChange']
 }
 
 const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
@@ -47,7 +58,8 @@ const PrivacyPoolsOverview: FC<Props> = ({
   totalPrivateBalance,
   canSend,
   onRefresh,
-  onSend
+  onSend,
+  onCollapsibleHeightChange
 }) => {
   const { theme } = useTheme()
   const { state: isPrivacyModeEnabled, dispatch: walletStateDispatch } = useController(
@@ -69,19 +81,20 @@ const PrivacyPoolsOverview: FC<Props> = ({
     hasSyncedAnyChain && (isBalanceHovered || isSyncing || hasSyncError)
 
   return (
-    <View style={[spacings.phSm, spacings.mbTy]}>
+    <View style={[OVERVIEW_CARD_INSET_STYLE, { marginBottom: OVERVIEW_CARD_GAP }]}>
       <View
         style={[
           common.borderRadiusPrimary,
           spacings.ptTy,
           spacings.phSm,
-          { paddingBottom: SPACING, overflow: 'hidden' }
+          // The rest of the open padding is covered together with the content
+          { paddingBottom: SPACING_TY, overflow: 'hidden' }
         ]}
       >
         <PrivacyPoolsOverviewBackground />
         <View style={{ zIndex: 2 }}>
           <DashboardHeader />
-          <View style={[flexbox.alignCenter, spacings.pt]}>
+          <OverviewCollapsible onHeightChange={onCollapsibleHeightChange}>
             <View style={[{ width: '100%' }, spacings.mb, flexbox.alignCenter]}>
               <View
                 style={[
@@ -132,7 +145,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
             </View>
             {/* Disabled until the notes are read, or the form would have an empty dropdown */}
             <PrivacyPoolsActions onSend={onSend} isSendDisabled={!canSend} />
-          </View>
+          </OverviewCollapsible>
         </View>
       </View>
     </View>

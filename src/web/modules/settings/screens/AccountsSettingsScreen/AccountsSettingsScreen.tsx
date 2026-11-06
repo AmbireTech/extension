@@ -1,5 +1,4 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import isEqual from 'react-fast-compare'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -8,8 +7,8 @@ import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
-import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
+import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -30,9 +29,9 @@ import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
-import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -48,10 +47,57 @@ const selectPrivacyPoolsAccountId = (
   state: AllControllersMappingType['SelectedAccountController']
 ) => state.privacyPoolsAccountId
 
+const DRAG_ICON_WIDTH = 12.5
+// Its padding on both sides plus the icon
+const DRAG_HANDLE_WIDTH = SPACING_SM * 2 + DRAG_ICON_WIDTH
+
+/** The handle a row of the draggable list is dragged by */
+const DragHandle = React.memo(
+  ({
+    isDragging,
+    listeners,
+    attributes
+  }: {
+    isDragging: boolean
+    listeners: any
+    attributes: any
+  }) => {
+    const { theme } = useTheme()
+
+    return (
+      <div {...listeners} {...attributes}>
+        <Pressable
+          style={[
+            flexbox.alignCenter,
+            flexbox.justifyCenter,
+            spacings.pvMi,
+            spacings.phSm,
+            spacings.mbMi,
+            // @ts-expect-error: Web style
+            { cursor: 'grab', touchAction: 'manipulation' }
+          ]}
+        >
+          <DragIndicatorIcon
+            color={isDragging ? theme.primary : theme.iconPrimary}
+            width={DRAG_ICON_WIDTH}
+          />
+        </Pressable>
+      </div>
+    )
+  }
+)
+
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
-  const { accounts, control, search, keyExtractor, getItemLayout, onAccountExtraHeightChange } =
-    useAccountsList()
+  const {
+    accounts,
+    control,
+    debouncedSearch,
+    isFiltered,
+    keyExtractor,
+    getItemLayout,
+    onAccountExtraHeightChange
+  } = useAccountsList()
   const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
   const { state: privacyPoolsAccountId } = useController(
     'SelectedAccountController',
@@ -113,36 +159,36 @@ const AccountsSettingsScreen = () => {
   const [activeTab, setActiveTab] = useState<AccountsTab>(
     privacyPoolsAccountId ? 'private' : 'public'
   )
-  const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
+  // The order a drag left the list in, shown until the controller sends the reordered accounts
+  const [draggedOrder, setDraggedOrder] = useState<{
+    from: AccountInterface[]
+    order: AccountInterface[]
+  } | null>(null)
+  // The same for the Privacy Pools accounts
+  const [draggedPrivacyPoolsOrder, setDraggedPrivacyPoolsOrder] = useState<{
+    from: PrivacyPoolsAccountDisplay[]
+    order: PrivacyPoolsAccountDisplay[]
+  } | null>(null)
   const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
-  useEffect(() => {
-    setLocalAccounts((prev) => {
-      if (!isEqual(prev, accounts)) {
-        return accounts
-      }
-      return prev
-    })
-  }, [accounts])
+  // Any newer list from the controller already carries the drag, or replaces it
+  const displayedAccounts = draggedOrder?.from === accounts ? draggedOrder.order : accounts
 
   const handleAccDragEnd = useCallback(
     (fromIndex: number, toIndex: number) => {
       if (fromIndex === toIndex) return
-      setLocalAccounts((prev) => {
-        const updated = [...prev]
-        const [moved] = updated.splice(fromIndex, 1)
-        updated.splice(toIndex, 0, moved!)
-        accountsDispatch({
-          type: 'method',
-          params: {
-            method: 'reorderAccounts',
-            args: [{ fromIndex, toIndex }]
-          }
-        })
-        return updated
+
+      const updated = [...displayedAccounts]
+      const [moved] = updated.splice(fromIndex, 1)
+      updated.splice(toIndex, 0, moved!)
+      setDraggedOrder({ from: accounts, order: updated })
+
+      accountsDispatch({
+        type: 'method',
+        params: { method: 'reorderAccounts', args: [{ fromIndex, toIndex }] }
       })
     },
-    [accountsDispatch]
+    [accounts, accountsDispatch, displayedAccounts]
   )
 
   useEffect(() => {
@@ -214,29 +260,74 @@ const AccountsSettingsScreen = () => {
     cancelRemovePrivacyPoolsAccount()
   }, [cancelRemovePrivacyPoolsAccount, privacyPoolsAccountToRemove, privacyPoolsDispatch])
 
-  // Not draggable: their order is not stored and they have no address to key them by
+  // Any newer list from the controller already carries the drag, or replaces it
+  const displayedPrivacyPoolsAccounts =
+    draggedPrivacyPoolsOrder?.from === privacyPoolsAccounts
+      ? draggedPrivacyPoolsOrder.order
+      : privacyPoolsAccounts
+  // Filtered by the debounced search, like the regular ones, so this follows the same value
+  const isPrivacyPoolsFiltered = !!debouncedSearch.trim()
   const filteredPrivacyPoolsAccounts = useMemo(
-    () => filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')),
-    [privacyPoolsAccounts, search, t]
+    () => filterPrivacyPoolsAccountsBySearch(displayedPrivacyPoolsAccounts, debouncedSearch, t),
+    [displayedPrivacyPoolsAccounts, debouncedSearch, t]
+  )
+
+  const handlePrivacyPoolsAccountDragEnd = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return
+
+      const updated = [...displayedPrivacyPoolsAccounts]
+      const [moved] = updated.splice(fromIndex, 1)
+      updated.splice(toIndex, 0, moved!)
+      setDraggedPrivacyPoolsOrder({ from: privacyPoolsAccounts, order: updated })
+
+      privacyPoolsDispatch({
+        type: 'method',
+        params: { method: 'reorderAccounts', args: [{ fromIndex, toIndex }] }
+      })
+    },
+    [displayedPrivacyPoolsAccounts, privacyPoolsAccounts, privacyPoolsDispatch]
   )
 
   const renderPrivacyPoolsAccount = useCallback(
-    ({ item: privacyPoolsAccount }: { item: PrivacyPoolsAccountDisplay }) => (
+    (
+      privacyPoolsAccount: PrivacyPoolsAccountDisplay,
+      index: number,
+      isDragging: boolean,
+      listeners: any,
+      attributes: any
+    ) => (
       <View
         style={[
+          flexbox.flex1,
+          flexbox.directionRow,
+          flexbox.alignCenter,
           spacings.mbTy,
-          spacings.plSm,
+          // As wide as the hidden drag handle, so the content stays in place
+          isPrivacyPoolsFiltered && { paddingLeft: DRAG_HANDLE_WIDTH },
           { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
         ]}
       >
-        <PrivacyPoolsAccountRow
-          account={privacyPoolsAccount}
-          onRemove={setPrivacyPoolsAccountToRemove}
-          containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
-        />
+        {!isPrivacyPoolsFiltered && (
+          <DragHandle isDragging={isDragging} listeners={listeners} attributes={attributes} />
+        )}
+        <View style={flexbox.flex1}>
+          <PrivacyPoolsAccountRow
+            account={privacyPoolsAccount}
+            onRemove={setPrivacyPoolsAccountToRemove}
+            withRename
+            containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
+          />
+        </View>
       </View>
     ),
-    [theme.secondaryBackground]
+    [isPrivacyPoolsFiltered, theme.secondaryBackground]
+  )
+  // Adapts the draggable row renderer to the plain list shown while searching
+  const renderPrivacyPoolsSearchResult = useCallback(
+    ({ item, index }: { item: PrivacyPoolsAccountDisplay; index: number }) =>
+      renderPrivacyPoolsAccount(item, index, false, undefined, undefined),
+    [renderPrivacyPoolsAccount]
   )
 
   const renderItem = useCallback(
@@ -254,27 +345,17 @@ const AccountsSettingsScreen = () => {
             flexbox.directionRow,
             flexbox.alignCenter,
             spacings.mbTy,
+            // As wide as the hidden drag handle, so the content stays in place
+            isFiltered && { paddingLeft: DRAG_HANDLE_WIDTH },
             {
               backgroundColor: theme.secondaryBackground,
               borderRadius: BORDER_RADIUS_PRIMARY
             }
           ]}
         >
-          <div {...listeners} {...attributes}>
-            <Pressable
-              style={[
-                flexbox.alignCenter,
-                flexbox.justifyCenter,
-                spacings.pvMi,
-                spacings.phSm,
-                spacings.mbMi,
-                //@ts-ignore
-                { cursor: 'grab', touchAction: 'manipulation' }
-              ]}
-            >
-              <DragIndicatorIcon color={isDragging ? theme.primary : theme.iconPrimary} />
-            </Pressable>
-          </div>
+          {!isFiltered && (
+            <DragHandle isDragging={isDragging} listeners={listeners} attributes={attributes} />
+          )}
           <View style={flexbox.flex1}>
             <Account
               account={item}
@@ -292,12 +373,17 @@ const AccountsSettingsScreen = () => {
     },
     [
       theme.secondaryBackground,
-      theme.primary,
-      theme.iconPrimary,
       shortenAccountAddr,
       accountOptions,
-      onAccountExtraHeightChange
+      onAccountExtraHeightChange,
+      isFiltered
     ]
+  )
+  // Adapts the draggable row renderer to the plain list shown while searching
+  const renderSearchResult = useCallback(
+    ({ item, index }: { item: AccountInterface; index: number }) =>
+      renderItem(item, index, false, undefined, undefined),
+    [renderItem]
   )
   const { maxWidthSize } = useWindowSize()
   const isWidthS = maxWidthSize('s')
@@ -362,19 +448,26 @@ const AccountsSettingsScreen = () => {
         {isPrivacyPoolsEnabled && <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />}
         {isPrivacyPoolsEnabled && activeTab === 'private' ? (
           <ScrollableWrapper
-            type={WRAPPER_TYPES.FLAT_LIST}
+            // Search results are ordered by relevance, so there is no order to rearrange in them
+            type={
+              isPrivacyPoolsFiltered ? WRAPPER_TYPES.FLAT_LIST : WRAPPER_TYPES.DRAGGABLE_FLAT_LIST
+            }
             data={filteredPrivacyPoolsAccounts}
             keyExtractor={privacyPoolsAccountKeyExtractor}
-            renderItem={renderPrivacyPoolsAccount}
+            onDragEnd={handlePrivacyPoolsAccountDragEnd}
+            renderItem={renderPrivacyPoolsSearchResult}
+            renderDraggableItem={renderPrivacyPoolsAccount}
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
         ) : (
           <ScrollableWrapper
-            type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
-            data={localAccounts}
+            // Search results are ordered by relevance, so there is no order to rearrange in them
+            type={isFiltered ? WRAPPER_TYPES.FLAT_LIST : WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+            data={displayedAccounts}
             keyExtractor={keyExtractor}
             onDragEnd={handleAccDragEnd}
-            renderItem={renderItem}
+            renderItem={renderSearchResult}
+            renderDraggableItem={renderItem}
             getItemLayout={getItemLayout}
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
@@ -469,7 +562,9 @@ const AccountsSettingsScreen = () => {
         </View>
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Text fontSize={16} weight="medium" style={{ ...spacings.mbSm, textAlign: 'center' }}>
-            {t('Are you sure you want to remove this Privacy Pools account?')}
+            {t('Are you sure you want to remove the Private account from {{seedLabel}}?', {
+              seedLabel: privacyPoolsAccountToRemove?.sourceLabel
+            })}
           </Text>
           <Text fontSize={14} appearance="secondaryText" style={{ textAlign: 'center' }}>
             {t(

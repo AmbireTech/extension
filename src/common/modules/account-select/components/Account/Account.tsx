@@ -4,9 +4,7 @@ import { StyleSheet, View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
@@ -29,10 +27,11 @@ import useReverseLookup from '@common/hooks/useReverseLookup'
 import useSafeDeployedChainIds from '@common/hooks/useSafeDeployedChainIds'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import measureLayoutSync from '@common/utils/measureLayoutSync'
 
+import { BalanceBadge, SelectedAccountBalanceBadge } from './AccountBalanceBadge'
 import getStyles, { ACCOUNT_AVATAR_SIZE, ACCOUNT_SELECT_ACCOUNT_HEIGHT } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -89,7 +88,7 @@ const Account = ({
     withOptionsButton?: boolean
     markSelected?: boolean
     setAccountToImportOrExport?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
-    setAccountSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
+    setAccountSettingsAccount?: (account: AccountInterface) => void
     setAccountToRemove?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
   }
   containerStyle?: ViewStyle
@@ -132,6 +131,7 @@ const Account = ({
     [addr]
   )
   const { state: balance } = useController('SelectedAccountController', selectBalance)
+  const isSelectedAccount = selectedAccount?.addr === addr
   const { state: isPrivacyModeEnabled } = useController(
     'WalletStateController',
     selectIsPrivacyModeEnabled
@@ -284,7 +284,7 @@ const Account = ({
     ]
     const settingsOption = account.safeCreation
       ? [{ label: t('Activation settings'), value: 'deploySettings' }]
-      : add7702Option && isWeb
+      : add7702Option
         ? [{ label: t('Smart settings'), value: 'toSmarter' }]
         : []
 
@@ -344,24 +344,13 @@ const Account = ({
         { columnGap: SPACING_MI, rowGap: SPACING_MI }
       ]}
     >
-      {balance !== null && withBalance && !isPrivacyModeEnabled && (
-        <Badge
-          style={{
-            columnGap: SPACING_MI,
-            // The icon leads, like the avatar on the Safe signer badges
-            paddingLeft: SPACING_MI,
-            // The badge leaves room only for a trailing info icon when it has children
-            paddingRight: SPACING_TY,
-            // Stands out from the card in either theme, as the card is in the secondary one
-            backgroundColor: theme.primaryBackground
-          }}
-        >
-          <WalletIcon width={14} height={14} color={theme.secondaryText} />
-          <Text fontSize={12} weight="semiBold" color={theme.primaryText}>
-            {formatDecimals(balance, 'value')}
-          </Text>
-        </Badge>
-      )}
+      {withBalance &&
+        !isPrivacyModeEnabled &&
+        (isSelectedAccount ? (
+          <SelectedAccountBalanceBadge />
+        ) : (
+          balance !== null && <BalanceBadge balance={balance} />
+        ))}
       {!!pendingRequestsCount && <PendingRequestsBadge count={pendingRequestsCount} />}
       {!!withKeyType &&
         (safeDeployedChainIds.length ? (

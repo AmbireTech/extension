@@ -21,6 +21,7 @@ import useTheme from '@common/hooks/useTheme'
 import PrivacyPoolsRecipient from '@common/modules/transfer/components/PrivacyPoolsRecipient'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
 import SendNft from '@common/modules/transfer/components/SendNft'
@@ -110,7 +111,7 @@ const SendForm = ({
 
   useEffect(() => {
     if (!isTopUp) return
-    fetch(`${RELAYER_URL}/gas-tank/assets`)
+    fetchWithRelayerCustomHeaders(`${RELAYER_URL}/gas-tank/assets`)
       .then((r) => r.json())
       .then((assets) => {
         const safeAssets = Array.isArray(assets)
@@ -245,7 +246,7 @@ const SendForm = ({
   }, [options, tokenSections])
 
   const handleChangeToken = useCallback(
-    (value: string) => {
+    ({ value }: SelectValue) => {
       const tokenToSelect = tokens.find((tokenRes: TokenResult) => getTokenId(tokenRes) === value)
       transferDispatch({
         type: 'method',
@@ -309,7 +310,8 @@ const SendForm = ({
       <View>
         {!isTopUp && !!privacyPoolsRecipient && (
           <PrivacyPoolsRecipient
-            label={privacyPoolsRecipientAccount?.label || t('Privacy Pools account')}
+            name={privacyPoolsRecipientAccount?.label || t('Private account')}
+            sourceLabel={privacyPoolsRecipientAccount?.sourceLabel}
             onClear={clearPrivacyPoolsRecipient}
           />
         )}
@@ -361,7 +363,7 @@ const SendForm = ({
           fromTokenValue={tokenSelectValue}
           fromAmountValue={amountFieldValue}
           fromTokenAmountSelectDisabled={disableForm || amountSelectDisabled}
-          handleChangeFromToken={({ value }) => handleChangeToken(value as string)}
+          handleChangeFromToken={handleChangeToken}
           fromSelectedToken={selectedToken}
           fromAmount={controllerAmount}
           fromAmountInFiat={amountInFiat}

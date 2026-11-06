@@ -81,6 +81,8 @@ export const handleCleanUpOnPortDisconnect = async ({
 
     if (url.pathname.includes('dashboard') || url.pathname.includes('transactions')) {
       mainCtrl.activity.resetAccountsOpsFilters(sessionId)
+      // Left open, every sync of the account would keep reading its history
+      mainCtrl.privacyPools.resetHistoryFilters(sessionId)
     }
 
     if (url.pathname.includes('signed-messages')) {
@@ -121,14 +123,25 @@ export const handleCleanUpOnPortDisconnect = async ({
   // With accounts in the wallet nothing leads back there, so they are dropped too, after the
   // grace period that keeps them over a reload.
   if (isOnboardingRoute && isAccountAddingFlowRoute) {
-    const { isInitialized, initParams, readyToAddAccounts, readyToRemoveAccounts } =
-      mainCtrl.accountPicker
+    const {
+      isInitialized,
+      initParams,
+      readyToAddAccounts,
+      readyToRemoveAccounts,
+      privacyPoolsInitParams,
+      privacyPoolsAccountToAdd
+    } = mainCtrl.accountPicker
     const isOnPersonalizeStep = url.pathname.includes(ROUTES.accountPersonalize)
     const isWaitingToBeAdded =
-      isOnPersonalizeStep && (!!readyToAddAccounts.length || !!readyToRemoveAccounts.length)
+      isOnPersonalizeStep &&
+      (!!readyToAddAccounts.length || !!readyToRemoveAccounts.length || !!privacyPoolsAccountToAdd)
 
     const hasFlow =
-      isInitialized || !!initParams || !!readyToAddAccounts.length || !!readyToRemoveAccounts.length
+      isInitialized ||
+      !!initParams ||
+      !!readyToAddAccounts.length ||
+      !!readyToRemoveAccounts.length ||
+      !!privacyPoolsInitParams
 
     if (hasFlow && !isWaitingToBeAdded) {
       await mainCtrl.accountPicker.reset()

@@ -17,6 +17,7 @@ import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import NetworksScreen from '@web/modules/networks/screens'
 import PrivacyPoolsSendScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsSendScreen'
+import PrivacyPoolsTokenDetailsScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsTokenDetailsScreen'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
 import TabOnlyRoute from '@web/modules/router/components/TabOnlyRoute'
@@ -259,6 +260,10 @@ const MainRoutes = () => {
             <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
             <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
             <Route path={WEB_ROUTES.privacyPoolsSend} element={<PrivacyPoolsSendScreen />} />
+            <Route
+              path={WEB_ROUTES.privacyPoolsTokenDetails}
+              element={<PrivacyPoolsTokenDetailsScreen />}
+            />
             <Route
               path={WEB_ROUTES.signAccountOp}
               element={<RequestWindowGroupScreen pick={(m) => m.SignAccountOpScreen} />}

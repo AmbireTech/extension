@@ -38,6 +38,7 @@ type DispatchUpdate = (update: {
   pendingFeeTokenPreference?: SelectValue['token'] | null
   customGasPrices?: GasSpeeds
   customGasLimit?: bigint
+  shouldResetCustomGas?: boolean
 }) => void
 
 export type { DispatchUpdate, FeeOption, Props }

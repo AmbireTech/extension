@@ -54,6 +54,8 @@ const getSafeQueueRequests = (
     const { accountOp, account } = request.signAccountOp
     if (!account.safeCreation || accountOp.accountAddr !== accountAddr || !accountOp.txnId)
       return false
+    // re-sending an already sent transaction isn't a new one waiting for its owners
+    if (accountOp.meta?.isResend) return false
     if (accountOp.nonce === null || accountOp.nonce === undefined) return false
 
     const currentNonce = currentNonces[accountOp.chainId.toString()]

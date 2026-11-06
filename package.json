@@ -85,7 +85,7 @@
     "@gorhom/portal": "1.0.14",
     "@keystonehq/animated-qr": "0.10.0",
     "@keystonehq/bc-ur-registry-eth": "0.22.1",
-    "@kohaku-eth/privacy-pools": "0.1.0-alpha.26",
+    "@kohaku-eth/privacy-pools": "0.1.0-alpha.35",
     "@ledgerhq/context-module": "2.5.0",
     "@ledgerhq/device-management-kit": "1.8.0",
     "@ledgerhq/device-signer-kit-ethereum": "1.17.0",
@@ -195,6 +195,7 @@
     "pq1-sdk": "0.1.0",
     "pq1-sdk-catalogs": "0.1.0",
     "process": "0.11.10",
+    "punycode": "2.3.0",
     "purify-ts": "2.1.0",
     "qr-scanner": "1.4.2",
     "querystring-es3": "0.2.1",
@@ -345,7 +346,8 @@
     "@onekeyfe/hd-shared": "1.1.0",
     "@onekeyfe/hd-transport": "1.1.0",
     "@onekeyfe/hd-transport-http": "1.1.0",
-    "@onekeyfe/hd-transport-web-device": "1.1.0"
+    "@onekeyfe/hd-transport-web-device": "1.1.0",
+    "react-native-url-polyfill": "4.0.0"
   },
   "private": true,
   "lavamoat": {
