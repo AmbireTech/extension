@@ -449,6 +449,18 @@ const Estimation = ({
     // Paying from an EOA publicly links it to the Safe, so the ones that reveal nothing new come first
     if (safeFeeOptionGroups) {
       const { owners, linked, notLinked } = safeFeeOptionGroups
+      const hasNoLinkedGroups = !owners.length && !linked.length
+      // "Other" only makes sense next to the owners and linked groups. Alone, it gets no title,
+      // unless the account's own tokens are listed above it and need to be told apart from it
+      let notLinkedTitle: { icon: typeof AssetIcon; text: string } | undefined = {
+        icon: VisibilityIcon,
+        text: t('Other')
+      }
+      if (hasNoLinkedGroups) {
+        notLinkedTitle = payOptionsPaidByUsOrGasTank.length
+          ? { icon: AssetIcon, text: t('Native tokens from my EOAs') }
+          : undefined
+      }
 
       return [
         accountTokensSection,
@@ -463,7 +475,7 @@ const Estimation = ({
           key: 'safe-linked'
         },
         {
-          title: { icon: VisibilityIcon, text: t('Other') },
+          title: notLinkedTitle,
           data: notLinked,
           key: 'safe-not-linked'
         }
