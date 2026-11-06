@@ -39,6 +39,9 @@ import { markWcLinkFromInAppBrowser } from '@mobile/modules/wallet-connect/servi
 import { getWcPairingUriFromLink } from '@mobile/modules/wallet-connect/utils'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
 
+// Every in-app browser page shares one tab for now, so its sessions are keyed by this tab id
+const IN_APP_BROWSER_TAB_ID = 1
+
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
 // Cross-origin iframes cannot read main-frame globals (Same-Origin Policy), so they
 // cannot forge messages with a valid token. Called once per WebView mount.
@@ -287,6 +290,20 @@ const DappWebViewScreen = () => {
     // Only run on mount with the initial URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // The page lives only as long as this WebView, so its session goes with it, like a closed tab
+  // in the extension. The app stays connected and gets a new session on its next request.
+  useEffect(
+    () => () => {
+      dappsDispatch({
+        type: 'method',
+        params: { method: 'deleteDappSessionsForTab', args: [IN_APP_BROWSER_TAB_ID] }
+      })
+    },
+    // Only on unmount - a cleanup that reran on a dependency change would end a live page's session
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
 
   // WebView Refs & State
   const webviewRef = useRef<WebView>(null)
@@ -907,7 +924,7 @@ const DappWebViewScreen = () => {
               requestId: data.id,
               providerId: 1,
               topic,
-              tabId: 1
+              tabId: IN_APP_BROWSER_TAB_ID
             }
           })
         }
