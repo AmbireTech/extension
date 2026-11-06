@@ -14,6 +14,7 @@ export { default as KeyStoreSetupScreen } from '@web/modules/keystore/screens/Ke
 export { default as LedgerConnectScreen } from '@web/modules/hardware-wallet/screens/LedgerConnectScreen/LedgerConnectScreen'
 export { default as OneKeyConnectScreen } from '@web/modules/hardware-wallet/screens/OneKeyConnectScreen/OneKeyConnectScreen'
 export { default as OnboardingCompletedScreen } from '@web/modules/auth/screens/OnboardingCompletedScreen'
+export { default as PQ1ConnectScreen } from '@web/modules/hardware-wallet/screens/PQ1ConnectScreen'
 export { default as PrivateKeyImportScreen } from '@web/modules/auth/screens/PrivateKeyImportScreen'
 export { default as QrCameraPermissionPage } from '@web/modules/hardware-wallet/screens/QrCameraPermissionPage'
 export { default as QrConnectScreen } from '@web/modules/hardware-wallet/screens/QrConnectScreen/QrConnectScreen'

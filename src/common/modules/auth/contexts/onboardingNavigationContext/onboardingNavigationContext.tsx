@@ -132,13 +132,18 @@ const selectRecoverKeyStoreStatus = (state: AllControllersMappingType['EmailVaul
   state.statuses?.recoverKeyStore
 const selectPickerSubType = (state: AllControllersMappingType['AccountPickerController']) =>
   state.subType
-// A flow is under way - set up (personalize prepares its accounts) or prepared already, which
-// can be removals only (e.g. Safes deselected on import by owner)
-const selectHasAccountAddingFlow = (state: AllControllersMappingType['AccountPickerController']) =>
+/**
+ * A flow is under way - set up (personalize prepares its accounts) or prepared already, which
+ * can be removals only (e.g. Safes deselected on import by owner), or a Privacy Pools account
+ */
+export const selectHasAccountAddingFlow = (
+  state: AllControllersMappingType['AccountPickerController']
+) =>
   !!state.isInitialized ||
   !!state.initParams ||
   !!state.readyToAddAccounts?.length ||
-  !!state.readyToRemoveAccounts?.length
+  !!state.readyToRemoveAccounts?.length ||
+  !!state.privacyPoolsInitParams
 
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
@@ -219,6 +224,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
             importMethod(WEB_ROUTES.safeImportByOwner)
           ]),
           importMethod(WEB_ROUTES.qrConnect),
+          importMethod(WEB_ROUTES.pq1Connect),
           importMethod(WEB_ROUTES.importSmartAccountJson),
           // "Already an Ambire user" - a sync from the other app
           importMethod(WEB_ROUTES.importFromMobile),

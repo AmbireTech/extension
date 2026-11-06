@@ -39,6 +39,8 @@ const QrScannerWithPermission = ({
   const [decodeError, setDecodeError] = useState<string | null>(null)
   const lastReadRef = useRef(emptyQrScanLastRead())
   const lastProgressRef = useRef<QrScanProgress | null>(null)
+  // How much of an animated (multi-part) code is read, undefined while no such code is being read
+  const [animatedScanProgress, setAnimatedScanProgress] = useState<number>()
   // The camera reads the same code several times while it is on screen, and each read
   // would be decoded again for nothing
   const lastFragmentRef = useRef<string | null>(null)
@@ -59,7 +61,7 @@ const QrScannerWithPermission = ({
   }, [permission, requestPermission])
 
   useEffect(() => {
-    if (!onProgress || !permissionGranted || disabled) return
+    if (!permissionGranted || disabled) return
 
     const id = setInterval(() => {
       if (isCompletedRef.current) return
@@ -69,6 +71,10 @@ const QrScannerWithPermission = ({
         expectedParts: decoderRef.current.expectedPartCount(),
         progress: decoderRef.current.progress()
       }
+
+      setAnimatedScanProgress(progress.expectedParts > 1 ? progress.progress : undefined)
+
+      if (!onProgress) return
 
       // Only on change, so that the message the user is reading is not re-rendered while
       // nothing about the scan moved
@@ -104,6 +110,9 @@ const QrScannerWithPermission = ({
           if (!decoderRef.current.isComplete()) return
 
           isCompletedRef.current = true
+          // The progress is not polled anymore once the scan completes, so the bar is
+          // filled up here
+          setAnimatedScanProgress(decoderRef.current.expectedPartCount() > 1 ? 1 : undefined)
           onComplete(decoderRef.current.result())
           return
         }
@@ -126,6 +135,7 @@ const QrScannerWithPermission = ({
     lastFragmentRef.current = null
     lastReadRef.current = emptyQrScanLastRead()
     lastProgressRef.current = null
+    setAnimatedScanProgress(undefined)
     setDecodeError(null)
     onExternalRetry?.()
   }, [onExternalRetry])
@@ -177,7 +187,9 @@ const QrScannerWithPermission = ({
 
   // `disabled` pauses scanning; the completed case is guarded inside handleScan
   // (reading the ref here would be an illegal ref access during render).
-  return <CameraScanner onScan={handleScan} isProcessing={!!disabled} />
+  return (
+    <CameraScanner onScan={handleScan} isProcessing={!!disabled} progress={animatedScanProgress} />
+  )
 }
 
 export default QrScannerWithPermission
