@@ -5,27 +5,28 @@ import { convertTokenPriceToBigInt } from '@ambire-common/utils/numbers/formatte
 /** The precision a slider moving a USD amount works in - whole cents. */
 export const SLIDER_FIAT_DECIMALS = 2
 
-// The step is the smallest 1-2-5 multiple of a power of ten that leaves at most this many amounts
-// along the track - fine enough to pick an approximate amount, coarse enough to stay round.
-const MAX_SLIDER_POSITIONS = 100n
-const NICE_STEP_MULTIPLIERS = [1n, 2n, 5n]
+// The step is the largest 1-2-5 multiple of a power of ten that leaves at least this many amounts
+// along the track - one per whole percentage, so a drag can still pick any of them, while the
+// amounts it picks stay round.
+const MIN_SLIDER_POSITIONS = 100n
+const NICE_STEP_MULTIPLIERS = [5n, 2n, 1n]
 
 /**
  * The "nice" step a slider over `maximumValue` moves in: 1, 2 or 5 times a power of ten, in the
  * unit's smallest denomination. Because the unit's decimals are a power of ten too, the step reads
- * as round in whole units as well (e.g. $10, 0.0005 ETH). A range too small to split into
- * `MAX_SLIDER_POSITIONS` moves by the smallest denomination itself (e.g. by 1 cent below $1).
+ * as round in whole units as well (e.g. $10, 0.0002 ETH). It is never more than 1% of the range,
+ * so every whole percentage has an amount to land on. A range too small to split into
+ * `MIN_SLIDER_POSITIONS` moves by the smallest denomination itself (e.g. by 1 cent below $1).
  */
 export const getNiceSliderStep = (maximumValue: bigint) => {
-  const minimumStep = (maximumValue + MAX_SLIDER_POSITIONS - 1n) / MAX_SLIDER_POSITIONS
-  if (minimumStep <= 1n) return 1n
+  const maximumStep = maximumValue / MIN_SLIDER_POSITIONS
+  if (maximumStep <= 1n) return 1n
 
-  const magnitude = 10n ** BigInt(minimumStep.toString().length - 1)
-  const multiplier = NICE_STEP_MULTIPLIERS.find(
-    (niceMultiplier) => niceMultiplier * magnitude >= minimumStep
-  )
+  const magnitude = 10n ** BigInt(maximumStep.toString().length - 1)
+  const multiplier =
+    NICE_STEP_MULTIPLIERS.find((niceMultiplier) => niceMultiplier * magnitude <= maximumStep) ?? 1n
 
-  return multiplier ? multiplier * magnitude : 10n * magnitude
+  return multiplier * magnitude
 }
 
 /**

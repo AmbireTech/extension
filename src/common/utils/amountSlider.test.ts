@@ -9,15 +9,20 @@ import {
 } from './amountSlider'
 
 describe('getNiceSliderStep', () => {
-  it('picks a 1-2-5 step that splits the range into at most 100 amounts', () => {
+  it('picks a 1-2-5 step that splits the range into at least 100 amounts', () => {
     expect(getNiceSliderStep(100000n)).toBe(1000n) // $1,000 in cents -> $10
-    expect(getNiceSliderStep(127400n)).toBe(2000n) // $1,274 in cents -> $20
-    expect(getNiceSliderStep(300000n)).toBe(5000n) // $3,000 in cents -> $50
-    expect(getNiceSliderStep(parseUnits('0.0372', 18))).toBe(parseUnits('0.0005', 18))
-    expect(getNiceSliderStep(parseUnits('3.2', 18))).toBe(parseUnits('0.05', 18))
+    expect(getNiceSliderStep(127400n)).toBe(1000n) // $1,274 in cents -> $10
+    expect(getNiceSliderStep(300000n)).toBe(2000n) // $3,000 in cents -> $20
+    expect(getNiceSliderStep(600000n)).toBe(5000n) // $6,000 in cents -> $50
+    expect(getNiceSliderStep(parseUnits('0.0372', 18))).toBe(parseUnits('0.0002', 18))
+    expect(getNiceSliderStep(parseUnits('433.93', 18))).toBe(parseUnits('2', 18))
   })
-  it('moves up a power of ten when no 1-2-5 multiple of the current one is enough', () => {
-    expect(getNiceSliderStep(60001n)).toBe(1000n)
+  it('never moves by more than 1% of the range, so every whole percentage is reachable', () => {
+    ;[199n, 4999n, 19999n, 99999n, 100148n, parseUnits('433.93', 18)].forEach((maximumValue) => {
+      const step = getNiceSliderStep(maximumValue)
+      expect(step * 100n).toBeLessThanOrEqual(maximumValue)
+      expect(step * 100n * 5n).toBeGreaterThan(maximumValue)
+    })
   })
   it('moves by the smallest denomination on a range too small to split', () => {
     expect(getNiceSliderStep(30n)).toBe(1n)
@@ -33,7 +38,7 @@ describe('snapSliderAmount', () => {
     expect(snapSliderAmount(1112n, max)).toBe(1000n)
     expect(snapSliderAmount(1500n, max)).toBe(2000n)
     expect(snapSliderAmount(parseUnits('0.01137', 18), parseUnits('0.0372', 18))).toBe(
-      parseUnits('0.0115', 18)
+      parseUnits('0.0114', 18)
     )
   })
   it('keeps zero and the maximum exact', () => {
@@ -46,8 +51,19 @@ describe('snapSliderAmount', () => {
     expect(snapSliderAmount(400n, max)).toBe(0n)
   })
   it('stays on the last step below a maximum it would round past', () => {
-    const unevenMax = 101500n // $1,015 in cents, moving in $20 steps
-    expect(snapSliderAmount(101200n, unevenMax)).toBe(100000n)
+    const unevenMax = 101700n // $1,017 in cents, moving in $10 steps
+    expect(snapSliderAmount(101600n, unevenMax)).toBe(101000n)
+  })
+  it('lets a drag across the track land on every whole percentage', () => {
+    // The 433.93 stkWALLET balance the slider used to skip 42% on, dragged a slider step at a time
+    const maximumValue = parseUnits('433.93', 18)
+    const percentages = new Set<number>()
+    for (let step = 0n; step <= 10000n; step += 1n) {
+      const amount = snapSliderAmount((maximumValue * step) / 10000n, maximumValue)
+      percentages.add(Math.round(Number((amount * 10000n) / maximumValue) / 100))
+    }
+
+    expect(percentages.size).toBe(101)
   })
   it('leaves a range too small to split as it is', () => {
     expect(snapSliderAmount(17n, 30n)).toBe(17n)

@@ -35,10 +35,10 @@ describe('getSliderMarks', () => {
     })
 
     it('rounds the quarters in between to nice amounts but keeps the maximum exact', () => {
-      // $1,001.48 in cents, moving in $20 steps
+      // $1,001.48 in cents, moving in $10 steps
       const marks = getSliderMarks({ maximumValue: 100148n, tierOffset: 0n })
 
-      expect(marks.map(({ amount }) => amount)).toEqual([0n, 26000n, 50000n, 76000n, 100148n])
+      expect(marks.map(({ amount }) => amount)).toEqual([0n, 25000n, 50000n, 75000n, 100148n])
       expect(marks.map(({ steps }) => steps)).toEqual(EVENLY_SPACED_STEPS)
     })
   })
