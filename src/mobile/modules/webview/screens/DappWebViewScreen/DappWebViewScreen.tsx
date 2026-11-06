@@ -34,7 +34,9 @@ import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import useEdgeSwipeBackGesture from '@mobile/hooks/useEdgeSwipeBackGesture'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
+import useWalletConnect from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
 import { markWcLinkFromInAppBrowser } from '@mobile/modules/wallet-connect/services/walletConnectService'
+import { getWcPairingUriFromLink } from '@mobile/modules/wallet-connect/utils'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
@@ -419,9 +421,21 @@ const DappWebViewScreen = () => {
     setHeaderValue('search', hostname)
   }, [hostname, setHeaderValue])
 
+  const { pair: pairWalletConnect } = useWalletConnect()
+
   const handleShouldStartLoadWithRequest = useCallback(
     (event: { url: string; navigationType: string }) => {
       const { url } = event
+
+      // Paired here rather than handed to the OS, so the session is known to come from this
+      // browser - including Ambire links (`ambire://wc?uri=`) that wallet pickers open.
+      const wcPairingUri = getWcPairingUriFromLink(url)
+      if (wcPairingUri) {
+        markWcLinkFromInAppBrowser(wcPairingUri)
+        void pairWalletConnect(wcPairingUri)
+        return false
+      }
+
       try {
         const parsed = new URL(url)
         const protocol = parsed.protocol.replace(':', '')
@@ -434,13 +448,9 @@ const DappWebViewScreen = () => {
           return true
         }
 
-        // Hand off wallet deep links to the OS
-        // Note: wc protocol is now intercepted by WalletConnectProvider, but we still openURL
-        // to trigger the Linking event within the app.
-        if (protocol === 'wc' || protocol === 'metamask' || protocol === 'ethereum') {
+        // Hand off wallet deep links to the OS (WalletConnect ones are paired above)
+        if (protocol === 'metamask' || protocol === 'ethereum') {
           console.log('[DappWebView] Handing off wallet deep link to OS:', url)
-          // So the session it creates counts as an in-app browser connection, not an external one
-          if (protocol === 'wc') markWcLinkFromInAppBrowser(url)
           Linking.openURL(url).catch((err) => {
             console.warn('[DappWebView] Failed to open wallet deep link:', err)
           })
@@ -466,7 +476,7 @@ const DappWebViewScreen = () => {
         return true
       }
     },
-    []
+    [pairWalletConnect]
   )
 
   const updateCurrentOriginRef = useCallback(
@@ -1181,8 +1191,8 @@ const DappWebViewScreen = () => {
         allowFileAccessFromFileURLs={false}
         allowUniversalAccessFromFileURLs={false}
         // On iOS every frame's navigation is checked against this list (Turnstile uses about:srcdoc
-        // iframes). `wc:` must pass, or the WebView opens it itself and our handler never sees it.
-        originWhitelist={['https://*', 'blob:*', 'about:srcdoc', 'wc:*']}
+        // iframes). WalletConnect links must pass, or the WebView opens them itself, unseen by us.
+        originWhitelist={['https://*', 'blob:*', 'about:srcdoc', 'wc:*', 'ambire:*']}
         setSupportMultipleWindows={false}
         onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onLoadStart={handleLoadStart}
