@@ -4,7 +4,7 @@ import { View } from 'react-native'
 
 import { getSessionConnectionSource, Session } from '@ambire-common/classes/session'
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import GlobeIcon from '@common/assets/svg/GlobeIcon'
+import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import WalletConnectIcon from '@common/assets/svg/WalletConnectIcon'
 import Button from '@common/components/Button'
 import Text, { TextAppearance } from '@common/components/Text'
@@ -80,7 +80,9 @@ const ConnectionCard = ({ title, wcTopic, onDisconnect, children }: ConnectionCa
         {wcTopic ? (
           <WalletConnectIcon width={22} height={22} />
         ) : (
-          <GlobeIcon width={20} height={20} />
+          <View style={[flexbox.center, { width: 22, height: 22 }]}>
+            <AmbireLogo width={14} height={22} />
+          </View>
         )}
         <Text
           fontSize={14}
@@ -126,7 +128,7 @@ const WcSessionCard = React.memo(({ session, details, onDisconnect }: WcSessionC
       onDisconnect={onDisconnect}
     >
       <DetailLine
-        label={t('Type')}
+        label={t('Connected from')}
         value={
           getSessionConnectionSource(session) === 'wc-in-app' ? t('In-app browser') : t('External')
         }
@@ -183,6 +185,12 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
     [dappWcSessions, detailsByTopic]
   )
   const isConnectedViaInjected = !!dapp.connectedSources?.includes('injected')
+  // Active while the wallet holds a session of the page in the in-app browser
+  const injectedStatus: WcSessionStatus = Object.values(dappSessions).some(
+    (s) => s.id === dapp.id && !s.wcTopic
+  )
+    ? 'active'
+    : 'inactive'
 
   const handleDisconnect = useCallback(
     (wcTopic?: string) => (wcTopic ? onDisconnectWcSession(wcTopic) : onDisconnectInjected()),
@@ -199,8 +207,14 @@ const ManageAppConnections = ({ dapp, onDisconnectInjected, onDisconnectWcSessio
       </Text>
       <View style={{ rowGap: SPACING_SM }}>
         {isConnectedViaInjected && (
-          <ConnectionCard title={t('In-app browser')} onDisconnect={handleDisconnect}>
-            <DetailLine label={t('Type')} value={t('Direct connection')} />
+          <ConnectionCard title={t('Ambire provider')} onDisconnect={handleDisconnect}>
+            <DetailLine label={t('Connected from')} value={t('In-app browser')} />
+            <DetailLine label={t('Expires')} value={t('Never')} />
+            <DetailLine
+              label={t('Status')}
+              value={injectedStatus === 'active' ? t('Active') : t('Inactive')}
+              valueAppearance={STATUS_APPEARANCE[injectedStatus]}
+            />
           </ConnectionCard>
         )}
         {wcSessions.map((session) => (
