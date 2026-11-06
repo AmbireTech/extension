@@ -19,7 +19,8 @@ export type PrivacyPoolsTokenOption = SelectValue & {
   isNative: boolean
   symbol: string
   decimals: number
-  // The approved balance in raw units, for validating the typed amount
+  // What can be sent now in raw units - the approved balance less what withdrawals on their way
+  // take out - for validating the typed amount
   availableAmount: bigint
 }
 
@@ -97,7 +98,7 @@ const usePrivacyPoolsTokens = ({
   const withdrawTokens: PrivacyPoolsTokenOption[] = useMemo(
     () =>
       tokenBalances
-        .filter(({ balance }) => balance.approvedAmount > 0n)
+        .filter(({ balance }) => balance.approvedAmountPostSimulation > 0n)
         .map(({ chainId, balance }) =>
           getTokenOption({
             chainId,
@@ -107,7 +108,7 @@ const usePrivacyPoolsTokens = ({
             decimals: balance.decimals,
             networkName: getNetworkName(chainId),
             note: t('ready to send'),
-            availableAmount: balance.approvedAmount
+            availableAmount: balance.approvedAmountPostSimulation
           })
         ),
     [tokenBalances, getNetworkName, t]

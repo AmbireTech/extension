@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ListRenderItemInfo, Pressable, View } from 'react-native'
 import { IHandles } from 'react-native-modalize/lib/options'
 
+import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -56,7 +57,7 @@ const SavedSeedPhrasesBottomSheet = ({
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
-      const keysFromSeed = keys.filter((k) => k.meta.fromSeedId === seedId)
+      const keysFromSeed = keys.filter((k) => getKeySeedId(k) === seedId)
       const keysFromSeedAddr = keysFromSeed.map(({ addr }) => addr)
       return accounts.filter(
         (a) => !a.safeCreation && a.associatedKeys.some((k) => keysFromSeedAddr.includes(k))

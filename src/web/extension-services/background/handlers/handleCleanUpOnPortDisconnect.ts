@@ -46,9 +46,9 @@ export const handleCleanUpOnPortDisconnect = async ({
     // pending requests like a request window close: transactions stay queued, the rest get
     // rejected. Skipped while another panel or a request window still shows the request.
     // Nothing is discarded while panel mode is off: turning it off moves a pending app request to a
-    // request window instead and leaves transactions queued (see background.ts) - and on Firefox
-    // the sidebar can be open while the mode is off, showing the "mode off" notice, which never
-    // showed the requests.
+    // request window instead and leaves transactions queued (see background.ts) - and the panel
+    // can be open while the mode is off, showing the "mode off" notice, which never showed the
+    // requests.
     // The closed panel's port is already gone, so this only counts the panels still open (every
     // open panel shows the current request), with the same checks that decide where requests go.
     const isAnotherPanelOpen = !!mainCtrl.ui.panel?.isOpen()

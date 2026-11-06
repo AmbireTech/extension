@@ -403,6 +403,18 @@
       "meta": {
         "note": "Reads document.fonts through a context object, which the policy generator can't see. Without it the observer falls back to guessing from the widths of hidden elements, which can time out even when the font loaded fine."
       }
+    },
+    "pq1-sdk": {
+      "globals": {
+        "chrome.storage.local.get": false,
+        "chrome.storage.local.set": false,
+        "chrome.runtime.onMessage.addListener": false,
+        "chrome.runtime.onMessage.removeListener": false,
+        "chrome.runtime.sendMessage": false
+      },
+      "meta": {
+        "note": "Denied, not granted: the generator allows these because the SDK's extension helpers reference them, but chrome.storage.local also holds the keystore and the SDK can fetch, so it must never read it. Its only storage use, the init-code cache, is passed in by PQ1Controller (pq1InitCodeCache in libs/pq1/context.ts) and goes through Ambire's code. The runtime messaging is for permission-granted helpers Ambire never calls."
+      }
     }
   }
 }
