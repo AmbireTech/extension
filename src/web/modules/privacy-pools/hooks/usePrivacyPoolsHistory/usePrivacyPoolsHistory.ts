@@ -52,7 +52,7 @@ const usePrivacyPoolsHistory = ({ sessionId, isEnabled, chainId, itemsPerPage }:
     selectUnavailableReason
   )
   const { selectedAccountId, selectedAccount } = usePrivacyPoolsAccounts()
-  // Not read until it is backed up - see `syncIfStale`
+  // Not read until it is backed up - see `PrivacyPoolsController.syncInBackground`
   const isWaitingForBackup = !!selectedAccount && !selectedAccount.isBackedUp
 
   const filters: PrivacyPoolsHistoryFilters = useMemo(() => (chainId ? { chainId } : {}), [chainId])

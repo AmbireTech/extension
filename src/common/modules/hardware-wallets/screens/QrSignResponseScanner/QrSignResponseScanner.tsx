@@ -72,7 +72,7 @@ const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
         <Button
           size={withMobileLayout ? 'regular' : 'smaller'}
           hasBottomSpacing={false}
-          type="secondary"
+          type={withMobileLayout ? 'tertiary' : 'secondary'}
           text={t('Back')}
           onPress={handleBack}
           style={isWeb && !withMobileLayout ? { width: 98 } : undefined}

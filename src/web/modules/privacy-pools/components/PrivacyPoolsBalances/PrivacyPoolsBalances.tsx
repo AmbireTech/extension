@@ -22,7 +22,7 @@ interface Props {
   state: PrivacyPoolsBalancesState
   /** Why the account cannot use Privacy Pools, explained while the state is 'unavailable'. */
   unavailableReason: PrivacyPoolsUnavailableReason | null
-  /** Whether reading waits for the recovery phrase backup - see `syncIfStale`. */
+  /** Whether reading waits for the recovery phrase backup - see `PrivacyPoolsController`. */
   isWaitingForBackup: boolean
 }
 
@@ -55,7 +55,10 @@ const PrivacyPoolsBalances: FC<Props> = ({
       'unsupported-network': t(
         'Privacy Pools is not available on any of the networks you have added. It runs on Ethereum.'
       ),
-      locked: t('Unlock your wallet to see what you have in Privacy Pools.')
+      locked: t('Unlock your wallet to see what you have in Privacy Pools.'),
+      'passphrase-needed': t(
+        'This account needs its passphrase again. Remove it and add it again with the passphrase - your funds stay where they are.'
+      )
     }
 
     return renderNotice(

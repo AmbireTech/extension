@@ -95,7 +95,8 @@ const getAndFormatTokenDetails = (
     : undefined
 
   const pendingAmountsFormatted = formatPendingAmounts(
-    pendingAmount || amountPostSimulation
+    // A zero amount is still a pending state, so check the type instead of truthiness
+    typeof pendingAmount === 'bigint' || typeof amountPostSimulation === 'bigint'
       ? calculatePendingAmounts(
           latestAmount || 0n,
           pendingAmount || 0n,
