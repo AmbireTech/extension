@@ -77,7 +77,9 @@ const SummaryPreview = ({ submittedAccountOp }: { submittedAccountOp: SubmittedA
                       ? t('Cancel')
                       : interaction.id === 'fallback:safeDeploy'
                         ? t('Activate Safe account')
-                        : interaction.name}
+                        : interaction.id === 'fallback:safeApproval'
+                          ? t('Approve Safe transaction')
+                          : interaction.name}
                   </Text>
                   {interaction.nonce !== undefined && (
                     <Text fontSize={12} appearance="secondaryText">
