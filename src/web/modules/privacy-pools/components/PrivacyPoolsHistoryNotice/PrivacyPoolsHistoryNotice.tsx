@@ -39,7 +39,10 @@ const PrivacyPoolsHistoryNotice: FC<Props> = ({ listState, unavailableReason }) 
       'unsupported-network': t(
         'Privacy Pools is not available on any of the networks you have added. It runs on Ethereum.'
       ),
-      locked: t('Unlock your wallet to see your Privacy Pools activity.')
+      locked: t('Unlock your wallet to see your Privacy Pools activity.'),
+      'passphrase-needed': t(
+        'This account needs its passphrase again. Remove it and add it again with the passphrase - your funds stay where they are.'
+      )
     }
 
     return {

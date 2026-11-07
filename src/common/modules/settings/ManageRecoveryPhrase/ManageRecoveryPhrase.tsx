@@ -6,17 +6,19 @@ import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
-import Editable from '@common/components/Editable'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -29,6 +31,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 
+import EditRecoveryPhraseNameBottomSheet from './EditRecoveryPhraseNameBottomSheet'
 import getStyles from './styles'
 
 const DUMMY_SEED = 'dummy seed phrase canyon pigeon meadow orbit lunch erupt promote silver casino'
@@ -64,6 +67,14 @@ const ManageRecoveryPhrase = ({
   const { theme, styles, themeType } = useTheme(getStyles)
   const { t } = useTranslation()
   const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  const [bindEditAnim, editAnimStyle] = useHover({ preset: 'opacityInverted' })
+  const [isEditNameSheetMounted, setIsEditNameSheetMounted] = useState(false)
+  // The prop is a snapshot taken when the phrase was opened, so a rename shows only through state
+  const savedSeed = useMemo(
+    () => keystoreState.seeds.find(({ id }) => id === recoveryPhrase.id),
+    [keystoreState.seeds, recoveryPhrase.id]
+  )
+  const label = savedSeed?.label ?? recoveryPhrase.label
   // Removed along with the phrase, the only way to recover it
   const hasPrivacyPoolsAccount = useMemo(
     () => privacyPoolsAccounts.some(({ seedId }) => seedId === recoveryPhrase.id),
@@ -148,16 +159,8 @@ const ManageRecoveryPhrase = ({
     })
   }
 
-  const onSave = useCallback(
-    (value: string) => {
-      keystoreDispatch({
-        type: 'method',
-        params: { method: 'updateSeed', args: [{ id: recoveryPhrase.id, label: value }] }
-      })
-      addToast(t('Recovery phrase label updated.'))
-    },
-    [addToast, keystoreDispatch, recoveryPhrase.id, t]
-  )
+  const openEditNameSheet = useCallback(() => setIsEditNameSheetMounted(true), [])
+  const unmountEditNameSheet = useCallback(() => setIsEditNameSheetMounted(false), [])
 
   const isBlurred = blurred || seed === DUMMY_SEED
 
@@ -171,18 +174,25 @@ const ManageRecoveryPhrase = ({
           {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
           <PanelTitle title={t('Manage recovery phrase')} style={isWeb ? text.left : text.center} />
         </View>
-        <View style={[isMobile ? spacings.mbSm : spacings.mb, flexbox.directionRow]}>
-          <Editable
-            initialValue={recoveryPhrase.label}
-            onSave={onSave}
-            fontSize={16}
-            height={24}
-            textProps={{
-              weight: 'medium'
-            }}
-            minWidth={100}
-            maxLength={40}
-          />
+        <View style={[isMobile ? spacings.mbSm : spacings.mb, flexbox.alignStart]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text fontSize={16} weight="medium" numberOfLines={1} style={{ flexShrink: 1 }}>
+              {label}
+            </Text>
+            <AnimatedPressable
+              onPress={openEditNameSheet}
+              style={[spacings.mlTy, editAnimStyle]}
+              {...bindEditAnim}
+              accessibilityRole="button"
+              accessibilityLabel={t('Edit name')}
+              testID="edit-recovery-phrase-name-button"
+            >
+              <EditPenIcon color={theme.iconPrimary} width={20} height={20} />
+            </AnimatedPressable>
+          </View>
+          {!!savedSeed?.withPassphrase && (
+            <PassphraseBadge passphraseLabel={savedSeed.passphraseLabel} style={spacings.mtMi} />
+          )}
         </View>
         <View
           style={[
@@ -232,6 +242,19 @@ const ManageRecoveryPhrase = ({
             />
           )}
         </View>
+        {isSeedRevealed && !!savedSeed?.isPassphraseNeeded && (
+          <Alert
+            type="info"
+            isTypeLabelHidden
+            titleWeight="semiBold"
+            size="sm"
+            title={t('Passphrase not saved')}
+            text={t(
+              'To restore these accounts anywhere, you need these words and your passphrase.'
+            )}
+            style={spacings.mtSm}
+          />
+        )}
         <View
           style={[
             flexbox.directionRow,
@@ -239,7 +262,7 @@ const ManageRecoveryPhrase = ({
             isWeb && flexbox.justifySpaceBetween,
             isWeb ? spacings.mtTy : spacings.mtSm,
             isWeb && { marginHorizontal: -SPACING_SM },
-            isMobile && spacings.mbLg
+            isWeb ? spacings.mbSm : spacings.mbLg
           ]}
         >
           <View
@@ -334,9 +357,16 @@ const ManageRecoveryPhrase = ({
             value={deleteSeedIsConfirmed}
             onValueChange={() => setDeleteSeedIsConfirmed(!deleteSeedIsConfirmed)}
             uncheckedBorderColor={theme.secondaryText}
-            label={t(
-              `I acknowledge ${recoveryPhrase.label} will no longer be available as a backup in the extension`
-            )}
+            label={
+              isMobile
+                ? t('I acknowledge {{label}} will no longer be available as a backup in the app', {
+                    label
+                  })
+                : t(
+                    'I acknowledge {{label}} will no longer be available as a backup in the extension',
+                    { label }
+                  )
+            }
             labelProps={{
               style: { color: theme.secondaryText, fontSize: 14 },
               weight: 'medium'
@@ -374,6 +404,12 @@ const ManageRecoveryPhrase = ({
           onBackButtonPress={closeConfirmPassword}
         />
       </BottomSheet>
+      {isEditNameSheetMounted && !!savedSeed && (
+        <EditRecoveryPhraseNameBottomSheet
+          recoveryPhrase={savedSeed}
+          onClosed={unmountEditNameSheet}
+        />
+      )}
     </>
   )
 }

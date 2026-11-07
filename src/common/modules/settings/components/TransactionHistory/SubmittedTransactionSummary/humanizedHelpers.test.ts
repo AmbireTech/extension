@@ -3,8 +3,11 @@ import { ZeroAddress } from 'ethers'
 import { jest } from '@jest/globals'
 
 import { BROADCAST_OPTIONS } from '@ambire-common/libs/broadcast/broadcast'
+import { SAFE_APPROVE_HASH_ACTION } from '@ambire-common/libs/humanizer/modules/Safe'
+import { getAction, getAddressVisualization, getLabel } from '@ambire-common/libs/humanizer/utils'
 
 import type { SubmittedAccountOpLike } from '@ambire-common/libs/accountOp/submittedAccountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 
 import { getDappInteractionsFromHumanizedCalls, getHumanizedCalls } from './humanizedHelpers'
 
@@ -211,4 +214,44 @@ describe('getDappInteractions swap/bridge', () => {
       ).toEqual(['Send'])
     }
   )
+})
+
+describe('getDappInteractions Safe owner approval', () => {
+  const SAFE_ADDR = '0x5aFE000000000000000000000000000000000001'
+  const approvalCall = {
+    to: SAFE_ADDR,
+    value: 0n,
+    data: '0xd4d9bdcd0000000000000000000000000000000000000000000000000000000000000001'
+  }
+  const buildHumanizedCall = (fullVisualization: IrCall['fullVisualization']): IrCall => ({
+    ...approvalCall,
+    id: '0',
+    fullVisualization
+  })
+
+  test('shows a smart account approving a Safe transaction with the Safe icon instead of a send', () => {
+    const submittedAccountOp = buildSubmittedAccountOp({ calls: [approvalCall] })
+
+    const interactions = getDappInteractionsFromHumanizedCalls(submittedAccountOp, [
+      buildHumanizedCall([
+        getAction(SAFE_APPROVE_HASH_ACTION),
+        getLabel('of'),
+        getAddressVisualization(SAFE_ADDR)
+      ])
+    ])
+
+    expect(interactions).toEqual([
+      { id: 'fallback:safeApproval', name: 'Approve Safe transaction', iconType: 'safe' }
+    ])
+  })
+
+  test('does not show a call that only mentions the approval later on as one', () => {
+    const submittedAccountOp = buildSubmittedAccountOp({ calls: [approvalCall] })
+
+    const interactions = getDappInteractionsFromHumanizedCalls(submittedAccountOp, [
+      buildHumanizedCall([getAction('Send'), getLabel(SAFE_APPROVE_HASH_ACTION)])
+    ])
+
+    expect(interactions.map(({ id }) => id)).toEqual(['fallback:send'])
+  })
 })

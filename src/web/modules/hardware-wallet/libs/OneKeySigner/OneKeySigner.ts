@@ -2,8 +2,8 @@ import { getAddress, Signature, toBeHex, Transaction } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import {
-  ExternalKey,
   ExternalSignerController,
+  HdExternalKey,
   KeystoreSignerInterface
 } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
@@ -16,11 +16,11 @@ import OneKeyController, {
 } from '@web/modules/hardware-wallet/controllers/OneKeyController/OneKeyController'
 
 class OneKeySigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: OneKeyController | null = null
 
-  constructor(key: ExternalKey) {
+  constructor(key: HdExternalKey) {
     this.key = { ...key, isExternallyStored: true }
   }
 

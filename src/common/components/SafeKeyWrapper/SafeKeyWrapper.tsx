@@ -47,6 +47,8 @@ interface Props {
   type: Key['type']
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
   shouldSignAndClose?: boolean
+  /** Replaces the Sign label, e.g. for owners that approve onchain instead of signing */
+  signButtonText?: string
 }
 
 const SafeKeyWrapper = ({
@@ -58,7 +60,8 @@ const SafeKeyWrapper = ({
   onSign,
   addr,
   type,
-  shouldSignAndClose
+  shouldSignAndClose,
+  signButtonText
 }: Props) => {
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
@@ -75,7 +78,7 @@ const SafeKeyWrapper = ({
           <ButtonWithLoader
             type="primary"
             isLoading={isSignLoading}
-            text={t(shouldSignAndClose ? 'Sign & Close' : 'Sign')}
+            text={signButtonText || t(shouldSignAndClose ? 'Sign & Close' : 'Sign')}
             onPress={() => onSign(addr, type)}
             size="tiny"
             style={[styles.icon, { minWidth: 60 }, withMobileLayout && { height: 40 }]}
@@ -83,7 +86,8 @@ const SafeKeyWrapper = ({
         )}
         {isDisabled && !hasSigned && <NoEntryIcon width={18} height={18} style={styles.icon} />}
       </View>
-      {isSignLoading && <SafeGlobalLagWarning />}
+      {/* An onchain approval (signButtonText) is being prepared here, not sent to Safe Global */}
+      {isSignLoading && !signButtonText && <SafeGlobalLagWarning />}
     </View>
   )
 }

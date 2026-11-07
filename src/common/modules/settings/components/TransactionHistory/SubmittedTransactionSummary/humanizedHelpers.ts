@@ -4,6 +4,7 @@ import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { getCancelledNonce, isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
+import { SAFE_APPROVE_HASH_ACTION } from '@ambire-common/libs/humanizer/modules/Safe'
 import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
@@ -189,6 +190,22 @@ export const getDappInteractionsFromHumanizedCalls = (
       ...(gasTankToken?.type === 'token'
         ? { token: gasTankToken.address, amount: gasTankToken.value }
         : {})
+    })
+  }
+
+  // e.g. a smart account owner of a Safe approving its transaction, as it can't sign it
+  const isSafeApproval = humanizedCalls.some((call) => {
+    const firstVisualization = call.fullVisualization?.[0]
+    return (
+      firstVisualization?.type === 'action' &&
+      firstVisualization.content === SAFE_APPROVE_HASH_ACTION
+    )
+  })
+  if (isSafeApproval) {
+    addInteraction({
+      id: 'fallback:safeApproval',
+      name: 'Approve Safe transaction',
+      iconType: 'safe'
     })
   }
 

@@ -25,5 +25,5 @@ export type ModalsProps = Pick<
 > & {
   signAccountOpState: ISignAccountOpController | null
   autoOpen?: 'warnings' | 'gas-fee-updated'
-  actionType?: 'swapAndBridge' | 'transfer'
+  actionType?: 'swapAndBridge' | 'transfer' | 'safeOwnerApproval'
 }

@@ -11,8 +11,9 @@ import SidePanelEmptyState from '@web/components/SidePanelEmptyState'
 const selectNoState = () => null
 
 /**
- * Shown instead of the wallet when the Firefox sidebar is opened (e.g. from Firefox's sidebar
- * switcher, which always lists the extension) while side panel mode is off.
+ * Shown instead of the wallet when the side panel is opened while side panel mode is off (e.g.
+ * from Chrome's toolbar icon context menu or Firefox's sidebar switcher, which always lists the
+ * extension).
  */
 const SidePanelModeDisabledScreen = () => {
   const { t } = useTranslation()

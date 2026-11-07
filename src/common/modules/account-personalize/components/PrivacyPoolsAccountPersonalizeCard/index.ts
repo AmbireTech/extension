@@ -1,0 +1,3 @@
+import PrivacyPoolsAccountPersonalizeCard from './PrivacyPoolsAccountPersonalizeCard'
+
+export default PrivacyPoolsAccountPersonalizeCard

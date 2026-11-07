@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FlatList, ListRenderItemInfo, StyleSheet, View, ViewStyle } from 'react-native'
+import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel/Panel'
+import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -44,7 +46,7 @@ const RecoveryPhrasesSettingsScreen = () => {
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
-      const keysFromSeed = keys.filter((k) => k.meta.fromSeedId === seedId)
+      const keysFromSeed = keys.filter((k) => getKeySeedId(k) === seedId)
       const keysFromSeedAddr = keysFromSeed.map(({ addr }) => addr)
       return accounts.filter((a) => a.associatedKeys.some((k) => keysFromSeedAddr.includes(k)))
     },
@@ -78,19 +80,24 @@ const RecoveryPhrasesSettingsScreen = () => {
             !!associatedAccounts.length && spacings.mbSm
           ]}
         >
-          <Text weight="medium" numberOfLines={1} style={flexbox.flex1}>
-            {item.label}
-          </Text>
+          <View style={[flexbox.flex1, flexbox.alignStart, spacings.mrSm]}>
+            <Text weight="medium" numberOfLines={1}>
+              {item.label}
+            </Text>
+            {item.withPassphrase && (
+              <PassphraseBadge passphraseLabel={item.passphraseLabel} style={spacings.mtMi} />
+            )}
+          </View>
           <Button
             testID={`manage-recovery-phrase-${item.id}`}
             size="small"
-            type="ghost"
+            type="secondary"
             childrenPosition="left"
             text={t('Manage')}
             hasBottomSpacing={false}
             onPress={() => setRecoveryPhraseToManage(item)}
-            style={spacings.ph0}
-            innerContainerStyle={() => spacings.ph0 as ViewStyle}
+            // Secondary buttons share the card's background on mobile, so it takes the web one
+            style={{ backgroundColor: theme.primaryBackground }}
           >
             <SettingsIcon width={20} height={20} style={spacings.mrMi} color={theme.primaryText} />
           </Button>

@@ -366,7 +366,21 @@ module.exports = async function buildExtension(
         // are still escaped. Unescape them so the emitted file is valid JavaScript.
         return match[1].replace(/\\`/g, '`').replace(/\\\$/g, '$')
       }
-    }
+    },
+    // PQ1 hardware-wallet clear-signing catalogs (ERC-20 metadata, address
+    // names, ERC-7730 descriptors, function names) from the `pq1-sdk-catalogs`
+    // package. Fetched lazily from the extension's own assets by `pq1-sdk`
+    // (see `src/web/modules/hardware-wallet/libs/pq1/context.ts`); the README
+    // in `libs/pq1/` says why they ship with the build. Chromium builds only:
+    // PQ1 needs WebHID, which Firefox and Safari don't have.
+    ...(isWebkit && !isSafari
+      ? [
+          {
+            from: './node_modules/pq1-sdk-catalogs/data',
+            to: 'pq1'
+          }
+        ]
+      : [])
   ]
 
   config.plugins = [
@@ -402,7 +416,7 @@ module.exports = async function buildExtension(
       inject: 'body', // to auto inject the main.js bundle in the body
       chunks: ['runtime', 'main'] // include only chunks from the main entry
     }),
-    ...((isWebkit && !isSafari) || isGecko
+    ...(isWebkit && !isSafari
       ? [
           new HtmlWebpackPlugin({
             template: './src/web/public/onekey-offscreen.html',
@@ -412,14 +426,19 @@ module.exports = async function buildExtension(
           })
         ]
       : []),
-    ...(isWebkit && !isSafari
+    // Chrome's side panel and Firefox's sidebar (side_panel / sidebar_action in the manifest)
+    ...((isWebkit && !isSafari) || isGecko
       ? [
           new HtmlWebpackPlugin({
             template: './src/web/public/side-panel.html',
             filename: 'side-panel.html',
             inject: 'body',
-            chunks: ['runtime', 'rootTheme', 'main']
-          }),
+            chunks: ['runtime', 'main']
+          })
+        ]
+      : []),
+    ...(isWebkit && !isSafari
+      ? [
           new HtmlWebpackPlugin({
             template: './src/web/public/privacy-pools-prover.html',
             filename: 'privacy-pools-prover.html',

@@ -3,8 +3,8 @@ import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
-import FatToggle from '@common/components/FatToggle'
 import InputPassword from '@common/components/InputPassword'
+import PassphraseToggle from '@common/components/PassphraseToggle'
 import { useTranslation } from '@common/config/localization'
 import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
@@ -25,7 +25,9 @@ const SeedPhraseImportScreen = () => {
     control,
     isValid,
     enablePassphrase,
-    setEnablePassphrase,
+    toggleEnablePassphrase,
+    shouldSavePassphrase,
+    toggleShouldSavePassphrase,
     seedPhraseStatus,
     seedPhraseError,
     seedCaretPosition,
@@ -79,35 +81,42 @@ const SeedPhraseImportScreen = () => {
             </View>
           )}
         />
-        <FatToggle
+        <PassphraseToggle
           testID="enable-passphrase-toggle"
+          title={t('I have a passphrase')}
+          description={t('Not sure? Leave it off.')}
           isOn={enablePassphrase}
-          onToggle={() => setEnablePassphrase((prev) => !prev)}
-          label={t('Advanced mode')}
-          width={44}
-          height={24}
-          style={flexbox.alignSelfStart}
+          onToggle={toggleEnablePassphrase}
         />
         {enablePassphrase ? (
-          <View style={styles.passphraseContainer}>
-            <Controller
-              control={control}
-              rules={{ required: enablePassphrase }}
-              render={({ field: { onChange, onBlur, value } }) => (
-                <InputPassword
-                  {...NO_AUTOFILL_PROPS}
-                  testID="input-passphrase"
-                  onBlur={onBlur}
-                  backgroundColor={theme.secondaryBackground}
-                  onChangeText={onChange}
-                  value={value}
-                  placeholder="Recovery phrase passphrase"
-                  containerStyle={flexbox.flex1}
-                />
-              )}
-              name="passphrase"
+          <>
+            <View style={styles.passphraseContainer}>
+              <Controller
+                control={control}
+                rules={{ required: enablePassphrase }}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <InputPassword
+                    {...NO_AUTOFILL_PROPS}
+                    testID="input-passphrase"
+                    onBlur={onBlur}
+                    backgroundColor={theme.secondaryBackground}
+                    onChangeText={onChange}
+                    value={value}
+                    placeholder="Passphrase"
+                    containerStyle={flexbox.flex1}
+                  />
+                )}
+                name="passphrase"
+              />
+            </View>
+            <PassphraseToggle
+              testID="save-passphrase-toggle"
+              title={t('Save passphrase')}
+              description={t("You won't be asked for it next time you add accounts.")}
+              isOn={shouldSavePassphrase}
+              onToggle={toggleShouldSavePassphrase}
             />
-          </View>
+          </>
         ) : null}
         <View style={flexbox.flex1} />
       </MobileLayoutWrapperMainContent>

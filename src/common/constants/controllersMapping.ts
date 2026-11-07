@@ -39,6 +39,7 @@ import QrHardwareController from '@common/modules/hardware-wallets/controllers/Q
 import { createExhaustiveArray } from '@common/utils/createExhaustiveArray'
 
 import type { ExtensionUpdateController } from '@web/extension-services/background/controllers/extension-update'
+import type PQ1Controller from '@web/modules/hardware-wallet/controllers/PQ1Controller'
 
 export type ControllersNestedInMainMappingType = {
   StorageController: StorageController
@@ -126,6 +127,7 @@ export type AllControllersMappingType = {
   WalletStateController: WalletStateController
   AutoLockController: AutoLockController
   ExtensionUpdateController: ExtensionUpdateController
+  PQ1Controller: PQ1Controller
 } & ControllersNestedInMainMappingType
 
 export const allControllersMapping = createExhaustiveArray<AllControllersMappingType>()([
@@ -133,5 +135,6 @@ export const allControllersMapping = createExhaustiveArray<AllControllersMapping
   'WalletStateController',
   'AutoLockController',
   'ExtensionUpdateController',
+  'PQ1Controller',
   ...controllersNestedInMainMapping
 ] as const)

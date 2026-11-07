@@ -11,6 +11,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import { ACCENT_PRIMITIVES } from '@common/styles/theme/primitives'
 import { THEME_TYPES } from '@common/styles/theme/types'
+import { snapSliderAmount } from '@common/utils/amountSlider'
 
 import { getSliderMarks, Mark, SLIDER_STEPS } from './getSliderMarks'
 import getStyles, { MARK_SIZE } from './styles'
@@ -21,7 +22,8 @@ const EDGE_MARK_INSET = 1
 const ACCESSIBILITY_STEP = SLIDER_STEPS / 20n
 const ACCESSIBILITY_ACTIONS = [{ name: 'increment' }, { name: 'decrement' }] as const
 // A press is a deliberate "give me that mark", so pressing within this many px of a dot (or of
-// either end of the track) lands exactly on it. A drag never snaps - it is a fine adjustment.
+// either end of the track) lands exactly on it. A drag never snaps to a dot - it is a fine
+// adjustment, rounded only to the nearest nice amount (see snapSliderAmount).
 const PRESS_SNAP_RADIUS = 24
 // Linearly maps x from [fromStart, fromEnd] onto [toStart, toEnd].
 const interpolate = (
@@ -116,7 +118,19 @@ const AmountSlider = ({
   const [width, setWidth] = useState(0)
   const isDisabled = disabled || maximumValue <= 0n
   const clampedValue = value < 0n ? 0n : value > maximumValue ? maximumValue : value
-  const sliderStep = maximumValue > 0n ? (clampedValue * SLIDER_STEPS) / maximumValue : 0n
+  // Every dot on the track, on the slider's own axis - the same list a press snaps onto.
+  const sliderMarks = useMemo(
+    () => getSliderMarks({ marks, maximumValue, tierOffset }),
+    [marks, maximumValue, tierOffset]
+  )
+  // A quarter dot sets a rounded amount but stays drawn at its exact quarter, so on a dot's amount
+  // the thumb sits on the dot itself rather than wherever that rounded amount would put it.
+  const sliderStep = useMemo(() => {
+    const markAtValue = sliderMarks.find((mark) => mark.amount === clampedValue)
+    if (markAtValue) return markAtValue.steps
+
+    return maximumValue > 0n ? (clampedValue * SLIDER_STEPS) / maximumValue : 0n
+  }, [clampedValue, maximumValue, sliderMarks])
   // Values live on the track's own axis, edge to edge, so a mark and the thumb picking it out
   // always land on the same spot.
   const fractionOfWidth = useCallback(
@@ -175,9 +189,8 @@ const AmountSlider = ({
     return segments
   }, [clampedValue, maximumValue, tierBoundaries, tierOffset])
   const progressWidth = Math.max(fractionOfWidth(sliderStep), 0)
-  // Every dot on the track, on the slider's own axis - the same list the drag snaps onto.
   const markers = useMemo(() => {
-    return getSliderMarks({ marks, maximumValue, tierOffset }).map((mark) => {
+    return sliderMarks.map((mark) => {
       const position = fractionOfWidth(mark.steps)
       // Every dot but one sitting at either end of the track is centered on its own position.
       // Those are pulled fully inside the track instead, so they sit flush with its rounded caps
@@ -195,7 +208,7 @@ const AmountSlider = ({
         left: position + edgeOffset
       }
     })
-  }, [fractionOfWidth, marks, maximumValue, tierOffset, width])
+  }, [fractionOfWidth, sliderMarks, width])
 
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { width: nextWidth } = event.nativeEvent.layout
@@ -246,7 +259,7 @@ const AmountSlider = ({
     (position: number) => {
       const rawStep = Math.round((position / width) * Number(SLIDER_STEPS))
       const nextStep = BigInt(Math.min(Math.max(rawStep, 0), Number(SLIDER_STEPS)))
-      emitValueChange((maximumValue * nextStep) / SLIDER_STEPS)
+      emitValueChange(snapSliderAmount((maximumValue * nextStep) / SLIDER_STEPS, maximumValue))
     },
     [emitValueChange, maximumValue, width]
   )
@@ -368,7 +381,7 @@ const AmountSlider = ({
       const direction = event.nativeEvent.actionName === 'increment' ? 1n : -1n
       const nextStep = sliderStep + ACCESSIBILITY_STEP * direction
       const clampedStep = nextStep < 0n ? 0n : nextStep > SLIDER_STEPS ? SLIDER_STEPS : nextStep
-      emitValueChange((maximumValue * clampedStep) / SLIDER_STEPS)
+      emitValueChange(snapSliderAmount((maximumValue * clampedStep) / SLIDER_STEPS, maximumValue))
     },
     [emitValueChange, isDisabled, maximumValue, sliderStep]
   )

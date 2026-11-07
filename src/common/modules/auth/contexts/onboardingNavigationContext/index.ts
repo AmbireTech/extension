@@ -1,6 +1,7 @@
 import {
   OnboardingNavigationContext,
-  OnboardingNavigationProvider
+  OnboardingNavigationProvider,
+  selectHasAccountAddingFlow
 } from './onboardingNavigationContext'
 
-export { OnboardingNavigationContext, OnboardingNavigationProvider }
+export { OnboardingNavigationContext, OnboardingNavigationProvider, selectHasAccountAddingFlow }

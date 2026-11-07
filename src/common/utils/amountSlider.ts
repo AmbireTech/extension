@@ -1,29 +1,93 @@
-import { formatUnits } from 'ethers'
+import { formatUnits, parseUnits } from 'ethers'
 
-const SLIDER_AMOUNT_DECIMALS = 2
-// The cut may never be coarser than this share of the range, or a small balance (e.g. 0.0372)
-// leaves the drag only a few reachable amounts and the thumb jumps between them.
-const MAX_CUT_SHARE_OF_RANGE = 1000n
+import { convertTokenPriceToBigInt } from '@ambire-common/utils/numbers/formatters'
+
+/** The precision a slider moving a USD amount works in - whole cents. */
+export const SLIDER_FIAT_DECIMALS = 2
+
+// The step is the largest 1-2-5 multiple of a power of ten that leaves at least this many amounts
+// along the track - one per whole percentage, so a drag can still pick any of them, while the
+// amounts it picks stay round.
+const MIN_SLIDER_POSITIONS = 100n
+const NICE_STEP_MULTIPLIERS = [5n, 2n, 1n]
 
 /**
- * The amount the amount slider writes into the field, cut down to 2 decimals so a drag doesn't
- * fill it with up to 18 digits of noise - or to more decimals on a balance too small for 2 to
- * slide smoothly. The maximum stays exact, so the whole balance can still be picked, and so does
- * an amount the cut would wipe out entirely.
+ * The "nice" step a slider over `maximumValue` moves in: 1, 2 or 5 times a power of ten, in the
+ * unit's smallest denomination. Because the unit's decimals are a power of ten too, the step reads
+ * as round in whole units as well (e.g. $10, 0.0002 ETH). It is never more than 1% of the range,
+ * so every whole percentage has an amount to land on. A range too small to split into
+ * `MIN_SLIDER_POSITIONS` moves by the smallest denomination itself (e.g. by 1 cent below $1).
  */
-export const getSliderAmountFieldValue = (
-  amount: bigint,
-  maximumValue: bigint,
-  decimals: number
-) => {
-  let smallestKeptUnit = 10n ** BigInt(Math.max(decimals - SLIDER_AMOUNT_DECIMALS, 0))
-  while (smallestKeptUnit > 1n && smallestKeptUnit * MAX_CUT_SHARE_OF_RANGE > maximumValue) {
-    smallestKeptUnit /= 10n
-  }
-  const truncatedAmount = amount - (amount % smallestKeptUnit)
-  const fieldAmount = amount >= maximumValue || truncatedAmount <= 0n ? amount : truncatedAmount
-  const formattedAmount = formatUnits(fieldAmount, decimals)
+export const getNiceSliderStep = (maximumValue: bigint) => {
+  const maximumStep = maximumValue / MIN_SLIDER_POSITIONS
+  if (maximumStep <= 1n) return 1n
+
+  const magnitude = 10n ** BigInt(maximumStep.toString().length - 1)
+  const multiplier =
+    NICE_STEP_MULTIPLIERS.find((niceMultiplier) => niceMultiplier * magnitude <= maximumStep) ?? 1n
+
+  return multiplier * magnitude
+}
+
+/**
+ * Rounds a slider amount to the nearest multiple of its nice step (see `getNiceSliderStep`), so a
+ * drag picks amounts like $20 or 0.05 ETH instead of $11.12 or 0.01137 ETH. Zero and the maximum
+ * stay exact. An amount that would round past the maximum stays on the last step below it instead,
+ * so a drag that stops just short of the end doesn't pick the whole balance.
+ */
+export const snapSliderAmount = (amount: bigint, maximumValue: bigint) => {
+  if (amount <= 0n) return 0n
+  if (amount >= maximumValue) return maximumValue
+
+  const step = getNiceSliderStep(maximumValue)
+  const snappedAmount = ((amount + step / 2n) / step) * step
+
+  return snappedAmount <= maximumValue ? snappedAmount : maximumValue - (maximumValue % step)
+}
+
+/**
+ * A slider amount as amount field text. Only formats it: the slider already rounds what it emits
+ * (see `snapSliderAmount`), and what it doesn't round - the maximum, the caller's own marks - must
+ * stay exact.
+ */
+export const getSliderAmountFieldValue = (amount: bigint, decimals: number) => {
+  const formattedAmount = formatUnits(amount, decimals)
 
   // formatUnits always keeps a decimal, which reads as noise on a whole amount ("413.0")
   return formattedAmount.endsWith('.0') ? formattedAmount.slice(0, -2) : formattedAmount
+}
+
+/**
+ * An amount field's text as a slider amount in the unit's smallest denomination. The field holds
+ * whatever was typed into it, so it can carry more decimals than the unit allows. `parseUnits`
+ * rejects those outright, and the slider is better off sitting at the truncated amount than
+ * snapping back to zero mid-typing.
+ */
+export const parseSliderAmount = (value: string, decimals: number) => {
+  const [whole, fraction] = (value || '0').split('.')
+  const fractionDigits = fraction ? fraction.slice(0, decimals) : ''
+  const truncated = fractionDigits ? `${whole || '0'}.${fractionDigits}` : whole || '0'
+
+  try {
+    return parseUnits(truncated, decimals)
+  } catch {
+    return 0n
+  }
+}
+
+/**
+ * A token amount priced in USD, in `SLIDER_FIAT_DECIMALS` units - the axis a slider moves on while
+ * the field shows USD. Uses the controllers' bigint math and rounds down, so a slider's range never
+ * reaches past what the account actually holds. Zero without a price.
+ */
+export const toFiatSliderAmount = (amount: bigint, decimals: number, tokenUsdPrice?: number) => {
+  if (!tokenUsdPrice) return 0n
+
+  const { tokenPriceBigInt, tokenPriceDecimals } = convertTokenPriceToBigInt(tokenUsdPrice)
+  const fiatAmount = amount * tokenPriceBigInt
+  const excessDecimals = decimals + tokenPriceDecimals - SLIDER_FIAT_DECIMALS
+
+  return excessDecimals >= 0
+    ? fiatAmount / 10n ** BigInt(excessDecimals)
+    : fiatAmount * 10n ** BigInt(-excessDecimals)
 }

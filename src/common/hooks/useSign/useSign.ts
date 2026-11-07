@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
-import { SignAccountOpType } from '@ambire-common/controllers/signAccountOp/helper'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
+import useCallSignAccountOpMethod, {
+  getSignAccountOpType
+} from '@common/hooks/useCallSignAccountOpMethod'
 import useController from '@common/hooks/useController'
 import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useExtremeGasFeeWarning from '@common/hooks/useExtremeGasFeeWarning'
@@ -16,7 +18,6 @@ import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useOneKey from '@common/modules/hardware-wallets/hooks/useOneKey'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
 import { OneClickEstimationProps } from '@common/modules/sign-account-op/components/OneClick/Estimation/Estimation'
-import useSignAccountOpMethodDispatch from '@common/modules/sign-account-op/hooks/useSignAccountOpMethodDispatch'
 import { getIsSignLoading } from '@web/modules/sign-account-op/utils/helpers'
 
 import type { SignAccountOpUpdateProps } from '@ambire-common/controllers/signAccountOp/signAccountOp'
@@ -47,6 +48,10 @@ const PRIMARY_BUTTON_LABELS: Record<
   Safe: {
     default: 'Begin signing',
     isLoading: 'Close signing'
+  },
+  SafeOwnerApproval: {
+    default: 'Approve',
+    isLoading: 'Approving...'
   }
 }
 
@@ -74,7 +79,6 @@ const useSign = ({
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { dispatch: mainControllerDispatch } = useController('MainController')
-  const dispatchSignAccountOpMethod = useSignAccountOpMethodDispatch(updateType)
   const {
     state: { accountStates }
   } = useController('AccountsController')
@@ -287,18 +291,12 @@ const useSign = ({
     [acknowledgedWarnings, isOneClickSign, signAccountOpState?.warnings]
   )
 
+  const signAccountOpType = getSignAccountOpType(updateType)
+  const callSignAccountOpMethod = useCallSignAccountOpMethod(signAccountOpType)
+
   const handleBroadcast = useCallback(() => {
     if (!signAccountOpState) return // should never happen
 
-    let type: SignAccountOpType = 'default'
-
-    if (updateType === 'Swap&Bridge') {
-      type = 'one-click-swap-and-bridge'
-    }
-
-    if (updateType === 'Transfer&TopUp') {
-      type = 'one-click-transfer'
-    }
     mainControllerDispatch({
       type: 'method',
       params: {
@@ -306,15 +304,14 @@ const useSign = ({
         // Pass the id of the accountOp the user is reviewing on screen. The
         // background compares it against the live accountOp before signing to
         // reject signing calls that were appended after this review.
-        args: [type, signAccountOpState.fromRequestId, signAccountOpState.accountOp.id]
+        args: [signAccountOpType, signAccountOpState.fromRequestId, signAccountOpState.accountOp.id]
       }
     })
-  }, [mainControllerDispatch, signAccountOpState, updateType])
+  }, [mainControllerDispatch, signAccountOpState, signAccountOpType])
 
-  const dismissGasFeeChangedConfirmation = useCallback(
-    () => dispatchSignAccountOpMethod('dismissGasFeeChangedConfirmation', []),
-    [dispatchSignAccountOpMethod]
-  )
+  const dismissGasFeeChangedConfirmation = useCallback(() => {
+    callSignAccountOpMethod('dismissGasFeeChangedConfirmation', [])
+  }, [callSignAccountOpMethod])
 
   const handleDismissGasFeeUpdate = useCallback(() => {
     dismissGasFeeChangedConfirmation()
@@ -620,8 +617,12 @@ const useSign = ({
         signAccountOpState?.accountOp.chainId.toString()
       ]?.isDeployed
 
-    return isDeployed && noKeysImported
+    // smart account owners approve with a transaction of their own instead of a key
+    const hasSmartAccountOwners = !!signAccountOpState.safeSmartAccountOwners.length
+
+    return isDeployed && noKeysImported && !hasSmartAccountOwners
   }, [
+    signAccountOpState?.safeSmartAccountOwners,
     signAccountOpState?.accountKeyStoreKeys,
     accountStates,
     signAccountOpState?.account,

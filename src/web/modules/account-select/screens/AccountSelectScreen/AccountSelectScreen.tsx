@@ -115,7 +115,7 @@ const AccountSelectScreen = () => {
   const {
     accounts,
     control,
-    search,
+    debouncedSearch,
     keyExtractor,
     getItemLayout,
     onAccountExtraHeightChange,
@@ -147,8 +147,8 @@ const AccountSelectScreen = () => {
   )
 
   const filteredPrivacyPoolsAccounts = useMemo(
-    () => filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')),
-    [privacyPoolsAccounts, search, t]
+    () => filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, debouncedSearch, t),
+    [privacyPoolsAccounts, debouncedSearch, t]
   )
 
   const renderItem = useCallback(

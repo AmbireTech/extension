@@ -12,7 +12,9 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
-  account: Account
+  /** See `account` and `identity` of `EditAccountNameBottomSheet` */
+  account?: Account
+  identity?: React.ReactNode
   /** The name as currently stored - see `currentName` of `EditAccountNameBottomSheet` */
   name: string
   /** See `onSave` of `EditAccountNameBottomSheet` */
@@ -27,6 +29,7 @@ type Props = {
  */
 const EditableAccountName = ({
   account,
+  identity,
   name,
   onSave,
   textProps,
@@ -68,6 +71,7 @@ const EditableAccountName = ({
       {isSheetMounted && (
         <EditAccountNameBottomSheet
           account={account}
+          identity={identity}
           currentName={name}
           onSave={onSave}
           onClosed={unmountSheet}

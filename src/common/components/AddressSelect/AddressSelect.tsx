@@ -426,11 +426,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const filteredPrivacyPoolsAccounts = useMemo(
     () =>
       privacyPoolsAccounts && onSelectPrivacyPoolsAccount
-        ? filterPrivacyPoolsAccountsBySearch(
-            privacyPoolsAccounts,
-            privacyPoolsSearch,
-            t('Privacy Pools')
-          )
+        ? filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, privacyPoolsSearch, t)
         : NO_PRIVACY_POOLS_ACCOUNTS,
     [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, privacyPoolsSearch, t]
   )
@@ -464,9 +460,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const privacyPoolsAccountOptions = useMemo(
     () =>
-      filteredPrivacyPoolsAccounts.map(({ seedId, label }) => ({
+      filteredPrivacyPoolsAccounts.map(({ seedId, label, sourceLabel }) => ({
         value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
-        // Named like in the accounts list: the account has no name or address of its own
+        // Named like in the accounts list: the account has no address of its own
         label: (
           <View
             testID={`address-book-privacy-pools-account-${seedId}`}
@@ -475,10 +471,10 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
             <View style={flexbox.flex1}>
               <Text fontSize={14} weight="medium" numberOfLines={1}>
-                {t('Private account')}
+                {label}
               </Text>
               <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-                {t('Added from {{seedLabel}}', { seedLabel: label })}
+                {t('From {{seedLabel}}', { seedLabel: sourceLabel })}
               </Text>
             </View>
           </View>

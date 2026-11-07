@@ -1,6 +1,7 @@
 let mockEngine: 'webkit' | 'gecko' = 'webkit'
 const mockStorageLocalGet = jest.fn(async (): Promise<Record<string, unknown>> => ({}))
 const mockScheduleDappTabFocusDispatch = jest.fn()
+let mockChromeSidePanelApi: { setOptions: jest.Mock; setPanelBehavior: jest.Mock } | undefined
 
 jest.mock('@web/constants/browserapi', () => ({
   get engine() {
@@ -17,7 +18,7 @@ jest.mock('@web/extension-services/background/handlers/dispatchDappTabFocus', ()
 jest.mock('@web/extension-services/messengers', () => ({}))
 jest.mock('@web/utils/sidePanel', () => ({
   FIREFOX_SIDEBAR_IS_ON_LEFT_STORAGE_KEY: 'isFirefoxSidebarOnLeft',
-  getChromeSidePanelApi: () => undefined,
+  getChromeSidePanelApi: () => mockChromeSidePanelApi,
   getFirefoxSidebarApi: () => undefined
 }))
 
@@ -42,6 +43,44 @@ const loadPanel = (engine: 'webkit' | 'gecko'): PanelModule => {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockChromeSidePanelApi = undefined
+})
+
+describe('applyPanelMode on Chrome', () => {
+  const mockSetPopup = jest.fn()
+
+  beforeEach(() => {
+    mockChromeSidePanelApi = { setOptions: jest.fn(), setPanelBehavior: jest.fn() }
+    ;(global as any).chrome = { action: { setPopup: mockSetPopup } }
+  })
+
+  afterEach(() => {
+    delete (global as any).chrome
+  })
+
+  it('keeps the side panel enabled while the mode is off, so it stays in the context menu', async () => {
+    const { applyPanelMode } = loadPanel('webkit')
+
+    await applyPanelMode(false)
+
+    expect(mockChromeSidePanelApi!.setOptions).toHaveBeenCalledWith({ enabled: true })
+    expect(mockChromeSidePanelApi!.setPanelBehavior).toHaveBeenCalledWith({
+      openPanelOnActionClick: false
+    })
+    expect(mockSetPopup).toHaveBeenCalledWith({ popup: 'index.html' })
+  })
+
+  it('opens the side panel from the toolbar action while the mode is on', async () => {
+    const { applyPanelMode } = loadPanel('webkit')
+
+    await applyPanelMode(true)
+
+    expect(mockChromeSidePanelApi!.setOptions).toHaveBeenCalledWith({ enabled: true })
+    expect(mockChromeSidePanelApi!.setPanelBehavior).toHaveBeenCalledWith({
+      openPanelOnActionClick: true
+    })
+    expect(mockSetPopup).toHaveBeenCalledWith({ popup: '' })
+  })
 })
 
 describe('panel manager isOpen', () => {

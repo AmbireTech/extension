@@ -11,6 +11,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import AccountsLoadingAnimation from '@common/modules/account-personalize/components/AccountsLoadingAnimation'
 import PersonalizeAccountsList from '@common/modules/account-personalize/components/PersonalizeAccountsList'
+import PrivacyPoolsAccountPersonalizeCard from '@common/modules/account-personalize/components/PrivacyPoolsAccountPersonalizeCard'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
 import SafeCreateSummary from '@common/modules/auth/components/SafeCreateSummary'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
@@ -43,6 +44,8 @@ const AccountPersonalizeScreen = () => {
     canProceed,
     handleSaveAccountName,
     handleProceed,
+    privacyPoolsAccount,
+    handleSavePrivacyPoolsAccountName,
     title,
     proceedText,
     removalOnlyText,
@@ -127,17 +130,26 @@ const AccountPersonalizeScreen = () => {
                 {removalOnlyText}
               </Text>
             )}
-            <PersonalizeAccountsList
-              fields={fields}
-              control={control}
-              accountsToRemove={accountsToRemove}
-              isAdding={isAdding}
-              onSaveName={handleSaveAccountName}
-              removalNote={removalNote}
-              ListEmptyComponent={listEmpty}
-              footer={SAFE_CREATE_SUMMARY}
-              style={flexbox.flex1}
-            />
+            {privacyPoolsAccount ? (
+              <PrivacyPoolsAccountPersonalizeCard
+                name={privacyPoolsAccount.name}
+                sourceText={privacyPoolsAccount.sourceText}
+                disableEdit={isAdding}
+                onSaveName={handleSavePrivacyPoolsAccountName}
+              />
+            ) : (
+              <PersonalizeAccountsList
+                fields={fields}
+                control={control}
+                accountsToRemove={accountsToRemove}
+                isAdding={isAdding}
+                onSaveName={handleSaveAccountName}
+                removalNote={removalNote}
+                ListEmptyComponent={listEmpty}
+                footer={SAFE_CREATE_SUMMARY}
+                style={flexbox.flex1}
+              />
+            )}
           </>
         )}
       </MobileLayoutWrapperMainContent>
