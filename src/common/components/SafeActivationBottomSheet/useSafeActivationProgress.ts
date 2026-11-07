@@ -52,7 +52,9 @@ const useSafeActivationProgress = (account: Account | null) => {
       if (!accountAddr) return ''
 
       return (state.broadcastedButNotConfirmed[accountAddr] || [])
-        .flatMap((accountOp) => (accountOp.meta?.isSafeDeploy ? [accountOp.chainId.toString()] : []))
+        .flatMap((accountOp) =>
+          accountOp.meta?.isSafeDeploy ? [accountOp.chainId.toString()] : []
+        )
         .join(',')
     },
     [accountAddr]

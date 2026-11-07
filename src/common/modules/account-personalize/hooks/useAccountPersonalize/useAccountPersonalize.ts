@@ -97,13 +97,10 @@ export default function useAccountPersonalize() {
     () => accounts.filter(({ addr }) => addr.toLowerCase() === existingSafeAddr?.toLowerCase()),
     [accounts, existingSafeAddr]
   )
-  const getAccountsToName = () => {
-    if (isSyncedMode) return syncedAccounts
-    if (isExistingSafeMode) return existingSafeAccounts
-
-    return readyToAddAccounts
-  }
-  const accountsToName = getAccountsToName()
+  // Without a sync: the Safe found in the wallet, or what the flow prepared. Plain expressions
+  // rather than a function, which keeps the React Compiler optimizing the callbacks below
+  const unsyncedAccountsToName = isExistingSafeMode ? existingSafeAccounts : readyToAddAccounts
+  const accountsToName = isSyncedMode ? syncedAccounts : unsyncedAccountsToName
   const accountsToRemove = isSyncedMode ? NO_ACCOUNTS : readyToRemoveAccounts
 
   // A sync has added its accounts already, so there is nothing to go back to - only Proceed
@@ -312,7 +309,10 @@ export default function useAccountPersonalize() {
         type: 'method',
         params: { method: 'updateAccountPreferences', args: [names] }
       })
-      mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [existingSafeAddr] } })
+      mainDispatch({
+        type: 'method',
+        params: { method: 'selectAccount', args: [existingSafeAddr] }
+      })
       isProceedingRef.current = false
       goToNextRouteRef.current('/')
       return
@@ -359,7 +359,6 @@ export default function useAccountPersonalize() {
     setIsAdding(false)
   }, [
     isSyncedMode,
-    isExistingSafeMode,
     existingSafeAddr,
     mainDispatch,
     getValues,
