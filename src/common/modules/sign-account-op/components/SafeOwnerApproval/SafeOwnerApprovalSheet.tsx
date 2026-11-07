@@ -2,6 +2,7 @@ import React, { Suspense, useCallback } from 'react'
 import { useModalize } from 'react-native-modalize'
 
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
+import { isMobile } from '@common/config/env'
 import OneClickEstimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 
@@ -18,23 +19,25 @@ type Props = {
  */
 const SafeOwnerApprovalSheet = ({ approval, onClose, Modals }: Props) => {
   const { ref: sheetRef, close: closeSheet } = useModalize()
+  // On mobile, OneClickEstimation reports every close (dragging the sheet down too) with
+  // onEstimationModalClosed, so onClose runs from there. On web it doesn't, so it runs here
   const handleClose = useCallback(() => {
     closeSheet()
-    onClose()
+    if (!isMobile) onClose()
   }, [closeSheet, onClose])
 
   return (
     // lazy loaded on web
     <Suspense fallback={null}>
       <OneClickEstimation
-      updateType="SafeOwnerApproval"
-      estimationModalRef={sheetRef}
-      closeEstimationModal={handleClose}
-      onEstimationModalClosed={onClose}
-      hasProceeded
-      signAccountOpController={approval}
-      shouldShowTxnDetails
-      Modals={Modals}
+        updateType="SafeOwnerApproval"
+        estimationModalRef={sheetRef}
+        closeEstimationModal={handleClose}
+        onEstimationModalClosed={onClose}
+        hasProceeded
+        signAccountOpController={approval}
+        shouldShowTxnDetails
+        Modals={Modals}
       />
     </Suspense>
   )
