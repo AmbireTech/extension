@@ -1,5 +1,5 @@
-import { BlurView } from 'expo-blur'
-import React, { FC, useCallback, useMemo } from 'react'
+import { BlurTargetView, BlurView } from 'expo-blur'
+import React, { FC, useCallback, useMemo, useRef } from 'react'
 import { StyleSheet, View } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -34,6 +34,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
   const { t } = useTranslation()
 
   const { theme, themeType, styles } = useTheme(getStyles)
+  const blurTargetRef = useRef<View>(null)
   const { addToast } = useToast()
 
   const visibilityButtonText = useMemo(() => {
@@ -67,27 +68,31 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
         <View
           style={[
             blurred ? styles.blurred : styles.notBlurred,
-            spacings.pvMd,
-            spacings.phMd,
             {
               borderRadius: BORDER_RADIUS_PRIMARY,
-              overflow: 'hidden',
-              backgroundColor: theme.secondaryBackground
+              overflow: 'hidden'
             }
           ]}
         >
-          <Text testID="private-key-value" fontSize={14} color={theme.secondaryText}>
-            {/* Before the key is revealed, render a dummy hex so the blur (CSS filter on web,
-                BlurView on native) has something to obscure instead of showing a flat solid box */}
-            {privateKey || PLACEHOLDER_PRIVATE_KEY}
-          </Text>
+          {/* Fills the box, so the Android BlurView has the whole area to blur */}
+          <BlurTargetView
+            ref={blurTargetRef}
+            style={[spacings.pvMd, spacings.phMd, { backgroundColor: theme.secondaryBackground }]}
+          >
+            <Text testID="private-key-value" fontSize={14} color={theme.secondaryText}>
+              {/* Before the key is revealed, render a dummy hex so the blur (CSS filter on web,
+                  BlurView on native) has something to obscure instead of showing a flat solid box */}
+              {privateKey || PLACEHOLDER_PRIVATE_KEY}
+            </Text>
+          </BlurTargetView>
           {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView to hide the key */}
           {isMobile && blurred && (
             <BlurView
               intensity={12}
               // Android renders a barely visible tint instead of a blur unless this
-              // experimental method is on, leaving the phrase readable
-              experimentalBlurMethod="dimezisBlurView"
+              // method is on and pointed at the content, leaving the phrase readable
+              blurMethod="dimezisBlurView"
+              blurTarget={blurTargetRef}
               blurReductionFactor={1}
               tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
               style={StyleSheet.absoluteFill}

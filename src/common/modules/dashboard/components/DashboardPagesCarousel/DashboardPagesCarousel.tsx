@@ -3,7 +3,6 @@ import {
   Animated,
   Dimensions,
   Easing,
-  InteractionManager,
   LayoutChangeEvent,
   GestureResponderEvent,
   Keyboard,
@@ -40,6 +39,7 @@ import {
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import runWhenIdle from '@common/utils/runWhenIdle'
 
 import CarouselPage from './CarouselPage'
 import DashboardCarouselContext, {
@@ -149,13 +149,13 @@ const WhileFocused = ({
       timeoutId = setTimeout(() => renderFrom(index + 1), PAGE_RENDER_STEP)
     }
 
-    const interaction = InteractionManager.runAfterInteractions(() => {
+    const cancelIdleRender = runWhenIdle(() => {
       timeoutId = setTimeout(() => renderFrom(0), PAGE_RENDER_DELAY)
     })
 
     return () => {
       isCancelled = true
-      interaction.cancel()
+      cancelIdleRender()
       if (timeoutId) clearTimeout(timeoutId)
     }
   }, [isScreenFocused, openTabIndex, renderTabs, tabs])
@@ -165,9 +165,7 @@ const WhileFocused = ({
   useEffect(() => {
     if (!isScreenFocused) return undefined
 
-    const interaction = InteractionManager.runAfterInteractions(initAllTabs)
-
-    return () => interaction.cancel()
+    return runWhenIdle(initAllTabs)
   }, [initAllTabs, isScreenFocused])
 
   return null

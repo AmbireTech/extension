@@ -33,7 +33,7 @@ const getStyles = (theme: ThemeProps) =>
       overflow: 'hidden'
     },
     cardGradient: {
-      ...StyleSheet.absoluteFillObject
+      ...StyleSheet.absoluteFill
     },
     cardContent: {
       ...spacings.phSm,

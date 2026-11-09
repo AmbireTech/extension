@@ -88,11 +88,11 @@ const materializeWorkerBundle = async (): Promise<string | null> => {
 
     // JS first, then the HTML that pins it, then the version marker LAST - so a crash
     // mid-write never leaves a "valid" version pointing at a partial/mismatched bundle.
-    // These writes block the JS thread (the modern API has no async write), which is
-    // acceptable because they only run on the first launch after an install or an OTA.
-    js.write(otaBundle.js)
-    html.write(otaBundle.html)
-    version.write(otaBundle.integrity)
+    // Sync writes keep that order. They block the JS thread, which is acceptable because
+    // they only run on the first launch after an install or an OTA.
+    js.writeSync(otaBundle.js)
+    html.writeSync(otaBundle.html)
+    version.writeSync(otaBundle.integrity)
 
     return html.uri
   } catch (error) {

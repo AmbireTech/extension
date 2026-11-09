@@ -1,5 +1,6 @@
-import { ReactNode, useEffect, useRef, useState } from 'react'
-import { InteractionManager } from 'react-native'
+import { ReactNode, useEffect, useState } from 'react'
+
+import runWhenIdle from '@common/utils/runWhenIdle'
 
 interface Props {
   children: any
@@ -10,20 +11,7 @@ interface Props {
 const AfterInteractions = ({ children, placeholder, enabled = true }: Props) => {
   const [interactionsComplete, setInteractionsComplete] = useState(false)
 
-  const interactionHandle: any = useRef(null)
-
-  useEffect(() => {
-    interactionHandle.current = InteractionManager.runAfterInteractions(() => {
-      setInteractionsComplete(true)
-      interactionHandle.current = null
-    })
-
-    return () => {
-      if (interactionHandle.current) {
-        interactionHandle.current.cancel()
-      }
-    }
-  }, [])
+  useEffect(() => runWhenIdle(() => setInteractionsComplete(true)), [])
 
   if (!enabled) {
     return children

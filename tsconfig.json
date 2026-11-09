@@ -4,6 +4,8 @@
     "baseUrl": ".",
     "jsx": "react-native",
     "module": "ES2020",
+    "moduleResolution": "bundler",
+    "customConditions": ["react-native-legacy-deep-imports"],
     "lib": ["ES2020", "ESNext", "DOM", "WebWorker"],
     "types": ["chrome", "firefox-webext-browser", "jest", "w3c-web-hid"],
     "paths": {

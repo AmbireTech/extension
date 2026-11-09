@@ -42,7 +42,7 @@ const getStyles = () =>
       scrollbarGutter: 'stable'
     },
     backdrop: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       overflow: 'hidden',
       // Reserves the same space as the native input's scrollbar so both wrap the text at the same width
       // @ts-expect-error web only
