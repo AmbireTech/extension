@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DimensionValue, Pressable, ScrollView, View } from 'react-native'
+import { SvgProps } from 'react-native-svg'
 
 import Option from '@common/components/Option'
 import Text from '@common/components/Text'
@@ -12,6 +13,8 @@ import getStyles from './styles'
 type Props = {
   dropdownText: string
   dropdownIcon: React.FC<any>
+  /** Overrides the props of the dropdown icon, e.g. to keep a brand color instead of the hover one */
+  dropdownIconProps?: SvgProps
   dropdownTestID?: string
   options: OptionType[]
   icons?: { key: string; component: React.FC<any> }[]
@@ -61,6 +64,7 @@ const OptionItem = ({
 const ExpandableOptionSection = ({
   dropdownText,
   dropdownIcon,
+  dropdownIconProps,
   dropdownTestID,
   options,
   icons = [],
@@ -107,6 +111,7 @@ const ExpandableOptionSection = ({
     <Option
       text={t(dropdownText)}
       icon={dropdownIcon}
+      iconProps={dropdownIconProps}
       onPress={toggleHwOptions}
       testID={dropdownTestID}
       status={expanded ? 'expanded' : 'collapsed'}

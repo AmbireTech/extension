@@ -116,16 +116,16 @@ const MainRoutes = () => {
               element={<AuthGroupScreen pick={(m) => m.OneKeyConnectScreen} />}
             />
             <Route
-              path={WEB_ROUTES.safeImport}
-              element={<AuthGroupScreen pick={(m) => m.SafeImportMethodScreen} />}
-            />
-            <Route
               path={WEB_ROUTES.safeImportAddress}
               element={<AuthGroupScreen pick={(m) => m.SafeImportScreen} />}
             />
             <Route
               path={WEB_ROUTES.safeImportByOwner}
               element={<AuthGroupScreen pick={(m) => m.SafeImportByOwnerScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.safeCreate}
+              element={<AuthGroupScreen pick={(m) => m.SafeCreateScreen} />}
             />
             <Route
               path={WEB_ROUTES.qrConnect}

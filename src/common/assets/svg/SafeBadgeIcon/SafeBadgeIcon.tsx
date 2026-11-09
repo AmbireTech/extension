@@ -1,7 +1,8 @@
 import React from 'react'
 import Svg, { Circle, Path, SvgProps } from 'react-native-svg'
 
-const SAFE_BRAND_GREEN = '#30FD7E'
+/** Safe's brand green, the same in light and dark themes */
+export const SAFE_BRAND_GREEN = '#30FD7E'
 
 /**
  * The Safe artwork is drawn edge to edge in a 100x100 box, while the other badge icons

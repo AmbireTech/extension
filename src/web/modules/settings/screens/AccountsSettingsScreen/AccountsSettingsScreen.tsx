@@ -12,6 +12,7 @@ import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -30,7 +31,6 @@ import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -473,7 +473,7 @@ const AccountsSettingsScreen = () => {
           />
         )}
       </View>
-      <AccountDeploySettingsBottomSheet
+      <SafeActivationBottomSheet
         sheetRef={sheetRefAccountDeploySettings}
         closeBottomSheet={closeAccountDeploySettings}
         onClosed={clearAccountSettingsAccount}

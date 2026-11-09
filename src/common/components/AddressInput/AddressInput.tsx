@@ -49,6 +49,12 @@ interface Props extends InputProps {
   onScanAddress?: (address: string) => void
   // Shortens the address of the entered contact, for a container too narrow to fit a full one.
   plainAddressMaxLength?: number
+  /**
+   * Shows a valid address like any other value: no "Valid address" label and no success
+   * border. The validation still runs and its errors and other messages still show. As that
+   * leaves the line under the input empty most of the time, it isn't kept for a message either.
+   */
+  isSuccessHidden?: boolean
 }
 
 const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
@@ -71,6 +77,7 @@ const AddressInput: React.FC<Props> = ({
   renderConfirmAddress,
   onScanAddress,
   plainAddressMaxLength,
+  isSuccessHidden = false,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -80,6 +87,7 @@ const AddressInput: React.FC<Props> = ({
   const { state: domains } = useController('DomainsController', selectDomains)
   const { message, severity } = validation
   const isError = severity === 'error'
+  const isSuccessShown = !(isSuccessHidden && severity === 'success')
 
   const isValidationInDomainResolvingState = message === 'Resolving domain...'
   const inputRef = useRef<TextInput | null>(null)
@@ -140,11 +148,13 @@ const AddressInput: React.FC<Props> = ({
         testID={rest.testID || 'address-ens-field'}
         containerStyle={containerStyle}
         validLabel={
-          !isError && severity !== 'info' && !isValidationInDomainResolvingState ? message : ''
+          !isError && severity !== 'info' && !isValidationInDomainResolvingState && isSuccessShown
+            ? message
+            : ''
         }
         validLabelAppearance={severity ? `${severity}Text` : undefined}
         error={isError ? message : ''}
-        isValid={!isError && !isValidationInDomainResolvingState}
+        isValid={!isError && !isValidationInDomainResolvingState && isSuccessShown}
         placeholder={placeholder || t('Address / ENS / GNS / Namoshi')}
         bottomLabelStyle={styles.bottomLabel}
         info={
@@ -155,7 +165,8 @@ const AddressInput: React.FC<Props> = ({
               : ''
         }
         renderConfirmAddress={renderConfirmAddress}
-        preventJumpOnValidationChange
+        // Without the success label, the line kept for messages would be empty most of the time
+        preventJumpOnValidationChange={!isSuccessHidden}
         childrenBeforeButtons={
           <>
             {childrenBeforeButtons ||

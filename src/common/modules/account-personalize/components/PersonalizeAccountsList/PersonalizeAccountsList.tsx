@@ -59,6 +59,8 @@ type Props = {
   onSaveName: (addr: Account['addr'], name: string) => Promise<void>
   removalNote: string
   ListEmptyComponent?: React.ReactElement | null
+  /** Scrolls under the accounts, e.g. the details of a Safe being created */
+  footer?: React.ReactElement | null
   style?: ViewStyle
 }
 
@@ -76,6 +78,7 @@ const PersonalizeAccountsList = ({
   onSaveName,
   removalNote,
   ListEmptyComponent,
+  footer,
   style
 }: Props) => {
   const { t } = useTranslation()
@@ -237,8 +240,13 @@ const PersonalizeAccountsList = ({
   )
 
   const listFooter = useMemo(
-    () => (accountsToRemove.length ? <AccountsRemovalNote text={removalNote} /> : null),
-    [accountsToRemove.length, removalNote]
+    () => (
+      <>
+        {!!accountsToRemove.length && <AccountsRemovalNote text={removalNote} />}
+        {footer}
+      </>
+    ),
+    [accountsToRemove.length, removalNote, footer]
   )
 
   return (
