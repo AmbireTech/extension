@@ -4,6 +4,7 @@ import { GasSpeeds } from '@ambire-common/services/bundlers/types'
 import { Sponsor } from '@ambire-common/libs/erc7677/types'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import { SelectValue } from '@common/components/Select/types'
+import { SignAccountOpUpdateType } from '@common/hooks/useCallSignAccountOpMethod/useCallSignAccountOpMethod'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 type FeeOption = Pick<SelectValue, 'value' | 'label' | 'disabled'> &
@@ -20,7 +21,7 @@ type Props = {
   isViewOnly: boolean
   isSponsored: boolean
   sponsor: Sponsor | undefined
-  updateType: 'Requests' | 'Swap&Bridge' | 'Transfer&TopUp'
+  updateType: SignAccountOpUpdateType
   bundlerNonceDiscrepancy?: {
     id: string
     title: string
