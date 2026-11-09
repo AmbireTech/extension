@@ -4,6 +4,7 @@ import { Animated, LayoutChangeEvent, ScrollView, View } from 'react-native'
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
@@ -168,20 +169,22 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: SafeIcon,
         iconSize: 20,
         options: [
+          // The same text and icons as the Safe options of the add account menu
           {
-            title: 'Safe by address',
+            title: 'Import by address',
             onPress: () => {
               goToNextRoute(WEB_ROUTES.safeImportAddress)
             },
-            icon: SafeIcon,
-            iconSize: 20
+            icon: ImportAccountIcon,
+            testID: getImportMethodTestID('Safe by address')
           },
           {
-            title: 'Safe by owner',
+            title: 'Import by owner',
             onPress: () => {
               goToNextRoute(WEB_ROUTES.safeImportByOwner)
             },
-            icon: SingleKeyIcon
+            icon: SingleKeyIcon,
+            testID: getImportMethodTestID('Safe by owner')
           }
         ]
       },

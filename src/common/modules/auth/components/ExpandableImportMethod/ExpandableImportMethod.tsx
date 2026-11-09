@@ -10,7 +10,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_LG } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -29,14 +29,19 @@ export type ImportMethod = {
   iconSize?: number
   /** Overrides the icon color, e.g. for a brand mark */
   iconColor?: ColorValue
+  /**
+   * Overrides the e2e test ID made from the title, e.g. for a nested option whose title doesn't
+   * say what it belongs to
+   */
+  testID?: string
 }
 
 /** The e2e test ID of an import method, made from its (untranslated) title */
 export const getImportMethodTestID = (title: string) =>
   `import-method-${title.toLocaleLowerCase().split(' ').join('-')}`
 
-// The nested options start where the title of the expandable method does, so they read as its own
-const NESTED_IMPORT_METHOD_INDENT = SPACING_SM + IMPORT_METHOD_ICON_SLOT_SIZE + SPACING_SM
+// Indented a little more than the title of the expandable method, so they read as its own
+const NESTED_IMPORT_METHOD_INDENT = SPACING_LG
 const NESTED_IMPORT_METHOD_HEIGHT = 44
 const NESTED_IMPORT_METHOD_ICON_SLOT_SIZE = 20
 
@@ -56,7 +61,7 @@ const ImportMethodIcon = ({
 }
 
 const NestedImportMethod = React.memo(
-  ({ title, onPress, icon, iconSize, iconColor }: ImportMethod) => {
+  ({ title, onPress, icon, iconSize, iconColor, testID }: ImportMethod) => {
     const { theme } = useTheme()
     const { t } = useTranslation()
     const [bindHover, hoverStyle] = useCustomHover({
@@ -71,7 +76,7 @@ const NestedImportMethod = React.memo(
     return (
       <AnimatedPressable
         onPress={onPress}
-        testID={getImportMethodTestID(title)}
+        testID={testID ?? getImportMethodTestID(title)}
         style={[{ paddingLeft: NESTED_IMPORT_METHOD_INDENT }, hoverStyle]}
         {...bindHover}
       >

@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
+import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
@@ -142,20 +143,22 @@ const ImportExistingAccountSelectorScreen = () => {
 
   const safeImportMethods: ImportMethod[] = useMemo(
     () => [
+      // The same text and icons as the Safe options of the add account menu
       {
-        title: 'Safe by address',
+        title: 'Import by address',
         onPress: () => {
           goToNextRoute(ROUTES.safeImportAddress)
         },
-        icon: SafeIcon,
-        iconSize: 20
+        icon: ImportAccountIcon,
+        testID: getImportMethodTestID('Safe by address')
       },
       {
-        title: 'Safe by owner',
+        title: 'Import by owner',
         onPress: () => {
           goToNextRoute(ROUTES.safeImportByOwner)
         },
-        icon: SingleKeyIcon
+        icon: SingleKeyIcon,
+        testID: getImportMethodTestID('Safe by owner')
       }
     ],
     [goToNextRoute]
