@@ -6,6 +6,7 @@ import PublicAccountsIcon from '@common/assets/svg/PublicAccountsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
+import { isPrivacyPoolsComingSoon } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 
@@ -17,7 +18,10 @@ type AccountsTab = 'public' | 'private'
 type Props = {
   activeTab: AccountsTab
   onTabChange: (tab: AccountsTab) => void
-  /** Why a tab cannot be opened, shown on hover. A tab with a reason is disabled. */
+  /**
+   * Why a tab cannot be opened, shown on hover. A tab with a reason is disabled. Where Privacy Pools
+   * are not released yet, the Private tab is always disabled with a "Coming soon" reason.
+   */
   disabledTabReasons?: Partial<Record<AccountsTab, string>>
   style?: ViewStyle
 }
@@ -48,11 +52,19 @@ const AccountsTabs: FC<Props> = ({ activeTab, onTabChange, disabledTabReasons, s
     [t, theme.privacyPoolsText, theme.secondaryAccent400]
   )
 
+  const tabDisabledReasons = useMemo(
+    () =>
+      isPrivacyPoolsComingSoon
+        ? { ...disabledTabReasons, private: t('Send and receive privately. Coming soon.') }
+        : disabledTabReasons,
+    [disabledTabReasons, t]
+  )
+
   return (
     <View style={[styles.container, style]}>
       {tabs.map(({ id, label, Icon, activeIconColor }) => {
         const isActive = activeTab === id
-        const disabledReason = disabledTabReasons?.[id]
+        const disabledReason = tabDisabledReasons?.[id]
 
         return (
           <HoverablePressable
