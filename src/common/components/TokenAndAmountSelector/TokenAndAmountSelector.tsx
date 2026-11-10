@@ -21,6 +21,8 @@ type PressableStateWithHover = PressableStateCallbackType & { hovered?: boolean 
 type Props = {
   /** Shown above the balance, e.g. "You send". */
   label?: string
+  /** Puts the label left of the balance, on the same row, to save height. */
+  isLabelInline?: boolean
   /** What sits left of the amount: a token select, or a `FixedToken` when the token can't change. */
   token: ReactNode
   /** What the account holds of the token. Leave it out while there is nothing to show yet. */
@@ -49,6 +51,8 @@ type Props = {
     ComponentProps<typeof AmountSlider>,
     'value' | 'maximumValue' | 'onValueChange' | 'tierOffset' | 'marks'
   >
+  /** Amounts to pick with one tap, shown in place of the slider. */
+  amountPresets?: ReactNode
   onMaxPress: () => void
   isMaxDisabled?: boolean
   message?: {
@@ -63,10 +67,11 @@ type Props = {
 }
 
 /** Picks a token and an amount of it: the balance, the token (a select, or fixed) next to the
- * token/USD amount, and the slider with the Max button, framed in red while there is an error and
- * followed by its message. */
+ * token/USD amount, and the slider (or preset amounts) with the Max button, framed in red while
+ * there is an error and followed by its message. */
 const TokenAndAmountSelector: FC<Props> = ({
   label,
+  isLabelInline,
   token,
   balance,
   amountFieldModeSwitch,
@@ -78,6 +83,7 @@ const TokenAndAmountSelector: FC<Props> = ({
   amountAccessory,
   isTokenRowSplitEvenly,
   slider,
+  amountPresets,
   onMaxPress,
   isMaxDisabled,
   message,
@@ -99,23 +105,36 @@ const TokenAndAmountSelector: FC<Props> = ({
     <>
       <View style={[styles.outerContainer, isError && styles.outerContainerError]}>
         <ItemPanel style={{ ...styles.container, ...(isError ? styles.containerError : {}) }}>
-          {!!label && (
+          {!!label && !isLabelInline && (
             <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
               {label}
             </Text>
           )}
           <View style={styles.balanceRow}>
-            {balance && !disabled ? (
-              <MaxAmount
-                isLoading={!!balance.isLoading}
-                maxAmount={balance.amount}
-                selectedTokenSymbol={balance.symbol}
-                simulationFailed={balance.isInaccurate}
-              />
-            ) : (
-              // Prevent layout shifting
-              <View style={{ height: 22 }} />
-            )}
+            <View style={styles.labelAndBalance}>
+              {!!label && isLabelInline && (
+                <Text
+                  appearance="secondaryText"
+                  fontSize={14}
+                  weight="medium"
+                  numberOfLines={1}
+                  style={spacings.mrSm}
+                >
+                  {label}
+                </Text>
+              )}
+              {balance && !disabled ? (
+                <MaxAmount
+                  isLoading={!!balance.isLoading}
+                  maxAmount={balance.amount}
+                  selectedTokenSymbol={balance.symbol}
+                  simulationFailed={balance.isInaccurate}
+                />
+              ) : (
+                // Prevent layout shifting
+                <View style={{ height: 22 }} />
+              )}
+            </View>
             {amountFieldModeSwitch ? (
               <Pressable
                 onPress={amountFieldModeSwitch.onPress}
@@ -179,15 +198,17 @@ const TokenAndAmountSelector: FC<Props> = ({
           </View>
           <View style={[styles.sliderRow, sliderStyle]}>
             <View style={flexbox.flex1}>
-              <AmountSlider
-                value={slider.value}
-                maximumValue={slider.maximumValue}
-                onValueChange={slider.onValueChange}
-                // Still shows the amount, e.g. while a transfer is being prepared from it
-                disabled={disabled}
-                tierOffset={slider.tierOffset}
-                marks={slider.marks}
-              />
+              {amountPresets || (
+                <AmountSlider
+                  value={slider.value}
+                  maximumValue={slider.maximumValue}
+                  onValueChange={slider.onValueChange}
+                  // Still shows the amount, e.g. while a transfer is being prepared from it
+                  disabled={disabled}
+                  tierOffset={slider.tierOffset}
+                  marks={slider.marks}
+                />
+              )}
             </View>
             <MaxButton
               onPress={onMaxPress}

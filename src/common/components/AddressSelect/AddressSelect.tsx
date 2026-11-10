@@ -129,6 +129,7 @@ const SelectedMenuOption: React.FC<{
   inputBackgroundColor?: ColorValue
   plainAddressMaxLength?: number
   isSuccessHidden?: boolean
+  hint?: string
 }> = ({
   selectRef,
   filteredContacts,
@@ -147,7 +148,8 @@ const SelectedMenuOption: React.FC<{
   addressHighlight,
   inputBackgroundColor,
   plainAddressMaxLength,
-  isSuccessHidden
+  isSuccessHidden,
+  hint
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -209,6 +211,7 @@ const SelectedMenuOption: React.FC<{
         addressHighlight={addressHighlight}
         plainAddressMaxLength={plainAddressMaxLength}
         isSuccessHidden={isSuccessHidden}
+        hint={hint}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         // On mobile input mode we still need details view when poisoning highlight exists,
@@ -281,6 +284,7 @@ const SelectedMenuOption: React.FC<{
       inputBackgroundColor,
       plainAddressMaxLength,
       isSuccessHidden,
+      hint,
       type,
       validation
     ]
@@ -315,7 +319,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   hiddenAddresses,
   isSuccessHidden,
   privacyPoolsAccounts,
-  onSelectPrivacyPoolsAccount
+  onSelectPrivacyPoolsAccount,
+  hint
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
@@ -686,6 +691,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           inputBackgroundColor={inputBackgroundColor}
           plainAddressMaxLength={contactAddressMaxLength}
           isSuccessHidden={isSuccessHidden}
+          hint={hint}
         />
       )
     },
@@ -702,7 +708,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       selectedAddressHighlight,
       inputBackgroundColor,
       contactAddressMaxLength,
-      isSuccessHidden
+      isSuccessHidden,
+      hint
     ]
   )
 
@@ -746,6 +753,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             addressHighlight={selectedAddressHighlight}
             plainAddressMaxLength={contactAddressMaxLength}
             isSuccessHidden={isSuccessHidden}
+            hint={hint}
           />
         )}
         containerStyle={spacings.mb0}

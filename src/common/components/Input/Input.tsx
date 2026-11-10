@@ -59,6 +59,8 @@ export interface InputProps extends TextInputProps {
   customInputContent?: ReactNode
   renderConfirmAddress?: () => ReactNode
   preventJumpOnValidationChange?: boolean
+  /** Shown below the input while no error, valid label or info takes its place. */
+  hint?: string
 }
 
 const Input = ({
@@ -72,6 +74,7 @@ const Input = ({
   isValid,
   validLabel,
   validLabelAppearance,
+  hint,
   onBlur = () => {},
   onFocus = () => {},
   onButtonPress = () => {},
@@ -246,7 +249,17 @@ const Input = ({
             {info}
           </Text>
         )}
-        {!!preventJumpOnValidationChange && !error && !isValid && !info && (
+        {!!hint && !error && !(isValid && validLabel) && !info && (
+          <Text
+            weight="regular"
+            appearance="secondaryText"
+            style={[styles.bottomLabel, bottomLabelStyle]}
+            fontSize={10}
+          >
+            {hint}
+          </Text>
+        )}
+        {!!preventJumpOnValidationChange && !error && !isValid && !info && !hint && (
           <Text
             style={[styles.bottomLabel, bottomLabelStyle]}
             weight="regular"
