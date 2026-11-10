@@ -6,6 +6,8 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
+import HoldToProceedButton from '@common/components/HoldToProceedButton'
+import PrivacyStatus from '@common/components/PrivacyStatus'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
@@ -15,6 +17,7 @@ import { TransactionSummaryType } from './loadTransactionSummary'
 interface Props {
   operation: PrivacyPoolsOperation | null
   symbol: string
+  decimals: number
   /**
    * Loaded by the screen while the transfer is proving. The sheet opens only once it is set, so
    * the summary is there as it slides in. Stays null if it could not be loaded.
@@ -48,6 +51,7 @@ const transactionSummaryStyle = { marginBottom: SPACING_MD }
 const PrivacyPoolsSendSheet: FC<Props> = ({
   operation,
   symbol,
+  decimals,
   TransactionSummary,
   isTransactionSummaryLoaded,
   sheetRef,
@@ -62,6 +66,16 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
   const isReady = operation?.status === 'pending' && operation.phase === 'ready'
   const isBroadcasting = operation?.status === 'pending' && operation.phase === 'broadcasting'
   const isConfirming = isReady || isBroadcasting
+  // A send that weakens or breaks its privacy is never blocked, but the user holds to accept it.
+  // So does one nothing could be checked for, as it may break it just as well.
+  const privacy = operation?.privacy
+  const isPrivacyUnknown = !privacy || privacy.rating === 'unchecked'
+  const holdButtonType =
+    privacy?.rating === 'traceable'
+      ? 'dangerFilled'
+      : privacy?.rating === 'weak' || isPrivacyUnknown
+        ? 'warning'
+        : null
   // Only on mount: later, the screen opens it when a transfer is proved
   const [shouldOpenOnMount] = useState(isConfirming)
 
@@ -128,6 +142,19 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
             />
           )}
 
+          {/* For the deposits the proof actually spends. The amount can't change here anymore */}
+          {isConfirming && !!privacy && (
+            <PrivacyStatus
+              stage="send"
+              rating={privacy.rating}
+              leaks={privacy.leaks}
+              cover={privacy.cover.bigEnough}
+              decimals={decimals}
+              symbol={symbol}
+              style={spacings.mbSm}
+            />
+          )}
+
           {isConfirming && (
             <FooterGlassView
               size="sm"
@@ -141,15 +168,27 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
               }
             >
               {!isNarrowWebLayout && backButton}
-              <ButtonWithLoader
-                testID="privacy-pools-send-confirm"
-                text={t('Send')}
-                isLoading={isBroadcasting}
-                disabled={isBroadcasting}
-                onPress={onSend}
-                size="smaller"
-                style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
-              />
+              {holdButtonType && !isBroadcasting ? (
+                <HoldToProceedButton
+                  testID="privacy-pools-send-confirm"
+                  text={t('Hold to send')}
+                  completeText={t('Send')}
+                  buttonType={holdButtonType}
+                  onHoldComplete={onSend}
+                  size="smaller"
+                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
+                />
+              ) : (
+                <ButtonWithLoader
+                  testID="privacy-pools-send-confirm"
+                  text={t('Send')}
+                  isLoading={isBroadcasting}
+                  disabled={isBroadcasting}
+                  onPress={onSend}
+                  size="smaller"
+                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
+                />
+              )}
               {/* Back after Send on narrow layouts, like the regular fee sheet */}
               {isNarrowWebLayout && backButton}
             </FooterGlassView>
