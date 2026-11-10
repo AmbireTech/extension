@@ -48,6 +48,7 @@ import { openInTab } from '@common/utils/links'
 import { getVisibleNftTokenId } from '@common/utils/nft'
 import { getUiType } from '@common/utils/uiType'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
+import PrivacyPoolsCommunitySheet from '@web/modules/privacy-pools/components/PrivacyPoolsCommunitySheet'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -734,6 +735,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         portfolio={portfolio}
         account={account}
       />
+      <PrivacyPoolsCommunitySheet stage="before-deposit" isEnabled={!!privacyPoolsRecipient} />
       <Suspense fallback={null}>
         <Estimation
           updateType="Transfer&TopUp"
