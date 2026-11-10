@@ -7,6 +7,7 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import XWalletConversionTooltip from '@common/components/XWalletConversionTooltip'
 import XWalletLegacyBadge from '@common/components/XWalletLegacyBadge'
+import XWalletMigrationBanner from '@common/components/XWalletMigrationBanner'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import TokenDetailsTitle from '@common/modules/token-details/components/Title'
@@ -147,6 +148,14 @@ const TokenBalanceCard = ({
           )}
         </View>
       </View>
+      {xWalletAmount !== undefined && (
+        <XWalletMigrationBanner
+          address={address}
+          chainId={chainId}
+          xWalletAmount={xWalletAmount}
+          style={spacings.mbMd}
+        />
+      )}
     </View>
   )
 }
