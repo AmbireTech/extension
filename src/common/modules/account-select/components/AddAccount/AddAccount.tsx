@@ -21,7 +21,13 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
-import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
+import {
+  isMobile,
+  isPrivacyPoolsComingSoon,
+  isPrivacyPoolsEnabled,
+  isPrivacyPoolsSupported,
+  isWeb
+} from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -270,14 +276,20 @@ const AddAccount = ({
             disabled={isCreatingNewSeedAccount}
           />
         )}
-        {/* Extension only for now */}
-        {isPrivacyPoolsEnabled && !showImportOnly && (
+        {/* Extension only for now. Where not released yet, only a teaser that cannot be opened */}
+        {isPrivacyPoolsSupported && !showImportOnly && (
           <Option
             text={t('Add a Privacy Pools account')}
             icon={PrivacyPoolsIcon}
             onPress={openPrivacyPoolsBottomSheet as any}
             testID="add-privacy-pools-account"
             status="none"
+            disabled={isPrivacyPoolsComingSoon}
+            badge={
+              isPrivacyPoolsComingSoon
+                ? { text: t('Coming soon'), type: 'privacyPools' }
+                : undefined
+            }
           />
         )}
         <ExpandableOptionSection

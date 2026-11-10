@@ -4,6 +4,7 @@ import { SvgProps } from 'react-native-svg'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
+import Badge, { BadgeType } from '@common/components/Badge'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -26,6 +27,8 @@ interface Props {
   status?: 'default' | 'expanded' | 'collapsed' | 'none'
   icons?: { key: string; component: React.FC<any> }[]
   ref?: React.Ref<any>
+  /** A short label next to the text, e.g. "Coming soon" for an option that is not available yet */
+  badge?: { text: string; type?: BadgeType }
 }
 
 const Option = ({
@@ -39,7 +42,8 @@ const Option = ({
   disabled,
   status = 'default',
   icons = [],
-  ref
+  ref,
+  badge
 }: Props) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle, isHovered] = useCustomHover({
@@ -83,6 +87,7 @@ const Option = ({
         <Text style={flexbox.flex1} fontSize={14} weight="medium" numberOfLines={1}>
           {text}
         </Text>
+        {!!badge && <Badge text={badge.text} type={badge.type} />}
         {icons.length > 0 && (
           <View style={[flexbox.directionRow, spacings.mrTy]}>
             {icons.map(({ key, component: Component }) => (
