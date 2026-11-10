@@ -6,7 +6,6 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import XWalletConversionTooltip from '@common/components/XWalletConversionTooltip'
-import XWalletLegacyBadge from '@common/components/XWalletLegacyBadge'
 import XWalletMigrationBanner from '@common/components/XWalletMigrationBanner'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
@@ -80,21 +79,12 @@ const TokenBalanceCard = ({
               {symbol}
             </Text>
             {xWalletAmount !== undefined && (
-              <>
-                <XWalletConversionTooltip
-                  address={address}
-                  chainId={chainId}
-                  xWalletAmount={xWalletAmount}
-                  tooltipId="token-details-x-wallet-conversion"
-                />
-                <XWalletLegacyBadge
-                  address={address}
-                  chainId={chainId}
-                  xWalletAmount={xWalletAmount}
-                  tooltipId="token-details-x-wallet-legacy"
-                  testID="token-details-x-wallet-legacy-badge"
-                />
-              </>
+              <XWalletConversionTooltip
+                address={address}
+                chainId={chainId}
+                xWalletAmount={xWalletAmount}
+                tooltipId="token-details-x-wallet-conversion"
+              />
             )}
             {isRewards && (
               <Text fontSize={12} weight="medium">
