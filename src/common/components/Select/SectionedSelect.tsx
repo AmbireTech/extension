@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LayoutChangeEvent } from 'react-native'
 
 import { isWeb } from '@common/config/env'
@@ -119,12 +119,8 @@ const SectionedSelect = ({
     [filteredData, headerHeight, getSectionHeaderHeight, optionHeight]
   )
 
-  // Memoized for the same reason `Select` memoizes its `flatListProps`: a new object
-  // here defeats `React.memo` on the BottomSheet, so every render of the parent
-  // re-renders every mounted row of the list.
-  // The list mounts each time the menu opens, and the initial index is read on mount alone.
   // A SectionList counts each section's header and footer as items, so they are stepped over
-  const initialScrollIndex = useMemo(() => {
+  const selectedScrollIndex = useMemo(() => {
     if (!scrollToSelectedOnOpen || !value) return undefined
 
     let flatIndex = 0
@@ -155,13 +151,47 @@ const SectionedSelect = ({
     getItemLayout
   ])
 
+  // Not an `initialScrollIndex`: a list holds its rows above that index unrendered until it
+  // scrolls, and Android sends no scroll event when all rows fit, leaving a gap above them
+  const hasScrolledToSelectedRef = useRef(false)
+
+  useEffect(() => {
+    // The list mounts each time the menu opens
+    if (!isMenuOpen) hasScrolledToSelectedRef.current = false
+  }, [isMenuOpen])
+
+  // On the content size rather than the list layout: Modalize replaces the list's `onLayout`
+  const handleContentSizeChangeAndScrollToSelected = useCallback(
+    (width: number, height: number) => {
+      if (isScrollbarPaddingEnabled) handleContentSizeChange(width, height)
+      if (hasScrolledToSelectedRef.current || height <= 0) return
+
+      hasScrolledToSelectedRef.current = true
+      if (selectedScrollIndex === undefined) return
+
+      listRef.current
+        ?.getScrollResponder()
+        ?.scrollTo({ y: getItemLayout(null, selectedScrollIndex).offset, animated: false })
+    },
+    [
+      isScrollbarPaddingEnabled,
+      handleContentSizeChange,
+      selectedScrollIndex,
+      getItemLayout,
+      listRef
+    ]
+  )
+
+  // Memoized for the same reason `Select` memoizes its `flatListProps`: a new object
+  // here defeats `React.memo` on the BottomSheet, so every render of the parent
+  // re-renders every mounted row of the list.
   const sectionListProps = useMemo(
     () => ({
       ref: listRef,
       sections: filteredData as SectionedSelectProps['sections'],
       renderItem: renderItem as any,
       onLayout: handleListLayout,
-      onContentSizeChange: isScrollbarPaddingEnabled ? handleContentSizeChange : undefined,
+      onContentSizeChange: handleContentSizeChangeAndScrollToSelected,
       // Left out unless needed, as an undefined one would wipe the bottom sheet's own padding
       ...(hasVerticalScrollbar && { contentContainerStyle: CONTENT_WITH_SCROLLBAR_STYLE }),
       renderSectionHeader,
@@ -176,16 +206,14 @@ const SectionedSelect = ({
       scrollEventThrottle: 16,
       onViewableItemsChanged,
       viewabilityConfig,
-      onScrollBeginDrag,
-      initialScrollIndex
+      onScrollBeginDrag
     }),
     [
       listRef,
       filteredData,
       renderItem,
       handleListLayout,
-      isScrollbarPaddingEnabled,
-      handleContentSizeChange,
+      handleContentSizeChangeAndScrollToSelected,
       hasVerticalScrollbar,
       renderSectionHeader,
       keyExtractor,
@@ -196,8 +224,7 @@ const SectionedSelect = ({
       handleScroll,
       onViewableItemsChanged,
       viewabilityConfig,
-      onScrollBeginDrag,
-      initialScrollIndex
+      onScrollBeginDrag
     ]
   )
 
