@@ -24,7 +24,6 @@ import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { selectIsEmailVaultEnabled } from '@common/selectors/featureFlags'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -37,10 +36,6 @@ const KeyStoreUnlockScreen = () => {
   const { t } = useTranslation()
 
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
-  const { state: isEmailVaultEnabled } = useController(
-    'FeatureFlagsController',
-    selectIsEmailVaultEnabled
-  )
   const {
     state: { statuses, errorMessage, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
@@ -217,7 +212,7 @@ const KeyStoreUnlockScreen = () => {
               onPress={handleSubmit((data) => handleUnlock(data))}
             />
             <Animated.View style={flexbox.flex1} />
-            {!!hasKeystoreRecovery && isEmailVaultEnabled && (
+            {!!hasKeystoreRecovery && (
               <Button
                 text={t('Forgot extension password?')}
                 type="ghost2"

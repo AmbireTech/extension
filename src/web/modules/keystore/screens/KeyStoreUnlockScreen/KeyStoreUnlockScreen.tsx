@@ -30,7 +30,6 @@ import useToast from '@common/hooks/useToast'
 import useKeyStoreUnlock from '@common/modules/keystore/hooks/useKeyStoreUnlock'
 import backgroundImage from '@common/modules/keystore/images/background.png'
 import { ROUTES } from '@common/modules/router/constants/common'
-import { selectIsEmailVaultEnabled } from '@common/selectors/featureFlags'
 import { syncSessionStorage } from '@common/services/storage'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -62,10 +61,6 @@ const KeyStoreUnlockScreen = () => {
     dispatch: walletStateDispatch
   } = useController('WalletStateController')
   const { hasKeystoreRecovery } = useController('EmailVaultController').state
-  const { state: isEmailVaultEnabled } = useController(
-    'FeatureFlagsController',
-    selectIsEmailVaultEnabled
-  )
   const {
     state: { statuses, errorMessage, isUnlocked, isPasswordUnlockRequired },
     dispatch: keystoreDispatch
@@ -391,7 +386,7 @@ const KeyStoreUnlockScreen = () => {
               </Button>
             )}
 
-            {hasKeystoreRecovery && isEmailVaultEnabled && !canUseBiometrics && (
+            {hasKeystoreRecovery && !canUseBiometrics && (
               <TouchableOpacity
                 onPress={() =>
                   openInternalPageInTab({

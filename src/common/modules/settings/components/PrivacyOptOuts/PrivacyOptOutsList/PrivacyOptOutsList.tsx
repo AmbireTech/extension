@@ -11,7 +11,9 @@ import ValueIcon from '@common/assets/svg/ValueIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
+import { ROUTES } from '@common/modules/router/constants/common'
 import CrashAnalyticsControlOption from '@common/modules/settings/components/General/CrashAnalyticsControlOption'
 import AmbireApiOptions from '@common/modules/settings/components/PrivacyOptOuts/AmbireApiOptions'
 import OptOutControlOption from '@common/modules/settings/components/PrivacyOptOuts/OptOutControlOption'
@@ -26,6 +28,7 @@ const selectHasKeystoreRecovery = (state: AllControllersMappingType['EmailVaultC
 const PrivacyOptOutsList = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
+  const { navigate } = useNavigation()
   const erc4337RequiredBy = useMemo(() => ({ flag: 'gasTank' as const, title: t('Gas Tank') }), [t])
   const tokenPricesRequiredBy = useMemo(
     () => ({ flag: 'erc4337' as const, title: t('ERC-4337') }),
@@ -36,14 +39,20 @@ const PrivacyOptOutsList = () => {
     [t]
   )
   // Opting out of Email Vault would leave the recovery secret with Ambire, so email recovery
-  // has to be turned off (which deletes it) first
+  // has to be turned off (which deletes it) first, on its own screen
   const { state: hasKeystoreRecovery } = useController(
     'EmailVaultController',
     selectHasKeystoreRecovery
   )
-  const emailVaultRequiredBy = useMemo(
-    () => ({ isActive: !!hasKeystoreRecovery, title: t('Email recovery') }),
-    [hasKeystoreRecovery, t]
+  const emailVaultAction = useMemo(
+    () =>
+      hasKeystoreRecovery
+        ? {
+            text: t('Disable recovery first'),
+            onPress: () => navigate(ROUTES.devicePasswordRecovery)
+          }
+        : undefined,
+    [hasKeystoreRecovery, navigate, t]
   )
   const ambireAnalyticsOption = (
     <OptOutControlOption
@@ -98,7 +107,7 @@ const PrivacyOptOutsList = () => {
             )}
             icon={<EmailVaultIcon width={24} height={24} color={theme.iconPrimary} />}
             flag="emailVault"
-            requiredBy={emailVaultRequiredBy}
+            action={emailVaultAction}
           />
           <View style={[spacings.mlLg, spacings.plTy]}>{ambireAnalyticsOption}</View>
         </>
