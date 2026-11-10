@@ -31,6 +31,8 @@ interface Props {
   ref?: React.Ref<any>
   /** A badge next to the text, e.g. "Soon" for an option that is not available yet. Never dimmed */
   badge?: React.ReactNode
+  /** E.g. a tooltip from `createGlobalTooltipDataSet`, which works on a disabled option too */
+  dataSet?: Record<string, string>
 }
 
 const Option = ({
@@ -45,7 +47,8 @@ const Option = ({
   status = 'default',
   icons = [],
   ref,
-  badge
+  badge,
+  dataSet
 }: Props) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle, isHovered] = useCustomHover({
@@ -75,6 +78,7 @@ const Option = ({
       disabled={disabled}
       accessibilityRole="button"
       ref={ref}
+      dataSet={dataSet}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter, { height: BUTTON_HEIGHT }]}>
         <View style={[styles.iconWrapper, disabled && disabledStyle]}>
