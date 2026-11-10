@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { TextInput } from 'react-native'
 
 import { isWeb } from '@common/config/env'
@@ -9,13 +9,17 @@ import { useIsScreenSettled } from '@common/contexts/screenFocusContext'
  * its screen, so the keyboard is not animated up while the navigation still is. Focuses
  * once, the way `autoFocus` does - a screen the user comes back to is left as it was.
  *
- * Web keeps the native `autoFocus`: there is no transition there to wait for.
+ * Web keeps the native `autoFocus`: there is no transition there to wait for. Neither does
+ * a field that mounts focused on a settled screen (e.g. in a bottom sheet), which keeps it too.
  */
 const useAutoFocus = (autoFocus?: boolean, setInputRef?: (ref: TextInput | null) => void) => {
   const isScreenSettled = useIsScreenSettled()
   const inputRef = useRef<TextInput | null>(null)
   const hasAutoFocusedRef = useRef(false)
-  const shouldDeferAutoFocus = !isWeb && !!autoFocus
+  // A `focus()` from the mount effect reaches Android before the view is attached, so the
+  // keyboard is refused; the native `autoFocus` waits for the attach
+  const [canAutoFocusNatively] = useState(() => isScreenSettled && !!autoFocus)
+  const shouldDeferAutoFocus = !isWeb && !!autoFocus && !canAutoFocusNatively
 
   const setRef = useCallback(
     (ref: TextInput | null) => {
