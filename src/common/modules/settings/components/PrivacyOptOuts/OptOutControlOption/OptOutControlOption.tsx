@@ -17,10 +17,11 @@ import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureF
 
 const selectFeatureFlags = (state: IFeatureFlagsController) => state.flags
 
-interface RequiredBy {
-  flag: keyof FeatureFlags
-  title: string
-}
+/**
+ * What keeps the option from being turned off: another opt-out that needs it (`flag`), or
+ * something that isn't an opt-out, like email recovery being set up (`isActive`)
+ */
+type RequiredBy = { title: string } & ({ flag: keyof FeatureFlags } | { isActive: boolean })
 
 interface Opts {
   title: string
@@ -38,7 +39,10 @@ const OptOutControlOption = (opts: Opts) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { title, description, icon, flag, requiredBy } = opts
-  const isRequired = !!requiredBy && flags[flag] && flags[requiredBy.flag]
+  const isRequired =
+    !!requiredBy &&
+    flags[flag] &&
+    ('flag' in requiredBy ? flags[requiredBy.flag] : requiredBy.isActive)
 
   const handleToggle = useCallback(() => {
     const isEnabling = !flags[flag]

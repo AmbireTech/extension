@@ -52,7 +52,12 @@ import handleProviderRequests from '@common/modules/provider/handleProviderReque
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
-import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
+import {
+  attachBalanceHint,
+  getAppInstanceId,
+  isAmbireAnalyticsEnabled,
+  isAmbireApiUrl
+} from '@common/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
 import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
@@ -329,9 +334,10 @@ const init = async () => {
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
   // (only internal Ambire APIs need the x-app-* headers and tracking params)
+  // and for users who opted out of Ambire analytics
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
-    if (!isAmbireApiUrl(url.toString())) {
+    if (!isAmbireApiUrl(url.toString()) || !isAmbireAnalyticsEnabled(mainCtrl?.featureFlags)) {
       // @ts-ignore
       return fetchWithRelayerCustomHeaders(url, init)
     }
