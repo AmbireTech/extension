@@ -125,8 +125,8 @@ const WhileFocused = ({
   const isScreenFocused = useIsScreenFocused()
 
   // Every page ends up rendered, so no swipe can outrun them: closest first and one at
-  // a time, never during a gesture or in the same frame as another. Only while this is
-  // the screen the user is on, or the rest would be built over the screen it was left for.
+  // a time, once the JS thread is idle and never in the same frame as another. Only while
+  // this is the screen the user is on, or the rest would be built over the screen it was left for.
   useEffect(() => {
     if (!isScreenFocused) return undefined
 
@@ -160,7 +160,7 @@ const WhileFocused = ({
     }
   }, [isScreenFocused, openTabIndex, renderTabs, tabs])
 
-  // Deferred until the interactions are over, and a navigation away is one of them,
+  // Deferred until the JS thread is idle, and a navigation away may come first,
   // so this has to ask whether the dashboard is still the screen it was deferred on.
   useEffect(() => {
     if (!isScreenFocused) return undefined
