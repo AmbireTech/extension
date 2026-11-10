@@ -20,7 +20,6 @@ import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Option from '@common/components/Option'
 import SoonBadge from '@common/components/SoonBadge'
 import {
@@ -293,14 +292,6 @@ const AddAccount = ({
             status="none"
             disabled={isPrivacyPoolsComingSoon}
             badge={isPrivacyPoolsComingSoon ? <SoonBadge /> : undefined}
-            dataSet={
-              isPrivacyPoolsComingSoon
-                ? createGlobalTooltipDataSet({
-                    id: 'add-private-account-coming-soon',
-                    content: t('Send and receive privately. Coming soon.')
-                  })
-                : undefined
-            }
           />
         )}
         <ExpandableOptionSection
