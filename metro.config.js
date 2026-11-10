@@ -43,6 +43,14 @@ const config = getSentryExpoConfig(__dirname, {
 
 config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
 
+// Polyfills run before React Native's InitializeCore, the only point where `window` can
+// still be replaced. See windowPolyfill.js
+const baseGetPolyfills = config.serializer.getPolyfills
+config.serializer.getPolyfills = (...args) => [
+  ...baseGetPolyfills(...args),
+  path.resolve(__dirname, 'windowPolyfill.js')
+]
+
 config.cacheVersion = `${config.cacheVersion}-${getRelayerCustomHeadersCacheKey(process.env)}`
 
 // PERF (cold start): defer module evaluation until first use instead of running
