@@ -63,6 +63,8 @@ type Props = {
   isMaxAmountLoading?: boolean
   /** Extra styling for the amount slider's own row, e.g. to give it room before the panel ends. */
   sliderStyle?: ViewStyle
+  /** Shown at the bottom of the panel, e.g. what makes the amount a risk. */
+  note?: ReactNode
 }
 
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -94,7 +96,8 @@ const SendToken: FC<Props> = ({
   sections,
   renderSectionHeader,
   isMaxAmountLoading,
-  sliderStyle
+  sliderStyle,
+  note
 }) => {
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { theme } = useTheme()
@@ -294,6 +297,7 @@ const SendToken: FC<Props> = ({
           </View>
         </View>
       )}
+      {note}
     </TokenAndAmountSelector>
   )
 }

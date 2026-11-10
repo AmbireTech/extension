@@ -3,7 +3,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
+import {
+  getPrivacyPoolsAsset,
+  PRIVACY_POOLS_AMOUNT_LEAK_IDS,
+  PRIVACY_POOLS_RECIPIENT_LEAK_IDS
+} from '@ambire-common/consts/privacyPools'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { PrivacyPoolsSendForm } from '@ambire-common/interfaces/privacyPools'
 import {
@@ -15,7 +19,7 @@ import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/format
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
-import { PrivacySendStatus } from '@common/components/PrivacyStatus'
+import { PrivacyFieldNote, PrivacySendStatus } from '@common/components/PrivacyStatus'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
@@ -293,18 +297,31 @@ const PrivacyPoolsSendScreen = () => {
     return { success: true }
   }, [maxAmount, parsedAmount, selectedToken, t])
 
-  const { privacy, wholeNoteAmounts } = usePrivacyPoolsSendCheck(
+  const { privacy, recipientPrivacy, wholeNoteAmounts } = usePrivacyPoolsSendCheck(
     selectedToken
       ? {
           chainId: selectedToken.chainId,
           tokenAddress: selectedToken.tokenAddress,
-          amount: parsedAmount && parsedAmount > 0n ? parsedAmount : 0n,
+          // Without a valid amount, only the recipient is checked
+          amount: amountValidation.success && parsedAmount ? parsedAmount : 0n,
           recipient: isAddress(recipient) ? recipient : null
         }
       : null
   )
 
   const isTransferInFlight = operation?.status === 'pending'
+  // Checked with the amount, so it shows only where the privacy line below does too
+  const isPrivacyShown = !!selectedToken && !!privacy && amountValidation.success
+  const recipientLeakPrivacy =
+    !!selectedToken &&
+    !!recipientPrivacy &&
+    recipientPrivacy.leaks.some(({ id }) => PRIVACY_POOLS_RECIPIENT_LEAK_IDS.includes(id))
+      ? recipientPrivacy
+      : null
+  const isRecipientCheckPending = isAddress(recipient) && !recipientPrivacy
+  // A recipient that is a risk is not called valid, which would read as all good, and neither is
+  // one still being checked, so the label does not flash before the note
+  const isRecipientSuccessHidden = isRecipientCheckPending || !!recipientLeakPrivacy
 
   const suggestedAmountChips = useMemo(() => {
     if (!selectedToken) return undefined
@@ -470,7 +487,29 @@ const PrivacyPoolsSendScreen = () => {
             addressValidationMsg={addressInputState.validation.message}
             selectedTokenSymbol={selectedToken?.symbol}
             disabled={isTransferInFlight}
-            hint={t('For the best privacy, send to an address you have never used.')}
+            // The note below says it for this recipient
+            hint={
+              isRecipientSuccessHidden
+                ? undefined
+                : t('For the best privacy, send to an address you have never used.')
+            }
+            isSuccessHidden={isRecipientSuccessHidden}
+            note={
+              !!recipientLeakPrivacy &&
+              !!selectedToken && (
+                <PrivacyFieldNote
+                  fieldLeakIds={PRIVACY_POOLS_RECIPIENT_LEAK_IDS}
+                  testID="privacy-pools-send-recipient-note"
+                  rating={recipientLeakPrivacy.rating}
+                  leaks={recipientLeakPrivacy.leaks}
+                  cover={recipientLeakPrivacy.cover.bigEnough}
+                  decimals={selectedToken.decimals}
+                  symbol={selectedToken.symbol}
+                  onSetAmount={isTransferInFlight ? undefined : setRawAmount}
+                  style={spacings.mbTy}
+                />
+              )
+            }
           />
 
           <SendToken
@@ -492,10 +531,25 @@ const PrivacyPoolsSendScreen = () => {
             handleSetMaxFromAmount={setMaxAmount}
             amountPresets={suggestedAmountChips}
             isMaxAmountLoading={false}
+            note={
+              isPrivacyShown && (
+                <PrivacyFieldNote
+                  fieldLeakIds={PRIVACY_POOLS_AMOUNT_LEAK_IDS}
+                  testID="privacy-pools-send-amount-note"
+                  rating={privacy.rating}
+                  leaks={privacy.leaks}
+                  cover={privacy.cover.bigEnough}
+                  decimals={selectedToken.decimals}
+                  symbol={selectedToken.symbol}
+                  onSetAmount={isTransferInFlight ? undefined : setRawAmount}
+                  style={spacings.mtSm}
+                />
+              )
+            }
             inputTestId="privacy-pools-amount-field"
             selectTestId="privacy-pools-tokens-select"
           />
-          {!!selectedToken && !!privacy && amountValidation.success && (
+          {isPrivacyShown && (
             <PrivacySendStatus
               rating={privacy.rating}
               leaks={privacy.leaks}

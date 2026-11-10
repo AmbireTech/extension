@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import AddressSelect, { AddressSelectProps } from '@common/components/AddressSelect'
@@ -10,10 +10,12 @@ import type { TokenResult } from '@ambire-common/libs/portfolio'
 
 interface Props extends AddressSelectProps {
   selectedTokenSymbol?: TokenResult['symbol']
+  /** Shown under the field, e.g. what makes the recipient a risk. */
+  note?: ReactNode
 }
 
 // The transfer flow's recipient field: an AddressSelect presented as a labelled panel.
-const Recipient: React.FC<Props> = (props) => {
+const Recipient: React.FC<Props> = ({ note, ...props }) => {
   const { t } = useTranslation()
 
   return (
@@ -22,6 +24,7 @@ const Recipient: React.FC<Props> = (props) => {
         {t('Add recipient')}
       </Text>
       <AddressSelect {...props} bottomSheetTitle={t('Add recipient')} />
+      {note}
     </ItemPanel>
   )
 }

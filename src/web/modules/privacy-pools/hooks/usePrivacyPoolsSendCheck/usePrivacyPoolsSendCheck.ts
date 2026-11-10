@@ -19,7 +19,10 @@ const selectPoolStats = (state: AllControllersMappingType['PrivacyPoolsControlle
 type Params = {
   chainId: string
   tokenAddress: string
-  /** 0 before the user enters an amount, which still gets the whole-deposit amounts. */
+  /**
+   * 0 before the user enters a valid amount, which still checks the recipient and gets the
+   * whole-deposit amounts.
+   */
   amount: bigint
   /** Null before the user enters a valid one. */
   recipient: string | null
@@ -28,15 +31,26 @@ type Params = {
 const isSameAddress = (a: string | null, b: string | null) =>
   (a?.toLowerCase() ?? null) === (b?.toLowerCase() ?? null)
 
+type Result = {
+  /** Null until the check matches the form, so an answer about an older entry is never shown. */
+  privacy: PrivacyPoolsWithdrawalPrivacy | null
+  /**
+   * The last check sent to the form's recipient, even for another amount. What the recipient gives
+   * away barely depends on the amount, so it stays while the amount is typed. Null until the
+   * recipient is checked.
+   */
+  recipientPrivacy: PrivacyPoolsWithdrawalPrivacy | null
+  wholeNoteAmounts: bigint[]
+}
+
+const NOT_CHECKED: Result = { privacy: null, recipientPrivacy: null, wholeNoteAmounts: NO_AMOUNTS }
+
 /**
  * Checks what the Send form's transfer gives away, once the user stops typing, and again once the
- * pool's deposits are first read, as nothing can be checked before. Returns the result
- * only while it matches the form, so an answer about an older entry is never shown, and the amounts
- * that send whole deposits of the token.
+ * pool's deposits are first read, as nothing can be checked before. Returns the result, and the
+ * amounts that send whole deposits of the token.
  */
-const usePrivacyPoolsSendCheck = (
-  params: Params | null
-): { privacy: PrivacyPoolsWithdrawalPrivacy | null; wholeNoteAmounts: bigint[] } => {
+const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
   const { state: check, dispatch } = useController(
     'PrivacyPoolsController',
     selectWithdrawalPrivacy
@@ -72,12 +86,14 @@ const usePrivacyPoolsSendCheck = (
       check.chainId === chainId &&
       !!tokenAddress &&
       isSameAddress(check.tokenAddress, tokenAddress)
-    if (!isSameToken) return { privacy: null, wholeNoteAmounts: NO_AMOUNTS }
+    if (!isSameToken) return NOT_CHECKED
 
-    const isSameSend = check.amount === amount && isSameAddress(check.recipient, recipient)
+    const isSameRecipient = isSameAddress(check.recipient, recipient)
+    const isSameSend = isSameRecipient && check.amount === amount
 
     return {
       privacy: isSameSend ? check.privacy : null,
+      recipientPrivacy: isSameRecipient ? check.privacy : null,
       wholeNoteAmounts: check.wholeNoteAmounts
     }
   }, [amount, chainId, check, recipient, tokenAddress])
