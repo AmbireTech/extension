@@ -61,14 +61,6 @@ const MainRoutes = () => {
             element={<SettingsGroupScreen pick={(m) => m.InternalLogsScreen} />}
           />
           <Route
-            path={WEB_ROUTES.networksConfiguration}
-            element={<SettingsGroupScreen pick={(m) => m.NetworksConfiguration} />}
-          />
-          <Route
-            path={WEB_ROUTES.privacyOptOutsConfiguration}
-            element={<SettingsGroupScreen pick={(m) => m.PrivacyOptOutsConfiguration} />}
-          />
-          <Route
             path={WEB_ROUTES.keyStoreSetup}
             element={<AuthGroupScreen pick={(m) => m.KeyStoreSetupScreen} />}
           />
@@ -82,6 +74,15 @@ const MainRoutes = () => {
           />
 
           <Route element={<KeystoreUnlockedRoute />}>
+            {/* Open during the first setup, but once set up, a locked wallet's settings stay locked */}
+            <Route
+              path={WEB_ROUTES.networksConfiguration}
+              element={<SettingsGroupScreen pick={(m) => m.NetworksConfiguration} />}
+            />
+            <Route
+              path={WEB_ROUTES.privacyOptOutsConfiguration}
+              element={<SettingsGroupScreen pick={(m) => m.PrivacyOptOutsConfiguration} />}
+            />
             <Route
               path={WEB_ROUTES.getStarted}
               element={<AuthGroupScreen pick={(m) => m.GetStartedScreen} />}
