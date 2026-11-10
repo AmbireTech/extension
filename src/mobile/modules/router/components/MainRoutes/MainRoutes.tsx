@@ -31,6 +31,7 @@ import QrReaderScreen from '@mobile/modules/qr-reader/screens/QrReaderScreen'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@mobile/modules/router/components/NavMenu'
 import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
+import AccountSmartSettingsScreen from '@mobile/modules/settings/screens/AccountSmartSettingsScreen'
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
 import AddressBookSettingsScreen from '@mobile/modules/settings/screens/AddressBookSettingsScreen'
 import ChangeAppPasswordScreen from '@mobile/modules/settings/screens/ChangeAppPasswordScreen'
@@ -94,6 +95,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.menu} element={<NavMenu />} />
           <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
           <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
+          <Route path={ROUTES.accountSmartSettings} element={<AccountSmartSettingsScreen />} />
           <Route path={ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
           <Route path={ROUTES.devicePasswordChange} element={<ChangeAppPasswordScreen />} />
           <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />

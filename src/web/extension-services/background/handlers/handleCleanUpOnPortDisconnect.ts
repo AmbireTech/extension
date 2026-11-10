@@ -81,6 +81,8 @@ export const handleCleanUpOnPortDisconnect = async ({
 
     if (url.pathname.includes('dashboard') || url.pathname.includes('transactions')) {
       mainCtrl.activity.resetAccountsOpsFilters(sessionId)
+      // Left open, every sync of the account would keep reading its history
+      mainCtrl.privacyPools.resetHistoryFilters(sessionId)
     }
 
     if (url.pathname.includes('signed-messages')) {

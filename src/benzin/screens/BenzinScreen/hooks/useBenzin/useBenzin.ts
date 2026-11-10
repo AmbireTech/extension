@@ -17,11 +17,12 @@ import useController from '@common/hooks/useController'
 import useRoute from '@common/hooks/useRoute'
 import useToast from '@common/hooks/useToast'
 import { setStringAsync } from '@common/utils/clipboard'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const fetch = (typeof window !== 'undefined' ? window.fetch.bind(window) : global.fetch) as any
+const fetch = fetchWithRelayerCustomHeaders as any
 const standardOptions = {
   fetch,
   callRelayer: relayerCall.bind({ url: RELAYER_URL, fetch })

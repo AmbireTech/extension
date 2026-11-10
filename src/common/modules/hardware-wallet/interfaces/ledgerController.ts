@@ -1,3 +1,4 @@
+import { Hex } from '@ambire-common/interfaces/hex'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 
@@ -22,5 +23,12 @@ export interface LedgerControllerInterface {
     path: string
     signTypedData: TypedMessageUserRequest['meta']['params']
   }) => Promise<LedgerSignature>
+  /** Signs an EIP-7702 delegation with the sideloaded "Ambire Signer" app */
+  sign7702: (
+    derivationPath: string,
+    chainId: bigint,
+    delegationAddr: Hex,
+    nonce: bigint
+  ) => Promise<LedgerSignature>
   signingCleanup: () => Promise<void>
 }

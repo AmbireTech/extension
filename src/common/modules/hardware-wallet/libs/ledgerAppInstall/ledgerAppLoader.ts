@@ -9,7 +9,7 @@ import { DeviceModelId } from '@ledgerhq/device-management-kit'
  * script: one hex-encoded APDU per line, all wrapped as `E0 00 00 00 <Lc> <cmd>`
  * (CREATE APP, LOAD code chunks, CRC, COMMIT). Its payloads are the *unwrapped*
  * inner secure commands, so they cannot be replayed in the clear — the device
- * answers `0x6615`. `ledgerSideload.ts` opens an SCP v2 secure channel and wraps
+ * answers `0x6615`. `installLedgerApp.ts` opens an SCP v2 secure channel and wraps
  * every payload before sending it; no payload depends on a device response, so
  * the order is static. See the `ledger` skill for the full picture.
  */

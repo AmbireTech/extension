@@ -75,6 +75,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     [networks, signAccountOpState?.accountOp.chainId]
   )
   const nonceString = nonce.toString()
+  // What the user typed, shown while the nonce is still `sourceNonce`. A typed nonce that gets
+  // set is keyed to itself, so any later change of the nonce (e.g. by Replace pending, back to
+  // the nonce it was typed over) shows the new nonce instead of the typed one
   const [draftNonceState, setDraftNonceState] = useState({
     fromRequestId,
     sourceNonce: nonceString,
@@ -112,8 +115,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
 
   const handleNonceChange = useCallback(
     (value: string) => {
-      setDraftNonceState({ fromRequestId, sourceNonce: nonceString, value })
-      if (!isValidSafeNonce(value, latestNonce)) return
+      const isValid = isValidSafeNonce(value, latestNonce)
+      setDraftNonceState({ fromRequestId, sourceNonce: isValid ? value : nonceString, value })
+      if (!isValid) return
 
       dispatch({
         type: 'method',
@@ -189,7 +193,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     if (isMobile) Keyboard.dismiss()
     setDraftNonceState({
       fromRequestId,
-      sourceNonce: nonceString,
+      sourceNonce: nonceConflict.nextNonce.toString(),
       value: nonceConflict.nextNonce.toString()
     })
     dispatch({
@@ -199,7 +203,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
         args: [nonceConflict.nextNonce]
       }
     })
-  }, [dispatch, fromRequestId, nonceConflict, nonceString])
+  }, [dispatch, fromRequestId, nonceConflict])
 
   // Small floating card styled like the app's real Tooltip (Tooltip.web.tsx), so the
   // conflict reads as an Ambire tooltip popup rather than a one-off alert card. The

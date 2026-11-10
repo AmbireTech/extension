@@ -54,6 +54,7 @@ import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
@@ -315,7 +316,10 @@ const init = async () => {
 
   pm = new PortMessenger()
   ledgerCtrl = new LedgerController(
-    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
+    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports'),
+    (addr, deviceModel) => {
+      void mainCtrl?.keystore.updateUnknownKeyDeviceModel({ addr, type: 'ledger', deviceModel })
+    }
   )
   trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   oneKeyCtrl = new OneKeyController()
@@ -327,7 +331,7 @@ const init = async () => {
   const fetchWithAnalytics: Fetch = (url, init) => {
     if (!isAmbireApiUrl(url.toString())) {
       // @ts-ignore
-      return fetch(url, init)
+      return fetchWithRelayerCustomHeaders(url, init)
     }
 
     // As of v4.26.0, custom internal headers. The mobile app sends the same ones from
@@ -380,7 +384,7 @@ const init = async () => {
     // browser extensions are designed to run within the web environment,
     // which already provides a native and well-optimized fetch API.
     // @ts-ignore
-    return fetch(url, initWithCustomHeaders)
+    return fetchWithRelayerCustomHeaders(url, initWithCustomHeaders)
   }
 
   eventEmitterRegistry = new EventEmitterRegistryController(() => {
@@ -436,8 +440,7 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            // mainCtrl may not exist yet - WalletStateController is created and loads before it
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl?.name }
+            params: { errors: ctrl.emittedErrors, controller: ctrl.name }
           })
           reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')

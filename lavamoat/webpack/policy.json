@@ -641,6 +641,8 @@
       },
       "packages": {
         "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits": true,
+        "@kohaku-eth/privacy-pools>@kohaku-eth/plugins": true,
+        "@kohaku-eth/privacy-pools>@kohaku-eth/poseidon": true,
         "@kohaku-eth/privacy-pools>@kohaku-eth/provider": true,
         "@kohaku-eth/privacy-pools>@reduxjs/toolkit": true,
         "@kohaku-eth/privacy-pools>@saga-sync/client": true,

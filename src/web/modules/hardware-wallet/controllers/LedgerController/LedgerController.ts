@@ -48,8 +48,15 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   #isSigningReportAllowed: () => boolean
 
-  constructor(isSigningReportAllowed: () => boolean) {
+  // Lets the keystore fill in the model of a key saved without one
+  #onKeyConfirmed?: (keyAddr: string, deviceModel: string) => void
+
+  constructor(
+    isSigningReportAllowed: () => boolean,
+    onKeyConfirmed?: (keyAddr: string, deviceModel: string) => void
+  ) {
     this.#isSigningReportAllowed = isSigningReportAllowed
+    this.#onKeyConfirmed = onKeyConfirmed
     // When the `cleanUpListener` method gets passed to the navigator.hid listeners
     // the `this` context gets lost, so we need to bind it here. The `this` context
     // in the `cleanUp` method should be the `LedgerController` instance.
@@ -404,6 +411,9 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     // Save unlocked state
     this.unlockedPath = path
     this.unlockedPathKeyAddr = address
+
+    if (expectedKeyOnThisPath && address.toLowerCase() === expectedKeyOnThisPath.toLowerCase())
+      this.#onKeyConfirmed?.(expectedKeyOnThisPath, this.deviceModel)
 
     return 'JUST_UNLOCKED' as const
   }

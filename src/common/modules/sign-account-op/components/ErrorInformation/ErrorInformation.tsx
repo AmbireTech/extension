@@ -2,6 +2,7 @@ import { setStringAsync } from 'expo-clipboard'
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
+import { EARLIER_PENDING_TRANSACTION_ERROR_CODE } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { getErrorCodeStringFromReason } from '@ambire-common/libs/errorDecoder/helpers'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
@@ -27,6 +28,15 @@ const ErrorInformation = () => {
   const { state: accountsState } = useController('AccountsController')
   const { accountStates } = accountsState
 
+  // The earlier pending transaction box already explains this error
+  const visibleErrors = useMemo(
+    () =>
+      (signAccountOpState?.errors || []).filter(
+        (error) => error.code !== EARLIER_PENDING_TRANSACTION_ERROR_CODE
+      ),
+    [signAccountOpState?.errors]
+  )
+
   const state = useMemo(() => {
     if (!signAccountOpState) return undefined
     return accountStates[signAccountOpState.accountOp.accountAddr]?.[
@@ -44,8 +54,8 @@ const ErrorInformation = () => {
   const copySignAccountOpError = useCallback(async () => {
     let devInfo = tenderlyLink ? `URL: ${tenderlyLink}` : ''
 
-    if (signAccountOpState?.errors?.length) {
-      const { code, text, title } = signAccountOpState.errors[0]!
+    if (visibleErrors.length) {
+      const { code, text, title } = visibleErrors[0]!
       if (code) {
         devInfo = `${devInfo}\nError code: ${code}`
       } else if (text) {
@@ -61,7 +71,7 @@ const ErrorInformation = () => {
     } catch {
       addToast(t('Error copying to clipboard'))
     }
-  }, [addToast, signAccountOpState, t, tenderlyLink])
+  }, [addToast, t, tenderlyLink, visibleErrors])
 
   const refetchAccountState = useCallback(() => {
     if (!signAccountOpState) return
@@ -76,7 +86,7 @@ const ErrorInformation = () => {
   }, [signAccountOpDispatch, signAccountOpState])
 
   const errorText = useMemo(() => {
-    const { action, code, text } = signAccountOpState?.errors?.[0] || {}
+    const { action, code, text } = visibleErrors[0] || {}
     const hasDeveloperInformation = !!code || !!text || !!tenderlyLink
     const canRefetchAccountState = action === 'refetch-account-state'
 
@@ -135,16 +145,17 @@ const ErrorInformation = () => {
     styles.errorTextContainer,
     theme.secondaryText,
     t,
-    tenderlyLink
+    tenderlyLink,
+    visibleErrors
   ])
 
-  if (!signAccountOpState) return null
+  if (!signAccountOpState || !visibleErrors.length) return null
 
   return (
     <AlertVertical
       type="warning"
       size="sm"
-      title={signAccountOpState.errors[0]?.title}
+      title={visibleErrors[0]?.title}
       text={errorText}
       style={spacings.mbLg}
     />

@@ -15,6 +15,7 @@ import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import { isSafeDeploymentRequestError } from '@common/hooks/useSafeActivation'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -33,13 +34,6 @@ type DeploymentRowState = {
   isLoading: boolean
   error?: SafeDeploymentRequestError
 }
-
-/**
- * Whether the value is one of the error codes the RequestsController replies with when it
- * can't prepare the activation. They are already reported by the controller.
- */
-const isSafeDeploymentRequestError = (value: string): value is SafeDeploymentRequestError =>
-  value === 'unavailable' || value === 'preparation-failed'
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 const selectAreAccountStatesLoading = (state: AllControllersMappingType['AccountsController']) =>

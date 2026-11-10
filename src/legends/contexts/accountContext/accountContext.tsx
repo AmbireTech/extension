@@ -5,6 +5,7 @@ import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import { normalizeIdentityResponse } from '@ambire-common/libs/accountPicker/accountPicker'
 import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { storage } from '@common/services/storage'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 import useProviderContext from '@legends/hooks/useProviderContext'
 import useToast from '@legends/hooks/useToast'
@@ -78,8 +79,11 @@ const AccountContextProvider = ({ children }: { children: React.ReactNode }) => 
     async (address: string) => {
       try {
         // Add: timeout to this request
-        // @ts-expect-error types mismatch a bit with the extension, which is fine
-        const callRelayer = relayerCall.bind({ url: RELAYER_URL, fetch })
+        const callRelayer = relayerCall.bind({
+          url: RELAYER_URL,
+          // @ts-expect-error types mismatch a bit with the extension, which is fine
+          fetch: fetchWithRelayerCustomHeaders
+        })
         const identityRes: AccountIdentityResponse | null = await callRelayer(
           `/v2/identity/${address}`
         ).catch((err: any) => {

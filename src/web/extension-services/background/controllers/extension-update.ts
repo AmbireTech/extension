@@ -1,6 +1,6 @@
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { Banner } from '@ambire-common/interfaces/banner'
-import { ErrorRef, IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
+import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { logInfoWithPrefix } from '@common/utils/logger'
 import { browser, isSafari } from '@web/constants/browserapi'
 
@@ -94,7 +94,7 @@ export class ExtensionUpdateController extends EventEmitter {
     return []
   }
 
-  toJSON(): this & { emittedErrors: ErrorRef[] } {
+  toJSON(): this {
     return {
       ...this,
       ...super.toJSON(),

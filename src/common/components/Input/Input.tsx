@@ -10,7 +10,8 @@ import {
   ViewStyle
 } from 'react-native'
 
-import InformationIcon from '@common/assets/svg/InformationIcon'
+import InfoIcon from '@common/assets/svg/InfoIcon'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text, { TextAppearance } from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useAutoFocus from '@common/hooks/useAutoFocus'
@@ -18,6 +19,7 @@ import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTextInputRemountKey from '@common/hooks/useTextInputRemountKey'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
@@ -141,23 +143,20 @@ const Input = ({
   return (
     <View style={[styles.inputContainer, containerStyle]}>
       {!!label && (
-        <Text appearance="secondaryText" fontSize={14} weight="regular" style={styles.label}>
-          {label}
+        <View style={[flexbox.directionRow, flexbox.alignCenter, styles.label]}>
+          <Text appearance="secondaryText" fontSize={14} weight="regular">
+            {label}
+          </Text>
           {!!tooltip && (
-            <View style={{ width: 1 }}>
-              <View style={{ position: 'absolute', top: -11.5, left: 8 }}>
-                <InformationIcon
-                  width={14}
-                  height={14}
-                  dataSet={{
-                    tooltipId: tooltip.id,
-                    tooltipContent: tooltip.content
-                  }}
-                />
-              </View>
-            </View>
+            <InfoIcon
+              width={14}
+              height={14}
+              color={theme.secondaryText}
+              style={spacings.mlMi}
+              dataSet={createGlobalTooltipDataSet({ id: tooltip.id, content: tooltip.content })}
+            />
           )}
-        </Text>
+        </View>
       )}
       <View style={{ zIndex: 10 }}>
         <View style={inputWrapperStyles} ref={inputBorderWrapperRef}>
