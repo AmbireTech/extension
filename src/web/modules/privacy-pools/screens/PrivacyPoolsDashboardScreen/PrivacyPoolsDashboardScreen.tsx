@@ -21,7 +21,6 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsActivityPage from '@web/modules/privacy-pools/components/PrivacyPoolsActivityPage'
-import PrivacyPoolsCommunitySheet from '@web/modules/privacy-pools/components/PrivacyPoolsCommunitySheet'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
 import PrivacyPoolsTokensPage, {
   PRIVACY_POOLS_TABS
@@ -216,7 +215,6 @@ const PrivacyPoolsDashboardScreen = () => {
         </View>
       </View>
       {/* The first time a Privacy Pools account opens, which is right after it is added */}
-      <PrivacyPoolsCommunitySheet stage="on-add" />
     </LayoutWrapper>
   )
 }

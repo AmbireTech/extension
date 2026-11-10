@@ -1,9 +1,12 @@
 import {
   PRIVACY_POOLS_COVER_WINDOW_DAYS,
+  PRIVACY_POOLS_MIN_REASSURING_COVER,
   PRIVACY_POOLS_UNCHECKED_PRIVACY_TEXT
 } from '@ambire-common/consts/privacyPools'
 import { PrivacyPoolsLeakAction, PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
 import { formatPrivacyPoolsAmount } from '@common/utils/privacyPools'
+
+import { PrivacySeverity, PrivacyStage } from './types'
 
 import type { TFunction } from 'i18next'
 
@@ -17,11 +20,23 @@ const getPrivacyActionText = (
   symbol: string
 ): string => `${t(label)}: ${formatPrivacyPoolsAmount(meta.amount, decimals, symbol)}`
 
-/** How many recent deposits hide the transfer, with the days counted. */
-const getPrivacyCoverText = (t: TFunction, cover: number): string =>
-  cover === 1
-    ? t('1 deposit covers you ({{days}}d)', { days: COVER_WINDOW_DAYS })
-    : t('{{count}} deposits cover you ({{days}}d)', { count: cover, days: COVER_WINDOW_DAYS })
+/**
+ * How bad the privacy of a transfer looks. A send hidden among few deposits, or not checked at all,
+ * is a `warning` even without a leak. A deposit's amount can still be sent out in other amounts, so
+ * for it they are `ok`.
+ */
+const getPrivacySeverity = (
+  stage: PrivacyStage,
+  rating: PrivacyPoolsRating,
+  cover: number
+): PrivacySeverity => {
+  if (rating === 'traceable') return 'error'
+  if (rating === 'weak') return 'warning'
+  if (stage === 'send' && (rating === 'unchecked' || cover < PRIVACY_POOLS_MIN_REASSURING_COVER))
+    return 'warning'
+
+  return 'ok'
+}
 
 /**
  * The status line of a transfer: its cover, or that nothing could be checked yet. Leaves out the
@@ -35,4 +50,4 @@ const getPrivacyStatusText = (t: TFunction, rating: PrivacyPoolsRating, cover: n
     : t('{{count}} deposits cover you', { count: cover })
 }
 
-export { COVER_WINDOW_DAYS, getPrivacyActionText, getPrivacyCoverText, getPrivacyStatusText }
+export { COVER_WINDOW_DAYS, getPrivacyActionText, getPrivacySeverity, getPrivacyStatusText }

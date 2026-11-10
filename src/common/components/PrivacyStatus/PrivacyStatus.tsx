@@ -2,7 +2,6 @@ import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import { PRIVACY_POOLS_MIN_REASSURING_COVER } from '@ambire-common/consts/privacyPools'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
@@ -12,7 +11,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { getPrivacyStatusText } from './helpers'
+import { getPrivacySeverity, getPrivacyStatusText } from './helpers'
 import PrivacyModal from './PrivacyModal'
 import { PrivacyStatusProps } from './types'
 
@@ -28,14 +27,10 @@ const PrivacyStatus: FC<PrivacyStatusProps> = (props) => {
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
-  const isTraceable = rating === 'traceable'
+  const severity = getPrivacySeverity(stage, rating, cover)
+  const isTraceable = severity === 'error'
+  const isWarning = severity === 'warning'
   const hasSuggestions = !!leaks.length
-  // On a send, few deposits to hide among read as a warning even without a leak, as does no check
-  // at all. A deposit's amount can still be sent out in other amounts, so for it they are only info.
-  const isWarning =
-    !isTraceable &&
-    (rating === 'weak' ||
-      (stage === 'send' && (rating === 'unchecked' || cover < PRIVACY_POOLS_MIN_REASSURING_COVER)))
   // A suggestion that neither breaks nor weakens privacy still stands out, so it isn't missed
   const iconColor = isTraceable
     ? theme.errorDecorative

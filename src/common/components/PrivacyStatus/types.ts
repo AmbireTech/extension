@@ -5,6 +5,9 @@ import { PrivacyPoolsLeak, PrivacyPoolsRating } from '@ambire-common/interfaces/
 /** Where the status shows. A deposit is hidden among deposits of its exact amount. */
 type PrivacyStage = 'deposit' | 'send'
 
+/** How bad the privacy of a transfer looks, which sets its colors. */
+type PrivacySeverity = 'error' | 'warning' | 'ok'
+
 type PrivacyStatusProps = {
   stage: PrivacyStage
   rating: PrivacyPoolsRating
@@ -21,4 +24,4 @@ type PrivacyStatusProps = {
   style?: ViewStyle
 }
 
-export type { PrivacyStage, PrivacyStatusProps }
+export type { PrivacySeverity, PrivacyStage, PrivacyStatusProps }
