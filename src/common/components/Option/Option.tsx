@@ -85,15 +85,18 @@ const Option = ({
             {...iconProps}
           />
         </View>
-        <Text
-          style={[flexbox.flex1, disabled && disabledStyle]}
-          fontSize={14}
-          weight="medium"
-          numberOfLines={1}
-        >
-          {text}
-        </Text>
-        {badge}
+        {/* The badge follows the text right away, so the text only takes as much room as it needs */}
+        <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+          <Text
+            style={[{ flexShrink: 1 }, !!badge && spacings.mrTy, disabled && disabledStyle]}
+            fontSize={14}
+            weight="medium"
+            numberOfLines={1}
+          >
+            {text}
+          </Text>
+          {badge}
+        </View>
         {icons.length > 0 && (
           <View style={[flexbox.directionRow, spacings.mrTy, disabled && disabledStyle]}>
             {icons.map(({ key, component: Component }) => (
