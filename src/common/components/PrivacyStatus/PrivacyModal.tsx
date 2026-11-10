@@ -32,7 +32,6 @@ const ICON_SIZE = 18
 const COVER_LEAK_IDS: PrivacyPoolsLeakId[] = ['unusual-deposit-amount', 'unique-amount']
 
 const RATING_SUMMARIES = {
-  strong: 'Nothing in this transfer links it to you, and many deposits hide it.',
   basic:
     'Nothing in this transfer links it to you. How well it hides depends on how many deposits are like yours.',
   weak: 'Some details make this transfer easier to link to you.',
@@ -163,7 +162,7 @@ const PrivacyModal: FC<Props> = ({
       {!isCoverInLeaks && rating !== 'unchecked' && (
         <MemoizedPrivacyItem
           type="info"
-          title={getPrivacyCoverText(t, stage, cover)}
+          title={getPrivacyCoverText(t, cover)}
           text={t(COVER_EXPLANATIONS[stage], { days: COVER_WINDOW_DAYS })}
         />
       )}

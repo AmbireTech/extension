@@ -15,7 +15,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import PrivacyModal from './PrivacyModal'
 import { PrivacyStatusProps } from './types'
 
-type Props = Omit<PrivacyStatusProps, 'stage' | 'isCompact'> & {
+type Props = Omit<PrivacyStatusProps, 'stage'> & {
   /** The leaks that come from the field, e.g. `PRIVACY_POOLS_RECIPIENT_LEAK_IDS`. */
   fieldLeakIds: PrivacyPoolsLeakId[]
   testID: string

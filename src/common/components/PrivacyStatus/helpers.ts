@@ -5,8 +5,6 @@ import {
 import { PrivacyPoolsLeakAction, PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
 import { formatPrivacyPoolsAmount } from '@common/utils/privacyPools'
 
-import { PrivacyStage } from './types'
-
 import type { TFunction } from 'i18next'
 
 const COVER_WINDOW_DAYS = Number(PRIVACY_POOLS_COVER_WINDOW_DAYS)
@@ -19,21 +17,11 @@ const getPrivacyActionText = (
   symbol: string
 ): string => `${t(label)}: ${formatPrivacyPoolsAmount(meta.amount, decimals, symbol)}`
 
-/** How many recent deposits hide the transfer, in the words of its stage. */
-const getPrivacyCoverText = (t: TFunction, stage: PrivacyStage, cover: number): string => {
-  if (stage === 'deposit') {
-    return cover === 1
-      ? t('1 deposit covers you ({{days}}d)', { days: COVER_WINDOW_DAYS })
-      : t('{{count}} deposits cover you ({{days}}d)', {
-          count: cover,
-          days: COVER_WINDOW_DAYS
-        })
-  }
-
-  return cover === 1
+/** How many recent deposits hide the transfer, with the days counted. */
+const getPrivacyCoverText = (t: TFunction, cover: number): string =>
+  cover === 1
     ? t('1 deposit covers you ({{days}}d)', { days: COVER_WINDOW_DAYS })
     : t('{{count}} deposits cover you ({{days}}d)', { count: cover, days: COVER_WINDOW_DAYS })
-}
 
 /**
  * The status line of a transfer: its cover, or that nothing could be checked yet. Leaves out the

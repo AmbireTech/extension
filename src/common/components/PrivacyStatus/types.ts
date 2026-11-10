@@ -18,8 +18,6 @@ type PrivacyStatusProps = {
   symbol: string
   /** Fixes a leak with another amount. Without it, no fix is offered, as on a proved transfer. */
   onSetAmount?: (amount: bigint) => void
-  /** One line without the rating badge, for a form short on room. The fixes stay in the details. */
-  isCompact?: boolean
   style?: ViewStyle
 }
 

@@ -18,7 +18,7 @@ import { COVER_WINDOW_DAYS, getPrivacyStatusText } from './helpers'
 import PrivacyModal from './PrivacyModal'
 import { PrivacyStatusProps } from './types'
 
-type Props = Omit<PrivacyStatusProps, 'stage' | 'isCompact'>
+type Props = Omit<PrivacyStatusProps, 'stage'>
 
 const COVER_ICON_SIZE = 16
 const SUGGESTIONS_ICON_SIZE = 12

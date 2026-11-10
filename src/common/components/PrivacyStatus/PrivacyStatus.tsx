@@ -9,21 +9,20 @@ import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import { getPrivacyStatusText } from './helpers'
 import PrivacyModal from './PrivacyModal'
-import PrivacyRatingBadge from './PrivacyRatingBadge'
 import { PrivacyStatusProps } from './types'
 
 /**
- * How well a Privacy Pools transfer hides: a badge when something weakens or breaks its privacy,
- * and how many deposits hide it, or that nothing could be checked yet. Pressing it opens every
- * suggestion with its fix. A compact status is one line without the badge.
+ * How well a Privacy Pools transfer hides, in one line: how many deposits hide it, or that nothing
+ * could be checked yet, colored by how weak its privacy is. Pressing it opens every suggestion
+ * with its fix.
  */
 const PrivacyStatus: FC<PrivacyStatusProps> = (props) => {
-  const { stage, rating, leaks, cover, isCompact, style } = props
+  const { stage, rating, leaks, cover, style } = props
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
@@ -61,22 +60,11 @@ const PrivacyStatus: FC<PrivacyStatusProps> = (props) => {
       <HoverablePressable
         testID={`privacy-pools-${stage}-privacy-status`}
         onPress={handleOpen}
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          !isCompact && flexbox.wrap,
-          { gap: SPACING_TY }
-        ]}
+        style={[flexbox.directionRow, flexbox.alignCenter]}
       >
-        {!isCompact && <PrivacyRatingBadge rating={rating} />}
-        <View style={[flexbox.directionRow, flexbox.alignCenter, isCompact && flexbox.flex1]}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
           <StatusIcon width={16} height={16} color={iconColor} style={spacings.mrMi} />
-          <Text
-            fontSize={12}
-            appearance="secondaryText"
-            numberOfLines={isCompact ? 1 : undefined}
-            style={isCompact ? flexbox.flex1 : undefined}
-          >
+          <Text fontSize={12} appearance="secondaryText" numberOfLines={1} style={flexbox.flex1}>
             <Text fontSize={12} appearance={textAppearance} underline>
               {getPrivacyStatusText(t, rating, cover)}
               {hasSuggestions && ` · ${suggestionsText}`}

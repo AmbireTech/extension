@@ -64,7 +64,6 @@ const PrivacyPoolsDepositPrivacy: FC<Props> = ({
         decimals={token.decimals}
         symbol={token.symbol}
         onSetAmount={disabled ? undefined : onSetAmount}
-        isCompact
         style={flexbox.flex1}
       />
       {feeAmount !== null && vettingFeeBPS !== null && (

@@ -344,10 +344,6 @@ const SendForm = ({
     setRawTokenAmount
   ])
 
-  // The one-line privacy status below the form already tells why the amount is weak
-  const isAmountMessageHidden =
-    !!privacyPoolsDepositPrivacy && !!privacyPoolsRecipient && amountErrorSeverity === 'warning'
-
   const privacyPoolsRecipientAccount = useMemo(
     () =>
       privacyPoolsRecipient
@@ -444,7 +440,7 @@ const SendForm = ({
           maxAmountDisabled={isPrivacyPoolsMaxLoading}
           validateFromAmount={{
             success: !amountIsError,
-            message: isAmountMessageHidden ? '' : amountErrorMessage,
+            message: amountErrorMessage,
             severity: amountErrorSeverity
           }}
           onFromAmountChange={setAmountFieldValue}

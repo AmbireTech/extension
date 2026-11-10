@@ -446,7 +446,7 @@ const PrivacyPoolsSendScreen = () => {
         ) : (
           <Completed
             title={t('Sending successfully')}
-            titleSecondary={t('Your {{symbol}} is on its way. No trail back to you.', {
+            titleSecondary={t('Your {{symbol}} is on its way.', {
               symbol: operationAsset?.symbol || t('Token')
             })}
             openExplorerText={t('View Transfer')}
