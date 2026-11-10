@@ -21,6 +21,7 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
+import SoonBadge from '@common/components/SoonBadge'
 import {
   isMobile,
   isPrivacyPoolsComingSoon,
@@ -290,11 +291,7 @@ const AddAccount = ({
             testID="add-privacy-pools-account"
             status="none"
             disabled={isPrivacyPoolsComingSoon}
-            badge={
-              isPrivacyPoolsComingSoon
-                ? { text: t('Coming soon'), type: 'privacyPools' }
-                : undefined
-            }
+            badge={isPrivacyPoolsComingSoon ? <SoonBadge /> : undefined}
           />
         )}
         <ExpandableOptionSection

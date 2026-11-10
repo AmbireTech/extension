@@ -4,7 +4,6 @@ import { SvgProps } from 'react-native-svg'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
-import Badge, { BadgeType } from '@common/components/Badge'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -14,6 +13,9 @@ import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+// Applied to each part but the badge, which stays readable on a disabled option
+const disabledStyle = { opacity: 0.5 }
 
 interface Props {
   text: string
@@ -27,8 +29,8 @@ interface Props {
   status?: 'default' | 'expanded' | 'collapsed' | 'none'
   icons?: { key: string; component: React.FC<any> }[]
   ref?: React.Ref<any>
-  /** A short label next to the text, e.g. "Coming soon" for an option that is not available yet */
-  badge?: { text: string; type?: BadgeType }
+  /** A badge next to the text, e.g. "Soon" for an option that is not available yet. Never dimmed */
+  badge?: React.ReactNode
 }
 
 const Option = ({
@@ -65,8 +67,7 @@ const Option = ({
         animStyle,
         status === 'expanded' && {
           backgroundColor: theme.secondaryBackground
-        },
-        disabled && { opacity: 0.5 }
+        }
       ]}
       onPress={onPress}
       {...bindAnim}
@@ -76,7 +77,7 @@ const Option = ({
       ref={ref}
     >
       <View style={[flexbox.directionRow, flexbox.alignCenter, { height: BUTTON_HEIGHT }]}>
-        <View style={styles.iconWrapper}>
+        <View style={[styles.iconWrapper, disabled && disabledStyle]}>
           <Icon
             color={
               isHovered && themeType === THEME_TYPES.LIGHT ? theme.primaryAccent : theme.iconPrimary
@@ -84,25 +85,30 @@ const Option = ({
             {...iconProps}
           />
         </View>
-        <Text style={flexbox.flex1} fontSize={14} weight="medium" numberOfLines={1}>
+        <Text
+          style={[flexbox.flex1, disabled && disabledStyle]}
+          fontSize={14}
+          weight="medium"
+          numberOfLines={1}
+        >
           {text}
         </Text>
-        {!!badge && <Badge text={badge.text} type={badge.type} />}
+        {badge}
         {icons.length > 0 && (
-          <View style={[flexbox.directionRow, spacings.mrTy]}>
+          <View style={[flexbox.directionRow, spacings.mrTy, disabled && disabledStyle]}>
             {icons.map(({ key, component: Component }) => (
               <Component key={key} width={32} height={32} style={spacings.mrMi} />
             ))}
           </View>
         )}
 
-        <View style={spacings.mrSm}>
+        <View style={[spacings.mrSm, disabled && disabledStyle]}>
           {status === 'default' && <RightArrowIcon />}
           {status === 'expanded' && <UpArrowIcon />}
           {status === 'collapsed' && <DownArrowIcon />}
         </View>
       </View>
-      {children}
+      {disabled ? <View style={disabledStyle}>{children}</View> : children}
     </AnimatedPressable>
   )
 }
