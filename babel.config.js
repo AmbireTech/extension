@@ -31,6 +31,10 @@ module.exports = function (api) {
   // build for one target cannot reuse the config computed for another.
   api.cache.using(() => `${process.env.WEB_ENGINE}|${process.env.WEBPACK_BUILD_OUTPUT_PATH}`)
 
+  // Metro transforms in jest-worker processes, which set JEST_WORKER_ID. Both env-inlining plugins
+  // below would bake it in, making react-native-mmkv's isTest() true: an empty in-memory storage
+  if (api.caller((caller) => caller?.name === 'metro')) delete process.env.JEST_WORKER_ID
+
   const isMobile =
     !process.env.WEB_ENGINE &&
     !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('benzin') &&
