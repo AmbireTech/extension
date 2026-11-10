@@ -30,19 +30,31 @@ const PrivacyStatus: FC<PrivacyStatusProps> = (props) => {
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
   const isTraceable = rating === 'traceable'
+  const hasSuggestions = !!leaks.length
   // On a send, few deposits to hide among read as a warning even without a leak, as does no check
   // at all. A deposit's amount can still be sent out in other amounts, so for it they are only info.
   const isWarning =
     !isTraceable &&
     (rating === 'weak' ||
       (stage === 'send' && (rating === 'unchecked' || cover < PRIVACY_POOLS_MIN_REASSURING_COVER)))
+  // A suggestion that neither breaks nor weakens privacy still stands out, so it isn't missed
   const iconColor = isTraceable
     ? theme.errorDecorative
     : isWarning
       ? theme.warningDecorative
-      : theme.iconSecondary
+      : hasSuggestions
+        ? theme.infoDecorative
+        : theme.iconSecondary
   const StatusIcon = isTraceable || isWarning ? WarningIcon : InfoIcon
-  const textAppearance = isTraceable ? 'errorText' : isWarning ? 'warningText' : 'secondaryText'
+  const textAppearance = isTraceable
+    ? 'errorText'
+    : isWarning
+      ? 'warningText'
+      : hasSuggestions
+        ? 'infoText'
+        : 'secondaryText'
+  const suggestionsText =
+    leaks.length === 1 ? t('1 suggestion') : t('{{count}} suggestions', { count: leaks.length })
 
   return (
     <View style={style}>
@@ -66,17 +78,11 @@ const PrivacyStatus: FC<PrivacyStatusProps> = (props) => {
             style={isCompact ? flexbox.flex1 : undefined}
           >
             <Text fontSize={12} appearance={textAppearance} underline>
-              {getPrivacyStatusText(t, stage, rating, cover)}
+              {getPrivacyStatusText(t, rating, cover)}
+              {hasSuggestions && ` · ${suggestionsText}`}
             </Text>
           </Text>
         </View>
-        {!isCompact && !!leaks.length && (
-          <Text fontSize={12} appearance="secondaryText">
-            {leaks.length === 1
-              ? t('1 suggestion')
-              : t('{{count}} suggestions', { count: leaks.length })}
-          </Text>
-        )}
       </HoverablePressable>
       <PrivacyModal {...props} sheetRef={sheetRef} closeBottomSheet={closeSheet} />
     </View>

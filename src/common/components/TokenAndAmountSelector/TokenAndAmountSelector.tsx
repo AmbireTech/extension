@@ -94,6 +94,7 @@ const TokenAndAmountSelector: FC<Props> = ({
   const { theme, styles } = useTheme(getStyles)
   const isError = message?.severity === 'error' && !!message?.text
   const isWarning = message?.severity === 'warning' && !!message?.text
+  const isInfo = message?.severity === 'info' && !!message?.text
 
   const amountColumnStyle = isTokenRowSplitEvenly
     ? styles.evenAmountColumn
@@ -224,7 +225,7 @@ const TokenAndAmountSelector: FC<Props> = ({
         <Text
           fontSize={12}
           style={styles.message}
-          appearance={isWarning ? 'warningText' : 'errorText'}
+          appearance={isInfo ? 'secondaryText' : isWarning ? 'warningText' : 'errorText'}
         >
           {message.text}
         </Text>

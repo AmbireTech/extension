@@ -87,7 +87,7 @@ const PrivacySendStatus: FC<Props> = (props) => {
           style={spacings.mrTy}
         />
         <Text fontSize={12} appearance={coverAppearance} numberOfLines={1} style={flexbox.flex1}>
-          {getPrivacyStatusText(t, 'send', rating, cover)}
+          {getPrivacyStatusText(t, rating, cover)}
         </Text>
       </View>
       {!!leaks.length && (

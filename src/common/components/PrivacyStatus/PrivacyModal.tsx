@@ -16,7 +16,7 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
-import { getPrivacyActionText, getPrivacyCoverText } from './helpers'
+import { COVER_WINDOW_DAYS, getPrivacyActionText, getPrivacyCoverText } from './helpers'
 import { PrivacyStatusProps } from './types'
 
 type Props = Omit<PrivacyStatusProps, 'style'> & {
@@ -42,8 +42,9 @@ const RATING_SUMMARIES = {
 } as const
 
 const COVER_EXPLANATIONS = {
-  deposit: 'More deposits of this amount make yours harder to find.',
-  send: 'More deposits that can pay this transfer make yours harder to find.'
+  deposit:
+    'Counts deposits from the last {{days}} days. More deposits of this amount make yours harder to find.',
+  send: 'Counts deposits from the last {{days}} days. More deposits that can pay this transfer make yours harder to find.'
 } as const
 
 type ItemProps = {
@@ -163,7 +164,7 @@ const PrivacyModal: FC<Props> = ({
         <MemoizedPrivacyItem
           type="info"
           title={getPrivacyCoverText(t, stage, cover)}
-          text={t(COVER_EXPLANATIONS[stage])}
+          text={t(COVER_EXPLANATIONS[stage], { days: COVER_WINDOW_DAYS })}
         />
       )}
     </BottomSheet>

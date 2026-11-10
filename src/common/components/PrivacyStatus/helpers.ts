@@ -23,30 +23,28 @@ const getPrivacyActionText = (
 const getPrivacyCoverText = (t: TFunction, stage: PrivacyStage, cover: number): string => {
   if (stage === 'deposit') {
     return cover === 1
-      ? t('1 deposit has this amount (last {{days}} days)', { days: COVER_WINDOW_DAYS })
-      : t('{{count}} deposits have this amount (last {{days}} days)', {
+      ? t('1 deposit covers you ({{days}}d)', { days: COVER_WINDOW_DAYS })
+      : t('{{count}} deposits cover you ({{days}}d)', {
           count: cover,
           days: COVER_WINDOW_DAYS
         })
   }
 
   return cover === 1
-    ? t('1 deposit covers you (last {{days}} days)', { days: COVER_WINDOW_DAYS })
-    : t('{{count}} deposits cover you (last {{days}} days)', {
-        count: cover,
-        days: COVER_WINDOW_DAYS
-      })
+    ? t('1 deposit covers you ({{days}}d)', { days: COVER_WINDOW_DAYS })
+    : t('{{count}} deposits cover you ({{days}}d)', { count: cover, days: COVER_WINDOW_DAYS })
 }
 
-/** The status line of a transfer: its cover, or that nothing could be checked yet. */
-const getPrivacyStatusText = (
-  t: TFunction,
-  stage: PrivacyStage,
-  rating: PrivacyPoolsRating,
-  cover: number
-): string =>
-  rating === 'unchecked'
-    ? t(PRIVACY_POOLS_UNCHECKED_PRIVACY_TEXT)
-    : getPrivacyCoverText(t, stage, cover)
+/**
+ * The status line of a transfer: its cover, or that nothing could be checked yet. Leaves out the
+ * days counted, which only the privacy details have room for.
+ */
+const getPrivacyStatusText = (t: TFunction, rating: PrivacyPoolsRating, cover: number): string => {
+  if (rating === 'unchecked') return t(PRIVACY_POOLS_UNCHECKED_PRIVACY_TEXT)
+
+  return cover === 1
+    ? t('1 deposit covers you')
+    : t('{{count}} deposits cover you', { count: cover })
+}
 
 export { COVER_WINDOW_DAYS, getPrivacyActionText, getPrivacyCoverText, getPrivacyStatusText }

@@ -7,7 +7,7 @@ import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
-import PrivacyStatus from '@common/components/PrivacyStatus'
+import { PrivacySendStatus } from '@common/components/PrivacyStatus'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
@@ -144,8 +144,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
 
           {/* For the deposits the proof actually spends. The amount can't change here anymore */}
           {isConfirming && !!privacy && (
-            <PrivacyStatus
-              stage="send"
+            <PrivacySendStatus
               rating={privacy.rating}
               leaks={privacy.leaks}
               cover={privacy.cover.bigEnough}
