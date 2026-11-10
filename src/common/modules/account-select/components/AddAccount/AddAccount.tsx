@@ -279,7 +279,12 @@ const AddAccount = ({
         {/* Extension only for now. Where not released yet, only a teaser that cannot be opened */}
         {isPrivacyPoolsSupported && !showImportOnly && (
           <Option
-            text={t('Add a Privacy Pools account')}
+            // The teaser doesn't say which privacy provider is coming
+            text={
+              isPrivacyPoolsComingSoon
+                ? t('Add a private account')
+                : t('Add a Privacy Pools account')
+            }
             icon={PrivacyPoolsIcon}
             onPress={openPrivacyPoolsBottomSheet as any}
             testID="add-privacy-pools-account"
