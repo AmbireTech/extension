@@ -295,7 +295,11 @@ const SendForm = ({
         params: {
           method: 'update',
           args: [
-            { amountFieldMode: 'token', amount: formatUnits(rawAmount, selectedToken.decimals) }
+            {
+              amountFieldMode: 'token',
+              amount: formatUnits(rawAmount, selectedToken.decimals),
+              isAmountUpdateFromOutsideField: true
+            }
           ]
         }
       })
