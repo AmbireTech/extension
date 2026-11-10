@@ -1,3 +1,4 @@
+import { formatUnits } from 'ethers'
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
@@ -5,6 +6,7 @@ import { SvgProps } from 'react-native-svg'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import Alert from '@common/components/Alert'
+import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
 import Recipient from '@common/components/Recipient'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
@@ -18,9 +20,12 @@ import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
+import PrivacyPoolsDepositPrivacy from '@common/modules/transfer/components/PrivacyPoolsDepositPrivacy'
 import PrivacyPoolsRecipient from '@common/modules/transfer/components/PrivacyPoolsRecipient'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { parseSliderAmount } from '@common/utils/amountSlider'
+import { getPrivacyPoolsSuggestedAmounts } from '@common/utils/privacyPools'
 import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
@@ -89,7 +94,10 @@ const SendForm = ({
       areDefaultsSet,
       addressPoisoningMatch,
       privacyPoolsRecipient,
-      privacyPoolsDepositError
+      privacyPoolsDepositError,
+      privacyPoolsDepositPrivacy,
+      privacyPoolsMaxAmount,
+      privacyPoolsFeeAmount
     },
     dispatch: transferDispatch
   } = useController('TransferController')
@@ -278,6 +286,64 @@ const SendForm = ({
     })
   }, [transferDispatch])
 
+  // A chip or a privacy fix is an amount in the token, so the field switches to token mode
+  const setRawTokenAmount = useCallback(
+    (rawAmount: bigint) => {
+      if (!selectedToken) return
+      transferDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [
+            { amountFieldMode: 'token', amount: formatUnits(rawAmount, selectedToken.decimals) }
+          ]
+        }
+      })
+    },
+    [selectedToken, transferDispatch]
+  )
+
+  const parsedTokenAmount = useMemo(
+    () => (selectedToken ? parseSliderAmount(controllerAmount, selectedToken.decimals) : 0n),
+    [controllerAmount, selectedToken]
+  )
+
+  // Max and the chips need the pool's fee, which comes on top of the amount
+  const isPrivacyPoolsMaxLoading = !!privacyPoolsRecipient && privacyPoolsMaxAmount === null
+
+  const privacyPoolsDepositChips = useMemo(() => {
+    if (!privacyPoolsRecipient || !selectedToken) return undefined
+
+    return (
+      <PrivacyPoolsAmountChips
+        amounts={getPrivacyPoolsSuggestedAmounts(
+          selectedToken.chainId.toString(),
+          selectedToken.address
+        )}
+        decimals={selectedToken.decimals}
+        selectedAmount={parsedTokenAmount}
+        // What the balance can put into the pool, after the pool's fee
+        maxAmount={privacyPoolsMaxAmount ?? 0n}
+        onSelect={setRawTokenAmount}
+        disabled={disableForm || isPrivacyPoolsMaxLoading}
+        testID="privacy-pools-deposit-amount"
+        style={spacings.mt0}
+      />
+    )
+  }, [
+    disableForm,
+    isPrivacyPoolsMaxLoading,
+    parsedTokenAmount,
+    privacyPoolsMaxAmount,
+    privacyPoolsRecipient,
+    selectedToken,
+    setRawTokenAmount
+  ])
+
+  // The one-line privacy status below the form already tells why the amount is weak
+  const isAmountMessageHidden =
+    !!privacyPoolsDepositPrivacy && !!privacyPoolsRecipient && amountErrorSeverity === 'warning'
+
   const privacyPoolsRecipientAccount = useMemo(
     () =>
       privacyPoolsRecipient
@@ -357,6 +423,8 @@ const SendForm = ({
       ) : (
         <SendToken
           label={t('Send token')}
+          isLabelInline
+          amountPresets={privacyPoolsDepositChips}
           fromTokenOptions={allFromTokenOptions}
           sections={tokenSections}
           renderSectionHeader={tokenSections ? renderSectionHeader : undefined}
@@ -369,9 +437,10 @@ const SendForm = ({
           fromAmountInFiat={amountInFiat}
           fromAmountFieldMode={amountFieldMode}
           maxFromAmount={maxAmount}
+          maxAmountDisabled={isPrivacyPoolsMaxLoading}
           validateFromAmount={{
             success: !amountIsError,
-            message: amountErrorMessage,
+            message: isAmountMessageHidden ? '' : amountErrorMessage,
             severity: amountErrorSeverity
           }}
           onFromAmountChange={setAmountFieldValue}
@@ -381,6 +450,17 @@ const SendForm = ({
           selectTestId="tokens-select"
           simulationFailed={!!simulationError}
           amountAdjustmentInfo={amountAdjustmentInfo}
+        />
+      )}
+
+      {!!privacyPoolsRecipient && !!selectedToken && !!privacyPoolsDepositPrivacy && (
+        <PrivacyPoolsDepositPrivacy
+          privacy={privacyPoolsDepositPrivacy}
+          token={selectedToken}
+          amount={parsedTokenAmount}
+          feeAmount={privacyPoolsFeeAmount}
+          disabled={disableForm}
+          onSetAmount={setRawTokenAmount}
         />
       )}
 
