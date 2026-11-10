@@ -151,6 +151,14 @@ const AccountSelectScreen = () => {
     [privacyPoolsAccounts, debouncedSearch, t]
   )
 
+  // The list's bottom inset ends exactly at a floating footer, so the last row keeps its margin
+  // to stay off it. A footer under the list (narrow view) has its own padding, so there it doesn't
+  const getRowContainerStyle = useCallback(
+    (index: number, rowsCount: number) =>
+      isNarrowWebLayout && index === rowsCount - 1 ? spacings.mb0 : undefined,
+    [isNarrowWebLayout]
+  )
+
   const renderItem = useCallback(
     ({ item: acc, index }: { item: AccountType; index: number }) => {
       return (
@@ -162,11 +170,11 @@ const AccountSelectScreen = () => {
           maxAccountAddrLength={32}
           onExtraHeightChange={onAccountExtraHeightChange}
           withReceive
-          containerStyle={index === accounts.length - 1 ? spacings.mb0 : undefined}
+          containerStyle={getRowContainerStyle(index, accounts.length)}
         />
       )
     },
-    [onAccountSelect, onAccountExtraHeightChange, accounts.length]
+    [onAccountSelect, onAccountExtraHeightChange, getRowContainerStyle, accounts.length]
   )
 
   useEffect(() => {
@@ -189,14 +197,15 @@ const AccountSelectScreen = () => {
   }, [navigate, pendingToBeSetSelectedPrivacyPoolsAccount, privacyPoolsAccountId])
 
   const renderPrivacyPoolsAccount = useCallback(
-    ({ item: privacyPoolsAccount }: { item: PrivacyPoolsAccountDisplay }) => (
+    ({ item: privacyPoolsAccount, index }: { item: PrivacyPoolsAccountDisplay; index: number }) => (
       <PrivacyPoolsAccountRow
         account={privacyPoolsAccount}
         isSelected={privacyPoolsAccount.seedId === privacyPoolsAccountId}
         onSelect={setPendingToBeSetSelectedPrivacyPoolsAccount}
+        containerStyle={getRowContainerStyle(index, filteredPrivacyPoolsAccounts.length)}
       />
     ),
-    [privacyPoolsAccountId]
+    [privacyPoolsAccountId, getRowContainerStyle, filteredPrivacyPoolsAccounts.length]
   )
 
   const listContentContainerStyle = useMemo(
