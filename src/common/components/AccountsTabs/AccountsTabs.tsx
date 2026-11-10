@@ -5,6 +5,7 @@ import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PublicAccountsIcon from '@common/assets/svg/PublicAccountsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
+import SoonBadge from '@common/components/SoonBadge'
 import Text from '@common/components/Text'
 import { isPrivacyPoolsComingSoon } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -74,11 +75,7 @@ const AccountsTabs: FC<Props> = ({ activeTab, onTabChange, disabledTabReasons, s
             accessibilityState={{ selected: isActive, disabled: !!disabledReason }}
             // Not the `disabled` prop, which would block the tooltip's hover
             onPress={disabledReason ? undefined : () => onTabChange(id)}
-            style={[
-              styles.tab,
-              isActive && styles.activeTab,
-              !!disabledReason && styles.disabledTab
-            ]}
+            style={[styles.tab, isActive && styles.activeTab]}
             dataSet={
               disabledReason
                 ? createGlobalTooltipDataSet({
@@ -88,14 +85,18 @@ const AccountsTabs: FC<Props> = ({ activeTab, onTabChange, disabledTabReasons, s
                 : undefined
             }
           >
-            <Icon width={24} height={24} color={isActive ? activeIconColor : undefined} />
-            <Text
-              fontSize={12}
-              weight="medium"
-              appearance={isActive ? 'primaryText' : 'secondaryText'}
-            >
-              {label}
-            </Text>
+            {/* Only the label is dimmed when disabled, the "Soon" badge stays readable */}
+            <View style={[styles.tabLabel, !!disabledReason && styles.disabledTabLabel]}>
+              <Icon width={24} height={24} color={isActive ? activeIconColor : undefined} />
+              <Text
+                fontSize={12}
+                weight="medium"
+                appearance={isActive ? 'primaryText' : 'secondaryText'}
+              >
+                {label}
+              </Text>
+            </View>
+            {id === 'private' && isPrivacyPoolsComingSoon && <SoonBadge />}
           </HoverablePressable>
         )
       })}
