@@ -80,7 +80,9 @@ export const ControllersMiddlewareProvider: React.FC<{
       const featureFlagsCtrl = ctrls.FeatureFlagsController
       const tokenPricesCtrl = new TokenPricesController({
         fetch: fetch as any,
-        isTokenPricesEnabled: () => featureFlagsCtrl.isFeatureEnabled('tokenPrices')
+        isTokenPricesEnabled: () => featureFlagsCtrl.isFeatureEnabled('tokenPrices'),
+        // No Privacy Pools account exists here, so there's nothing for the assets to cover
+        addsPrivacyPoolsAssets: false
       })
       ctrls.ProvidersController = new ProvidersController({
         eventEmitterRegistry: eventEmitterRegistry.current,
