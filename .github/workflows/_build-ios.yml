@@ -25,7 +25,11 @@ jobs:
   build-ios:
     name: Build iOS artifact and upload
     environment: extension-production
-    # NOTE: macos-15 runners are Apple Silicon (arm64)
+    # NOTE: macos-26 runners are Apple Silicon (arm64)
+    # TODO: Move to Xcode 27 once the `xcode-27` runner image leaves public preview
+    # (https://github.com/actions/runner-images/issues/14404) and its keychain unlock bug
+    # is fixed (https://github.com/actions/runner-images/issues/14837). Switch `runs-on` here,
+    # in e2e-mobilewright-ios.yml and in publish-ota-ios.yml, then bump .xcode-version.
     runs-on: macos-26
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
