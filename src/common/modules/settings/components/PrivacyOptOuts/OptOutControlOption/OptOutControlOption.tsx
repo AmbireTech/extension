@@ -3,6 +3,7 @@ import React, { useCallback, useMemo } from 'react'
 import LinkIcon from '@common/assets/svg/LinkIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Badge from '@common/components/Badge'
+import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import { useTranslation } from '@common/config/localization'
@@ -17,11 +18,19 @@ import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureF
 
 const selectFeatureFlags = (state: IFeatureFlagsController) => state.flags
 
+interface RequiredBy {
+  flag: keyof FeatureFlags
+  title: string
+}
+
 /**
- * What keeps the option from being turned off: another opt-out that needs it (`flag`), or
- * something that isn't an opt-out, like email recovery being set up (`isActive`)
+ * Shown in place of the toggle when the option can't be changed from here, for example
+ * when something has to be turned off on another screen first
  */
-type RequiredBy = { title: string } & ({ flag: keyof FeatureFlags } | { isActive: boolean })
+interface Action {
+  text: string
+  onPress: () => void
+}
 
 interface Opts {
   title: string
@@ -29,6 +38,7 @@ interface Opts {
   icon: React.ReactNode
   flag: keyof FeatureFlags
   requiredBy?: RequiredBy
+  action?: Action
 }
 
 const OptOutControlOption = (opts: Opts) => {
@@ -38,11 +48,8 @@ const OptOutControlOption = (opts: Opts) => {
   )
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { title, description, icon, flag, requiredBy } = opts
-  const isRequired =
-    !!requiredBy &&
-    flags[flag] &&
-    ('flag' in requiredBy ? flags[requiredBy.flag] : requiredBy.isActive)
+  const { title, description, icon, flag, requiredBy, action } = opts
+  const isRequired = !!requiredBy && flags[flag] && flags[requiredBy.flag]
 
   const handleToggle = useCallback(() => {
     const isEnabling = !flags[flag]
@@ -82,14 +89,25 @@ const OptOutControlOption = (opts: Opts) => {
       forceDescriptionOnMobile
       renderIcon={icon}
     >
-      <FatToggle
-        isOn={flags[flag]}
-        onToggle={handleToggle}
-        disabled={isRequired}
-        trackStyle={spacings.mr0}
-      >
-        {isRequired && <LockIcon width={14} height={14} color={theme.primaryAccent300} />}
-      </FatToggle>
+      {action ? (
+        <Button
+          type="success"
+          size="smaller"
+          style={spacings.phLg}
+          text={action.text}
+          onPress={action.onPress}
+          hasBottomSpacing={false}
+        />
+      ) : (
+        <FatToggle
+          isOn={flags[flag]}
+          onToggle={handleToggle}
+          disabled={isRequired}
+          trackStyle={spacings.mr0}
+        >
+          {isRequired && <LockIcon width={14} height={14} color={theme.primaryAccent300} />}
+        </FatToggle>
+      )}
     </ControlOption>
   )
 }
