@@ -23,10 +23,9 @@ const useNativeThemeSync = (isSplashHidden: boolean) => {
   useEffect(() => {
     if (!isSplashHidden) return
 
-    // `unspecified` restores following the system. Passing
-    // the resolved theme instead would mask the system value from
-    // `useColorScheme`, freezing the "System" option on whatever it was applied
-    // with until the next app start.
+    // `unspecified` restores following the system. Passing the resolved theme instead would mask
+    // the system value from `useColorScheme`, freezing the "System" option on whatever it was
+    // applied with until the next app start.
     Appearance.setColorScheme(selectedThemeType === THEME_TYPES.SYSTEM ? 'unspecified' : themeType)
 
     StatusBar.setBarStyle(themeType === THEME_TYPES.DARK ? 'light-content' : 'dark-content', true)
