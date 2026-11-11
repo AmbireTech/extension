@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 
-import InfoIcon from '@common/assets/svg/InfoIcon'
+import PrivacyPoolsLogoIcon from '@common/assets/svg/PrivacyPoolsLogoIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -24,7 +24,7 @@ type ChipProps = {
 }
 
 const CHIP_HEIGHT = 28
-const INFO_ICON_SIZE = 12
+const LOGO_SIZE = 16
 const DIMMED_OPACITY = 0.5
 /** Matches the hovered `MaxButton`, which sits next to the chips. */
 const SELECTED_HOVER_OPACITY = 0.16
@@ -144,17 +144,20 @@ const PrivacyPoolsAmountChips: FC<Props> = ({
         style
       ]}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <Text fontSize={12} appearance="secondaryText" weight="medium">
-          {t('Suggested')}
-        </Text>
-        <InfoIcon
-          width={INFO_ICON_SIZE}
-          height={INFO_ICON_SIZE}
-          color={theme.iconSecondary}
-          style={spacings.mlMi}
-          dataSet={suggestedTooltip}
-        />
+      {/* Not a chip, it only names the row through its tooltip */}
+      <View
+        style={[
+          flexbox.center,
+          {
+            width: CHIP_HEIGHT,
+            height: CHIP_HEIGHT,
+            borderRadius: CHIP_HEIGHT / 2,
+            backgroundColor: theme.privacyPoolsBackground
+          }
+        ]}
+        dataSet={suggestedTooltip}
+      >
+        <PrivacyPoolsLogoIcon width={LOGO_SIZE} height={LOGO_SIZE} />
       </View>
       {chips.map(({ amount, key, label }) => (
         <MemoizedChip

@@ -1,6 +1,6 @@
 import React, { FC, useCallback } from 'react'
 
-import { PrivacyPoolsLeakAction, PrivacyPoolsLeakId } from '@ambire-common/interfaces/privacyPools'
+import { PrivacyPoolsLeakAction, PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -22,17 +22,13 @@ type Props = Omit<PrivacyStatusProps, 'style'> & {
   closeBottomSheet: () => void
 }
 
-/** Leaks that already say how few deposits hide the amount, so the cover line would repeat them. */
-const COVER_LEAK_IDS: PrivacyPoolsLeakId[] = ['unusual-deposit-amount', 'unique-amount']
-
-const RATING_SUMMARIES = {
-  basic:
-    'Nothing in this transfer links it to you. How well it hides depends on how many deposits are like yours.',
+/** No summary for a basic rating, as any line there reads as a promise that the transfer is private. */
+const RATING_SUMMARIES: Partial<Record<PrivacyPoolsRating, string>> = {
   weak: 'Some details make this transfer easier to link to you.',
   traceable: 'Anyone can link this transfer to you.',
   unchecked:
     'We could not check yet how private this transfer is, as the pool is still loading. Anything in it could link it to you.'
-} as const
+}
 
 /**
  * How many deposits hide a Privacy Pools transfer, then every privacy suggestion with its fix, and
@@ -51,6 +47,7 @@ const PrivacyModal: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { isPopup } = getUiType()
+  const ratingSummary = RATING_SUMMARIES[rating]
 
   const runAction = useCallback(
     ({ meta }: PrivacyPoolsLeakAction) => {
@@ -64,9 +61,9 @@ const PrivacyModal: FC<Props> = ({
 
   const getActionText = (action: PrivacyPoolsLeakAction | undefined) =>
     action && onSetAmount ? getPrivacyActionText(t, action, decimals, symbol) : undefined
-  const isCoverInLeaks = leaks.some(({ id }) => COVER_LEAK_IDS.includes(id))
   // Nothing was counted before the pool is read
-  const isCoverShown = !isCoverInLeaks && rating !== 'unchecked'
+  const isCoverShown = rating !== 'unchecked'
+  const hasContentBelowCover = !!ratingSummary || leaks.length > 0
 
   return (
     <BottomSheet
@@ -86,12 +83,14 @@ const PrivacyModal: FC<Props> = ({
           stage={stage}
           cover={cover}
           severity={getPrivacySeverity(stage, rating, cover)}
-          style={spacings.mbLg}
+          style={hasContentBelowCover ? spacings.mbLg : undefined}
         />
       )}
-      <Text fontSize={14} appearance="secondaryText" style={spacings.mbLg}>
-        {t(RATING_SUMMARIES[rating])}
-      </Text>
+      {!!ratingSummary && (
+        <Text fontSize={14} appearance="secondaryText" style={spacings.mbLg}>
+          {t(ratingSummary)}
+        </Text>
+      )}
 
       {leaks.map((leak) => {
         const [action] = leak.actions
