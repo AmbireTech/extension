@@ -8,8 +8,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 /** Waits for the user to stop typing, as each check may ask the network about the recipient. */
 const CHECK_DEBOUNCE_MS = 300
 
-const NO_AMOUNTS: bigint[] = []
-
 const selectWithdrawalPrivacy = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.withdrawalPrivacy
 
@@ -19,10 +17,7 @@ const selectPoolStats = (state: AllControllersMappingType['PrivacyPoolsControlle
 type Params = {
   chainId: string
   tokenAddress: string
-  /**
-   * 0 before the user enters a valid amount, which still checks the recipient and gets the
-   * whole-deposit amounts.
-   */
+  /** 0 before the user enters a valid amount, which still checks the recipient. */
   amount: bigint
   /** Null before the user enters a valid one. */
   recipient: string | null
@@ -40,15 +35,13 @@ type Result = {
    * recipient is checked.
    */
   recipientPrivacy: PrivacyPoolsWithdrawalPrivacy | null
-  wholeNoteAmounts: bigint[]
 }
 
-const NOT_CHECKED: Result = { privacy: null, recipientPrivacy: null, wholeNoteAmounts: NO_AMOUNTS }
+const NOT_CHECKED: Result = { privacy: null, recipientPrivacy: null }
 
 /**
  * Checks what the Send form's transfer gives away, once the user stops typing, and again once the
- * pool's deposits are first read, as nothing can be checked before. Returns the result, and the
- * amounts that send whole deposits of the token.
+ * pool's deposits are first read, as nothing can be checked before.
  */
 const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
   const { state: check, dispatch } = useController(
@@ -93,8 +86,7 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
 
     return {
       privacy: isSameSend ? check.privacy : null,
-      recipientPrivacy: isSameRecipient ? check.privacy : null,
-      wholeNoteAmounts: check.wholeNoteAmounts
+      recipientPrivacy: isSameRecipient ? check.privacy : null
     }
   }, [amount, chainId, check, recipient, tokenAddress])
 }

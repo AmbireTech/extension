@@ -27,8 +27,8 @@ type Props = {
 }
 
 /**
- * Amounts that keep a Privacy Pools transfer hidden among others, to pick with one tap: common
- * deposit amounts, and amounts that send whole deposits. Amounts above `maxAmount` show dimmed.
+ * Common deposit amounts that keep a Privacy Pools transfer hidden among others, to pick with one
+ * tap. Amounts above `maxAmount` show dimmed.
  * Renders nothing without amounts.
  */
 const PrivacyPoolsAmountChips: FC<Props> = ({

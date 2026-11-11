@@ -255,7 +255,7 @@ const PrivacyPoolsSendScreen = () => {
     [selectedToken?.decimals, setAmountsOfSelectedToken, tokenPrice]
   )
   const setMaxAmount = useCallback(() => setTokenAmount(maxAmount), [maxAmount, setTokenAmount])
-  // A whole-deposit amount, or a privacy fix
+  // A common amount, or a privacy fix
   const setRawAmount = useCallback(
     (rawAmount: bigint) => setTokenAmount(formatUnits(rawAmount, selectedToken?.decimals ?? 18)),
     [selectedToken?.decimals, setTokenAmount]
@@ -297,7 +297,7 @@ const PrivacyPoolsSendScreen = () => {
     return { success: true }
   }, [maxAmount, parsedAmount, selectedToken, t])
 
-  const { privacy, recipientPrivacy, wholeNoteAmounts } = usePrivacyPoolsSendCheck(
+  const { privacy, recipientPrivacy } = usePrivacyPoolsSendCheck(
     selectedToken
       ? {
           chainId: selectedToken.chainId,
@@ -328,14 +328,7 @@ const PrivacyPoolsSendScreen = () => {
 
     return (
       <PrivacyPoolsAmountChips
-        amounts={getPrivacyPoolsSuggestedAmounts(
-          selectedToken.chainId,
-          selectedToken.tokenAddress,
-          // Max already sends all of it
-          wholeNoteAmounts.filter(
-            (wholeNoteAmount) => wholeNoteAmount !== selectedToken.availableAmount
-          )
-        )}
+        amounts={getPrivacyPoolsSuggestedAmounts(selectedToken.chainId, selectedToken.tokenAddress)}
         decimals={selectedToken.decimals}
         selectedAmount={parsedAmount}
         maxAmount={selectedToken.availableAmount}
@@ -345,7 +338,7 @@ const PrivacyPoolsSendScreen = () => {
         style={spacings.mt0}
       />
     )
-  }, [isTransferInFlight, parsedAmount, selectedToken, setRawAmount, wholeNoteAmounts])
+  }, [isTransferInFlight, parsedAmount, selectedToken, setRawAmount])
   // Proving and pricing, before the fee sheet opens. The form is locked meanwhile, as the transfer
   // is proved for what it held on Proceed; leaving the screen cancels it.
   const isPreparingTransfer = isTransferInFlight && operation?.phase === 'proving'
