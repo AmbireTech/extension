@@ -22,7 +22,10 @@ type Props = Omit<PrivacyStatusProps, 'style'> & {
   closeBottomSheet: () => void
 }
 
-/** No summary for a basic rating, as any line there reads as a promise that the transfer is private. */
+/**
+ * No summary for a standard rating, as any line there reads as a promise that the transfer is
+ * private.
+ */
 const RATING_SUMMARIES: Partial<Record<PrivacyPoolsRating, string>> = {
   weak: 'Some details make this transfer easier to link to you.',
   traceable: 'This transfer can be linked to you.',

@@ -17,10 +17,10 @@ import { TransactionSummaryType } from './loadTransactionSummary'
 /**
  * A send that weakens or breaks its privacy is never blocked, but the user holds to accept it.
  * So does one nothing could be checked for, as it may break it just as well. Null for a send with
- * basic privacy, which sends with a tap.
+ * a `standard` rating, which sends with a tap.
  */
 const getHoldButtonType = (rating: PrivacyPoolsRating | undefined) => {
-  if (rating === 'basic') return null
+  if (rating === 'standard') return null
   if (rating === 'traceable') return 'dangerFilled'
 
   return 'warning'
