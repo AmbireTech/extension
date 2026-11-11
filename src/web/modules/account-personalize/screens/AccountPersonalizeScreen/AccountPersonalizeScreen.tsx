@@ -21,6 +21,7 @@ import AccountsToRemoveSection from '@common/modules/account-personalize/compone
 import PersonalizeAccountsList from '@common/modules/account-personalize/components/PersonalizeAccountsList'
 import PrivacyPoolsAccountPersonalizeCard from '@common/modules/account-personalize/components/PrivacyPoolsAccountPersonalizeCard'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
+import SafeCreateSummary from '@common/modules/auth/components/SafeCreateSummary'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { FORWARD_NAVIGATION_STATE, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -40,6 +41,8 @@ export const CARD_WIDTH = 400
 
 // As tall as the header's back button (28), also while the button is hidden
 const HEADER_STYLE = { minHeight: 28 }
+// Renders nothing unless the account being named is the Safe from Safe create
+const SAFE_CREATE_SUMMARY = <SafeCreateSummary />
 
 const selectIsWalletOpen = (state: AllControllersMappingType['UiController']) =>
   state.views.some(isExtensionOverlayView)
@@ -207,6 +210,7 @@ const AccountPersonalizeScreen = () => {
                   onSaveName={handleSaveAccountName}
                   removalNote={removalNote}
                   ListEmptyComponent={listEmpty}
+                  footer={SAFE_CREATE_SUMMARY}
                   style={spacings.mbLg}
                 />
               )}

@@ -2,6 +2,7 @@ import React, { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
+import { isPrivacyPoolsEnabled } from '@common/config/env'
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
@@ -61,14 +62,6 @@ const MainRoutes = () => {
             element={<SettingsGroupScreen pick={(m) => m.InternalLogsScreen} />}
           />
           <Route
-            path={WEB_ROUTES.networksConfiguration}
-            element={<SettingsGroupScreen pick={(m) => m.NetworksConfiguration} />}
-          />
-          <Route
-            path={WEB_ROUTES.privacyOptOutsConfiguration}
-            element={<SettingsGroupScreen pick={(m) => m.PrivacyOptOutsConfiguration} />}
-          />
-          <Route
             path={WEB_ROUTES.keyStoreSetup}
             element={<AuthGroupScreen pick={(m) => m.KeyStoreSetupScreen} />}
           />
@@ -82,6 +75,15 @@ const MainRoutes = () => {
           />
 
           <Route element={<KeystoreUnlockedRoute />}>
+            {/* Open during the first setup, but once set up, a locked wallet's settings stay locked */}
+            <Route
+              path={WEB_ROUTES.networksConfiguration}
+              element={<SettingsGroupScreen pick={(m) => m.NetworksConfiguration} />}
+            />
+            <Route
+              path={WEB_ROUTES.privacyOptOutsConfiguration}
+              element={<SettingsGroupScreen pick={(m) => m.PrivacyOptOutsConfiguration} />}
+            />
             <Route
               path={WEB_ROUTES.getStarted}
               element={<AuthGroupScreen pick={(m) => m.GetStartedScreen} />}
@@ -116,16 +118,16 @@ const MainRoutes = () => {
               element={<AuthGroupScreen pick={(m) => m.OneKeyConnectScreen} />}
             />
             <Route
-              path={WEB_ROUTES.safeImport}
-              element={<AuthGroupScreen pick={(m) => m.SafeImportMethodScreen} />}
-            />
-            <Route
               path={WEB_ROUTES.safeImportAddress}
               element={<AuthGroupScreen pick={(m) => m.SafeImportScreen} />}
             />
             <Route
               path={WEB_ROUTES.safeImportByOwner}
               element={<AuthGroupScreen pick={(m) => m.SafeImportByOwnerScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.safeCreate}
+              element={<AuthGroupScreen pick={(m) => m.SafeCreateScreen} />}
             />
             <Route
               path={WEB_ROUTES.qrConnect}
@@ -259,11 +261,16 @@ const MainRoutes = () => {
             </Route>
             <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
             <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
-            <Route path={WEB_ROUTES.privacyPoolsSend} element={<PrivacyPoolsSendScreen />} />
-            <Route
-              path={WEB_ROUTES.privacyPoolsTokenDetails}
-              element={<PrivacyPoolsTokenDetailsScreen />}
-            />
+            {/* Unreachable where Privacy Pools are not released yet, even by a typed-in URL */}
+            {isPrivacyPoolsEnabled && (
+              <>
+                <Route path={WEB_ROUTES.privacyPoolsSend} element={<PrivacyPoolsSendScreen />} />
+                <Route
+                  path={WEB_ROUTES.privacyPoolsTokenDetails}
+                  element={<PrivacyPoolsTokenDetailsScreen />}
+                />
+              </>
+            )}
             <Route
               path={WEB_ROUTES.signAccountOp}
               element={<RequestWindowGroupScreen pick={(m) => m.SignAccountOpScreen} />}
