@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
 
-import { PrivacyPoolsOperation } from '@ambire-common/interfaces/privacyPools'
+import { PrivacyPoolsOperation, PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -13,6 +13,18 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import spacings, { SPACING_MD, SPACING_TY } from '@common/styles/spacings'
 
 import { TransactionSummaryType } from './loadTransactionSummary'
+
+/**
+ * A send that weakens or breaks its privacy is never blocked, but the user holds to accept it.
+ * So does one nothing could be checked for, as it may break it just as well. Null for a send with
+ * basic privacy, which sends with a tap.
+ */
+const getHoldButtonType = (rating: PrivacyPoolsRating | undefined) => {
+  if (rating === 'basic') return null
+  if (rating === 'traceable') return 'dangerFilled'
+
+  return 'warning'
+}
 
 interface Props {
   operation: PrivacyPoolsOperation | null
@@ -66,16 +78,8 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
   const isReady = operation?.status === 'pending' && operation.phase === 'ready'
   const isBroadcasting = operation?.status === 'pending' && operation.phase === 'broadcasting'
   const isConfirming = isReady || isBroadcasting
-  // A send that weakens or breaks its privacy is never blocked, but the user holds to accept it.
-  // So does one nothing could be checked for, as it may break it just as well.
   const privacy = operation?.privacy
-  const isPrivacyUnknown = !privacy || privacy.rating === 'unchecked'
-  const holdButtonType =
-    privacy?.rating === 'traceable'
-      ? 'dangerFilled'
-      : privacy?.rating === 'weak' || isPrivacyUnknown
-        ? 'warning'
-        : null
+  const holdButtonType = getHoldButtonType(privacy?.rating)
   // Only on mount: later, the screen opens it when a transfer is proved
   const [shouldOpenOnMount] = useState(isConfirming)
 

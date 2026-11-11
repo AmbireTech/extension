@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { PRIVACY_POOLS_MIN_REASSURING_COVER } from '@ambire-common/consts/privacyPools'
+import { PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
@@ -14,14 +15,28 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { COVER_WINDOW_DAYS, getPrivacyStatusText } from './helpers'
+import {
+  COVER_WINDOW_DAYS,
+  getLeakTextAppearance,
+  getPrivacyStatusText,
+  getPrivacyToneColors
+} from './helpers'
 import PrivacyModal from './PrivacyModal'
-import { PrivacyStatusProps } from './types'
+import { PrivacyStatusProps, PrivacyTone } from './types'
 
 type Props = Omit<PrivacyStatusProps, 'stage'>
 
 const COVER_ICON_SIZE = 16
 const SUGGESTIONS_ICON_SIZE = 12
+
+/** The tone of the deposit count. Not counted at all reads as a warning rather than as no cover. */
+const getCoverTone = (rating: PrivacyPoolsRating, cover: number): PrivacyTone => {
+  if (rating === 'unchecked') return 'warning'
+  if (cover === 0) return 'error'
+  if (cover < PRIVACY_POOLS_MIN_REASSURING_COVER) return 'warning'
+
+  return 'neutral'
+}
 
 /**
  * The Send form's privacy line: how many recent deposits hide the transfer, explained in a
@@ -36,30 +51,16 @@ const PrivacySendStatus: FC<Props> = (props) => {
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
-  // Not counted at all, which reads as a warning rather than as no cover
   const isUnchecked = rating === 'unchecked'
-  const isCoverMissing = !isUnchecked && cover === 0
-  const isCoverLow = isUnchecked || cover < PRIVACY_POOLS_MIN_REASSURING_COVER
-  const coverAppearance = isCoverMissing
-    ? 'errorText'
-    : isCoverLow
-      ? 'warningText'
-      : 'secondaryText'
-  const coverIconColor = isCoverMissing
-    ? theme.errorDecorative
-    : isCoverLow
-      ? theme.warningDecorative
-      : theme.iconSecondary
-  const CoverIcon = isCoverLow ? WarningIcon : InfoIcon
-  const hasBreakingLeak = leaks.some(({ type }) => type === 'error')
-  const hasWarningLeak = leaks.some(({ type }) => type === 'warning')
-  const suggestionsBadgeType = hasBreakingLeak ? 'error' : hasWarningLeak ? 'warning' : 'info'
-  const suggestionsIconColor = hasBreakingLeak
-    ? theme.errorText
-    : hasWarningLeak
-      ? theme.warningText
-      : theme.infoText
-  const SuggestionsIcon = hasBreakingLeak || hasWarningLeak ? WarningIcon : InfoIcon
+  const coverTone = getCoverTone(rating, cover)
+  const { textAppearance: coverAppearance, iconColor: coverIconColor } = getPrivacyToneColors(
+    theme,
+    coverTone
+  )
+  const CoverIcon = coverTone === 'neutral' ? InfoIcon : WarningIcon
+  // Leaks come worst first
+  const worstLeak = leaks[0]
+  const SuggestionsIcon = worstLeak?.type === 'info' ? InfoIcon : WarningIcon
 
   const coverTooltip = useMemo(
     () =>
@@ -90,11 +91,11 @@ const PrivacySendStatus: FC<Props> = (props) => {
           {getPrivacyStatusText(t, rating, cover)}
         </Text>
       </View>
-      {!!leaks.length && (
+      {!!worstLeak && (
         <>
           <HoverablePressable testID="privacy-pools-send-privacy-suggestions" onPress={handleOpen}>
             <Badge
-              type={suggestionsBadgeType}
+              type={worstLeak.type}
               text={
                 leaks.length === 1
                   ? t('1 privacy suggestion')
@@ -105,7 +106,7 @@ const PrivacySendStatus: FC<Props> = (props) => {
               <SuggestionsIcon
                 width={SUGGESTIONS_ICON_SIZE}
                 height={SUGGESTIONS_ICON_SIZE}
-                color={suggestionsIconColor}
+                color={theme[getLeakTextAppearance(worstLeak.type)]}
                 strokeWidth="2"
               />
             </Badge>

@@ -3,14 +3,41 @@ import {
   PRIVACY_POOLS_MIN_REASSURING_COVER,
   PRIVACY_POOLS_UNCHECKED_PRIVACY_TEXT
 } from '@ambire-common/consts/privacyPools'
-import { PrivacyPoolsLeakAction, PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
+import {
+  PrivacyPoolsLeak,
+  PrivacyPoolsLeakAction,
+  PrivacyPoolsRating
+} from '@ambire-common/interfaces/privacyPools'
+import { TextAppearance } from '@common/components/Text'
+import { ThemeProps } from '@common/styles/themeConfig'
 import { formatPrivacyPoolsAmount } from '@common/utils/privacyPools'
 
-import { PrivacySeverity, PrivacyStage } from './types'
+import { PrivacySeverity, PrivacyStage, PrivacyTone } from './types'
 
 import type { TFunction } from 'i18next'
 
 const COVER_WINDOW_DAYS = Number(PRIVACY_POOLS_COVER_WINDOW_DAYS)
+
+const PRIVACY_TONE_COLORS: Record<
+  PrivacyTone,
+  { textAppearance: TextAppearance; iconColorKey: keyof ThemeProps }
+> = {
+  error: { textAppearance: 'errorText', iconColorKey: 'errorDecorative' },
+  warning: { textAppearance: 'warningText', iconColorKey: 'warningDecorative' },
+  info: { textAppearance: 'infoText', iconColorKey: 'infoDecorative' },
+  neutral: { textAppearance: 'secondaryText', iconColorKey: 'iconSecondary' }
+}
+
+/** The text appearance and the icon color of a privacy line in `tone`. */
+const getPrivacyToneColors = (theme: ThemeProps, tone: PrivacyTone) => {
+  const { textAppearance, iconColorKey } = PRIVACY_TONE_COLORS[tone]
+
+  return { textAppearance, iconColor: theme[iconColorKey] }
+}
+
+/** The text appearance of a leak's note. Its small icon takes the same color, to stay visible. */
+const getLeakTextAppearance = (type: PrivacyPoolsLeak['type']): TextAppearance =>
+  PRIVACY_TONE_COLORS[type].textAppearance
 
 /** The button text of a fix, like "Use a common amount: 0.1 ETH". */
 const getPrivacyActionText = (
@@ -50,4 +77,11 @@ const getPrivacyStatusText = (t: TFunction, rating: PrivacyPoolsRating, cover: n
     : t('{{count}} deposits like yours', { count: cover })
 }
 
-export { COVER_WINDOW_DAYS, getPrivacyActionText, getPrivacySeverity, getPrivacyStatusText }
+export {
+  COVER_WINDOW_DAYS,
+  getLeakTextAppearance,
+  getPrivacyActionText,
+  getPrivacySeverity,
+  getPrivacyStatusText,
+  getPrivacyToneColors
+}

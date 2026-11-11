@@ -5,6 +5,7 @@ import {
   PRIVACY_POOLS_DEPOSIT_CHIPS
 } from '@ambire-common/consts/privacyPools'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import compareBigInts from '@ambire-common/utils/numbers/compareBigInts'
 
 /** A Privacy Pools amount as the user reads it, without its symbol, like "0.1". */
 const formatPrivacyPoolsAmountNumber = (amount: bigint, decimals: number): string =>
@@ -22,12 +23,12 @@ const getPrivacyPoolsSuggestedAmounts = (
   chainId: string,
   tokenAddress: string,
   extraAmounts: bigint[] = []
-): bigint[] =>
-  [
-    ...new Set([
-      ...(PRIVACY_POOLS_DEPOSIT_CHIPS[getPrivacyPoolsTokenId(chainId, tokenAddress)] ?? []),
-      ...extraAmounts
-    ])
-  ].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+): bigint[] => {
+  const commonAmounts =
+    PRIVACY_POOLS_DEPOSIT_CHIPS[getPrivacyPoolsTokenId(chainId, tokenAddress)] ?? []
+  const uniqueAmounts = new Set([...commonAmounts, ...extraAmounts])
+
+  return [...uniqueAmounts].sort(compareBigInts)
+}
 
 export { formatPrivacyPoolsAmount, formatPrivacyPoolsAmountNumber, getPrivacyPoolsSuggestedAmounts }

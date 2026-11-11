@@ -8,6 +8,9 @@ type PrivacyStage = 'deposit' | 'send'
 /** How bad the privacy of a transfer looks, which sets its colors. */
 type PrivacySeverity = 'error' | 'warning' | 'ok'
 
+/** How much a privacy line stands out, which sets its colors. `neutral` has nothing to flag. */
+type PrivacyTone = 'error' | 'warning' | 'info' | 'neutral'
+
 type PrivacyStatusProps = {
   stage: PrivacyStage
   rating: PrivacyPoolsRating
@@ -24,4 +27,4 @@ type PrivacyStatusProps = {
   style?: ViewStyle
 }
 
-export type { PrivacySeverity, PrivacyStage, PrivacyStatusProps }
+export type { PrivacySeverity, PrivacyStage, PrivacyStatusProps, PrivacyTone }

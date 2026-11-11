@@ -1,85 +1,17 @@
-import React, { FC, useCallback, useMemo } from 'react'
+import React, { FC, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import PrivacyPoolsLogoIcon from '@common/assets/svg/PrivacyPoolsLogoIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { formatPrivacyPoolsAmountNumber } from '@common/utils/privacyPools'
 
-type ChipProps = {
-  amount: bigint
-  label: string
-  isSelected: boolean
-  /** Above what the user can send. Still selectable, as the user may add funds first. */
-  isAboveMax: boolean
-  disabled: boolean
-  onSelect: (amount: bigint) => void
-  testID: string
-}
+import PrivacyPoolsAmountChip, { CHIP_HEIGHT } from './PrivacyPoolsAmountChip'
 
-const CHIP_HEIGHT = 28
 const LOGO_SIZE = 16
-const DIMMED_OPACITY = 0.5
-/** Matches the hovered `MaxButton`, which sits next to the chips. */
-const SELECTED_HOVER_OPACITY = 0.16
-
-const Chip: FC<ChipProps> = ({
-  amount,
-  label,
-  isSelected,
-  isAboveMax,
-  disabled,
-  onSelect,
-  testID
-}) => {
-  const { theme } = useTheme()
-  const [bindAnim, animStyle] = useCustomHover({
-    property: 'backgroundColor',
-    // A picked chip is tinted like the Max button, the others are a shade lighter than the form
-    values: isSelected
-      ? {
-          from: theme.primaryAccent100,
-          to: hexToRgba(theme.primaryAccent200, SELECTED_HOVER_OPACITY)
-        }
-      : { from: theme.tertiaryBackground, to: theme.hoverBackground }
-  })
-  const handlePress = useCallback(() => onSelect(amount), [amount, onSelect])
-
-  return (
-    <AnimatedPressable
-      testID={testID}
-      disabled={disabled}
-      onPress={handlePress}
-      style={[
-        flexbox.center,
-        spacings.phSm,
-        {
-          height: CHIP_HEIGHT,
-          borderRadius: CHIP_HEIGHT / 2,
-          opacity: disabled || isAboveMax ? DIMMED_OPACITY : 1
-        },
-        animStyle
-      ]}
-      {...bindAnim}
-    >
-      <Text
-        fontSize={12}
-        weight={isSelected ? 'semiBold' : 'medium'}
-        appearance={isSelected ? 'primary' : 'primaryText'}
-      >
-        {label}
-      </Text>
-    </AnimatedPressable>
-  )
-}
-
-const MemoizedChip = React.memo(Chip)
 
 type Props = {
   amounts: bigint[]
@@ -160,7 +92,7 @@ const PrivacyPoolsAmountChips: FC<Props> = ({
         <PrivacyPoolsLogoIcon width={LOGO_SIZE} height={LOGO_SIZE} />
       </View>
       {chips.map(({ amount, key, label }) => (
-        <MemoizedChip
+        <PrivacyPoolsAmountChip
           key={key}
           amount={amount}
           label={label}

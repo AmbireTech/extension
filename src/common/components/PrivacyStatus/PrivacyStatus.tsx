@@ -11,9 +11,17 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { getPrivacySeverity, getPrivacyStatusText } from './helpers'
+import { getPrivacySeverity, getPrivacyStatusText, getPrivacyToneColors } from './helpers'
 import PrivacyModal from './PrivacyModal'
-import { PrivacyStatusProps } from './types'
+import { PrivacySeverity, PrivacyStatusProps, PrivacyTone } from './types'
+
+// A suggestion that neither breaks nor weakens privacy still stands out, so it isn't missed
+const getStatusTone = (severity: PrivacySeverity, hasSuggestions: boolean): PrivacyTone => {
+  if (severity !== 'ok') return severity
+  if (hasSuggestions) return 'info'
+
+  return 'neutral'
+}
 
 /**
  * How well a Privacy Pools transfer hides, in one line: how many deposits hide it, or that nothing
@@ -28,25 +36,12 @@ const PrivacyStatus: FC<PrivacyStatusProps> = (props) => {
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
   const severity = getPrivacySeverity(stage, rating, cover)
-  const isTraceable = severity === 'error'
-  const isWarning = severity === 'warning'
   const hasSuggestions = !!leaks.length
-  // A suggestion that neither breaks nor weakens privacy still stands out, so it isn't missed
-  const iconColor = isTraceable
-    ? theme.errorDecorative
-    : isWarning
-      ? theme.warningDecorative
-      : hasSuggestions
-        ? theme.infoDecorative
-        : theme.iconSecondary
-  const StatusIcon = isTraceable || isWarning ? WarningIcon : InfoIcon
-  const textAppearance = isTraceable
-    ? 'errorText'
-    : isWarning
-      ? 'warningText'
-      : hasSuggestions
-        ? 'infoText'
-        : 'secondaryText'
+  const { textAppearance, iconColor } = getPrivacyToneColors(
+    theme,
+    getStatusTone(severity, hasSuggestions)
+  )
+  const StatusIcon = severity === 'ok' ? InfoIcon : WarningIcon
   const suggestionsText =
     leaks.length === 1 ? t('1 suggestion') : t('{{count}} suggestions', { count: leaks.length })
 

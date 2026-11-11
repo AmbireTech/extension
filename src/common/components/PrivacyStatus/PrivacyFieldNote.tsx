@@ -12,6 +12,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import { getLeakTextAppearance } from './helpers'
 import PrivacyModal from './PrivacyModal'
 import { PrivacyStatusProps } from './types'
 
@@ -43,18 +44,7 @@ const PrivacyFieldNote: FC<Props> = ({ fieldLeakIds, testID, ...props }) => {
   const worstLeak = fieldLeaks[0]
   if (!worstLeak) return null
 
-  const textAppearance =
-    worstLeak.type === 'error'
-      ? 'errorText'
-      : worstLeak.type === 'warning'
-        ? 'warningText'
-        : 'infoText'
-  const iconColor =
-    worstLeak.type === 'error'
-      ? theme.errorText
-      : worstLeak.type === 'warning'
-        ? theme.warningText
-        : theme.infoText
+  const textAppearance = getLeakTextAppearance(worstLeak.type)
   const NoteIcon = worstLeak.type === 'info' ? InfoIcon : WarningIcon
   const otherLeaksCount = fieldLeaks.length - 1
 
@@ -65,7 +55,12 @@ const PrivacyFieldNote: FC<Props> = ({ fieldLeakIds, testID, ...props }) => {
         onPress={handleOpen}
         style={[flexbox.directionRow, flexbox.alignCenter]}
       >
-        <NoteIcon width={ICON_SIZE} height={ICON_SIZE} color={iconColor} style={spacings.mrMi} />
+        <NoteIcon
+          width={ICON_SIZE}
+          height={ICON_SIZE}
+          color={theme[textAppearance]}
+          style={spacings.mrMi}
+        />
         <Text fontSize={12} appearance={textAppearance} style={flexbox.flex1}>
           {t(worstLeak.title)}
           {otherLeaksCount > 0 && ` · ${t('{{count}} more', { count: otherLeaksCount })}`}
