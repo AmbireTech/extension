@@ -40,13 +40,6 @@ module.exports = function (api) {
     !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('benzin') &&
     !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
 
-  // Bundle Mode is mobile-only: it pairs with getBundleModeMetroConfig in
-  // metro.config.js and has no counterpart in the webpack builds.
-  const workletsPluginOptions = {
-    relativeSourceLocation: true,
-    ...(isMobile ? { bundleMode: true, strictGlobal: true } : {})
-  }
-
   const pathAliases = {
     '@': './src/ambire-common/src',
     '@test': './src/ambire-common/test',
@@ -72,7 +65,7 @@ module.exports = function (api) {
           path: '.env'
         }
       ],
-      ['react-native-worklets/plugin', workletsPluginOptions]
+      ['react-native-worklets/plugin', { relativeSourceLocation: true }]
     ]
   }
 

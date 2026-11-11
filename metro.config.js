@@ -1,6 +1,4 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
-const { getDefaultConfig } = require('expo/metro-config')
-const { getBundleModeMetroConfig } = require('react-native-worklets/bundleMode')
 const { getSentryExpoConfig } = require('@sentry/react-native/metro')
 const path = require('path')
 const {
@@ -30,16 +28,7 @@ if (
 process.env.EXPO_PUBLIC_USE_RN_FETCH = '1'
 
 // Sentry's Expo config gives the Hermes bundle and its source map the same debug ID.
-// Worklets Bundle Mode replaces the resolver without chaining, so it must run before Sentry wraps it.
-const config = getSentryExpoConfig(__dirname, {
-  getDefaultConfig: (projectRoot, options) => {
-    const defaultConfig = getDefaultConfig(projectRoot, options)
-    // Worklets Bundle Mode loads the whole Metro bundle into every worklet runtime, which is
-    // what makes `require`, and therefore libraries usable inside a worklet. Reanimated's UI
-    // runtime is the one that benefits here — the app runs no worklets of its own.
-    return getBundleModeMetroConfig(defaultConfig)
-  }
-})
+const config = getSentryExpoConfig(__dirname)
 
 config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
 
