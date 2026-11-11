@@ -56,9 +56,9 @@ const PrivacyOptOutsList = () => {
   )
   const ambireAnalyticsOption = (
     <OptOutControlOption
-      title={t('Ambire analytics')}
+      title={t('Anonymized analytics')}
       description={t(
-        "Share the app version, an anonymous ID of this installation and your account balance with Ambire's servers"
+        "Share the app version, an anonymous ID of this installation and your account balance with Ambire's servers. Disables informational banners"
       )}
       icon={<TrendingIcon width={24} height={24} color={theme.iconPrimary} />}
       flag="ambireAnalytics"
@@ -103,7 +103,7 @@ const PrivacyOptOutsList = () => {
           <OptOutControlOption
             title={t('Email Vault')}
             description={t(
-              'Reset your extension password by email if you forget it. Requires Ambire analytics.'
+              'Reset your extension password by email if you forget it. Requires anonymized analytics.'
             )}
             icon={<EmailVaultIcon width={24} height={24} color={theme.iconPrimary} />}
             flag="emailVault"
