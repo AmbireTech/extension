@@ -44,7 +44,7 @@ interface Props {
     sessionId: string
   }>
   /** Shown in place of the history while a Privacy Pools account, which has no address, is selected */
-  PrivacyPoolsHistoryComponent: ComponentType
+  PrivacyPoolsHistoryComponent: ComponentType<{ sessionId: string }>
   historyType: 'transactions' | 'messages'
   sessionId: string
 }
@@ -259,7 +259,7 @@ const HistorySettingsPage: FC<Props> = ({
     return (
       <>
         <SettingsPageHeader title={title} />
-        <PrivacyPoolsHistoryComponent />
+        <PrivacyPoolsHistoryComponent sessionId={sessionId} />
       </>
     )
   }

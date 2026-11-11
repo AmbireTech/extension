@@ -6,6 +6,11 @@ export type SelectValue = {
   label: string | ReactNode
   icon?: string | ReactNode
   disabled?: boolean
+  /**
+   * Keeps a disabled option looking enabled, e.g. when the list already explains why it
+   * can't be picked and the option offers its own action instead
+   */
+  keepEnabledLook?: boolean
   isPending?: boolean
   balanceFormatted?: string
   pendingBalanceFormatted?: string

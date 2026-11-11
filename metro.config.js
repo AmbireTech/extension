@@ -6,8 +6,13 @@ const path = require('path')
 const {
   ENV_TARGETS,
   PRODUCTION_APP_ENV,
-  validateEnvVariables
+  getRelayerCustomHeadersCacheKey,
+  validateEnvVariables,
+  validateRelayerCustomHeaders
 } = require('./scripts/validateEnv')
+
+// Runs on every build, because CI builds must never inline the custom headers.
+validateRelayerCustomHeaders(process.env)
 
 // Release bundles, store builds and OTAs alike, inline the env, so a missing value would ship.
 // Only CI builds what reaches users. Local production builds may point at staging or leave out
@@ -33,6 +38,8 @@ const config = getSentryExpoConfig(__dirname, {
 })
 
 config.transformer.assetPlugins = ['expo-asset/tools/hashAssetFiles']
+
+config.cacheVersion = `${config.cacheVersion}-${getRelayerCustomHeadersCacheKey(process.env)}`
 
 // PERF (cold start): defer module evaluation until first use instead of running
 // the entire ~16MB bundle's top-level code eagerly at boot. Metro's

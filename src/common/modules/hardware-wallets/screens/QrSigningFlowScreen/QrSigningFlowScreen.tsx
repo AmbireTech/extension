@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
@@ -27,6 +28,8 @@ type Props = {
   currentRequest: QrSignRequest | null
   signingStep: QrSigningStep
   signingRequest?: HardwareWalletSigningRequest | null
+  /** The calls as Ambire humanized them on the sign screen */
+  humanization?: IrCall[]
   transactionProgress?: {
     current: number
     total: number
@@ -43,6 +46,7 @@ const QrSigningFlowScreen = ({
   currentRequest,
   signingStep,
   signingRequest = null,
+  humanization,
   transactionProgress = null,
   onContinue,
   submitSignatureResponse,
@@ -164,6 +168,7 @@ const QrSigningFlowScreen = ({
           onReject={handleOnRejectPressed}
           transactionProgress={transactionProgress}
           signingRequest={signingRequest}
+          humanization={humanization}
           isTooLargeForDevice={!!request.isTooLargeForDevice}
         />
       ) : step === 'scan-response' ? (

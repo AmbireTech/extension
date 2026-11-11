@@ -115,7 +115,8 @@ export class SettingsPage extends BasePage {
 
   // TODO: once have IDs on FE remove this method and use .fill() instead
   async typeNetworkField(field: string, text: string) {
-    const selector = `//div[text()="${field}"]/following-sibling::div//input`
+    // The label text sits inside a row (label + optional tooltip icon), so the input is a sibling of that row
+    const selector = `//div[text()="${field}"]/parent::div/following-sibling::div//input`
     await this.page.waitForSelector(selector, { state: 'visible', timeout: 5000 })
     await this.page.locator(selector).fill(text)
   }

@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 import useAccountContext from '@legends/hooks/useAccountContext'
 import useLeaderboardContext from '@legends/hooks/useLeaderboardContext'
@@ -40,7 +41,7 @@ const LegendsContextProvider = ({ children }: { children: React.ReactNode }) => 
       setIsLoading(true)
     }
     try {
-      const rawCards = await fetch(
+      const rawCards = await fetchWithRelayerCustomHeaders(
         `${RELAYER_URL}/legends/cards${!noConnectionAcc ? `?identity=${connectedAccount}` : ''}`
       )
       const cards = await rawCards.json()

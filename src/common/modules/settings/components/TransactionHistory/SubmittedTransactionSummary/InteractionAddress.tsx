@@ -1,6 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
 
+import { ReverseLookupOptions } from '@ambire-common/interfaces/domains'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -14,9 +15,15 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 // TODO: Refactor to use the <AccountAddress /> component instead
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
-const InteractionAddress = ({ address }: { address: string }) => {
+interface Props {
+  address: string
+  /** When the address's name may be looked up on the network - see `useReverseLookup`. */
+  privacyUpdateMode?: ReverseLookupOptions['privacyUpdateMode']
+}
+
+const InteractionAddress = ({ address, privacyUpdateMode }: Props) => {
   const { isNarrowWebLayout } = useCompactLayout()
-  const reverseLookup = useReverseLookup({ address })
+  const reverseLookup = useReverseLookup({ address, privacyUpdateMode })
   const { contacts = [] } = useController('AddressBookController').state
   const { state: accounts = [] } = useController('AccountsController', selectAccounts)
   const addressBookContact = contacts.find(

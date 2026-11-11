@@ -1,4 +1,4 @@
-import { Signature, Transaction, TransactionLike } from 'ethers'
+import { Signature, Transaction } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import {
@@ -9,6 +9,7 @@ import {
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { normalizeSignatureHex } from '@ambire-common/utils/normalizeSignatureHex'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
+import { getUnsignedTransaction } from '@common/modules/hardware-wallets/utils/getUnsignedTransaction'
 
 /**
  * The QrHardwareSigner is responsible for signing data with QR-based hardware wallets.
@@ -128,8 +129,8 @@ class QrHardwareSigner implements KeystoreSignerInterface {
       const path = this.#getDerivationPath()
       const masterFingerprint = this.#getMasterFingerprint()
 
-      const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
-      const unsignedTxn: TransactionLike = { ...txnRequest, type }
+      const unsignedTxn = getUnsignedTransaction(txnRequest)
+      const { type } = unsignedTxn
       const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
 
       const res = await this.controller!.signTransactionQR({

@@ -8,7 +8,8 @@ interface Style {
   container: ViewStyle
   tab: ViewStyle
   activeTab: ViewStyle
-  disabledTab: ViewStyle
+  tabLabel: ViewStyle
+  disabledTabLabel: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) =>
@@ -35,7 +36,12 @@ const getStyles = (theme: ThemeProps) =>
     activeTab: {
       backgroundColor: theme.secondaryBackground
     },
-    disabledTab: {
+    tabLabel: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      columnGap: SPACING_MI
+    },
+    disabledTabLabel: {
       opacity: 0.5
     }
   })

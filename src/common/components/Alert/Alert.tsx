@@ -28,6 +28,12 @@ interface Props {
   size?: 'sm' | 'md'
   isTypeLabelHidden?: boolean
   buttonProps?: ButtonProps
+  /**
+   * An outline button shown next to the main one, on its left. Only the default layout supports
+   * it, `isButtonTopRight` ignores it. Moves to its own line above the main button when there is
+   * no room.
+   */
+  secondaryButtonProps?: ButtonProps
   /** Places the action button on the top-right, aligned with the title row */
   isButtonTopRight?: boolean
   customIcon?: React.FC<SvgProps>
@@ -94,6 +100,9 @@ const { isPopup } = getUiType()
 
 const DEFAULT_SM_FONT_SIZE = 14
 const DEFAULT_MD_FONT_SIZE = 16
+// The title is at least as tall as the icon and centered in that height, so a one-line
+// title lines up with the icon's middle, and a longer one keeps the icon on its first line
+const ICON_ALIGNED_TITLE_STYLE: ViewStyle = { minHeight: 24, justifyContent: 'center' }
 
 interface AlertTextProps extends TextProps {
   children: React.ReactNode
@@ -122,6 +131,7 @@ const Alert = ({
   size = 'md',
   isTypeLabelHidden = true,
   buttonProps,
+  secondaryButtonProps,
   isButtonTopRight = false,
   customIcon: CustomIcon,
   withIcon = true,
@@ -166,6 +176,16 @@ const Alert = ({
       />
     )
   }
+
+  const secondaryButton = !!secondaryButtonProps && (
+    <Button
+      type="outline"
+      size="small"
+      hasBottomSpacing={false}
+      {...secondaryButtonProps}
+      style={[spacings.mlTy, spacings.mtTy, secondaryButtonProps.style] as StyleProp<ViewStyle>}
+    />
+  )
 
   const closeButton = !!onClose && (
     <HoverablePressable
@@ -262,7 +282,13 @@ const Alert = ({
             )}
             <View style={flexbox.flex1}>
               <View style={[flexbox.directionRow, flexbox.alignStart, titleRowMarginBottom]}>
-                {!!title && <View style={[flexbox.flex1, spacings.mrSm]}>{titleContent}</View>}
+                {!!title && (
+                  <View
+                    style={[flexbox.flex1, spacings.mrSm, !!withIcon && ICON_ALIGNED_TITLE_STYLE]}
+                  >
+                    {titleContent}
+                  </View>
+                )}
                 {renderButton({ flexShrink: 0 })}
                 {closeButton}
               </View>
@@ -271,7 +297,7 @@ const Alert = ({
           </View>
         ) : (
           <>
-            <View style={[flexbox.directionRow, flexbox.alignCenter, titleRowMarginBottom]}>
+            <View style={[flexbox.directionRow, flexbox.alignStart, titleRowMarginBottom]}>
               {!!withIcon && (
                 <View style={spacings.mrMi}>
                   {CustomIcon ? (
@@ -281,11 +307,18 @@ const Alert = ({
                   )}
                 </View>
               )}
-              <View style={flexbox.flex1}>{titleContent}</View>
+              <View style={[flexbox.flex1, !!withIcon && ICON_ALIGNED_TITLE_STYLE]}>
+                {titleContent}
+              </View>
               {closeButton}
             </View>
             {textContent}
-            {renderButton({ alignSelf: 'flex-end', ...spacings.mtTy })}
+            {(!!buttonProps || !!secondaryButtonProps) && (
+              <View style={[flexbox.directionRow, flexbox.wrap, flexbox.justifyEnd]}>
+                {secondaryButton}
+                {renderButton({ ...spacings.mlTy, ...spacings.mtTy })}
+              </View>
+            )}
           </>
         )}
         {children}

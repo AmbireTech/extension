@@ -1,3 +1,4 @@
+const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
 
@@ -24,6 +25,51 @@ const IMPORTANT_PRODUCTION_VARIABLES_TO_DOUBLE_CHECK = [
   { name: 'RELAYER_URL', value: 'https://relayer.ambire.com' },
   { name: 'VELCRO_URL', value: 'https://relayer.ambire.com/velcro-v3' }
 ]
+
+/**
+ * Turns the `RELAYER_CUSTOM_HEADERS` value into a headers object. An empty value gives no
+ * headers. Throws when the value is not a JSON object with string values. The error never
+ * contains the value, because it can be a secret.
+ */
+const parseRelayerCustomHeaders = (value) => {
+  if (!value) return {}
+
+  let headers
+  try {
+    headers = JSON.parse(value)
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error
+    throw new Error('RELAYER_CUSTOM_HEADERS must be a JSON object with string values')
+  }
+
+  const isObject = typeof headers === 'object' && headers !== null && !Array.isArray(headers)
+  if (!isObject || !Object.values(headers).every((header) => typeof header === 'string')) {
+    throw new Error('RELAYER_CUSTOM_HEADERS must be a JSON object with string values')
+  }
+
+  return headers
+}
+
+/**
+ * Throws when `RELAYER_CUSTOM_HEADERS` is set in a CI build. CI builds are the ones that
+ * reach users or public sites, and the headers get inlined in plain text.
+ */
+const validateRelayerCustomHeaders = (envValues) => {
+  const headers = parseRelayerCustomHeaders(envValues.RELAYER_CUSTOM_HEADERS)
+  if (!Object.keys(headers).length || !envValues.CI) return
+
+  throw new Error('RELAYER_CUSTOM_HEADERS must not be set in a CI build')
+}
+
+/**
+ * Gives a hash of `RELAYER_CUSTOM_HEADERS` for the bundler cache keys. Babel inlines the
+ * value, so without it a cached transform keeps the old headers after the value changes.
+ */
+const getRelayerCustomHeadersCacheKey = (envValues) =>
+  crypto
+    .createHash('sha256')
+    .update(envValues.RELAYER_CUSTOM_HEADERS || '')
+    .digest('hex')
 
 /**
  * Gives the names of the variables `.env-sample` marks as required for the given build target.
@@ -92,7 +138,10 @@ const validateEnvVariables = (environment, target) => {
 module.exports = {
   ENV_TARGETS,
   PRODUCTION_APP_ENV,
+  getRelayerCustomHeadersCacheKey,
   getRequiredEnvVariables,
+  parseRelayerCustomHeaders,
   validateEnvValues,
-  validateEnvVariables
+  validateEnvVariables,
+  validateRelayerCustomHeaders
 }

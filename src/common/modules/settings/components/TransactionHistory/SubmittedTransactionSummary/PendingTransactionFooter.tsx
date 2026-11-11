@@ -5,8 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   getReplacementAccountOp,
   getReplacementBlocker,
-  Replacement,
-  ReplacementBlocker
+  Replacement
 } from '@ambire-common/libs/accountOp/replacement'
 import SpeedUpIcon from '@common/assets/svg/SpeedUpIcon'
 import Button from '@common/components/Button'
@@ -16,8 +15,10 @@ import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import { getReplacementBuildRequest } from '@common/modules/sign-account-op/helpers/replacementAccountOps'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 
+import { REPLACEMENT_BLOCKER_MESSAGES } from './constants'
 import getStyles from './styles'
 import { SubmittedAccountOpLike } from './types'
 
@@ -29,17 +30,6 @@ type Props = {
 
 // Resets the button if the sign flow never opens, so it can't stay stuck on "Loading..."
 const SPEED_UP_LOADING_RESET_TIMEOUT_MS = 5000
-
-const REPLACEMENT_BLOCKER_MESSAGES: Record<ReplacementBlocker, string> = {
-  external: 'Incoming transactions cannot be sped up or canceled',
-  otherAccount: 'Switch to this account to proceed',
-  notReplaceable:
-    "This transaction was sent through a service that handles it for you, so it can't be sped up or canceled",
-  missingDetails:
-    "This transaction can't be sped up or canceled, as some of its details are missing",
-  partiallyMined:
-    "Part of this transaction has already gone through, so it can't be sped up or canceled"
-}
 
 /**
  * The footer of a pending transaction: Cancel and Speed up, which replace it with a new
@@ -75,21 +65,7 @@ const PendingTransactionFooter: FC<Props> = ({ submittedAccountOp, isOwnTransact
 
       requestsDispatch({
         type: 'method',
-        params: {
-          method: 'build',
-          args: [
-            {
-              type: 'calls',
-              params: {
-                userRequestParams: {
-                  calls: accountOp.calls,
-                  meta: { chainId: accountOp.chainId, accountAddr: accountOp.accountAddr },
-                  accountOp
-                }
-              }
-            }
-          ]
-        }
+        params: { method: 'build', args: [getReplacementBuildRequest(accountOp)] }
       })
     },
     [submittedAccountOp, requestsDispatch]

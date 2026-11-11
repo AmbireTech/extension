@@ -60,11 +60,12 @@ export const handleCleanUpOnPortDisconnect = async ({
       await mainCtrl.requests.closeRequestWindow({ isUserInitiated: false })
   }
 
-  if (!port.sender || !port.sender?.url) return
+  const viewUrl = port.currentUrl ?? port.sender?.url
+  if (!viewUrl) return
 
-  const url = new URL(port.sender.url)
+  const url = new URL(viewUrl)
 
-  if (port.sender.url?.includes('sessionId')) {
+  if (viewUrl.includes('sessionId')) {
     const sessionId = url.searchParams.get('sessionId')!
 
     if (url.pathname.includes('swap-and-bridge')) {
@@ -81,6 +82,8 @@ export const handleCleanUpOnPortDisconnect = async ({
 
     if (url.pathname.includes('dashboard') || url.pathname.includes('transactions')) {
       mainCtrl.activity.resetAccountsOpsFilters(sessionId)
+      // Left open, every sync of the account would keep reading its history
+      mainCtrl.privacyPools.resetHistoryFilters(sessionId)
     }
 
     if (url.pathname.includes('signed-messages')) {

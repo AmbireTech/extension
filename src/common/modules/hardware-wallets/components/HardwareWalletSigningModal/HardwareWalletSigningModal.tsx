@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { ExternalKey } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
 import DriveIcon from '@common/assets/svg/DriveIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
@@ -30,6 +31,10 @@ type Props = {
   children?: React.ReactNode
   cancelReq?: () => void
   signingRequest?: HardwareWalletSigningRequest | null
+  /** The transaction is signed together with an account upgrade (type 4) */
+  isAccountUpgradeTransaction?: boolean
+  /** The calls as Ambire humanized them on the sign screen */
+  humanization?: IrCall[]
 }
 
 const iconByKeyType = {
@@ -46,7 +51,9 @@ const HardwareWalletSigningModal = ({
   isVisible,
   children,
   cancelReq,
-  signingRequest
+  signingRequest,
+  isAccountUpgradeTransaction,
+  humanization
 }: Props) => {
   const { t } = useTranslation()
   const { ref, open, close } = useModalize()
@@ -64,30 +71,26 @@ const HardwareWalletSigningModal = ({
       deviceName: HARDWARE_WALLET_DEVICE_NAMES[keyType]
     })
 
-    // On native a <Text> is not a flexbox container, so an icon nested directly
-    // in it is baseline-aligned and ends up vertically misaligned with the
-    // title. Wrapping the title in a <View> row makes flexbox centering apply.
-    if (isMobile)
-      return (
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <Text fontSize={18} weight="medium">
-            {text}
-          </Text>
-          {icon}
-        </View>
-      )
-
+    // On native, and in the narrow web header, the title is rendered in a
+    // <Text> that is not a flexbox container, so an icon nested directly in
+    // it is baseline-aligned and ends up vertically misaligned with the
+    // title. Wrapping the title in a centered <View> row makes flexbox
+    // centering apply everywhere.
     return (
-      <>
-        {text}
+      <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter]}>
+        <Text fontSize={isMobile ? 18 : 20} weight="medium" style={{ flexShrink: 1 }}>
+          {text}
+        </Text>
         {icon}
-      </>
+      </View>
     )
   }, [keyType, t])
 
   const isTrezor = useMemo(() => {
     return HARDWARE_WALLET_DEVICE_NAMES[keyType] === 'Trezor'
   }, [keyType])
+
+  const deviceName = HARDWARE_WALLET_DEVICE_NAMES[keyType]
 
   return (
     <BottomSheet
@@ -130,7 +133,12 @@ const HardwareWalletSigningModal = ({
         </View>
         {children}
         {!!signingRequest && (
-          <SigningRequestDetails signingRequest={signingRequest} style={spacings.mtLg} />
+          <SigningRequestDetails
+            signingRequest={signingRequest}
+            deviceName={deviceName}
+            isAccountUpgradeTransaction={isAccountUpgradeTransaction}
+            humanization={humanization}
+          />
         )}
         {isTrezor && !!cancelReq && (
           <Button

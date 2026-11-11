@@ -131,6 +131,9 @@ function processManifest(content, mode) {
   }
   manifest.permissions = permissions
 
+  // Use the faster structured_clone serialization for messages (only if supported by the installed browser)
+  if (isWebkit && !isSafari) manifest.message_serialization = 'structured_clone'
+
   if (isSafari) {
     manifest.permissions = manifest.permissions.filter((p) => p !== 'notifications')
   }

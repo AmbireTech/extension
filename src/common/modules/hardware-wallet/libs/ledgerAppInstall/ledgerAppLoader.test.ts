@@ -1,6 +1,7 @@
 import { DeviceModelId } from '@ledgerhq/device-management-kit'
 
-import { AMBIRE_SIGNER_APDUS } from './artifacts'
+import { AMBIRE_SIGNER_DEVICE_MODELS } from './artifacts'
+import { AMBIRE_SIGNER_APDUS } from './artifacts/apdus'
 import {
   getLoadScriptApiLevel,
   getOsMismatchMessage,
@@ -21,6 +22,23 @@ describe('Ambire Signer load scripts', () => {
       expect(OS_VERSION_BY_API_LEVEL[apiLevel!]?.[modelId as DeviceModelId]).toBeDefined()
     }
   )
+  // The smart settings show the Ledger install card only for these models
+  it('is offered only on the models that allow custom apps', () => {
+    expect(AMBIRE_SIGNER_DEVICE_MODELS).toEqual(
+      expect.arrayContaining([
+        DeviceModelId.NANO_SP,
+        DeviceModelId.STAX,
+        DeviceModelId.FLEX,
+        DeviceModelId.APEX
+      ])
+    )
+    expect(AMBIRE_SIGNER_DEVICE_MODELS).not.toContain(DeviceModelId.NANO_X)
+    expect(AMBIRE_SIGNER_DEVICE_MODELS).not.toContain(DeviceModelId.NANO_S)
+  })
+  // The list is kept apart from the builds, so it can drift from them
+  it('lists exactly the models that have a build', () => {
+    expect([...AMBIRE_SIGNER_DEVICE_MODELS].sort()).toEqual(Object.keys(AMBIRE_SIGNER_APDUS).sort())
+  })
 })
 
 describe('getOsMismatchMessage', () => {
