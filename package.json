@@ -155,6 +155,7 @@
     "expo-constants": "58.0.15",
     "expo-device": "58.0.5",
     "expo-document-picker": "58.0.4",
+    "expo-file-system": "58.0.13",
     "expo-font": "58.0.11",
     "expo-glass-effect": "58.0.5",
     "expo-image-picker": "58.0.10",
@@ -351,6 +352,15 @@
     "react-native-url-polyfill": "4.0.0"
   },
   "private": true,
+  "expo": {
+    "install": {
+      "exclude": [
+        "@react-native-async-storage/async-storage",
+        "@sentry/react-native",
+        "typescript"
+      ]
+    }
+  },
   "lavamoat": {
     "allowScripts": {
       "$root$": false,
