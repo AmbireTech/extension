@@ -1635,7 +1635,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-compat (2.23.9):
+  - react-native-compat (2.25.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1658,9 +1658,30 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-    - YttriumWrapper (= 0.10.50)
-  - react-native-get-random-values (1.11.0):
+    - YttriumWrapper (= 0.10.59)
+  - react-native-get-random-values (2.1.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-bridging
     - React-Core
+    - React-Core-prebuilt
+    - React-cxxstableapi
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-keyboard-controller (1.22.7):
     - hermes-engine
     - RCTRequired
@@ -1731,8 +1752,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-nfc-manager (3.17.2):
+  - react-native-nfc-manager (4.2.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-bridging
     - React-Core
+    - React-Core-prebuilt
+    - React-cxxstableapi
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-quick-base64 (3.0.1):
     - hermes-engine
     - RCTRequired
@@ -1828,7 +1870,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-stallion (2.3.2):
+  - react-native-stallion (2.4.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2466,7 +2508,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSentry (8.28.0):
+  - RNSentry (8.34.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2617,7 +2659,7 @@ PODS:
     - React-Core
   - Yoga (0.0.0):
     - React-Core-prebuilt
-  - YttriumWrapper (0.10.50)
+  - YttriumWrapper (0.10.59)
   - ZIPFoundation (0.9.20)
 
 DEPENDENCIES:
@@ -3144,14 +3186,14 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 0207d6133274a7cbfc3d0dae326e3055c8cfcf9e
   React-mutationobservernativemodule: b97a67c29f724d18a92379e7390f24350acb433a
   react-native-ble-plx: d6178fe13bb60e3ced278f528bb476fc0ceaf102
-  react-native-compat: 75f19c7801adade41c5751716355c06f5db5b32e
-  react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
+  react-native-compat: fdeb575b305ce67c653c9522b59789c88eeb1491
+  react-native-get-random-values: 625b34d7f8a66d85c594071603f748d756bd90da
   react-native-keyboard-controller: b0f7a2c7e3741625fcb3805ffbfcb3743df4c81e
   react-native-netinfo: 687391ecedb199c6d67fbc46c87cbae3277de967
-  react-native-nfc-manager: c8891e460b4943b695d63f7f4effc6345bbefc83
+  react-native-nfc-manager: 2ef040a725fc05ce469461ed0af21c78306e71cf
   react-native-quick-base64: d530613fbc277aa6899775d17f3bc8390399026c
   react-native-safe-area-context: 56700b839169ce88ffcec68c40447916fe512462
-  react-native-stallion: 4225bb4bc68c1f83f38e6aa3498ddd0e0ebfef93
+  react-native-stallion: 9e795ab01fe752e633c387ea901e6b97293821ac
   react-native-webview: 3a3d1fd130d39e4dcabeebe89e6b245478ee177e
   React-NativeModulesApple: 8cfb2f308f48c48068c96b932e7f0e4297c23342
   React-networking: 3325cf73ecbdaacab0da91260b094baf36061a56
@@ -3194,13 +3236,13 @@ SPEC CHECKSUMS:
   RNGestureHandler: e19fcf39b0212e0eb8bc7ca1e645500eb492f6be
   RNReanimated: 3018727dbf272754d0f31ef73f619e49ade7baf0
   RNScreens: f15a5bda1ddeff8575b8ce41d83885b67129f84b
-  RNSentry: 3cbf06d950d99c59f52035316146024280d02930
+  RNSentry: a666a08b436f44bde674b12c848322dfa8deabe5
   RNSVG: c35beed3dcf6fd14b50ca1fc0d4214a17ec5334d
   RNWorklets: 488806637a21eb17812a48dadca7cb8c698c8cfd
   SocketRocket: 37aec555668fb852ec12e3c0de59a86ca58f0871
   uniffi-bindgen-react-native: 5a59022841548d4c890e8f259016bdb8a797208a
   Yoga: d1c536142c5ff8ec8cd856ab2a7c227a1d875c8e
-  YttriumWrapper: d7f63336830536f1da41b745ed8bacedb04228c4
+  YttriumWrapper: 64983f0edbf609b800ac3074010224fc5341aaeb
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
 PODFILE CHECKSUM: d4fb076dfbbd7eaabae81fb5a1e32b5923d96b60
