@@ -25,9 +25,9 @@ type Props = Omit<PrivacyStatusProps, 'style'> & {
 /** No summary for a basic rating, as any line there reads as a promise that the transfer is private. */
 const RATING_SUMMARIES: Partial<Record<PrivacyPoolsRating, string>> = {
   weak: 'Some details make this transfer easier to link to you.',
-  traceable: 'Anyone can link this transfer to you.',
+  traceable: 'This transfer can be linked to you.',
   unchecked:
-    'We could not check yet how private this transfer is, as the pool is still loading. Anything in it could link it to you.'
+    "We could not check this transfer's privacy yet, as the pool is still loading. We cannot warn you about anything that links it to you."
 }
 
 /**

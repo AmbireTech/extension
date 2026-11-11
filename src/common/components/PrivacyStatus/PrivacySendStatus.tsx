@@ -65,7 +65,7 @@ const PrivacySendStatus: FC<Props> = (props) => {
     () =>
       createGlobalTooltipDataSet({
         id: 'privacy-pools-send-cover',
-        title: t('Deposits that cover you'),
+        title: t('Deposits like yours'),
         content: t(
           'Deposits made in the last {{days}} days that are large enough to pay this transfer. The more there are, the harder it is to link the transfer to you.',
           { days: COVER_WINDOW_DAYS }
