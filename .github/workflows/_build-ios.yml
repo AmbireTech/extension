@@ -26,7 +26,7 @@ jobs:
     name: Build iOS artifact and upload
     environment: extension-production
     # NOTE: macos-15 runners are Apple Silicon (arm64)
-    runs-on: macos-15
+    runs-on: macos-26
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
 
