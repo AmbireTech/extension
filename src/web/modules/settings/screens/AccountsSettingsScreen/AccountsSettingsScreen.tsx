@@ -16,7 +16,7 @@ import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSh
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isPrivacyPoolsEnabled } from '@common/config/env'
+import { isPrivacyPoolsEnabled, isPrivacyPoolsSupported } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
@@ -445,7 +445,9 @@ const AccountsSettingsScreen = () => {
         </>
       </SettingsPageHeader>
       <View style={[flexbox.flex1]} ref={accountsContainerRef}>
-        {isPrivacyPoolsEnabled && <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+        {isPrivacyPoolsSupported && (
+          <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        )}
         {isPrivacyPoolsEnabled && activeTab === 'private' ? (
           <ScrollableWrapper
             // Search results are ordered by relevance, so there is no order to rearrange in them

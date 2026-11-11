@@ -11,17 +11,29 @@ import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
 import usePrevious from '@common/hooks/usePrevious'
+import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
-import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 
 import { PanelBackButton, PanelTitle } from '../Panel/Panel'
+
+const { isPopup } = getUiType()
+
+// A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
+// The popup is barely wider than the width cap, so the modal there takes the popup's full width
+// instead of leaving a thin gap on each side
+const WIDE_LAYOUT_SHEET_STYLE = {
+  minHeight: 432,
+  ...spacings.pvLg,
+  ...(isPopup ? {} : { maxWidth: 432 })
+}
 
 const ExportKey = ({
   account,
@@ -35,6 +47,7 @@ const ExportKey = ({
   onBackButtonPress: () => void
 }) => {
   const { t } = useTranslation()
+  const { isCompactLayout } = useCompactLayout()
   const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
   const [privateKey, setPrivateKey] = useState<string | null>(null)
   const [salt, setSalt] = useState<string | null>(null)
@@ -162,7 +175,7 @@ const ExportKey = ({
         closeBottomSheet={closeConfirmPassword}
         scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={isWeb ? { flex: 1 } : undefined}
-        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+        style={isCompactLayout ? undefined : WIDE_LAYOUT_SHEET_STYLE}
       >
         <PasswordConfirmation
           text={
