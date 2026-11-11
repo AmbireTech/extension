@@ -35,7 +35,7 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsSupported, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -342,8 +342,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     preset: 'opacityInverted'
   })
   // Split like the accounts list: Privacy Pools accounts, having no address, are private. Without
-  // them, the list is as it was
-  const hasAccountsTabs = isPrivacyPoolsEnabled && !!onSelectPrivacyPoolsAccount
+  // them, the list is as it was. Where they are not released yet, the Private tab is only a teaser
+  const hasAccountsTabs = isPrivacyPoolsSupported && !!onSelectPrivacyPoolsAccount
   // The search stays when switching tabs, so it filters the newly opened tab too
   const [activeTab, setActiveTab] = useState<AccountsTab>('public')
 

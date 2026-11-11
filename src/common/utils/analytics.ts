@@ -1,3 +1,5 @@
+import type { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
+
 /**
  * The id that identifies an app instance (extension or mobile) in the internal
  * Ambire analytics. Sent as the `x-app-source` header on requests to Ambire APIs
@@ -29,6 +31,19 @@ const isAmbireApiUrl = (url: string): boolean => {
   }
 }
 
+/**
+ * Whether to attach the `x-app-*` headers and the balance hint to the requests to Ambire APIs
+ * (the user can opt out with the `ambireAnalytics` flag). False until the user's choice is
+ * loaded from storage, so that a request fired at startup never sends them for a user who
+ * opted out.
+ */
+const isAmbireAnalyticsEnabled = (
+  featureFlags: Pick<FeatureFlagsController, 'initialLoadPromise' | 'isFeatureEnabled'> | undefined
+): boolean =>
+  !!featureFlags &&
+  !featureFlags.initialLoadPromise &&
+  featureFlags.isFeatureEnabled('ambireAnalytics')
+
 const CENA_URL = 'https://cena.ambire.com/'
 
 /**
@@ -52,4 +67,4 @@ const attachBalanceHint = (url: string, accountAddr: string, balance: number): s
   return `${beforeHash}${separator}panVal=${panVal}${hash}`
 }
 
-export { attachBalanceHint, getAppInstanceId, isAmbireApiUrl }
+export { attachBalanceHint, getAppInstanceId, isAmbireAnalyticsEnabled, isAmbireApiUrl }

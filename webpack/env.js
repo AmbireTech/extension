@@ -17,7 +17,8 @@ const isAmbireExplorer = outputPath.includes('benzin')
 const isLegends = outputPath.includes('legends')
 const isAmbireNext = process.env.AMBIRE_NEXT === 'true'
 // Whether the Privacy Pools circuit artifacts (~23 MB) are shipped. Must match
-// `isPrivacyPoolsEnabled` in src/common/config/env/env.ts, which hides the feature everywhere else.
+// `isPrivacyPoolsEnabled` in src/common/config/env/env.ts, which keeps the feature out of reach
+// everywhere else (the rest of the Privacy Pools code is still bundled).
 const isPrivacyPoolsBundled = !isGecko && (isAmbireNext || process.env.APP_ENV === 'development')
 
 // The folder that holds every build output. Defaults to <repo root>/build, but BUILD_DIR
