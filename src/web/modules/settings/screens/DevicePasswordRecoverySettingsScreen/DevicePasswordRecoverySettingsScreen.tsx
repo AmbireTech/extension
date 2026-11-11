@@ -21,10 +21,12 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { selectIsEmailVaultEnabled } from '@common/selectors/featureFlags'
 import spacings, { SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmation'
+import EmailVaultDisabledAlert from '@web/modules/keystore/components/EmailVaultDisabledAlert'
 import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
@@ -33,6 +35,10 @@ const CLOSE_ICON_SIZE = 14
 const DevicePasswordRecoverySettingsScreen = () => {
   const { state: ev, dispatch: evDispatch } = useController('EmailVaultController')
   const { state: keystoreState, dispatch: keystoreDispatch } = useController('KeystoreController')
+  const { state: isEmailVaultEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsEmailVaultEnabled
+  )
   const { t } = useTranslation()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { navigate } = useNavigation()
@@ -152,85 +158,92 @@ const DevicePasswordRecoverySettingsScreen = () => {
           {t('Extension password recovery with email')}
         </Text>
 
-        {!keystoreState.hasPasswordSecret && (
-          <Alert
-            type="warning"
-            isTypeLabelHidden
-            style={spacings.mbXl}
-            title={
-              <Text appearance="warningText" weight="semiBold">
-                {t('Set extension password')}
-              </Text>
-            }
-            text={t(
-              'Before enabling extension password recovery via email, you need to first set a password for your device.'
+        {/* Turned off in the privacy settings: nothing here works until it's turned back on */}
+        {!isEmailVaultEnabled ? (
+          <EmailVaultDisabledAlert />
+        ) : (
+          <>
+            {!keystoreState.hasPasswordSecret && (
+              <Alert
+                type="warning"
+                isTypeLabelHidden
+                style={spacings.mbXl}
+                title={
+                  <Text appearance="warningText" weight="semiBold">
+                    {t('Set extension password')}
+                  </Text>
+                }
+                text={t(
+                  'Before enabling extension password recovery via email, you need to first set a password for your device.'
+                )}
+                buttonProps={{
+                  text: t('Set extension password'),
+                  onPress: () =>
+                    navigate(ROUTES.devicePasswordSet, { state: { flow: 'password-recovery' } })
+                }}
+              />
             )}
-            buttonProps={{
-              text: t('Set extension password'),
-              onPress: () =>
-                navigate(ROUTES.devicePasswordSet, { state: { flow: 'password-recovery' } })
-            }}
-          />
-        )}
 
-        <Controller
-          control={control}
-          // @ts-ignore minot type mismatch, (value) => isEmail(value) has no warns
-          rules={{ validate: isEmail }}
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              onBlur={onBlur}
-              placeholder={t('E-mail')}
-              onChangeText={onChange}
-              inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
-              onSubmitEditing={handleDisablePress}
-              value={value}
-              autoFocus={isWeb}
-              isValid={isEmail(value)}
-              error={!!errors.email && (t('Please fill in a valid email.') as string)}
-              disabled
+            <Controller
+              control={control}
+              // @ts-ignore minot type mismatch, (value) => isEmail(value) has no warns
+              rules={{ validate: isEmail }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  onBlur={onBlur}
+                  placeholder={t('E-mail')}
+                  onChangeText={onChange}
+                  inputWrapperStyle={{ backgroundColor: theme.tertiaryBackground }}
+                  onSubmitEditing={handleDisablePress}
+                  value={value}
+                  autoFocus={isWeb}
+                  isValid={isEmail(value)}
+                  error={!!errors.email && (t('Please fill in a valid email.') as string)}
+                  disabled
+                />
+              )}
+              name="email"
             />
-          )}
-          name="email"
-        />
-        <Button
-          style={{ alignSelf: 'flex-start', paddingHorizontal: SPACING_XL }}
-          disabled={
-            ev.currentState === EmailVaultState.Loading ||
-            isSubmitting ||
-            !email ||
-            !ev.hasKeystoreRecovery ||
-            !isValid ||
-            keystoreState.statuses.unlockWithSecret !== 'INITIAL'
-          }
-          type="primary"
-          text={
-            isSubmitting || ev.currentState === EmailVaultState.Loading
-              ? t('Loading...')
-              : t('Disable')
-          }
-          onPress={handleDisablePress}
-        />
-        <Alert
-          type="warning"
-          isTypeLabelHidden
-          style={spacings.mtXl}
-          title={t('Email recovery will be deprecated soon')}
-          titleWeight="semiBold"
-          text={t(
-            "Email-based password recovery for this device is being phased out. To avoid losing access, we recommend disabling it now and switching to biometric unlock - a more private, self-sovereign alternative that doesn't rely on Ambire infrastructure.\n\nDisable email recovery before it's removed."
-          )}
-        />
-        <Alert
-          type="info"
-          isTypeLabelHidden
-          style={spacings.mtXl}
-          title={t('How it works')}
-          titleWeight="semiBold"
-          text={t(
-            "This is a recovery mechanism for your local extension password via email. \nPlease note that it doesn't upload any keys, and it is not an account recovery mechanism. \nIt is just an alternative way of unlocking your extension on this device in case you forget your password."
-          )}
-        />
+            <Button
+              style={{ alignSelf: 'flex-start', paddingHorizontal: SPACING_XL }}
+              disabled={
+                ev.currentState === EmailVaultState.Loading ||
+                isSubmitting ||
+                !email ||
+                !ev.hasKeystoreRecovery ||
+                !isValid ||
+                keystoreState.statuses.unlockWithSecret !== 'INITIAL'
+              }
+              type="primary"
+              text={
+                isSubmitting || ev.currentState === EmailVaultState.Loading
+                  ? t('Loading...')
+                  : t('Disable')
+              }
+              onPress={handleDisablePress}
+            />
+            <Alert
+              type="warning"
+              isTypeLabelHidden
+              style={spacings.mtXl}
+              title={t('Email recovery will be deprecated soon')}
+              titleWeight="semiBold"
+              text={t(
+                "Email-based password recovery for this device is being phased out. To avoid losing access, we recommend disabling it now and switching to biometric unlock - a more private, self-sovereign alternative that doesn't rely on Ambire infrastructure.\n\nDisable email recovery before it's removed."
+              )}
+            />
+            <Alert
+              type="info"
+              isTypeLabelHidden
+              style={spacings.mtXl}
+              title={t('How it works')}
+              titleWeight="semiBold"
+              text={t(
+                "This is a recovery mechanism for your local extension password via email. \nPlease note that it doesn't upload any keys, and it is not an account recovery mechanism. \nIt is just an alternative way of unlocking your extension on this device in case you forget your password."
+              )}
+            />
+          </>
+        )}
       </View>
       <BottomSheetPasswordConfirmation
         id="device-password-recovery-confirm-password-modal"
