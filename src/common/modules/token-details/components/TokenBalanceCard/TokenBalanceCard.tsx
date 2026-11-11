@@ -6,7 +6,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import XWalletConversionTooltip from '@common/components/XWalletConversionTooltip'
-import XWalletLegacyBadge from '@common/components/XWalletLegacyBadge'
+import XWalletMigrationBanner from '@common/components/XWalletMigrationBanner'
 import useTheme from '@common/hooks/useTheme'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import TokenDetailsTitle from '@common/modules/token-details/components/Title'
@@ -79,21 +79,12 @@ const TokenBalanceCard = ({
               {symbol}
             </Text>
             {xWalletAmount !== undefined && (
-              <>
-                <XWalletConversionTooltip
-                  address={address}
-                  chainId={chainId}
-                  xWalletAmount={xWalletAmount}
-                  tooltipId="token-details-x-wallet-conversion"
-                />
-                <XWalletLegacyBadge
-                  address={address}
-                  chainId={chainId}
-                  xWalletAmount={xWalletAmount}
-                  tooltipId="token-details-x-wallet-legacy"
-                  testID="token-details-x-wallet-legacy-badge"
-                />
-              </>
+              <XWalletConversionTooltip
+                address={address}
+                chainId={chainId}
+                xWalletAmount={xWalletAmount}
+                tooltipId="token-details-x-wallet-conversion"
+              />
             )}
             {isRewards && (
               <Text fontSize={12} weight="medium">
@@ -147,6 +138,14 @@ const TokenBalanceCard = ({
           )}
         </View>
       </View>
+      {xWalletAmount !== undefined && (
+        <XWalletMigrationBanner
+          address={address}
+          chainId={chainId}
+          xWalletAmount={xWalletAmount}
+          style={spacings.mbMd}
+        />
+      )}
     </View>
   )
 }
