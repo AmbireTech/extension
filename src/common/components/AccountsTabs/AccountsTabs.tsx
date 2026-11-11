@@ -5,7 +5,9 @@ import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PublicAccountsIcon from '@common/assets/svg/PublicAccountsIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
+import SoonBadge from '@common/components/SoonBadge'
 import Text from '@common/components/Text'
+import { isPrivacyPoolsComingSoon } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 
@@ -17,7 +19,10 @@ type AccountsTab = 'public' | 'private'
 type Props = {
   activeTab: AccountsTab
   onTabChange: (tab: AccountsTab) => void
-  /** Why a tab cannot be opened, shown on hover. A tab with a reason is disabled. */
+  /**
+   * Why a tab cannot be opened, shown on hover. A tab with a reason is disabled. Where Privacy Pools
+   * are not released yet, the Private tab is always disabled with a "Coming soon" reason.
+   */
   disabledTabReasons?: Partial<Record<AccountsTab, string>>
   style?: ViewStyle
 }
@@ -48,11 +53,19 @@ const AccountsTabs: FC<Props> = ({ activeTab, onTabChange, disabledTabReasons, s
     [t, theme.privacyPoolsText, theme.secondaryAccent400]
   )
 
+  const tabDisabledReasons = useMemo(
+    () =>
+      isPrivacyPoolsComingSoon
+        ? { ...disabledTabReasons, private: t('Send and receive privately. Coming soon.') }
+        : disabledTabReasons,
+    [disabledTabReasons, t]
+  )
+
   return (
     <View style={[styles.container, style]}>
       {tabs.map(({ id, label, Icon, activeIconColor }) => {
         const isActive = activeTab === id
-        const disabledReason = disabledTabReasons?.[id]
+        const disabledReason = tabDisabledReasons?.[id]
 
         return (
           <HoverablePressable
@@ -62,11 +75,7 @@ const AccountsTabs: FC<Props> = ({ activeTab, onTabChange, disabledTabReasons, s
             accessibilityState={{ selected: isActive, disabled: !!disabledReason }}
             // Not the `disabled` prop, which would block the tooltip's hover
             onPress={disabledReason ? undefined : () => onTabChange(id)}
-            style={[
-              styles.tab,
-              isActive && styles.activeTab,
-              !!disabledReason && styles.disabledTab
-            ]}
+            style={[styles.tab, isActive && styles.activeTab]}
             dataSet={
               disabledReason
                 ? createGlobalTooltipDataSet({
@@ -76,14 +85,18 @@ const AccountsTabs: FC<Props> = ({ activeTab, onTabChange, disabledTabReasons, s
                 : undefined
             }
           >
-            <Icon width={24} height={24} color={isActive ? activeIconColor : undefined} />
-            <Text
-              fontSize={12}
-              weight="medium"
-              appearance={isActive ? 'primaryText' : 'secondaryText'}
-            >
-              {label}
-            </Text>
+            {/* Only the label is dimmed when disabled, the "Soon" badge stays readable */}
+            <View style={[styles.tabLabel, !!disabledReason && styles.disabledTabLabel]}>
+              <Icon width={24} height={24} color={isActive ? activeIconColor : undefined} />
+              <Text
+                fontSize={12}
+                weight="medium"
+                appearance={isActive ? 'primaryText' : 'secondaryText'}
+              >
+                {label}
+              </Text>
+            </View>
+            {id === 'private' && isPrivacyPoolsComingSoon && <SoonBadge />}
           </HoverablePressable>
         )
       })}

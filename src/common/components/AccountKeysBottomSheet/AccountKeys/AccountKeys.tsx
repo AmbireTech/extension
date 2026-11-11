@@ -12,10 +12,12 @@ import BottomSheet from '@common/components/BottomSheet'
 import ExportKey from '@common/components/ExportKey'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 interface Props {
@@ -25,6 +27,17 @@ interface Props {
   keyIconColor?: string
   showExportImport?: boolean
   chainId?: bigint
+}
+
+const { isPopup } = getUiType()
+
+// A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
+// The popup is barely wider than the width cap, so the modal there takes the popup's full width
+// instead of leaving a thin gap on each side
+const WIDE_LAYOUT_SHEET_STYLE = {
+  minHeight: 432,
+  ...spacings.pvLg,
+  ...(isPopup ? {} : { maxWidth: 432 })
 }
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) =>
@@ -40,6 +53,7 @@ const AccountKeys: FC<Props> = ({
   chainId
 }) => {
   const { t } = useTranslation()
+  const { isCompactLayout } = useCompactLayout()
   const selectAccountState = useCallback(
     (state: AllControllersMappingType['AccountsController']) =>
       state.accountStates?.[account.addr] || null,
@@ -244,7 +258,7 @@ const AccountKeys: FC<Props> = ({
         closeBottomSheet={closeExportKey}
         scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+        style={isCompactLayout ? undefined : WIDE_LAYOUT_SHEET_STYLE}
         onClosed={handleExportKeyClosed}
       >
         {!!selectedExportKey && (

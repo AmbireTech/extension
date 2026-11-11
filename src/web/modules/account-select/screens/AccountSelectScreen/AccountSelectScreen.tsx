@@ -14,7 +14,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isPrivacyPoolsEnabled } from '@common/config/env'
+import { isPrivacyPoolsEnabled, isPrivacyPoolsSupported } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -205,7 +205,7 @@ const AccountSelectScreen = () => {
   )
   const noAccountsFound = <Text>{t('No accounts found')}</Text>
   const isPrivateTabOpen = isPrivacyPoolsEnabled && activeTab === 'private'
-  const listStyle = isPrivacyPoolsEnabled ? styles.containerBelowTabs : styles.container
+  const listStyle = isPrivacyPoolsSupported ? styles.containerBelowTabs : styles.container
 
   const addAccountButton = (
     <Button
@@ -246,7 +246,9 @@ const AccountSelectScreen = () => {
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
-        {isPrivacyPoolsEnabled && <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+        {isPrivacyPoolsSupported && (
+          <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        )}
         <View style={flexbox.flex1}>
           {/* Each tab gets its own list. A shared one keeps the render window of the other tab,
           and with `initialScrollIndex` set it isn't recomputed until scrolled, so coming back

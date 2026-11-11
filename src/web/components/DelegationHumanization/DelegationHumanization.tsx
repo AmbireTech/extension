@@ -1,14 +1,13 @@
 import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
-
-import flexbox from '@common/styles/utils/flexbox'
+import { TextStyle, View } from 'react-native'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { getDelegatorName } from '@ambire-common/libs/7702/7702'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
+import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
   setDelegation?: boolean
@@ -55,9 +54,16 @@ const DelegationHumanization: FC<Props> = ({ setDelegation, delegatedContract, i
                     {t('EIP-7702 Delegation for this account')}
                   </Text>
                   {!delegatorName && delegatedContract !== ZERO_ADDRESS && (
-                    <Text fontSize={fontSize} weight="semiBold">
-                      : {delegatedContract}
-                    </Text>
+                    <>
+                      <Text fontSize={fontSize}>: </Text>
+                      <Text
+                        fontSize={fontSize}
+                        weight="semiBold"
+                        style={{ wordBreak: 'break-all' } as TextStyle}
+                      >
+                        {delegatedContract}
+                      </Text>
+                    </>
                   )}
                 </>
               )}
