@@ -15,6 +15,10 @@ const selectPrivacyPoolsFeeAmount = (state: AllControllersMappingType['TransferC
 const selectSelectedToken = (state: AllControllersMappingType['TransferController']) =>
   state.selectedToken
 
+/** The tooltip of the Privacy Pools fee of a deposit, the same wherever it shows. In English, to translate as it is. */
+export const PRIVACY_POOLS_DEPOSIT_FEE_TOOLTIP =
+  'Privacy Pools charges this fee on top of your deposit, so the whole amount you typed goes into your private account.'
+
 /**
  * The Privacy Pools fee of a deposit into a Privacy Pools account, to show next to the network
  * fee. Undefined for other transfers and until the fee is read.
@@ -41,12 +45,7 @@ const usePrivacyPoolsDepositFee = (): EstimationServiceFee | undefined => {
         ? safeTokenAmountAndNumberMultiplication(feeAmount, token.decimals, price)
         : '0',
       token,
-      label: {
-        title: t('Protocol fee'),
-        tooltip: t(
-          'Privacy Pools charges this fee on top of your deposit, so the whole amount you typed goes into your private account.'
-        )
-      }
+      label: { title: t('Protocol fee'), tooltip: t(PRIVACY_POOLS_DEPOSIT_FEE_TOOLTIP) }
     }
   }, [feeAmount, privacyPoolsRecipient, t, token])
 }
