@@ -31,6 +31,7 @@ import SafeOwnerApprovalSheet, {
   useSafeOwnerApproval
 } from '@common/modules/sign-account-op/components/SafeOwnerApproval'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
+import SafeSignatureAdded from '@common/modules/sign-account-op/components/SafeSignatureAdded'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import SpeedUpNotNeededFee from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpNotNeededFee'
@@ -145,6 +146,7 @@ const SignAccountOpScreen = () => {
     holdToProceedButtonType,
     disabledReason,
     showSafeSigners,
+    safeSignatureAdded,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
@@ -306,6 +308,16 @@ const SignAccountOpScreen = () => {
     signAccountOpState?.readyToSign,
     signAccountOpState?.account.safeCreation
   ])
+
+  if (safeSignatureAdded) {
+    return (
+      <SafeSignatureAdded
+        signedCount={safeSignatureAdded.signedCount}
+        threshold={safeSignatureAdded.threshold}
+        closesAt={safeSignatureAdded.closesAt}
+      />
+    )
+  }
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
 
