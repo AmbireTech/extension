@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   FlatList,
   FlatListProps,
@@ -9,7 +9,7 @@ import {
   View
 } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { KeyboardController } from 'react-native-keyboard-controller'
+import { KeyboardController, KeyboardEvents } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { captureException } from '@common/config/analytics/CrashAnalytics'
@@ -17,7 +17,7 @@ import { isiOS } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { DEVICE_HEIGHT, SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import common from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
 
 import { BottomSheetProps } from './BottomSheet'
@@ -35,7 +35,7 @@ type SheetRefAdapter = {
 
 const AUTO_DETENTS: SheetDetent[] = ['auto']
 const IOS_DIM_COLOR = '#0D0E0F'
-const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.42, [THEME_TYPES.DARK]: 0.55 }
+const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.52, [THEME_TYPES.DARK]: 0.65 }
 const FULL_HEIGHT_DETENTS: SheetDetent[] = [1]
 
 const noop = () => {}
@@ -71,8 +71,26 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = props
 
   const { theme, themeType } = useTheme()
-  const { top, bottom } = useSafeAreaInsets()
+  const { bottom } = useSafeAreaInsets()
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
+  const [visibleKeyboardHeight, setVisibleKeyboardHeight] = useState(0)
   const { setRef, isModal, isOpen, setIsOpen } = useBottomSheetInternal(props)
+
+  useEffect(() => {
+    const showSub = KeyboardEvents.addListener('keyboardWillShow', (e) => {
+      setIsKeyboardVisible(true)
+      setVisibleKeyboardHeight(e.height)
+    })
+    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () => {
+      setIsKeyboardVisible(false)
+      setVisibleKeyboardHeight(0)
+    })
+
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
   const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
 
   const internalScrollableRef = useRef<any>(null)
@@ -114,16 +132,26 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const isFixedHeight = detents !== AUTO_DETENTS
 
   const horizontalPadding = isModal ? SPACING_LG : SPACING_SM
-  // Footers float over the content, so on iOS the content fades under them like in native sheets
+
+  // The bottom spacing works like it did with Modalize, so TrueSheet's own insets are off
+  // (`insetAdjustment` and `contentInsetAdjustment` "never"). The footer sits below the
+  // content, never over it, and takes all of the bottom padding; it rises above the keyboard
+  // by its height. A `customRenderer` controls its own layout, so it gets no content padding.
+  const bottomInset = bottom || SPACING_SM
+  const contentBottomPadding = isModal || FooterComponent ? 0 : bottomInset
+  // The keyboard covers the bottom inset, so above it the footer keeps only a small gap
+  let footerBottomPadding = isModal ? 0 : bottomInset
+  if (!isModal && isKeyboardVisible) footerBottomPadding = visibleKeyboardHeight + SPACING_SM
+
   const scrollableOptions = useMemo(
-    () => ({ bottomScrollEdgeEffect: FooterComponent ? ('soft' as const) : ('hidden' as const) }),
-    [FooterComponent]
+    () => ({
+      contentInsetAdjustment: 'never' as const,
+      // TrueSheet also pads the list by the keyboard height, which the footer already
+      // takes when there is one
+      keyboardOffset: FooterComponent ? -visibleKeyboardHeight : 0
+    }),
+    [FooterComponent, visibleKeyboardHeight]
   )
-  // TrueSheet pads the bottom by the safe area only, which is 0 on phones with a home button
-  const missingBottomInset = bottom ? 0 : SPACING_LG
-  // iOS 26 attaches a sheet that reaches full height to the screen edges; kept a little
-  // shorter, every sheet floats like the short ones
-  const iosMaxHeight = isiOS ? DEVICE_HEIGHT - top - SPACING_LG : undefined
 
   const handleWillPresent = useCallback(() => {
     KeyboardController.dismiss().catch(reportSheetError)
@@ -160,6 +188,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     bounces: false,
     keyboardShouldPersistTaps: 'handled' as const,
     showsVerticalScrollIndicator: false,
+    contentContainerStyle: { paddingBottom: contentBottomPadding },
     style: { marginBottom: isModal ? SPACING_LG : 0 }
   }
 
@@ -199,7 +228,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         {...sharedScrollProps}
         {...(!isScrollEnabled && {
           scrollEnabled: false,
-          contentContainerStyle: { flexGrow: 1 }
+          contentContainerStyle: { flexGrow: 1, paddingBottom: contentBottomPadding }
         })}
         {...((scrollViewProps || {}) as ScrollViewProps)}
       >
@@ -215,27 +244,26 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       <TrueSheet
         ref={trueSheetRef}
         detents={detents}
-        maxContentHeight={iosMaxHeight}
         scrollableRef={scrollableRef}
         scrollableOptions={scrollableOptions}
-        // The system sheet shape (floating on iOS, Material on Android) in our solid surface color
+        // The system sheet shape (floating on iOS, Material on Android) in our solid surface color,
+        // with the corner radius the sheets had before
         backgroundColor={theme[backgroundColor]}
+        cornerRadius={BORDER_RADIUS_PRIMARY}
         grabber={withHandle && !isModal}
-        // The design's iOS backdrop: a plain dark tint, no blur outside the sheet
+        // The design's iOS backdrop (a plain dark tint, no blur outside the sheet), a bit darker
         dimColor={isiOS ? IOS_DIM_COLOR : undefined}
         dimOpacity={isiOS ? IOS_DIM_OPACITY[themeType] : undefined}
         dismissible={shouldBeClosableOnDrag}
         header={HeaderComponent ? <>{HeaderComponent}</> : undefined}
         headerStyle={{ paddingTop: SPACING_SM, paddingHorizontal: horizontalPadding }}
         footer={FooterComponent ? <>{FooterComponent}</> : undefined}
-        footerStyle={{ paddingHorizontal: horizontalPadding, paddingBottom: missingBottomInset }}
-        // Absolute, so the footer rises above the keyboard like it did with Modalize
-        footerOptions={{ position: 'absolute' }}
+        footerStyle={{ paddingHorizontal: horizontalPadding, paddingBottom: footerBottomPadding }}
+        insetAdjustment="never"
         style={[
           {
             paddingTop: HeaderComponent ? 0 : SPACING_SM,
-            paddingHorizontal: horizontalPadding,
-            paddingBottom: FooterComponent ? 0 : missingBottomInset
+            paddingHorizontal: horizontalPadding
           },
           isFixedHeight && { flex: 1 },
           style
