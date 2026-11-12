@@ -44,6 +44,9 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getPrivacyPoolsSuggestedAmounts } from '@common/utils/privacyPools'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
+import PrivacyPoolsBroadcasterBottomSheet, {
+  PrivacyPoolsBroadcasterButton
+} from '@web/modules/privacy-pools/components/PrivacyPoolsBroadcasterBottomSheet'
 import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import loadTransactionSummary, {
@@ -114,6 +117,11 @@ const PrivacyPoolsSendScreen = () => {
   } = usePrivacyPools()
   const { withdrawTokens } = usePrivacyPoolsTokens({ getNetworkName })
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const {
+    ref: broadcasterSheetRef,
+    open: openBroadcasterSheet,
+    close: closeBroadcasterSheet
+  } = useModalize()
   const [TransactionSummary, setTransactionSummary] = useState<TransactionSummaryType | null>(null)
   const [isTransactionSummaryLoaded, setIsTransactionSummaryLoaded] = useState(false)
 
@@ -519,7 +527,7 @@ const PrivacyPoolsSendScreen = () => {
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
             <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} style={spacings.mrSm} />
             <PanelTitle title={t('Send')} />
-            <View style={{ width: 40 }} />
+            <PrivacyPoolsBroadcasterButton onPress={openBroadcasterSheet} />
           </View>
 
           <Recipient
@@ -593,6 +601,10 @@ const PrivacyPoolsSendScreen = () => {
         </ScrollableWrapper>
       </Content>
 
+      <PrivacyPoolsBroadcasterBottomSheet
+        sheetRef={broadcasterSheetRef}
+        closeBottomSheet={closeBroadcasterSheet}
+      />
       <PrivacyPoolsSendSheet
         operation={operation}
         symbol={operationAsset?.symbol || ''}
