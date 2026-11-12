@@ -24,7 +24,9 @@ import { bootstrapWithStorage } from '../../common-helpers/bootstrap'
 
 // Raised from 11MB: the measured build is the LavaMoat policy-generating one, whose runtime
 // alone is ~60KB larger than a release build's, and the dashboard carousel added its own code.
-const EAGER_JS_BUDGET_BYTES = 11.5 * 1024 * 1024
+// Raised again from 11.5MB for the Privacy Pools privacy UI on the Send forms (~66KB), which loads
+// with the dashboard because the Send screens are not lazy routes.
+const EAGER_JS_BUDGET_BYTES = 12 * 1024 * 1024
 
 test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
   test.setTimeout(120000)

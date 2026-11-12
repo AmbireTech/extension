@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -129,6 +129,7 @@ const SelectedMenuOption: React.FC<{
   inputBackgroundColor?: ColorValue
   plainAddressMaxLength?: number
   isSuccessHidden?: boolean
+  customBottomLabel?: ReactNode
 }> = ({
   selectRef,
   filteredContacts,
@@ -147,7 +148,8 @@ const SelectedMenuOption: React.FC<{
   addressHighlight,
   inputBackgroundColor,
   plainAddressMaxLength,
-  isSuccessHidden
+  isSuccessHidden,
+  customBottomLabel
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -209,6 +211,7 @@ const SelectedMenuOption: React.FC<{
         addressHighlight={addressHighlight}
         plainAddressMaxLength={plainAddressMaxLength}
         isSuccessHidden={isSuccessHidden}
+        customBottomLabel={customBottomLabel}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         // On mobile input mode we still need details view when poisoning highlight exists,
@@ -281,6 +284,7 @@ const SelectedMenuOption: React.FC<{
       inputBackgroundColor,
       plainAddressMaxLength,
       isSuccessHidden,
+      customBottomLabel,
       type,
       validation
     ]
@@ -315,7 +319,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   hiddenAddresses,
   isSuccessHidden,
   privacyPoolsAccounts,
-  onSelectPrivacyPoolsAccount
+  onSelectPrivacyPoolsAccount,
+  customBottomLabel
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
@@ -686,6 +691,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           inputBackgroundColor={inputBackgroundColor}
           plainAddressMaxLength={contactAddressMaxLength}
           isSuccessHidden={isSuccessHidden}
+          customBottomLabel={customBottomLabel}
         />
       )
     },
@@ -702,7 +708,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       selectedAddressHighlight,
       inputBackgroundColor,
       contactAddressMaxLength,
-      isSuccessHidden
+      isSuccessHidden,
+      customBottomLabel
     ]
   )
 
@@ -746,6 +753,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             addressHighlight={selectedAddressHighlight}
             plainAddressMaxLength={contactAddressMaxLength}
             isSuccessHidden={isSuccessHidden}
+            customBottomLabel={customBottomLabel}
           />
         )}
         containerStyle={spacings.mb0}

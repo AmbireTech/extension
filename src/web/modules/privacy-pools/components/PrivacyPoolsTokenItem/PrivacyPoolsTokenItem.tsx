@@ -15,11 +15,15 @@ import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/
 import getTokenItemStyles from '@common/modules/dashboard/components/Tokens/TokenItem/styles'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { privateValue } from '@common/utils/ui'
 import { PrivacyPoolsBalanceDisplay } from '@web/modules/privacy-pools/hooks/usePrivacyPools/usePrivacyPools'
+
+const TOKEN_ICON_SIZE = 40
+/** Matches `PendingBadge`, which sits next to it. */
+const PENDING_BADGE_HEIGHT = 32
 
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
 
@@ -97,8 +101,8 @@ const PrivacyPoolsTokenItem: FC<{ balance: PrivacyPoolsBalanceDisplay }> = ({ ba
               withNetworkIcon
               address={tokenAddress}
               chainId={BigInt(chainId)}
-              containerHeight={40}
-              containerWidth={40}
+              containerHeight={TOKEN_ICON_SIZE}
+              containerWidth={TOKEN_ICON_SIZE}
               width={32}
               height={32}
               networkSize={16}
@@ -135,7 +139,16 @@ const PrivacyPoolsTokenItem: FC<{ balance: PrivacyPoolsBalanceDisplay }> = ({ ba
         </View>
 
         {(isPending || !!pendingAmount) && (
-          <View style={[{ marginLeft: SPACING_2XL + SPACING_TY }, spacings.mtSm]}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.wrap,
+              flexbox.alignCenter,
+              spacings.mtTy,
+              // Lines up with the symbol, right of the token icon
+              { marginLeft: TOKEN_ICON_SIZE + SPACING_TY, columnGap: SPACING_TY }
+            ]}
+          >
             {!!pendingToBeConfirmed && !!pendingToBeConfirmedFormatted && (
               <PendingBadge
                 amount={pendingToBeConfirmed}
@@ -159,10 +172,19 @@ const PrivacyPoolsTokenItem: FC<{ balance: PrivacyPoolsBalanceDisplay }> = ({ ba
                   textColor={theme.infoText}
                 />
                 <View
-                  style={[flexbox.directionRow, flexbox.alignCenter, spacings.phSm, { height: 30 }]}
+                  style={[
+                    flexbox.directionRow,
+                    flexbox.alignCenter,
+                    spacings.phSm,
+                    spacings.mbMi,
+                    { height: PENDING_BADGE_HEIGHT, borderRadius: PENDING_BADGE_HEIGHT / 2 },
+                    { backgroundColor: theme.successBackground }
+                  ]}
                 >
                   <Text color={theme.successText} weight="medium" fontSize={12} numberOfLines={1}>
-                    {formatAmount(approvedAmountPostSimulation)} {t('(ready to send)')}
+                    {t('{{amount}} ready to send', {
+                      amount: formatAmount(approvedAmountPostSimulation)
+                    })}
                   </Text>
                 </View>
               </>
