@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo } from 'react'
+import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -7,7 +7,6 @@ import { PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
-import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -15,12 +14,7 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import {
-  COVER_WINDOW_DAYS,
-  getLeakTextAppearance,
-  getPrivacyStatusText,
-  getPrivacyToneColors
-} from './helpers'
+import { getLeakTextAppearance, getPrivacyStatusText, getPrivacyToneColors } from './helpers'
 import PrivacyModal from './PrivacyModal'
 import { PrivacyStatusProps, PrivacyTone } from './types'
 
@@ -39,10 +33,9 @@ const getCoverTone = (rating: PrivacyPoolsRating, cover: number): PrivacyTone =>
 }
 
 /**
- * The Send form's privacy line: how many recent deposits hide the transfer, explained in a
- * tooltip, or that nothing could be checked yet, and how many privacy suggestions it has, which
- * opens them with their fixes. Only the deposit count colors the count, as the suggestions show
- * apart from it. Without suggestions there is nothing to open.
+ * The Send form's privacy line: how many recent deposits hide the transfer, or that nothing could
+ * be checked yet, and how many privacy suggestions it has. Both open the privacy details with
+ * every fix. Only the deposit count colors the count, as the suggestions show apart from it.
  */
 const PrivacySendStatus: FC<Props> = (props) => {
   const { rating, leaks, cover, style } = props
@@ -51,7 +44,6 @@ const PrivacySendStatus: FC<Props> = (props) => {
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
-  const isUnchecked = rating === 'unchecked'
   const coverTone = getCoverTone(rating, cover)
   const { textAppearance: coverAppearance, iconColor: coverIconColor } = getPrivacyToneColors(
     theme,
@@ -62,24 +54,12 @@ const PrivacySendStatus: FC<Props> = (props) => {
   const worstLeak = leaks[0]
   const SuggestionsIcon = worstLeak?.type === 'info' ? InfoIcon : WarningIcon
 
-  const coverTooltip = useMemo(
-    () =>
-      createGlobalTooltipDataSet({
-        id: 'privacy-pools-send-cover',
-        title: t('Deposits like yours'),
-        content: t(
-          'Deposits made in the last {{days}} days that are large enough to pay this transfer. The more there are, the harder it is to link the transfer to you.',
-          { days: COVER_WINDOW_DAYS }
-        )
-      }),
-    [t]
-  )
-
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifySpaceBetween, style]}>
-      <View
+      <HoverablePressable
+        testID="privacy-pools-send-privacy-cover"
+        onPress={handleOpen}
         style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1, spacings.mrMd]}
-        dataSet={isUnchecked ? undefined : coverTooltip}
       >
         <CoverIcon
           width={COVER_ICON_SIZE}
@@ -87,33 +67,37 @@ const PrivacySendStatus: FC<Props> = (props) => {
           color={coverIconColor}
           style={spacings.mrTy}
         />
-        <Text fontSize={12} appearance={coverAppearance} numberOfLines={1} style={flexbox.flex1}>
+        <Text
+          fontSize={12}
+          appearance={coverAppearance}
+          numberOfLines={1}
+          underline
+          style={flexbox.flex1}
+        >
           {getPrivacyStatusText(t, rating, cover)}
         </Text>
-      </View>
+      </HoverablePressable>
       {!!worstLeak && (
-        <>
-          <HoverablePressable testID="privacy-pools-send-privacy-suggestions" onPress={handleOpen}>
-            <Badge
-              type={worstLeak.type}
-              text={
-                leaks.length === 1
-                  ? t('1 privacy suggestion')
-                  : t('{{count}} privacy suggestions', { count: leaks.length })
-              }
-              isIconLeading
-            >
-              <SuggestionsIcon
-                width={SUGGESTIONS_ICON_SIZE}
-                height={SUGGESTIONS_ICON_SIZE}
-                color={theme[getLeakTextAppearance(worstLeak.type)]}
-                strokeWidth="2"
-              />
-            </Badge>
-          </HoverablePressable>
-          <PrivacyModal {...props} stage="send" sheetRef={sheetRef} closeBottomSheet={closeSheet} />
-        </>
+        <HoverablePressable testID="privacy-pools-send-privacy-suggestions" onPress={handleOpen}>
+          <Badge
+            type={worstLeak.type}
+            text={
+              leaks.length === 1
+                ? t('1 privacy suggestion')
+                : t('{{count}} privacy suggestions', { count: leaks.length })
+            }
+            isIconLeading
+          >
+            <SuggestionsIcon
+              width={SUGGESTIONS_ICON_SIZE}
+              height={SUGGESTIONS_ICON_SIZE}
+              color={theme[getLeakTextAppearance(worstLeak.type)]}
+              strokeWidth="2"
+            />
+          </Badge>
+        </HoverablePressable>
       )}
+      <PrivacyModal {...props} stage="send" sheetRef={sheetRef} closeBottomSheet={closeSheet} />
     </View>
   )
 }
