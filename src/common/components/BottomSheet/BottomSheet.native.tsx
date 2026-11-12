@@ -16,7 +16,13 @@ import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isiOS } from '@common/config/env'
 import useLatestCallback from '@common/hooks/useLatestCallback'
 import useTheme from '@common/hooks/useTheme'
-import { DEVICE_HEIGHT, SPACING_LG, SPACING_SM } from '@common/styles/spacings'
+import {
+  DEVICE_HEIGHT,
+  SPACING_LG,
+  SPACING_MD,
+  SPACING_SM,
+  SPACING_XL
+} from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
@@ -39,6 +45,11 @@ const IOS_DIM_COLOR = '#0D0E0F'
 const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.52, [THEME_TYPES.DARK]: 0.65 }
 const FULL_HEIGHT_DETENTS: SheetDetent[] = [1]
 const FLEX_STYLE = { flex: 1 }
+/**
+ * Where the content starts below the native grabber, which overlays the top of the sheet:
+ * it ends ~10pt down on iOS (5pt margin + 5pt pill) and ~20dp on Android (16dp + 4dp)
+ */
+const BELOW_GRABBER_PADDING = isiOS ? SPACING_MD : SPACING_XL
 // Shared defaults, as a new `{}` per render would defeat the memoization below
 const EMPTY_STYLE = {}
 const FLEX_GROW_STYLE = { flexGrow: 1 }
@@ -135,6 +146,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const isFixedHeight = detents !== AUTO_DETENTS
 
   const horizontalPadding = isModal ? SPACING_LG : SPACING_SM
+  const hasGrabber = withHandle && !isModal
+  const topPadding = hasGrabber ? BELOW_GRABBER_PADDING : SPACING_SM
 
   // The bottom spacing works like it did with Modalize, so TrueSheet's safe-area insets are
   // off (`insetAdjustment` "never") and the footer, or the content without one, pads by it.
@@ -261,8 +274,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     [FooterComponent]
   )
   const headerStyle = useMemo(
-    () => ({ paddingTop: SPACING_SM, paddingHorizontal: horizontalPadding }),
-    [horizontalPadding]
+    () => ({ paddingTop: topPadding, paddingHorizontal: horizontalPadding }),
+    [topPadding, horizontalPadding]
   )
   const footerStyle = useMemo(
     () => ({
@@ -274,11 +287,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   )
   const sheetStyle = useMemo(
     () => [
-      { paddingTop: HeaderComponent ? 0 : SPACING_SM, paddingHorizontal: horizontalPadding },
+      { paddingTop: HeaderComponent ? 0 : topPadding, paddingHorizontal: horizontalPadding },
       isFixedHeight && { flex: 1 },
       style
     ],
-    [HeaderComponent, horizontalPadding, isFixedHeight, style]
+    [HeaderComponent, topPadding, horizontalPadding, isFixedHeight, style]
   )
   const sheetChildren = useMemo(
     () => (
@@ -304,7 +317,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           // with the corner radius the sheets had before
           backgroundColor={theme[backgroundColor]}
           cornerRadius={BORDER_RADIUS_PRIMARY}
-          grabber={withHandle && !isModal}
+          grabber={hasGrabber}
           // The design's iOS backdrop (a plain dark tint, no blur outside the sheet), a bit darker
           dimColor={isiOS ? IOS_DIM_COLOR : undefined}
           dimOpacity={isiOS ? IOS_DIM_OPACITY[themeType] : undefined}
