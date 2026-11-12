@@ -66,6 +66,7 @@ const PrivateKeyExport: FC<Props> = ({ privateKey, blurred, setBlurred, openConf
     <>
       <View style={[flexbox.flex1, isMobile && spacings.mb]}>
         <View
+          testID="private-key-blur-container"
           style={[
             blurred ? styles.blurred : styles.notBlurred,
             {

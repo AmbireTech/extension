@@ -24,7 +24,8 @@ import { bootstrapWithStorage } from '../../common-helpers/bootstrap'
 
 // Raised from 11MB: the measured build is the LavaMoat policy-generating one, whose runtime
 // alone is ~60KB larger than a release build's, and the dashboard carousel added its own code.
-const EAGER_JS_BUDGET_BYTES = 11.5 * 1024 * 1024
+// Raised from 11.5MB: the Expo SDK 58 upgrade added ~236KB (gesture-handler 3, reanimated 4.7, react-dom 19.3).
+const EAGER_JS_BUDGET_BYTES = 12 * 1024 * 1024
 
 test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
   test.setTimeout(120000)
