@@ -80,7 +80,7 @@ const PrivacyCoverCard: FC<Props> = ({ stage, cover, severity, style }) => {
               {cover}
             </Text>
             <Text fontSize={14} weight="semiBold" style={spacings.mlTy}>
-              {cover === 1 ? t('deposit like yours') : t('deposits like yours')}
+              {cover === 1 ? t('deposit covers you') : t('deposits cover you')}
             </Text>
           </View>
           <Text fontSize={12} appearance="secondaryText">

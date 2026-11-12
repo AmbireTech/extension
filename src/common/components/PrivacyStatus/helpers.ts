@@ -73,8 +73,8 @@ const getPrivacyStatusText = (t: TFunction, rating: PrivacyPoolsRating, cover: n
   if (rating === 'unchecked') return t(PRIVACY_POOLS_UNCHECKED_PRIVACY_TEXT)
 
   return cover === 1
-    ? t('1 deposit like yours')
-    : t('{{count}} deposits like yours', { count: cover })
+    ? t('1 deposit covers you')
+    : t('{{count}} deposits cover you', { count: cover })
 }
 
 export {
