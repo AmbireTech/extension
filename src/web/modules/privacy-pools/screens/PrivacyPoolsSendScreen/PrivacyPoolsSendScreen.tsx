@@ -19,7 +19,11 @@ import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/format
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
-import { PrivacyFieldNote, PrivacySendStatus } from '@common/components/PrivacyStatus'
+import {
+  PrivacyFieldNote,
+  PrivacyFieldTip,
+  PrivacySendStatus
+} from '@common/components/PrivacyStatus'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
@@ -323,6 +327,31 @@ const PrivacyPoolsSendScreen = () => {
   // one still being checked, so the label does not flash before the note
   const isRecipientSuccessHidden = isRecipientCheckPending || !!recipientLeakPrivacy
 
+  // The tip gives way to the note on what makes this recipient a risk
+  const recipientNote = useMemo(() => {
+    if (!recipientLeakPrivacy || !selectedToken) {
+      return (
+        <PrivacyFieldTip
+          testID="privacy-pools-send-recipient-tip"
+          text={t('For the best privacy, send to an address you have never used.')}
+        />
+      )
+    }
+
+    return (
+      <PrivacyFieldNote
+        fieldLeakIds={PRIVACY_POOLS_RECIPIENT_LEAK_IDS}
+        testID="privacy-pools-send-recipient-note"
+        rating={recipientLeakPrivacy.rating}
+        leaks={recipientLeakPrivacy.leaks}
+        cover={recipientLeakPrivacy.cover.bigEnough}
+        decimals={selectedToken.decimals}
+        symbol={selectedToken.symbol}
+        onSetAmount={isTransferInFlight ? undefined : setRawAmount}
+      />
+    )
+  }, [isTransferInFlight, recipientLeakPrivacy, selectedToken, setRawAmount, t])
+
   const suggestedAmountChips = useMemo(() => {
     if (!selectedToken) return undefined
 
@@ -480,29 +509,8 @@ const PrivacyPoolsSendScreen = () => {
             addressValidationMsg={addressInputState.validation.message}
             selectedTokenSymbol={selectedToken?.symbol}
             disabled={isTransferInFlight}
-            // The note below says it for this recipient
-            hint={
-              isRecipientSuccessHidden
-                ? undefined
-                : t('For the best privacy, send to an address you have never used.')
-            }
             isSuccessHidden={isRecipientSuccessHidden}
-            note={
-              !!recipientLeakPrivacy &&
-              !!selectedToken && (
-                <PrivacyFieldNote
-                  fieldLeakIds={PRIVACY_POOLS_RECIPIENT_LEAK_IDS}
-                  testID="privacy-pools-send-recipient-note"
-                  rating={recipientLeakPrivacy.rating}
-                  leaks={recipientLeakPrivacy.leaks}
-                  cover={recipientLeakPrivacy.cover.bigEnough}
-                  decimals={selectedToken.decimals}
-                  symbol={selectedToken.symbol}
-                  onSetAmount={isTransferInFlight ? undefined : setRawAmount}
-                  style={spacings.mbTy}
-                />
-              )
-            }
+            note={recipientNote}
           />
 
           <SendToken

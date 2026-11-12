@@ -59,8 +59,11 @@ export interface InputProps extends TextInputProps {
   customInputContent?: ReactNode
   renderConfirmAddress?: () => ReactNode
   preventJumpOnValidationChange?: boolean
-  /** Shown below the input while no error, valid label or info takes its place. */
-  hint?: string
+  /**
+   * Shown below the input while no error, valid label or info takes its place. The space below
+   * the input then keeps the height of one line, so swapping these does not move the layout.
+   */
+  note?: ReactNode
 }
 
 const Input = ({
@@ -74,7 +77,7 @@ const Input = ({
   isValid,
   validLabel,
   validLabelAppearance,
-  hint,
+  note,
   onBlur = () => {},
   onFocus = () => {},
   onButtonPress = () => {},
@@ -216,7 +219,7 @@ const Input = ({
         </View>
         {childrenBelowInput}
       </View>
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, !!note && styles.noteContainer]}>
         {!!error && (
           <Text
             style={[styles.bottomLabel, bottomLabelStyle]}
@@ -249,17 +252,10 @@ const Input = ({
             {info}
           </Text>
         )}
-        {!!hint && !error && !(isValid && validLabel) && !info && (
-          <Text
-            weight="regular"
-            appearance="secondaryText"
-            style={[styles.bottomLabel, bottomLabelStyle]}
-            fontSize={10}
-          >
-            {hint}
-          </Text>
+        {!!note && !error && !(isValid && validLabel) && !info && (
+          <View style={[styles.bottomLabel, bottomLabelStyle, flexbox.flex1]}>{note}</View>
         )}
-        {!!preventJumpOnValidationChange && !error && !isValid && !info && !hint && (
+        {!!preventJumpOnValidationChange && !error && !isValid && !info && !note && (
           <Text
             style={[styles.bottomLabel, bottomLabelStyle]}
             weight="regular"
