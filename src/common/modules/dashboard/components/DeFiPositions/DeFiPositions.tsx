@@ -1,14 +1,13 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { TouchableOpacity, View } from 'react-native'
+import { View } from 'react-native'
 
 import { BannerType } from '@ambire-common/interfaces/banner'
 import {
   defiPositionsOnDisabledNetworksBannerId,
   getCurrentAccountBanners
 } from '@ambire-common/libs/banners/banners'
-import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import Banner from '@common/components/Banner'
 import HourglassIconAnimated from '@common/components/HourglassIconAnimated'
 import Text from '@common/components/Text'
@@ -19,13 +18,12 @@ import useTheme from '@common/hooks/useTheme'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
-import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { searchWithNetworkName } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
+import AutoDiscoveryOffAlert from './AutoDiscoveryOffAlert'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import { getHasPendingDefiUpdate } from './helpers'
@@ -51,6 +49,9 @@ const selectPortfolioDefiPositions = (
 const selectPortfolioIsAllReady = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.portfolio?.isAllReady
 
+const selectIsAutoDiscoveryEnabled = (state: AllControllersMappingType['FeatureFlagsController']) =>
+  !!state.flags?.tokenAndDefiAutoDiscovery
+
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
@@ -62,7 +63,10 @@ const selectBanners = (state: AllControllersMappingType['SelectedAccountControll
 
 const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetworkFilterName }) => {
   const { t } = useTranslation()
-  const { flags } = useController('FeatureFlagsController').state
+  const { state: isAutoDiscoveryEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsAutoDiscoveryEnabled
+  )
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const { theme } = useTheme()
   const searchValue = watch('search')
@@ -85,7 +89,7 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
     selectDashboardNetworkFilter
   )
   const { state: banners } = useController('SelectedAccountController', selectBanners)
-  const { setSearchParams, navigate } = useNavigation()
+  const { setSearchParams } = useNavigation()
 
   const hasPendingUpdate = useMemo(
     () =>
@@ -210,46 +214,30 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
                   }.`
                 )}
             </Text>
-            <Text testID="suggest-protocol-text" fontSize={14} style={styles.noPositions}>
-              {t('To suggest a protocol integration, ')}
-              <Text
-                testID="open-ticket-link"
-                fontSize={14}
-                appearance="primary"
-                color={theme.linkText}
-                onPress={() => {
-                  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                  openInTab({ url: 'https://help.ambire.com/en' })
-                }}
-              >
-                {t('open a ticket.')}
+            {/* With auto discovery off, the alert below explains the missing protocols instead */}
+            {isAutoDiscoveryEnabled && (
+              <Text testID="suggest-protocol-text" fontSize={14} style={styles.noPositions}>
+                {t('To suggest a protocol integration, ')}
+                <Text
+                  testID="open-ticket-link"
+                  fontSize={14}
+                  appearance="primary"
+                  color={theme.linkText}
+                  onPress={() => {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    openInTab({ url: 'https://help.ambire.com/en' })
+                  }}
+                >
+                  {t('open a ticket.')}
+                </Text>
               </Text>
-            </Text>
+            )}
           </>
         )
       }
 
-      if (item === 'disabled') {
-        return (
-          <View style={[flexbox.alignCenter, spacings.mt]}>
-            <View style={[flexbox.directionRow, flexbox.alignSelfCenter]}>
-              <Text fontSize={16} weight="medium" style={[spacings.mrTy]}>
-                {t('Defi positions disabled')}
-              </Text>
-              <PrivacyIcon width={20} height={20} />
-            </View>
-            <TouchableOpacity onPress={() => navigate(ROUTES.optOuts)}>
-              <Text
-                onPress={() => navigate(ROUTES.optOuts)}
-                fontSize={16}
-                color={theme.infoText}
-                style={{ textDecorationLine: 'underline' }}
-              >
-                {t('You can enable them from settings')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )
+      if (item === 'auto-discovery-off') {
+        return <AutoDiscoveryOffAlert />
       }
 
       if (item === 'skeleton') {
@@ -263,12 +251,11 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
     [
       initTab?.defi,
       theme.linkText,
-      theme.infoText,
       currentAccountBanners,
       searchValue,
       dashboardNetworkFilterName,
-      t,
-      navigate
+      isAutoDiscoveryEnabled,
+      t
     ]
   )
 
@@ -284,25 +271,25 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
     if (currentAccountBanners.length > 0) {
       items.push('banners')
     }
-    if (flags.tokenAndDefiAutoDiscovery) {
-      // Only worth saying when positions actually refresh; with discovery off they never do
-      if (hasPendingUpdate) {
-        items.push('pending-update')
-      }
-      items.push(!isPortfolioAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
-      if (initTab?.defi && isPortfolioAllReady) {
-        filteredPositions.forEach((p: any) => items.push(p))
-      }
-      items.push(isPortfolioAllReady && !filteredPositions.length ? 'empty' : '')
-    } else {
-      items.push('disabled')
+    // Only worth saying when the API positions refresh; with discovery off they never do
+    if (isAutoDiscoveryEnabled && hasPendingUpdate) {
+      items.push('pending-update')
+    }
+    items.push(!isPortfolioAllReady ? 'skeleton' : 'keep-this-to-avoid-key-warning')
+    // With auto discovery off, these are only the positions the wallet reads on its own (RPC)
+    if (initTab?.defi && isPortfolioAllReady) {
+      filteredPositions.forEach((p: any) => items.push(p))
+    }
+    items.push(isPortfolioAllReady && !filteredPositions.length ? 'empty' : '')
+    if (!isAutoDiscoveryEnabled && isPortfolioAllReady) {
+      items.push('auto-discovery-off')
     }
 
     return items
   }, [
     currentAccountBanners.length,
     filteredPositions,
-    flags.tokenAndDefiAutoDiscovery,
+    isAutoDiscoveryEnabled,
     hasPendingUpdate,
     initTab?.defi,
     isPortfolioAllReady

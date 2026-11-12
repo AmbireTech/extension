@@ -214,6 +214,7 @@ const PrivacyPoolsDashboardScreen = () => {
           </DashboardPagesCarousel>
         </View>
       </View>
+      {/* The first time a Privacy Pools account opens, which is right after it is added */}
     </LayoutWrapper>
   )
 }
