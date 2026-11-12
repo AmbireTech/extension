@@ -40,6 +40,12 @@ const FULL_HEIGHT_DETENTS: SheetDetent[] = [1]
 
 const noop = () => {}
 
+/**
+ * The context a ScrollView gives its descendants, which a list inside uses to warn about
+ * being nested in a ScrollView. Missing from the legacy React Native types this repo uses.
+ */
+const ScrollViewContext = (ScrollView as unknown as { Context: React.Context<unknown> }).Context
+
 const reportSheetError = (error: unknown) => {
   console.error('BottomSheet: opening or closing the sheet failed', error)
   captureException(error)
@@ -224,49 +230,53 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   return (
     <BottomSheetContext.Provider value={bottomSheetContextValue}>
-      <TrueSheet
-        ref={trueSheetRef}
-        detents={detents}
-        scrollableRef={scrollableRef}
-        scrollableOptions={scrollableOptions}
-        // The system sheet shape (floating on iOS, Material on Android) in our solid surface color,
-        // with the corner radius the sheets had before
-        backgroundColor={theme[backgroundColor]}
-        cornerRadius={BORDER_RADIUS_PRIMARY}
-        grabber={withHandle && !isModal}
-        // The design's iOS backdrop (a plain dark tint, no blur outside the sheet), a bit darker
-        dimColor={isiOS ? IOS_DIM_COLOR : undefined}
-        dimOpacity={isiOS ? IOS_DIM_OPACITY[themeType] : undefined}
-        dismissible={shouldBeClosableOnDrag}
-        header={HeaderComponent ? <>{HeaderComponent}</> : undefined}
-        headerStyle={{ paddingTop: SPACING_SM, paddingHorizontal: horizontalPadding }}
-        footer={FooterComponent ? <>{FooterComponent}</> : undefined}
-        footerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingBottom: footerBottomPadding,
-          backgroundColor: theme[backgroundColor]
-        }}
-        footerOptions={footerOptions}
-        insetAdjustment="never"
-        style={[
-          {
-            paddingTop: HeaderComponent ? 0 : SPACING_SM,
-            paddingHorizontal: horizontalPadding
-          },
-          isFixedHeight && { flex: 1 },
-          style
-        ]}
-        onWillPresent={handleWillPresent}
-        onDidPresent={handleDidPresent}
-        onWillDismiss={handleWillDismiss}
-        onDidDismiss={handleDidDismiss}
-        onBackPress={handleBackPress}
-      >
-        {/* Gesture handler touchables don't respond inside the sheet on Android without it */}
-        <GestureHandlerRootView style={isFixedHeight ? { flex: 1 } : { flexGrow: 1 }}>
-          {renderContent()}
-        </GestureHandlerRootView>
-      </TrueSheet>
+      {/* The sheet is presented in its own window, so a list in it isn't nested in the */}
+      {/* ScrollView of the screen that declares it, as it wasn't when Modalize portaled it out */}
+      <ScrollViewContext.Provider value={null}>
+        <TrueSheet
+          ref={trueSheetRef}
+          detents={detents}
+          scrollableRef={scrollableRef}
+          scrollableOptions={scrollableOptions}
+          // The system sheet shape (floating on iOS, Material on Android) in our solid surface color,
+          // with the corner radius the sheets had before
+          backgroundColor={theme[backgroundColor]}
+          cornerRadius={BORDER_RADIUS_PRIMARY}
+          grabber={withHandle && !isModal}
+          // The design's iOS backdrop (a plain dark tint, no blur outside the sheet), a bit darker
+          dimColor={isiOS ? IOS_DIM_COLOR : undefined}
+          dimOpacity={isiOS ? IOS_DIM_OPACITY[themeType] : undefined}
+          dismissible={shouldBeClosableOnDrag}
+          header={HeaderComponent ? <>{HeaderComponent}</> : undefined}
+          headerStyle={{ paddingTop: SPACING_SM, paddingHorizontal: horizontalPadding }}
+          footer={FooterComponent ? <>{FooterComponent}</> : undefined}
+          footerStyle={{
+            paddingHorizontal: horizontalPadding,
+            paddingBottom: footerBottomPadding,
+            backgroundColor: theme[backgroundColor]
+          }}
+          footerOptions={footerOptions}
+          insetAdjustment="never"
+          style={[
+            {
+              paddingTop: HeaderComponent ? 0 : SPACING_SM,
+              paddingHorizontal: horizontalPadding
+            },
+            isFixedHeight && { flex: 1 },
+            style
+          ]}
+          onWillPresent={handleWillPresent}
+          onDidPresent={handleDidPresent}
+          onWillDismiss={handleWillDismiss}
+          onDidDismiss={handleDidDismiss}
+          onBackPress={handleBackPress}
+        >
+          {/* Gesture handler touchables don't respond inside the sheet on Android without it */}
+          <GestureHandlerRootView style={isFixedHeight ? { flex: 1 } : { flexGrow: 1 }}>
+            {renderContent()}
+          </GestureHandlerRootView>
+        </TrueSheet>
+      </ScrollViewContext.Provider>
     </BottomSheetContext.Provider>
   )
 }
