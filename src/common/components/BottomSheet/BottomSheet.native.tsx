@@ -1,34 +1,55 @@
-import React, { RefObject, useEffect, useState } from 'react'
-import { ScrollView, View } from 'react-native'
+import React, { useCallback, useMemo, useRef } from 'react'
 import {
-  KeyboardController,
-  KeyboardEvents,
-  useReanimatedKeyboardAnimation
-} from 'react-native-keyboard-controller'
-import { Modalize } from 'react-native-modalize'
-import Animated, { useAnimatedStyle } from 'react-native-reanimated'
+  FlatList,
+  FlatListProps,
+  ScrollView,
+  ScrollViewProps,
+  SectionList,
+  SectionListProps,
+  View
+} from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { KeyboardController } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { isiOS } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import { Portal } from '@gorhom/portal'
+import { DEVICE_HEIGHT, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
+import { THEME_TYPES } from '@common/styles/themeConfig'
+import common from '@common/styles/utils/common'
+import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
 
-import Backdrop from './Backdrop'
 import { BottomSheetProps } from './BottomSheet'
 import { BottomSheetContext, useBottomSheetContextValue } from './BottomSheetContext'
-import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
-const DEFAULT_ANIMATION_DURATION: number = 250
+/**
+ * The subset of the Modalize ref API that callers use (via `useModalize`), so the
+ * call sites keep working unchanged on top of TrueSheet.
+ */
+type SheetRefAdapter = {
+  open: () => void
+  close: () => void
+}
+
+const AUTO_DETENTS: SheetDetent[] = ['auto']
+const IOS_DIM_COLOR = '#0D0E0F'
+const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.42, [THEME_TYPES.DARK]: 0.55 }
+const FULL_HEIGHT_DETENTS: SheetDetent[] = [1]
+
+const noop = () => {}
+
+const reportSheetError = (error: unknown) => {
+  console.error('BottomSheet: opening or closing the sheet failed', error)
+  captureException(error)
+}
 
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
-    id: _id,
-    type: _type,
     scrollViewRef: externalScrollViewRef,
     children,
-    closeBottomSheet: _closeBottomSheet = () => {},
+    closeBottomSheet = noop,
     adjustToContentHeight = true,
     modalHeight,
     style = {},
@@ -42,251 +63,195 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     flatListProps,
     sectionListProps,
     scrollViewProps,
-    animationDuration = DEFAULT_ANIMATION_DURATION,
     backgroundColor = 'primaryBackground',
-    autoWidth = false,
     shouldBeClosableOnDrag = true,
     withHandle = true,
-    withBackdropBlur,
-    customZIndex,
     isScrollEnabled = true,
     customRenderer
   } = props
 
-  const { styles, theme } = useTheme(getStyles)
-  const { bottom } = useSafeAreaInsets()
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
-  const [visibleKeyboardHeight, setVisibleKeyboardHeight] = useState(0)
-  const closeBottomSheet = React.useCallback(_closeBottomSheet, [_closeBottomSheet])
-
-  useEffect(() => {
-    const showSub = KeyboardEvents.addListener('keyboardWillShow', (e) => {
-      setIsKeyboardVisible(true)
-      setVisibleKeyboardHeight(e.height)
-    })
-    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () => {
-      setIsKeyboardVisible(false)
-      setVisibleKeyboardHeight(0)
-    })
-
-    return () => {
-      showSub.remove()
-      hideSub.remove()
-    }
-  }, [])
-
-  const {
-    modalTopOffset,
-    setRef,
-    isModal,
-    isOpen,
-    setIsOpen,
-    isBackdropVisible,
-    setIsBackdropVisible,
-    id,
-    computedZIndex
-  } = useBottomSheetInternal(props)
-
-  const { height: keyboardHeight } = useReanimatedKeyboardAnimation()
-
-  // Lift modals above the keyboard. `keyboardHeight` is 0 when hidden and goes
-  // negative as the keyboard rises, so half of it is enough to clear a
-  // vertically centered modal without pushing it off the top of the screen.
-  const modalKeyboardOffsetStyle = useAnimatedStyle(() => {
-    if (!isModal) return { transform: [{ translateY: 0 }] }
-    return { transform: [{ translateY: keyboardHeight.value / 2 }] }
-  }, [isModal])
-
-  const scrollViewRef = externalScrollViewRef
-
-  // Pad the scrollable content by the keyboard height so the content hidden
-  // behind the keyboard becomes reachable by scrolling while it's open. Only
-  // applies to the ScrollView/FlatList/SectionList paths; a `customRenderer`
-  // controls its own layout, so it keeps the plain bottom inset. Modals are
-  // vertically centered and lifted via `modalKeyboardOffsetStyle`, so they skip
-  // this padding entirely. A footer sits below the content, so it takes all of
-  // the bottom padding instead, or it would stay hidden behind the keyboard.
-  const keyboardBottomPadding =
-    !isModal && !customRenderer && isKeyboardVisible ? visibleKeyboardHeight : 0
-  const bottomInset = bottom || SPACING_SM
-  const contentBottomPadding = isModal || FooterComponent ? 0 : bottomInset + keyboardBottomPadding
-  // The keyboard covers the bottom inset, so above it the footer keeps only a small gap
-  let footerBottomPadding = isModal ? 0 : bottomInset
-  if (keyboardBottomPadding) footerBottomPadding = keyboardBottomPadding + SPACING_SM
-
+  const { theme, themeType } = useTheme()
+  const { top, bottom } = useSafeAreaInsets()
+  const { setRef, isModal, isOpen, setIsOpen } = useBottomSheetInternal(props)
   const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
 
-  return (
-    <Portal hostName="global">
-      {/* PortalHost renders portals in a keyless array - without this key React matches */}
-      {/* them by position and rebuilds this sheet closed when another one unmounts. True */}
-      {/* in @gorhom/portal 1.0.14 (2026-09-10); fix proposed in gorhom/react-native-portal#62. */}
-      <BottomSheetContext.Provider key={id} value={bottomSheetContextValue}>
-        {/* Wrapping the content in a View with a stable `key` prevents Portal */}
-        {/* from losing track of its subtree during React reconciliation and re-renders. */}
-        {/* Without this, the backdrop stays, but Modalize could disappear */}
-        {/* without even triggering `onClose` or (this) component unmount */}
-        {!!isBackdropVisible && (
-          <Backdrop
-            isVisible={isBackdropVisible}
-            isBottomSheetVisible={isOpen}
-            customZIndex={computedZIndex ? computedZIndex - 1 : undefined}
-            onPress={() => {
-              closeBottomSheet()
-              !!onBackdropPress && onBackdropPress()
-            }}
-            withBlur={withBackdropBlur}
-          />
-        )}
-        <Animated.View
-          key={`portal-host-${id}`}
-          style={[styles.portalHost, { zIndex: computedZIndex }, modalKeyboardOffsetStyle]}
-          pointerEvents="box-none"
-        >
-          <Modalize
-            // The key is used to force the re-render of the component when there is an opened
-            // bottom sheet and the user navigates to a route that also has a bottom sheet. Without
-            // this key or without a unique key, the bottom sheet will not close when navigating
-            key={id}
-            ref={setRef}
-            // React 19 makes refs strictly nullable. Temporary cast until Modalize updates its types.
-            contentRef={scrollViewRef as RefObject<ScrollView>}
-            modalStyle={[
-              styles.bottomSheet,
-              {
-                borderBottomEndRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
-                borderBottomStartRadius: isKeyboardVisible ? BORDER_RADIUS_PRIMARY : 0,
-                paddingHorizontal: SPACING_SM
-              },
-              isModal
-                ? {
-                    ...styles.modal,
-                    ...(autoWidth ? { maxWidth: null, width: 'auto' } : {}),
-                    borderBottomEndRadius: 30,
-                    borderTopLeftRadius: 30,
-                    borderBottomStartRadius: 30,
-                    borderTopRightRadius: 30,
-                    paddingHorizontal: SPACING_LG
-                  }
-                : {},
+  const internalScrollableRef = useRef<any>(null)
+  const scrollableRef = externalScrollViewRef || internalScrollableRef
+  // TrueSheet rejects a dismiss once the sheet has unmounted, and callers often close an
+  // already closed sheet, so close() only reaches TrueSheet while the sheet is up.
+  const isPresentedRef = useRef(false)
+  // Tells a dismissal started by close() apart from one started by a swipe or a tap outside
+  const isClosingProgrammaticallyRef = useRef(false)
 
-              {
-                backgroundColor: theme[backgroundColor]
-              },
-              style
-            ]}
-            rootStyle={[isModal && spacings.phSm]}
-            handleStyle={[
-              styles.dragger,
-              isModal
-                ? {
-                    display: 'none'
-                  }
-                : {}
-            ]}
-            handlePosition="inside"
-            withHandle={withHandle}
-            useNativeDriver={true}
-            avoidKeyboardLikeIOS={false}
-            modalTopOffset={modalTopOffset}
-            modalHeight={modalHeight}
-            threshold={90}
-            HeaderComponent={HeaderComponent}
-            FooterComponent={
-              // Always wrapped, so the footer doesn't remount when the keyboard toggles
-              !!FooterComponent && (
-                <View style={{ paddingBottom: footerBottomPadding }}>{FooterComponent}</View>
-              )
-            }
-            adjustToContentHeight={
-              customRenderer ? false : !isModal && isKeyboardVisible ? false : adjustToContentHeight
-            }
-            disableScrollIfPossible={false}
-            withOverlay={false}
-            onBackButtonPress={() => {
-              closeBottomSheet()
-              return true
-            }}
-            panGestureEnabled={shouldBeClosableOnDrag}
-            {...(!flatListProps && !sectionListProps
-              ? {
-                  scrollViewProps: {
-                    bounces: false,
-                    keyboardShouldPersistTaps: 'handled',
-                    showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: contentBottomPadding },
-                    ...(!isScrollEnabled && {
-                      scrollEnabled: false,
-                      nestedScrollEnabled: true,
-                      contentContainerStyle: { flexGrow: 1, paddingBottom: contentBottomPadding }
-                    }),
-                    style: { marginBottom: isModal ? SPACING_LG : 0 },
-                    ...(scrollViewProps || {})
-                  }
-                }
-              : {})}
-            {...(flatListProps
-              ? {
-                  flatListProps: {
-                    bounces: false,
-                    keyboardShouldPersistTaps: 'handled',
-                    showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: contentBottomPadding },
-                    style: { marginBottom: isModal ? SPACING_LG : 0 },
-                    ...(flatListProps || {})
-                  }
-                }
-              : {})}
-            {...(sectionListProps
-              ? {
-                  sectionListProps: {
-                    bounces: false,
-                    keyboardShouldPersistTaps: 'handled',
-                    showsVerticalScrollIndicator: false,
-                    contentContainerStyle: { paddingBottom: contentBottomPadding },
-                    style: { marginBottom: isModal ? SPACING_LG : 0 },
-                    ...(sectionListProps || {})
-                  }
-                }
-              : {})}
-            openAnimationConfig={{
-              timing: { duration: animationDuration, delay: 0 }
-            }}
-            closeAnimationConfig={{
-              timing: { duration: animationDuration, delay: 0 }
-            }}
-            onOpen={() => {
-              KeyboardController.dismiss()
-              setIsOpen(true)
-              setIsBackdropVisible(true)
-              !!onOpen && onOpen()
-            }}
-            onOpened={() => !!onOpened && onOpened()}
-            onClose={() => setIsOpen(false)}
-            onClosed={() => !!onClosed && onClosed()}
-            customRenderer={
-              customRenderer ? (
-                <View
-                  testID={isOpen ? 'bottom-sheet' : undefined}
-                  style={[common.fullWidth, containerInnerWrapperStyles]}
-                >
-                  {customRenderer}
-                </View>
-              ) : undefined
-            }
-          >
-            {!flatListProps && !sectionListProps && !customRenderer && (
-              <View
-                testID={isOpen ? 'bottom-sheet' : undefined}
-                style={[common.fullWidth, containerInnerWrapperStyles]}
-              >
-                {children}
-              </View>
-            )}
-          </Modalize>
-        </Animated.View>
-      </BottomSheetContext.Provider>
-    </Portal>
+  const trueSheetRef = useCallback(
+    (sheet: TrueSheet | null) => {
+      const adapter: SheetRefAdapter | null = sheet && {
+        open: () => {
+          isPresentedRef.current = true
+          sheet.present().catch(reportSheetError)
+        },
+        close: () => {
+          if (!isPresentedRef.current) return
+          isPresentedRef.current = false
+          isClosingProgrammaticallyRef.current = true
+          sheet.dismiss().catch(reportSheetError)
+        }
+      }
+      // setRef is shared with web, where it receives the Modalize ref
+      setRef(adapter as unknown as HTMLElement | null)
+    },
+    [setRef]
+  )
+
+  // Modalize opened at content height unless told otherwise; TrueSheet needs a detent for it
+  const detents = useMemo<SheetDetent[]>(() => {
+    if (customRenderer) return FULL_HEIGHT_DETENTS
+    if (typeof modalHeight === 'number') {
+      return [Math.min(1, modalHeight / DEVICE_HEIGHT)]
+    }
+    return adjustToContentHeight ? AUTO_DETENTS : FULL_HEIGHT_DETENTS
+  }, [adjustToContentHeight, customRenderer, modalHeight])
+  const isFixedHeight = detents !== AUTO_DETENTS
+
+  const horizontalPadding = isModal ? SPACING_LG : SPACING_SM
+  // Footers float over the content, so on iOS the content fades under them like in native sheets
+  const scrollableOptions = useMemo(
+    () => ({ bottomScrollEdgeEffect: FooterComponent ? ('soft' as const) : ('hidden' as const) }),
+    [FooterComponent]
+  )
+  // TrueSheet pads the bottom by the safe area only, which is 0 on phones with a home button
+  const missingBottomInset = bottom ? 0 : SPACING_LG
+  // iOS 26 attaches a sheet that reaches full height to the screen edges; kept a little
+  // shorter, every sheet floats like the short ones
+  const iosMaxHeight = isiOS ? DEVICE_HEIGHT - top - SPACING_LG : undefined
+
+  const handleWillPresent = useCallback(() => {
+    KeyboardController.dismiss().catch(reportSheetError)
+    setIsOpen(true)
+    !!onOpen && onOpen()
+  }, [onOpen, setIsOpen])
+
+  const handleDidPresent = useCallback(() => {
+    !!onOpened && onOpened()
+  }, [onOpened])
+
+  const handleWillDismiss = useCallback(() => {
+    const isUserDismissal = !isClosingProgrammaticallyRef.current
+    isPresentedRef.current = false
+    isClosingProgrammaticallyRef.current = false
+    setIsOpen(false)
+    // TrueSheet doesn't say whether a swipe or a tap outside closed it, so both run
+    // what the Modalize backdrop tap ran
+    if (!isUserDismissal) return
+    closeBottomSheet()
+    !!onBackdropPress && onBackdropPress()
+  }, [closeBottomSheet, onBackdropPress, setIsOpen])
+
+  const handleDidDismiss = useCallback(() => {
+    !!onClosed && onClosed()
+  }, [onClosed])
+
+  const handleBackPress = useCallback(() => {
+    closeBottomSheet()
+    return true
+  }, [closeBottomSheet])
+
+  const sharedScrollProps = {
+    bounces: false,
+    keyboardShouldPersistTaps: 'handled' as const,
+    showsVerticalScrollIndicator: false,
+    style: { marginBottom: isModal ? SPACING_LG : 0 }
+  }
+
+  const renderContent = () => {
+    const testID = isOpen ? 'bottom-sheet' : undefined
+
+    if (customRenderer) {
+      return (
+        <View testID={testID} style={[common.fullWidth, containerInnerWrapperStyles]}>
+          {customRenderer}
+        </View>
+      )
+    }
+    if (flatListProps) {
+      // Typed by Modalize as Animated props, which the plain lists accept
+      return (
+        <FlatList
+          ref={scrollableRef}
+          {...sharedScrollProps}
+          {...(flatListProps as FlatListProps<unknown>)}
+        />
+      )
+    }
+    if (sectionListProps) {
+      return (
+        <SectionList
+          ref={scrollableRef}
+          {...sharedScrollProps}
+          {...(sectionListProps as SectionListProps<unknown>)}
+        />
+      )
+    }
+
+    return (
+      <ScrollView
+        ref={scrollableRef}
+        {...sharedScrollProps}
+        {...(!isScrollEnabled && {
+          scrollEnabled: false,
+          contentContainerStyle: { flexGrow: 1 }
+        })}
+        {...((scrollViewProps || {}) as ScrollViewProps)}
+      >
+        <View testID={testID} style={[common.fullWidth, containerInnerWrapperStyles]}>
+          {children}
+        </View>
+      </ScrollView>
+    )
+  }
+
+  return (
+    <BottomSheetContext.Provider value={bottomSheetContextValue}>
+      <TrueSheet
+        ref={trueSheetRef}
+        detents={detents}
+        maxContentHeight={iosMaxHeight}
+        scrollableRef={scrollableRef}
+        scrollableOptions={scrollableOptions}
+        // The system sheet shape (floating on iOS, Material on Android) in our solid surface color
+        backgroundColor={theme[backgroundColor]}
+        grabber={withHandle && !isModal}
+        // The design's iOS backdrop: a plain dark tint, no blur outside the sheet
+        dimColor={isiOS ? IOS_DIM_COLOR : undefined}
+        dimOpacity={isiOS ? IOS_DIM_OPACITY[themeType] : undefined}
+        dismissible={shouldBeClosableOnDrag}
+        header={HeaderComponent ? <>{HeaderComponent}</> : undefined}
+        headerStyle={{ paddingTop: SPACING_MD, paddingHorizontal: horizontalPadding }}
+        footer={FooterComponent ? <>{FooterComponent}</> : undefined}
+        footerStyle={{ paddingHorizontal: horizontalPadding, paddingBottom: missingBottomInset }}
+        // Absolute, so the footer rises above the keyboard like it did with Modalize
+        footerOptions={{ position: 'absolute' }}
+        style={[
+          {
+            paddingTop: HeaderComponent ? 0 : SPACING_MD,
+            paddingHorizontal: horizontalPadding,
+            paddingBottom: FooterComponent ? 0 : missingBottomInset
+          },
+          isFixedHeight && { flex: 1 },
+          style
+        ]}
+        onWillPresent={handleWillPresent}
+        onDidPresent={handleDidPresent}
+        onWillDismiss={handleWillDismiss}
+        onDidDismiss={handleDidDismiss}
+        onBackPress={handleBackPress}
+      >
+        {/* Gesture handler touchables don't respond inside the sheet on Android without it */}
+        <GestureHandlerRootView style={isFixedHeight ? { flex: 1 } : { flexGrow: 1 }}>
+          {renderContent()}
+        </GestureHandlerRootView>
+      </TrueSheet>
+    </BottomSheetContext.Provider>
   )
 }
 

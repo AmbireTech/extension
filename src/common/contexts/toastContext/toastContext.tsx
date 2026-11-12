@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import AboveSheetsOverlay from '@common/components/AboveSheetsOverlay'
 import ToastComponent from '@common/components/Toast'
 import { isWeb } from '@common/config/env'
 import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
@@ -100,19 +101,21 @@ const ToastProvider = ({ children }: Props) => {
       )}
     >
       <Portal hostName="global">
-        <View style={[styles.container, { top: topInset }]}>
-          {toasts.map(({ id, type, text, url, isTypeLabelHidden = true }) => (
-            <ToastComponent
-              key={id}
-              id={id}
-              text={text}
-              type={type}
-              removeToast={removeToast}
-              isTypeLabelHidden={isTypeLabelHidden}
-              url={url}
-            />
-          ))}
-        </View>
+        <AboveSheetsOverlay>
+          <View style={[styles.container, { top: topInset }]}>
+            {toasts.map(({ id, type, text, url, isTypeLabelHidden = true }) => (
+              <ToastComponent
+                key={id}
+                id={id}
+                text={text}
+                type={type}
+                removeToast={removeToast}
+                isTypeLabelHidden={isTypeLabelHidden}
+                url={url}
+              />
+            ))}
+          </View>
+        </AboveSheetsOverlay>
       </Portal>
       {children}
     </ToastContext.Provider>

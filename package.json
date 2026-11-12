@@ -93,6 +93,7 @@
     "@ledgerhq/device-transport-kit-react-native-hid": "1.0.4",
     "@ledgerhq/device-transport-kit-speculos": "1.2.1",
     "@ledgerhq/device-transport-kit-web-hid": "1.2.4",
+    "@lodev09/react-native-true-sheet": "4.1.0",
     "@lottiefiles/dotlottie-react": "0.18.3",
     "@metamask/eth-sig-util": "8.2.0",
     "@metamask/obs-store": "6.0.2",
