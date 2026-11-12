@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isiOS } from '@common/config/env'
+import useLatestCallback from '@common/hooks/useLatestCallback'
 import useTheme from '@common/hooks/useTheme'
 import { DEVICE_HEIGHT, SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
@@ -37,6 +38,10 @@ const AUTO_DETENTS: SheetDetent[] = ['auto']
 const IOS_DIM_COLOR = '#0D0E0F'
 const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.52, [THEME_TYPES.DARK]: 0.65 }
 const FULL_HEIGHT_DETENTS: SheetDetent[] = [1]
+const FLEX_STYLE = { flex: 1 }
+// Shared defaults, as a new `{}` per render would defeat the memoization below
+const EMPTY_STYLE = {}
+const FLEX_GROW_STYLE = { flexGrow: 1 }
 
 const noop = () => {}
 
@@ -55,15 +60,15 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
     scrollViewRef: externalScrollViewRef,
     children,
-    closeBottomSheet = noop,
+    closeBottomSheet: _closeBottomSheet = noop,
     adjustToContentHeight = true,
     modalHeight,
-    style = {},
-    containerInnerWrapperStyles = {},
-    onClosed,
-    onOpened,
-    onOpen,
-    onBackdropPress,
+    style = EMPTY_STYLE,
+    containerInnerWrapperStyles = EMPTY_STYLE,
+    onClosed: _onClosed,
+    onOpened: _onOpened,
+    onOpen: _onOpen,
+    onBackdropPress: _onBackdropPress,
     HeaderComponent,
     FooterComponent,
     flatListProps,
@@ -78,7 +83,17 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const { theme, themeType } = useTheme()
   const { bottom } = useSafeAreaInsets()
-  const { setRef, isModal, isOpen, setIsOpen } = useBottomSheetInternal(props)
+  // Callers mostly pass inline callbacks; stable ones keep the sheet and its list from
+  // re-rendering for them, while the latest one still runs
+  const closeBottomSheet = useLatestCallback(_closeBottomSheet)
+  const onClosed = useLatestCallback(() => _onClosed?.())
+  const onOpened = useLatestCallback(() => _onOpened?.())
+  const onOpen = useLatestCallback(() => _onOpen?.())
+  const onBackdropPress = useLatestCallback(() => _onBackdropPress?.())
+  const { setRef, isModal, isOpen, setIsOpen } = useBottomSheetInternal({
+    ...props,
+    closeBottomSheet
+  })
   const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
 
   const internalScrollableRef = useRef<any>(null)
@@ -145,12 +160,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const handleWillPresent = useCallback(() => {
     KeyboardController.dismiss().catch(reportSheetError)
     setIsOpen(true)
-    !!onOpen && onOpen()
+    onOpen()
   }, [onOpen, setIsOpen])
-
-  const handleDidPresent = useCallback(() => {
-    !!onOpened && onOpened()
-  }, [onOpened])
 
   const handleWillDismiss = useCallback(() => {
     const isUserDismissal = !isClosingProgrammaticallyRef.current
@@ -161,27 +172,29 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     // what the Modalize backdrop tap ran
     if (!isUserDismissal) return
     closeBottomSheet()
-    !!onBackdropPress && onBackdropPress()
+    onBackdropPress()
   }, [closeBottomSheet, onBackdropPress, setIsOpen])
-
-  const handleDidDismiss = useCallback(() => {
-    !!onClosed && onClosed()
-  }, [onClosed])
 
   const handleBackPress = useCallback(() => {
     closeBottomSheet()
     return true
   }, [closeBottomSheet])
 
-  const sharedScrollProps = {
-    bounces: false,
-    keyboardShouldPersistTaps: 'handled' as const,
-    showsVerticalScrollIndicator: false,
-    contentContainerStyle: { paddingBottom: contentBottomPadding },
-    style: { marginBottom: isModal ? SPACING_LG : 0 }
-  }
+  // Memoized so a list in the sheet (a PureComponent) skips the sheet's re-renders
+  const sharedScrollProps = useMemo(
+    () => ({
+      bounces: false,
+      keyboardShouldPersistTaps: 'handled' as const,
+      showsVerticalScrollIndicator: false,
+      contentContainerStyle: { paddingBottom: contentBottomPadding },
+      style: { marginBottom: isModal ? SPACING_LG : 0 }
+    }),
+    [contentBottomPadding, isModal]
+  )
 
-  const renderContent = () => {
+  // Memoized with the sheet's other props, so TrueSheet (a PureComponent) skips re-renders
+  // that change none of them
+  const sheetContent = useMemo(() => {
     const testID = isOpen ? 'bottom-sheet' : undefined
 
     if (customRenderer) {
@@ -226,7 +239,56 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         </View>
       </ScrollView>
     )
-  }
+  }, [
+    isOpen,
+    customRenderer,
+    containerInnerWrapperStyles,
+    flatListProps,
+    sectionListProps,
+    scrollableRef,
+    sharedScrollProps,
+    isScrollEnabled,
+    contentBottomPadding,
+    scrollViewProps,
+    children
+  ])
+  const header = useMemo(
+    () => (HeaderComponent ? <>{HeaderComponent}</> : undefined),
+    [HeaderComponent]
+  )
+  const footer = useMemo(
+    () => (FooterComponent ? <>{FooterComponent}</> : undefined),
+    [FooterComponent]
+  )
+  const headerStyle = useMemo(
+    () => ({ paddingTop: SPACING_SM, paddingHorizontal: horizontalPadding }),
+    [horizontalPadding]
+  )
+  const footerStyle = useMemo(
+    () => ({
+      paddingHorizontal: horizontalPadding,
+      paddingBottom: footerBottomPadding,
+      backgroundColor: theme[backgroundColor]
+    }),
+    [horizontalPadding, footerBottomPadding, theme, backgroundColor]
+  )
+  const sheetStyle = useMemo(
+    () => [
+      { paddingTop: HeaderComponent ? 0 : SPACING_SM, paddingHorizontal: horizontalPadding },
+      isFixedHeight && { flex: 1 },
+      style
+    ],
+    [HeaderComponent, horizontalPadding, isFixedHeight, style]
+  )
+  const sheetChildren = useMemo(
+    () => (
+      // Gesture handler touchables don't respond inside the sheet on Android without it
+      <GestureHandlerRootView style={isFixedHeight ? FLEX_STYLE : FLEX_GROW_STYLE}>
+        {sheetContent}
+      </GestureHandlerRootView>
+    ),
+    [isFixedHeight, sheetContent]
+  )
 
   return (
     <BottomSheetContext.Provider value={bottomSheetContextValue}>
@@ -247,34 +309,20 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           dimColor={isiOS ? IOS_DIM_COLOR : undefined}
           dimOpacity={isiOS ? IOS_DIM_OPACITY[themeType] : undefined}
           dismissible={shouldBeClosableOnDrag}
-          header={HeaderComponent ? <>{HeaderComponent}</> : undefined}
-          headerStyle={{ paddingTop: SPACING_SM, paddingHorizontal: horizontalPadding }}
-          footer={FooterComponent ? <>{FooterComponent}</> : undefined}
-          footerStyle={{
-            paddingHorizontal: horizontalPadding,
-            paddingBottom: footerBottomPadding,
-            backgroundColor: theme[backgroundColor]
-          }}
+          header={header}
+          headerStyle={headerStyle}
+          footer={footer}
+          footerStyle={footerStyle}
           footerOptions={footerOptions}
           insetAdjustment="never"
-          style={[
-            {
-              paddingTop: HeaderComponent ? 0 : SPACING_SM,
-              paddingHorizontal: horizontalPadding
-            },
-            isFixedHeight && { flex: 1 },
-            style
-          ]}
+          style={sheetStyle}
           onWillPresent={handleWillPresent}
-          onDidPresent={handleDidPresent}
+          onDidPresent={onOpened}
           onWillDismiss={handleWillDismiss}
-          onDidDismiss={handleDidDismiss}
+          onDidDismiss={onClosed}
           onBackPress={handleBackPress}
         >
-          {/* Gesture handler touchables don't respond inside the sheet on Android without it */}
-          <GestureHandlerRootView style={isFixedHeight ? { flex: 1 } : { flexGrow: 1 }}>
-            {renderContent()}
-          </GestureHandlerRootView>
+          {sheetChildren}
         </TrueSheet>
       </ScrollViewContext.Provider>
     </BottomSheetContext.Provider>
