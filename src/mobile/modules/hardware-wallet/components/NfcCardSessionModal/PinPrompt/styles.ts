@@ -65,7 +65,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.center
     },
     keyPressHighlight: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       borderRadius: KEY_SIZE / 2,
       backgroundColor: hexToRgba(theme.primaryText, KEY_PRESSED_OPACITY)
     }

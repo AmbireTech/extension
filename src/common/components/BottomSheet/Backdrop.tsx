@@ -77,7 +77,7 @@ const Backdrop = ({
             intensity={55}
             tint="dark"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 opacity: 0.95
               }
@@ -86,7 +86,7 @@ const Backdrop = ({
         ) : (
           <Animated.View
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 backgroundColor: theme.backdrop
               }

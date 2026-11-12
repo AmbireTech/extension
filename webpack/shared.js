@@ -7,6 +7,7 @@ require('dotenv').config()
 const createExpoWebpackConfigAsync = require('@expo/webpack-config')
 const { getExpoBabelLoader } = require('@expo/webpack-config/utils')
 const path = require('path')
+const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const { getRelayerCustomHeadersCacheKey } = require('../scripts/validateEnv')
 const { isWebkit, isGecko, buildOutputDir } = require('./env')
@@ -91,6 +92,13 @@ async function createBaseConfig(env, argv) {
   removeExpoPlugin(config, 'ExpoPwaManifestWebpackPlugin')
 
   const defaultExpoConfigPlugins = [...config.plugins]
+  // expo-font's web build imports node:async_hooks for server rendering only (behind `typeof window`).
+  // Webpack can't read node: URIs, so it goes through the `async_hooks: false` fallback (empty module)
+  defaultExpoConfigPlugins.push(
+    new webpack.NormalModuleReplacementPlugin(/^node:async_hooks$/, (resource) => {
+      resource.request = 'async_hooks'
+    })
+  )
 
   // override MiniCssExtractPlugin only for prod to serve the css files in the main build directory
   if (config.mode === 'production') {
@@ -157,8 +165,21 @@ async function createBaseConfig(env, argv) {
       const file = warning.file || warning.module?.resource || ''
       const oxVirtualMasterPoolPath = 'ox/_esm/tempo/internal/virtualMasterPool'
       return moduleId.includes(oxVirtualMasterPoolPath) || file.includes(oxVirtualMasterPoolPath)
+    },
+    // react-native-svg's touch sound module, required lazily on Android only. Matched by `file`, as
+    // Expo rewraps the warning without its module
+    {
+      file: /react-native-svg[\\/]lib[\\/]module[\\/]fabric[\\/]NativeSvgSoundModule/,
+      message: /export 'TurboModuleRegistry'/
     }
   ]
+
+  // These ship lib/module as `"type": "module"`, and webpack provides `global` to non-ESM modules
+  // only. The worklets plugin emits `new global.Error()` in dev builds, so it would throw
+  config.module.rules.push({
+    test: /node_modules[\\/]react-native-(reanimated|worklets)[\\/]lib[\\/]module[\\/]/,
+    type: 'javascript/auto'
+  })
 
   config.resolve.extensions = [...(config.resolve.extensions || []), '.scss']
 
@@ -183,12 +204,15 @@ async function createBaseConfig(env, argv) {
       : {}),
     // There will be 2 instances of React if node_modules are installed in src/ambire-common.
     // That's why we need to alias the React package to the one in the root node_modules.
-    react: path.resolve(ROOT_DIR, 'node_modules/react')
+    react: path.resolve(ROOT_DIR, 'node_modules/react'),
+    // React Native 0.87+ no longer ships it (react-native-svg imports it); Expo's Metro maps it the same way
+    '@react-native/assets-registry/registry$': require.resolve('react-native-web/asset-registry')
   }
 
   config.resolve.fallback = {
     stream: require.resolve('stream-browserify'),
-    crypto: require.resolve('crypto-browserify')
+    crypto: require.resolve('crypto-browserify'),
+    async_hooks: false
   }
 
   config.output = {

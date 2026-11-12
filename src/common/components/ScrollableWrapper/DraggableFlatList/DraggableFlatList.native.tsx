@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
-import { FlatList, GestureHandlerRootView } from 'react-native-gesture-handler'
+import { GestureHandlerRootView, LegacyFlatList } from 'react-native-gesture-handler'
 import Animated from 'react-native-reanimated'
 import { DropProvider, useSortableList } from 'react-native-reanimated-dnd'
 
@@ -9,7 +9,8 @@ import { DraggableFlatListProps } from './DraggableFlatList.d'
 import DraggableItem from './DraggableItem'
 import { DraggableItemInternalContext } from './DraggableItemInternalContext'
 
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList)
+// The legacy list keeps `simultaneousHandlers` with a plain ref; the v3 FlatList only relates gesture objects
+const AnimatedFlatList = Animated.createAnimatedComponent(LegacyFlatList)
 
 const DraggableFlatList = forwardRef(
   <T,>(

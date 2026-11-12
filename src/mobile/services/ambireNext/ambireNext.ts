@@ -13,7 +13,8 @@ import { sync } from 'react-native-stallion'
  * part of the SDK's public API - re-check them when upgrading react-native-stallion.
  */
 
-const STALLION_VERIFY_PIN_URL = 'https://api.stalliontech.io/api/v1/sdk/auth/verify-pin'
+// Relative to the project's regional Stallion host (the SDK's `baseUrl`), as the SDK's own PIN login does
+const STALLION_VERIFY_PIN_PATH = '/api/v1/sdk/auth/verify-pin'
 
 /** The length of the SDK access PIN set in the Stallion console. */
 export const AMBIRE_NEXT_ACCESS_CODE_LENGTH = 6
@@ -23,6 +24,8 @@ type StallionConfig = {
   appToken: string
   /** Set by the PIN login. Sent along every production update check, marking the device as internal. */
   sdkToken: string
+  /** The Stallion API host for the project's region (resolved by the SDK from the app token). */
+  baseUrl: string
 }
 
 const StallionNativeModule = NativeModules.Stallion
@@ -41,8 +44,8 @@ export const getIsAmbireNextJoined = async () => {
  * Resolves to `false` when Stallion rejects the code, throws when Stallion itself fails.
  */
 export const joinAmbireNext = async (accessCode: string) => {
-  const { projectId, appToken } = await getStallionConfig()
-  const response = await fetch(STALLION_VERIFY_PIN_URL, {
+  const { projectId, appToken, baseUrl } = await getStallionConfig()
+  const response = await fetch(`${baseUrl}${STALLION_VERIFY_PIN_PATH}`, {
     method: 'POST',
     headers: {
       Accept: 'application/json',

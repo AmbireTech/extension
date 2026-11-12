@@ -4,7 +4,6 @@
   "version": "6.26.3",
   "assetBundlePatterns": ["**/*"],
   "runtimeVersion": "11",
-  "jsEngine": "hermes",
   "updates": {
     "enabled": false,
     "fallbackToCacheTimeout": 45000

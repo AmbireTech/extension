@@ -13,7 +13,7 @@ interface Style {
 const getStyles = () =>
   StyleSheet.create<Style>({
     backgroundImage: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       objectFit: 'cover'
     },
     container: {

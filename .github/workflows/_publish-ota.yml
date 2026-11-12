@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       runner:
-        description: GitHub runner (macos-15 for ios, ubuntu-latest for android) - matches the store build for bundle parity
+        description: GitHub runner (macos-26 for ios, ubuntu-latest for android) - matches the store build for bundle parity
         required: true
         type: string
       release_note:

@@ -1,5 +1,5 @@
-import { BlurView } from 'expo-blur'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { BlurTargetView, BlurView } from 'expo-blur'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -65,6 +65,7 @@ const ManageRecoveryPhrase = ({
 
   const { addToast } = useToast()
   const { theme, styles, themeType } = useTheme(getStyles)
+  const blurTargetRef = useRef<View>(null)
   const { t } = useTranslation()
   const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
   const [bindEditAnim, editAnimStyle] = useHover({ preset: 'opacityInverted' })
@@ -199,43 +200,53 @@ const ManageRecoveryPhrase = ({
             // On web the blur is a CSS `filter`; on native it doesn't apply,
             // so a BlurView overlay is rendered below instead
             isWeb && isBlurred && (isSeedRevealed ? styles.notBlurred : styles.blurred),
-            spacings.pvMd,
-            spacings.phMd,
             {
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.tertiaryBackground
-                  : theme.secondaryBackground,
               borderRadius: BORDER_RADIUS_PRIMARY,
               overflow: 'hidden'
             }
           ]}
         >
-          <Text testID="recovery-phrase-value" fontSize={14} color={theme.secondaryText}>
-            {seed}
-          </Text>
-          {!!seedPassphrase && (
-            <View style={spacings.ptSm}>
-              <Text fontSize={14} color={theme.secondaryText}>
-                {t('Passphrase: ')}
-                <Text
-                  testID="recovery-phrase-passphrase-value"
-                  fontSize={14}
-                  color={theme.secondaryText}
-                  weight="medium"
-                >
-                  {seedPassphrase}
+          {/* Fills the box, so the Android BlurView has the whole area to blur */}
+          <BlurTargetView
+            ref={blurTargetRef}
+            style={[
+              spacings.pvMd,
+              spacings.phMd,
+              {
+                backgroundColor:
+                  themeType === THEME_TYPES.DARK
+                    ? theme.tertiaryBackground
+                    : theme.secondaryBackground
+              }
+            ]}
+          >
+            <Text testID="recovery-phrase-value" fontSize={14} color={theme.secondaryText}>
+              {seed}
+            </Text>
+            {!!seedPassphrase && (
+              <View style={spacings.ptSm}>
+                <Text fontSize={14} color={theme.secondaryText}>
+                  {t('Passphrase: ')}
+                  <Text
+                    testID="recovery-phrase-passphrase-value"
+                    fontSize={14}
+                    color={theme.secondaryText}
+                    weight="medium"
+                  >
+                    {seedPassphrase}
+                  </Text>
                 </Text>
-              </Text>
-            </View>
-          )}
+              </View>
+            )}
+          </BlurTargetView>
           {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView to hide the phrase */}
           {isMobile && isBlurred && (
             <BlurView
               intensity={12}
               // Android renders a barely visible tint instead of a blur unless this
-              // experimental method is on, leaving the phrase readable
-              experimentalBlurMethod="dimezisBlurView"
+              // method is on and pointed at the content, leaving the phrase readable
+              blurMethod="dimezisBlurView"
+              blurTarget={blurTargetRef}
               blurReductionFactor={1}
               tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
               style={StyleSheet.absoluteFill}
