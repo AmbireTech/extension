@@ -1,6 +1,7 @@
 import { Linking } from 'react-native'
 
 import { TREZOR_CONNECT_MANIFEST } from '@common/modules/hardware-wallet/constants/trezor'
+import { getTrezorErrorPayload } from '@common/modules/hardware-wallet/libs/trezorError'
 import TrezorConnect from '@trezor/connect-mobile'
 
 // All Trezor communication on mobile happens HERE, in the React Native native
@@ -54,21 +55,21 @@ class TrezorDeeplinkService {
   }
 
   /**
-   * A `success: false` result that comes back through the Suite deep link means
-   * the user cancelled in Suite — on mobile, genuine device/connection errors
-   * never redirect back (they leave the promise hanging), so anything that DOES
-   * return unsuccessfully is a cancellation. Suite sends it with an empty
-   * payload (no `code`/`error`), which the shared error mapping would otherwise
-   * render as the misleading "Could not connect to your Trezor device". Stamp a
-   * clear cancel message so the signer surfaces the real reason. (Our own
+   * Suite can return a cancellation with an empty payload (no `code`/`error`),
+   * which the shared error mapping would otherwise render as the misleading
+   * "Could not connect to your Trezor device". Stamp a clear cancel message only
+   * when no error details are present, preserving v9 payloads and v10 serialized
+   * errors so device failures retain their real reason. (Our own
    * cancel resolves with `success: undefined`, not `false`, and already carries
    * its own message, so it's untouched here.)
    */
   #normalizeDeeplinkFailure = (res: any): any => {
     if (res?.success !== false) return res
 
-    const payload = res.payload || {}
-    if (payload.code || payload.error || payload.message) return res
+    const payload = getTrezorErrorPayload(res)
+    if (payload.code || payload.error || payload.message) {
+      return res.error ? { ...res, payload } : res
+    }
 
     return { ...res, payload: { ...payload, error: 'The request was cancelled in Trezor Suite.' } }
   }

@@ -1164,39 +1164,114 @@
         "@signinwithethereum/siwe>@signinwithethereum/siwe-parser>apg-js": true
       }
     },
+    "@trezor/connect-webextension>@trezor/connect-web>@trezor/connect-common": {
+      "globals": {
+        "URL": true,
+        "chrome.runtime.id": true,
+        "chrome.runtime.lastError": true,
+        "chrome.runtime.onMessageExternal.addListener": true,
+        "chrome.runtime.onMessageExternal.removeListener": true,
+        "chrome.tabs.get": true,
+        "chrome.tabs.update": true,
+        "crypto.randomUUID": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "@trezor/connect-webextension>@trezor/connect-web>@trezor/utils": true
+      }
+    },
+    "@trezor/connect-webextension>@trezor/connect-common": {
+      "globals": {
+        "CARDANO": true,
+        "ERRORS": true,
+        "FIRMWARE": true,
+        "NETWORK": true,
+        "PAGING": true,
+        "chrome.runtime.getURL": true,
+        "chrome.runtime.id": true,
+        "chrome.runtime.onConnect.addListener": true,
+        "chrome.runtime.onConnect.removeListener": true,
+        "console.warn": true,
+        "crypto.randomUUID": true,
+        "origin": true
+      },
+      "packages": {
+        "@trezor/connect-webextension>@trezor/connect-common>@trezor/protocol": true,
+        "@trezor/connect-webextension>@trezor/connect-common>@trezor/type-utils": true,
+        "@trezor/connect-webextension>@trezor/connect-common>@trezor/utils": true,
+        "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
     "@trezor/connect-plugin-ethereum": {
       "packages": {
         "@metamask/eth-sig-util": true
       }
     },
-    "@trezor/connect-webextension": {
+    "@trezor/connect-webextension>@trezor/connect-web": {
       "globals": {
-        "AbortController": true,
-        "UI_EVENT": true,
+        "URL": true,
         "URLSearchParams": true,
-        "WebSocket": true,
-        "__TREZOR_CONNECT_SRC": true,
-        "addEventListener": true,
+        "__SUITE_WEB_URL__": true,
         "chrome": true,
         "clearInterval": true,
         "clearTimeout": true,
-        "console": true,
-        "define": true,
-        "document.body": true,
+        "document.body.appendChild": true,
         "document.createElement": true,
         "document.getElementById": true,
+        "location.href": true,
         "location.origin": true,
-        "location.search": true,
         "navigator": true,
         "open": true,
-        "origin": true,
-        "postMessage": true,
         "setInterval": true,
-        "setTimeout": true,
-        "urlToOnion": true
+        "setTimeout": true
       },
       "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true
+        "@trezor/connect-webextension>@trezor/connect-web>@trezor/connect-common": true,
+        "@trezor/connect-webextension>@trezor/connect-web>@trezor/utils": true,
+        "@trezor/connect-webextension>@trezor/connect-web>@trezor/websocket-client": true,
+        "events": true
+      }
+    },
+    "@trezor/connect-webextension": {
+      "packages": {
+        "@trezor/connect-webextension>@trezor/connect-common": true,
+        "@trezor/connect-webextension>@trezor/connect-web": true
+      }
+    },
+    "@trezor/connect-webextension>@trezor/connect-common>@trezor/utils": {
+      "globals": {
+        "AbortController": true,
+        "clearTimeout": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "events": true
+      }
+    },
+    "@trezor/connect-webextension>@trezor/connect-web>@trezor/utils": {
+      "globals": {
+        "AbortController": true,
+        "clearTimeout": true,
+        "console.error": true,
+        "console.info": true,
+        "console.log": true,
+        "console.warn": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "events": true
+      }
+    },
+    "@trezor/connect-webextension>@trezor/connect-web>@trezor/websocket-client": {
+      "globals": {
+        "WebSocket": true,
+        "clearTimeout": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "@trezor/connect-webextension>@trezor/connect-web>@trezor/utils": true,
+        "events": true
       }
     },
     "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub": {

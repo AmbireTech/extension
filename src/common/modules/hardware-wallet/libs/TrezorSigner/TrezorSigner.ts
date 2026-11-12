@@ -22,8 +22,9 @@ import shortenAddress from '@ambire-common/utils/shortenAddress'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
 import wait from '@ambire-common/utils/wait'
 import { TrezorControllerInterface } from '@common/modules/hardware-wallet/interfaces/trezorController'
+import { getTrezorErrorPayload } from '@common/modules/hardware-wallet/libs/trezorError'
 import transformTypedData from '@trezor/connect-plugin-ethereum'
-import type { EthereumTransaction, EthereumTransactionEIP1559 } from '@trezor/connect/lib/types'
+import type { EthereumTransaction, EthereumTransactionEIP1559 } from '@trezor/connect-webextension'
 
 const DELAY_BETWEEN_POPUPS = 1000
 const HYPER_EVM_CHAIN_ID = 999n
@@ -194,12 +195,13 @@ class TrezorSigner implements KeystoreSignerInterface {
       })
     )
 
+    const errorPayload = getTrezorErrorPayload(res)
     if (!res.success)
       throw new ExternalSignerError(
         // @TODO: Implement a mechanism that reports the error if it's not humanized
         getMessageFromTrezorErrorCode(
-          res.payload?.code,
-          getTrezorErrorMessageFromPayload(res.payload),
+          errorPayload.code,
+          getTrezorErrorMessageFromPayload(errorPayload),
           {
             isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath(),
             isHyperEvmForbiddenPath: this.#isHyperEvmChain(txnRequest.chainId)
@@ -281,12 +283,13 @@ class TrezorSigner implements KeystoreSignerInterface {
       })
     )
 
+    const errorPayload = getTrezorErrorPayload(res)
     if (!res.success)
       throw new ExternalSignerError(
         // @TODO: Implement a mechanism that reports the error if it's not humanized
         getMessageFromTrezorErrorCode(
-          res.payload?.code,
-          getTrezorErrorMessageFromPayload(res.payload),
+          errorPayload.code,
+          getTrezorErrorMessageFromPayload(errorPayload),
           {
             isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath(),
             isHyperEvmForbiddenPath: this.#isHyperEvmChain(_domain.chainId)
@@ -311,11 +314,12 @@ class TrezorSigner implements KeystoreSignerInterface {
       })
     )
 
+    const errorPayload = getTrezorErrorPayload(res)
     if (!res.success)
       throw new ExternalSignerError(
         getMessageFromTrezorErrorCode(
-          res.payload?.code,
-          getTrezorErrorMessageFromPayload(res.payload),
+          errorPayload.code,
+          getTrezorErrorMessageFromPayload(errorPayload),
           {
             isLedgerLiveSmartAccountForbiddenPath: this.#isLedgerLiveSmartAccountSigningPath()
           }

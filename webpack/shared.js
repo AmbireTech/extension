@@ -174,6 +174,8 @@ async function createBaseConfig(env, argv) {
     '@web': path.resolve(ROOT_DIR, 'src/web'),
     '@benzin': path.resolve(ROOT_DIR, 'src/benzin'),
     '@legends': path.resolve(ROOT_DIR, 'src/legends'),
+    // Firefox cannot use the website messaging required by Trezor Connect v10.
+    ...(isGecko ? { '@trezor/connect-webextension$': '@trezor/connect-webextension-v9' } : {}),
     ...(enableLavaMoat
       ? {
           // reflect-metadata is installed early via LavaMoat staticShims_experimental.

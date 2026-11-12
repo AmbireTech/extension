@@ -9,6 +9,7 @@ import {
   TrezorControllerInterface,
   TrezorWalletSDK
 } from '@common/modules/hardware-wallet/interfaces/trezorController'
+import { getTrezorErrorPayload } from '@common/modules/hardware-wallet/libs/trezorError'
 import trezorDeeplinkService from '@mobile/services/trezor/trezorDeeplinkService'
 
 // Mobile counterpart of the web TrezorController. The actual device handling is
@@ -79,11 +80,9 @@ class TrezorController implements ExternalSignerController, TrezorControllerInte
     })
 
     if (!response.success) {
+      const payload = getTrezorErrorPayload(response)
       throw new ExternalSignerError(
-        getMessageFromTrezorErrorCode(
-          response.payload.code,
-          getTrezorErrorMessageFromPayload(response.payload)
-        )
+        getMessageFromTrezorErrorCode(payload.code, getTrezorErrorMessageFromPayload(payload))
       )
     }
 

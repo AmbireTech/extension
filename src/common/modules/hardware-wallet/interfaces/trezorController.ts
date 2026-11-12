@@ -1,5 +1,5 @@
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
-import type { TrezorConnect } from '@trezor/connect/lib/types'
+import type TrezorConnect from '@trezor/connect-webextension'
 
 // The subset of the Trezor Connect SDK that the shared TrezorSigner and
 // TrezorKeyIterator actually call. On the extension this is the real
@@ -7,7 +7,7 @@ import type { TrezorConnect } from '@trezor/connect/lib/types'
 // each call to the native deep-link service (trezorDeeplinkService) and returns
 // the same { success, payload } response shapes.
 export type TrezorWalletSDK = Pick<
-  TrezorConnect,
+  typeof TrezorConnect,
   | 'ethereumGetAddress'
   | 'ethereumGetPublicKey'
   | 'ethereumSignTransaction'

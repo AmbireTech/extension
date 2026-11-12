@@ -1,8 +1,7 @@
-diff --git a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
-index 0f1fc7c..3bd0e85 100644
---- a/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
-+++ b/node_modules/@trezor/connect-webextension/build/trezor-connect-webextension.js
-@@ -2508,18 +2508,39 @@ class PopupManager extends (events_default()) {
+diff --git a/node_modules/@trezor/connect-webextension-v9/build/trezor-connect-webextension.js b/node_modules/@trezor/connect-webextension-v9/build/trezor-connect-webextension.js
+--- a/node_modules/@trezor/connect-webextension-v9/build/trezor-connect-webextension.js
++++ b/node_modules/@trezor/connect-webextension-v9/build/trezor-connect-webextension.js
+@@ -2548,18 +2548,39 @@
          // Request coming from extension popup,
          // create new window above instead of opening new tab
          if (currentWindow.type !== 'normal') {
@@ -54,7 +53,7 @@ index 0f1fc7c..3bd0e85 100644
              });
            });
          } else {
-@@ -3684,7 +3705,7 @@ trezorContentScript();
+@@ -3724,7 +3745,7 @@
            this.logger.error('content script injection error', error);
            throw error;
          }), {

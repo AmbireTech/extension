@@ -13,6 +13,7 @@ import {
 } from '@ambire-common/libs/trezor/trezor'
 import { getHdPathFromTemplate, getParentHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { TrezorWalletSDK } from '@common/modules/hardware-wallet/interfaces/trezorController'
+import { getTrezorErrorPayload } from '@common/modules/hardware-wallet/libs/trezorError'
 
 interface KeyIteratorProps {
   walletSDK: TrezorWalletSDK
@@ -170,11 +171,12 @@ class TrezorKeyIterator implements KeyIteratorInterface {
           }))
         })
 
+        const errorPayload = getTrezorErrorPayload(res)
         if (!res.success)
           throw new ExternalSignerError(
             getMessageFromTrezorErrorCode(
-              res.payload.code,
-              getTrezorErrorMessageFromPayload(res.payload)
+              errorPayload.code,
+              getTrezorErrorMessageFromPayload(errorPayload)
             )
           )
 
@@ -221,11 +223,12 @@ class TrezorKeyIterator implements KeyIteratorInterface {
             showOnTrezor: false
           })
 
+          const errorPayload = getTrezorErrorPayload(res)
           if (!res.success)
             throw new ExternalSignerError(
               getMessageFromTrezorErrorCode(
-                res.payload.code,
-                getTrezorErrorMessageFromPayload(res.payload)
+                errorPayload.code,
+                getTrezorErrorMessageFromPayload(errorPayload)
               )
             )
 

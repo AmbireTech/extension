@@ -6,14 +6,14 @@ import {
   getTrezorErrorMessageFromPayload
 } from '@ambire-common/libs/trezor/trezor'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
+import { isFirefoxBuild } from '@common/config/env'
 import { TREZOR_CONNECT_MANIFEST } from '@common/modules/hardware-wallet/constants/trezor'
-import trezorConnect, { TrezorConnect } from '@trezor/connect-webextension'
+import { getTrezorErrorPayload } from '@common/modules/hardware-wallet/libs/trezorError'
+import trezorConnect from '@trezor/connect-webextension'
 
-export type {
-  EthereumTransaction,
-  EthereumTransactionEIP1559,
-  TrezorConnect
-} from '@trezor/connect-webextension'
+export type TrezorConnect = typeof trezorConnect
+
+export type { EthereumTransaction, EthereumTransactionEIP1559 } from '@trezor/connect-webextension'
 
 class TrezorController implements ExternalSignerController {
   type = 'trezor'
@@ -39,22 +39,28 @@ class TrezorController implements ExternalSignerController {
   constructor(windowManager: UiManager['window']) {
     this.#windowManager = windowManager
 
-    this.walletSDK.on('DEVICE_EVENT', (event: any) => {
-      if (event?.payload?.name) {
-        this.deviceModel = event.payload.name.replace(/^Trezor\s*/, '').trim()
-      }
+    // Device events are available only in the v9 SDK used by the Firefox build.
+    if ('on' in this.walletSDK && typeof this.walletSDK.on === 'function') {
+      this.walletSDK.on('DEVICE_EVENT', (event: any) => {
+        if (event?.payload?.name) {
+          this.deviceModel = event.payload.name.replace(/^Trezor\s*/, '').trim()
+        }
 
-      if (event?.payload?.id) {
-        this.deviceId = event.payload.id
-      }
-    })
+        if (event?.payload?.id) {
+          this.deviceId = event.payload.id
+        }
+      })
+    }
 
     this.initialLoadPromise = this.#init()
   }
 
   async #init() {
     try {
-      await this.walletSDK.init({ manifest: TREZOR_CONNECT_MANIFEST, lazyLoad: true, popup: true })
+      await this.walletSDK.init({
+        manifest: TREZOR_CONNECT_MANIFEST,
+        ...(isFirefoxBuild ? { lazyLoad: true, popup: true } : {})
+      })
       this.isInitiated = true
     } catch (error) {
       console.error('TrezorController: failed to init the Trezor SDK', error)
@@ -69,7 +75,11 @@ class TrezorController implements ExternalSignerController {
   async signingCleanup() {
     try {
       this.walletSDK.cancel()
-      await this.#windowManager.closePopupWithUrl('https://connect.trezor.io/9/popup.html')
+      await this.#windowManager.closePopupWithUrl(
+        isFirefoxBuild
+          ? 'https://connect.trezor.io/9/popup.html'
+          : 'https://suite.trezor.io/web/connect-popup'
+      )
     } catch (e) {
       console.error('Error while removing Trezor window', e)
     }
@@ -104,11 +114,9 @@ class TrezorController implements ExternalSignerController {
     })
 
     if (!response.success) {
+      const payload = getTrezorErrorPayload(response)
       throw new ExternalSignerError(
-        getMessageFromTrezorErrorCode(
-          response.payload.code,
-          getTrezorErrorMessageFromPayload(response.payload)
-        )
+        getMessageFromTrezorErrorCode(payload.code, getTrezorErrorMessageFromPayload(payload))
       )
     }
 
