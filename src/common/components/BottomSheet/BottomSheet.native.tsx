@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isiOS } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
-import { DEVICE_HEIGHT, SPACING_LG, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
+import { DEVICE_HEIGHT, SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
@@ -226,14 +226,14 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         dimOpacity={isiOS ? IOS_DIM_OPACITY[themeType] : undefined}
         dismissible={shouldBeClosableOnDrag}
         header={HeaderComponent ? <>{HeaderComponent}</> : undefined}
-        headerStyle={{ paddingTop: SPACING_MD, paddingHorizontal: horizontalPadding }}
+        headerStyle={{ paddingTop: SPACING_SM, paddingHorizontal: horizontalPadding }}
         footer={FooterComponent ? <>{FooterComponent}</> : undefined}
         footerStyle={{ paddingHorizontal: horizontalPadding, paddingBottom: missingBottomInset }}
         // Absolute, so the footer rises above the keyboard like it did with Modalize
         footerOptions={{ position: 'absolute' }}
         style={[
           {
-            paddingTop: HeaderComponent ? 0 : SPACING_MD,
+            paddingTop: HeaderComponent ? 0 : SPACING_SM,
             paddingHorizontal: horizontalPadding,
             paddingBottom: FooterComponent ? 0 : missingBottomInset
           },
