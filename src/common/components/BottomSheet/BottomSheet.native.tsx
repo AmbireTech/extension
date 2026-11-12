@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import {
   FlatList,
   FlatListProps,
@@ -9,7 +9,7 @@ import {
   View
 } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { KeyboardController, KeyboardEvents } from 'react-native-keyboard-controller'
+import { KeyboardController } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { captureException } from '@common/config/analytics/CrashAnalytics'
@@ -72,25 +72,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const { theme, themeType } = useTheme()
   const { bottom } = useSafeAreaInsets()
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
-  const [visibleKeyboardHeight, setVisibleKeyboardHeight] = useState(0)
   const { setRef, isModal, isOpen, setIsOpen } = useBottomSheetInternal(props)
-
-  useEffect(() => {
-    const showSub = KeyboardEvents.addListener('keyboardWillShow', (e) => {
-      setIsKeyboardVisible(true)
-      setVisibleKeyboardHeight(e.height)
-    })
-    const hideSub = KeyboardEvents.addListener('keyboardWillHide', () => {
-      setIsKeyboardVisible(false)
-      setVisibleKeyboardHeight(0)
-    })
-
-    return () => {
-      showSub.remove()
-      hideSub.remove()
-    }
-  }, [])
   const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
 
   const internalScrollableRef = useRef<any>(null)
@@ -133,24 +115,25 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const horizontalPadding = isModal ? SPACING_LG : SPACING_SM
 
-  // The bottom spacing works like it did with Modalize, so TrueSheet's own insets are off
-  // (`insetAdjustment` and `contentInsetAdjustment` "never"). The footer sits below the
-  // content, never over it, and takes all of the bottom padding; it rises above the keyboard
-  // by its height. A `customRenderer` controls its own layout, so it gets no content padding.
+  // The bottom spacing works like it did with Modalize, so TrueSheet's safe-area insets are
+  // off (`insetAdjustment` "never") and the footer, or the content without one, pads by it.
+  // A `customRenderer` controls its own layout, so it gets no content padding.
   const bottomInset = bottom || SPACING_SM
   const contentBottomPadding = isModal || FooterComponent ? 0 : bottomInset
-  // The keyboard covers the bottom inset, so above it the footer keeps only a small gap
-  let footerBottomPadding = isModal ? 0 : bottomInset
-  if (!isModal && isKeyboardVisible) footerBottomPadding = visibleKeyboardHeight + SPACING_SM
+  const footerBottomPadding = isModal ? 0 : bottomInset
 
-  const scrollableOptions = useMemo(
+  // The keyboard is handled natively: the sheet keeps its size and slides up with it, and the
+  // list is inset by it. TrueSheet only lifts an absolute footer above the keyboard, so the
+  // footer is absolute, but in the sheet's color and with the list ending above it, it looks
+  // like the Modalize footer below the content
+  const scrollableOptions = useMemo(() => ({ contentInsetAdjustment: 'footer' as const }), [])
+  // Above the keyboard the footer keeps only a small gap, as the keyboard covers the safe area
+  const footerOptions = useMemo(
     () => ({
-      contentInsetAdjustment: 'never' as const,
-      // TrueSheet also pads the list by the keyboard height, which the footer already
-      // takes when there is one
-      keyboardOffset: FooterComponent ? -visibleKeyboardHeight : 0
+      position: 'absolute' as const,
+      keyboardOffset: -Math.max(0, footerBottomPadding - SPACING_SM)
     }),
-    [FooterComponent, visibleKeyboardHeight]
+    [footerBottomPadding]
   )
 
   const handleWillPresent = useCallback(() => {
@@ -258,7 +241,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         header={HeaderComponent ? <>{HeaderComponent}</> : undefined}
         headerStyle={{ paddingTop: SPACING_SM, paddingHorizontal: horizontalPadding }}
         footer={FooterComponent ? <>{FooterComponent}</> : undefined}
-        footerStyle={{ paddingHorizontal: horizontalPadding, paddingBottom: footerBottomPadding }}
+        footerStyle={{
+          paddingHorizontal: horizontalPadding,
+          paddingBottom: footerBottomPadding,
+          backgroundColor: theme[backgroundColor]
+        }}
+        footerOptions={footerOptions}
         insetAdjustment="never"
         style={[
           {
