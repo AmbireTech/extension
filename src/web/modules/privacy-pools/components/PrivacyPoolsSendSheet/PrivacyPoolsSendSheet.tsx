@@ -1,6 +1,10 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
 
-import { PrivacyPoolsOperation, PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
+import {
+  PrivacyPoolsBroadcaster,
+  PrivacyPoolsOperation,
+  PrivacyPoolsRating
+} from '@ambire-common/interfaces/privacyPools'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
@@ -50,6 +54,12 @@ interface Props {
 }
 
 const transactionSummaryStyle = { marginBottom: SPACING_MD }
+
+/** Through 0xBow the fee also pays the relayer, so it is not only the network's. Translated where shown. */
+const FEE_NOTICES: { [broadcaster in PrivacyPoolsBroadcaster]: string } = {
+  '0xbow': 'The fee is deducted automatically from the {{symbol}} you send.',
+  kohaku: 'The network fee is deducted automatically from the {{symbol}} you send.'
+}
 
 /**
  * Confirmation of a Privacy Pools transfer, like the regular Send's fee sheet. Opened once the
@@ -118,8 +128,8 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
     >
       {!!operation && (
         <>
-          {/* Like the transaction details of the one-click Swap & Bridge sheet, the network fee
-              among its rows. Not expandable: there is no raw call of the user's account to show */}
+          {/* Like the transaction details of the one-click Swap & Bridge sheet, the fee among its
+              rows. Not expandable: there is no raw call of the user's account to show */}
           {isConfirming && !!operation.humanization && !!TransactionSummary && (
             <TransactionSummary
               style={transactionSummaryStyle}
@@ -140,9 +150,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
               size="sm"
               style={spacings.mbSm}
               titleWeight="regular"
-              title={t('The network fee is deducted automatically from the {{symbol}} you send.', {
-                symbol
-              })}
+              title={t(FEE_NOTICES[operation.broadcaster], { symbol })}
             />
           )}
 
