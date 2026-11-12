@@ -41,7 +41,7 @@ const EmailVaultDisabledAlert = ({ style }: { style?: ViewStyle }) => {
       text={
         isUnlocked
           ? t(
-              'You turned off Email Vault in the privacy settings. Enabling it also turns on Ambire analytics, which Email Vault needs to work.'
+              'You turned off Email Vault in the privacy settings. Enabling it also turns on anonymized analytics, which Email Vault needs to work.'
             )
           : t(
               'You turned off Email Vault in the privacy settings, so your password can not be reset by email.'
