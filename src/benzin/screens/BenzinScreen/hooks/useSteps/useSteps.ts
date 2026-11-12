@@ -68,7 +68,8 @@ export type FeePaidWith = {
   address: string
   amount: string
   symbol: string
-  usdValue: string
+  /** Null when the token has no price */
+  usdValue: string | null
   isErc20: boolean
   isSponsored: boolean
   chainId: bigint
@@ -997,7 +998,7 @@ const useSteps = ({
         setFeePaidWith({
           amount: formatDecimals(fee),
           symbol: tokenInfo.symbol,
-          usdValue: price ? formatDecimals(fee * price, 'value') : '-$',
+          usdValue: price ? formatDecimals(fee * price, 'value') : null,
           isErc20: address !== ZeroAddress,
           address: address as string,
           isSponsored,
@@ -1010,7 +1011,7 @@ const useSteps = ({
           amount:
             address === ZeroAddress ? formatDecimals(parseFloat(formatUnits(amount, 18))) : '-',
           symbol: address === ZeroAddress ? network.nativeAssetSymbol : '',
-          usdValue: '-$',
+          usdValue: null,
           isErc20: false,
           address: address as string,
           isSponsored,

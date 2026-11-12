@@ -90,7 +90,9 @@ const PrivacyOptOutsList = () => {
         />
         <OptOutControlOption
           title={t('Token prices')}
-          description={t(`Fetch token prices through Ambire's API`)}
+          description={t(
+            `Fetch token prices through Ambire's API. When off, prices are read from the network directly: fewer tokens get a price, and price changes and market data aren't shown.`
+          )}
           icon={<ValueIcon width={24} height={24} color={theme.iconPrimary} />}
           flag="tokenPrices"
           requiredBy={tokenPricesRequiredBy}

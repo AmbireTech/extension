@@ -67,13 +67,22 @@ const getFinalizedRows = (blockData: null | Block, finalizedStatus: FinalizedSta
   return rows
 }
 
+/**
+ * The fee's USD value, or `-$` when it has no price although prices are expected. Nothing when
+ * the user opted out of token prices and the fee couldn't be priced from the network either.
+ */
+const getFeeUsdValueLabel = (cost: FeePaidWith, tokenPricesEnabled: boolean): string | null =>
+  cost.usdValue ?? (tokenPricesEnabled ? '-$' : null)
+
 const getFee = (
   cost: FeePaidWith | null,
   finalizedStatus: FinalizedStatusType,
   tokenPricesEnabled: boolean
 ) => {
   if (cost) {
-    return `${cost.amount} ${cost.symbol}${tokenPricesEnabled ? ` (${cost.usdValue})` : ''}`
+    const usdValueLabel = getFeeUsdValueLabel(cost, tokenPricesEnabled)
+
+    return `${cost.amount} ${cost.symbol}${usdValueLabel ? ` (${usdValueLabel})` : ''}`
   }
 
   return finalizedStatus && doNotShow.indexOf(finalizedStatus.status) !== -1 ? '-' : 'loading'
@@ -82,6 +91,7 @@ const getFee = (
 export {
   getBlockNumber,
   getFee,
+  getFeeUsdValueLabel,
   getFinalizedRows,
   getTimestamp,
   hasBalanceChangesSettled,
