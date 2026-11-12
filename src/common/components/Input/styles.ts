@@ -21,7 +21,7 @@ export interface Style {
   tooltipWrapper: ViewStyle
   tooltip: ViewStyle
   errorContainer: ViewStyle
-  noteContainer: ViewStyle
+  customBottomLabelContainer: ViewStyle
 }
 
 export const INPUT_HEIGHT = 48
@@ -111,7 +111,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.justifySpaceBetween
     },
     // The margin and padding on top match `bottomLabel`
-    noteContainer: {
+    customBottomLabelContainer: {
       minHeight: SPACING_TY + SPACING_MI / 2 + BOTTOM_LABEL_LINE_HEIGHT
     }
   })

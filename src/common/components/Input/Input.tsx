@@ -63,7 +63,7 @@ export interface InputProps extends TextInputProps {
    * Shown below the input while no error, valid label or info takes its place. The space below
    * the input then keeps the height of one line, so swapping these does not move the layout.
    */
-  note?: ReactNode
+  customBottomLabel?: ReactNode
 }
 
 const Input = ({
@@ -77,7 +77,7 @@ const Input = ({
   isValid,
   validLabel,
   validLabelAppearance,
-  note,
+  customBottomLabel,
   onBlur = () => {},
   onFocus = () => {},
   onButtonPress = () => {},
@@ -219,7 +219,9 @@ const Input = ({
         </View>
         {childrenBelowInput}
       </View>
-      <View style={[styles.errorContainer, !!note && styles.noteContainer]}>
+      <View
+        style={[styles.errorContainer, !!customBottomLabel && styles.customBottomLabelContainer]}
+      >
         {!!error && (
           <Text
             style={[styles.bottomLabel, bottomLabelStyle]}
@@ -252,10 +254,12 @@ const Input = ({
             {info}
           </Text>
         )}
-        {!!note && !error && !(isValid && validLabel) && !info && (
-          <View style={[styles.bottomLabel, bottomLabelStyle, flexbox.flex1]}>{note}</View>
+        {!!customBottomLabel && !error && !(isValid && validLabel) && !info && (
+          <View style={[styles.bottomLabel, bottomLabelStyle, flexbox.flex1]}>
+            {customBottomLabel}
+          </View>
         )}
-        {!!preventJumpOnValidationChange && !error && !isValid && !info && !note && (
+        {!!preventJumpOnValidationChange && !error && !isValid && !info && !customBottomLabel && (
           <Text
             style={[styles.bottomLabel, bottomLabelStyle]}
             weight="regular"

@@ -328,7 +328,7 @@ const PrivacyPoolsSendScreen = () => {
   const isRecipientSuccessHidden = isRecipientCheckPending || !!recipientLeakPrivacy
 
   // The tip gives way to the note on what makes this recipient a risk
-  const recipientNote = useMemo(() => {
+  const recipientCustomBottomLabel = useMemo(() => {
     if (!recipientLeakPrivacy || !selectedToken) {
       return (
         <PrivacyFieldTip
@@ -510,7 +510,7 @@ const PrivacyPoolsSendScreen = () => {
             selectedTokenSymbol={selectedToken?.symbol}
             disabled={isTransferInFlight}
             isSuccessHidden={isRecipientSuccessHidden}
-            note={recipientNote}
+            customBottomLabel={recipientCustomBottomLabel}
           />
 
           <SendToken
@@ -532,7 +532,7 @@ const PrivacyPoolsSendScreen = () => {
             handleSetMaxFromAmount={setMaxAmount}
             amountPresets={suggestedAmountChips}
             isMaxAmountLoading={false}
-            note={
+            customBottomLabel={
               isPrivacyShown && (
                 <PrivacyFieldNote
                   fieldLeakIds={PRIVACY_POOLS_AMOUNT_LEAK_IDS}
