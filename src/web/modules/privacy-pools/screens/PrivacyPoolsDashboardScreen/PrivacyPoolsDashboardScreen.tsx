@@ -49,14 +49,13 @@ const PrivacyPoolsDashboardScreen = () => {
     balances,
     balancesState,
     totalPrivateBalance,
-    tokenBalances,
     getNetworkName,
     syncAllChains
   } = usePrivacyPools()
   const { selectedAccount } = usePrivacyPoolsAccounts()
   const isBackedUp = !!selectedAccount?.isBackedUp
   const { t } = useTranslation()
-  const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
+  const { withdrawTokens } = usePrivacyPoolsTokens({ getNetworkName })
   // As on the regular dashboard: the pager starts where the collapsed overview ends and slides
   // over the part that collapses, which hides the network filter with it. Both heights are static.
   const [overviewHeight, setOverviewHeight] = useState(0)

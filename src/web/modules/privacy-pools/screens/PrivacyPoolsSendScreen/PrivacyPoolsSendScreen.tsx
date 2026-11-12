@@ -52,6 +52,7 @@ import loadTransactionSummary, {
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsSendCheck from '@web/modules/privacy-pools/hooks/usePrivacyPoolsSendCheck'
 import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
+import type { PrivacyPoolsTokenOption } from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens/usePrivacyPoolsTokens'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -62,6 +63,28 @@ const NO_ADDRESS_RESOLUTION: Omit<AddressState, 'fieldValue'> = {
 }
 
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
+
+/**
+ * The picked deposit's option, else the fullest deposit of a token picked without one, as when
+ * opened from the token on the dashboard, else the first one. Null when there is none.
+ */
+const findPickedTokenOption = (
+  options: PrivacyPoolsTokenOption[],
+  pickedValue: string
+): PrivacyPoolsTokenOption | null => {
+  const pickedOption = options.find(({ value }) => value === pickedValue)
+  if (pickedOption) return pickedOption
+
+  const fullestOfToken = options
+    .filter(({ value }) => !!pickedValue && String(value).startsWith(`${pickedValue}:`))
+    .reduce<PrivacyPoolsTokenOption | null>(
+      (fullest, option) =>
+        !fullest || option.availableAmount > fullest.availableAmount ? option : fullest,
+      null
+    )
+
+  return fullestOfToken || options[0] || null
+}
 
 const selectSendForm = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.sendForm
@@ -81,7 +104,6 @@ const PrivacyPoolsSendScreen = () => {
   const { navigate } = useNavigation()
   const {
     operation,
-    tokenBalances,
     getNetworkName,
     getTokenPrice,
     prepareWithdrawal,
@@ -90,7 +112,7 @@ const PrivacyPoolsSendScreen = () => {
     dismissOperation,
     isAvailable
   } = usePrivacyPools()
-  const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
+  const { withdrawTokens } = usePrivacyPoolsTokens({ getNetworkName })
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   const [TransactionSummary, setTransactionSummary] = useState<TransactionSummaryType | null>(null)
   const [isTransactionSummaryLoaded, setIsTransactionSummaryLoaded] = useState(false)
@@ -168,10 +190,9 @@ const PrivacyPoolsSendScreen = () => {
   })
   const recipient = getAddressFromAddressState(addressState)
 
-  // Falls back to the first token if none is picked or the picked one runs out
+  // Falls back to the first deposit if none is picked or the picked one runs out
   const selectedToken = useMemo(
-    () =>
-      withdrawTokens.find(({ value }) => value === selectedTokenValue) || withdrawTokens[0] || null,
+    () => findPickedTokenOption(withdrawTokens, selectedTokenValue),
     [withdrawTokens, selectedTokenValue]
   )
 
@@ -197,7 +218,7 @@ const PrivacyPoolsSendScreen = () => {
     [setAmounts, updateSendForm]
   )
 
-  // An amount typed for a picked token that ran out is dropped, so it is not sent in the fallback
+  // An amount typed for a picked deposit that ran out is dropped, so it is not sent in the fallback
   useEffect(() => {
     if (!selectedTokenValue || !selectedToken || selectedToken.value === selectedTokenValue) return
 
@@ -205,7 +226,7 @@ const PrivacyPoolsSendScreen = () => {
     setAmounts(NO_AMOUNTS)
   }, [selectedToken, selectedTokenValue, setAmounts, updateSendForm])
 
-  // Keeps the fallback token once an amount is typed for it, so a token that becomes sendable
+  // Keeps the fallback deposit once an amount is typed for it, so a deposit that becomes sendable
   // later does not take its place under the same amount
   const setAmountsOfSelectedToken = useCallback(
     (newAmounts: typeof NO_AMOUNTS) => {
@@ -306,6 +327,7 @@ const PrivacyPoolsSendScreen = () => {
       ? {
           chainId: selectedToken.chainId,
           tokenAddress: selectedToken.tokenAddress,
+          depositNumber: selectedToken.depositNumber,
           // Without a valid amount, only the recipient is checked
           amount: amountValidation.success && parsedAmount ? parsedAmount : 0n,
           recipient: isAddress(recipient) ? recipient : null
@@ -387,6 +409,7 @@ const PrivacyPoolsSendScreen = () => {
     prepareWithdrawal({
       chainId: selectedToken.chainId,
       tokenAddress: selectedToken.tokenAddress,
+      depositNumber: selectedToken.depositNumber,
       amount: parsedAmount,
       recipient
     })
