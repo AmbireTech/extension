@@ -14,6 +14,7 @@ import { getExtremeGasFeeWarningState } from '@ambire-common/libs/safeguards/ext
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 
 import PayOption from './components/PayOption'
+import getUnknownFeeReason from './getUnknownFeeReason'
 
 const sortBasedOnUSDValue = (a: FeePaymentOption, b: FeePaymentOption) => {
   if (!a || !b) return 0
@@ -107,10 +108,17 @@ const mapFeeOptions = (
         (isEoa7702 && feeOption.token.address !== ZERO_ADDRESS && isPaidByAccount) ||
         (!!signAccountOpState.account.safeCreation && feeOption.token.flags.onGasTank))
 
+    const unknownFeeReason = getUnknownFeeReason(
+      signAccountOpState.feeSpeeds[id],
+      signAccountOpState.unpricedNativeTokenSymbol
+    )
+
     if (isUnavailableBecauseOfBundlerFailure) {
       disabledReason = 'Currently unavailable'
     } else if (!feeOption.token.priceIn.length) {
       disabledReason = 'No price data'
+    } else if (unknownFeeReason) {
+      disabledReason = unknownFeeReason
     } else {
       disabledReason = 'insufficient amount'
     }
