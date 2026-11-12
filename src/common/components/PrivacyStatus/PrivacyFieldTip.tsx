@@ -16,8 +16,8 @@ type Props = {
 const ICON_SIZE = 14
 
 /**
- * A tip under a field of a send on how to keep it private, laid out like `PrivacyFieldNote` so
- * the two can swap in place. Gray, as it is advice and not a check of the value.
+ * A tip under a field of a send on how to keep it private, sized like `PrivacyFieldNote` so the
+ * two can swap in place. Gray with a bulb, as it is advice and not a check of the value.
  */
 const PrivacyFieldTip: FC<Props> = ({ text, testID }) => {
   const { theme } = useTheme()

@@ -3,14 +3,9 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { PrivacyPoolsLeakId } from '@ambire-common/interfaces/privacyPools'
-import InfoIcon from '@common/assets/svg/InfoIcon'
-import WarningIcon from '@common/assets/svg/WarningIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
 import { getLeakTextAppearance } from './helpers'
 import PrivacyModal from './PrivacyModal'
@@ -22,8 +17,6 @@ type Props = Omit<PrivacyStatusProps, 'stage'> & {
   testID: string
 }
 
-const ICON_SIZE = 14
-
 /**
  * A short note under a field of a send, such as the recipient, on what in it makes the transfer
  * easy to link to the user. It opens every suggestion with its fixes. Renders nothing when the
@@ -32,7 +25,6 @@ const ICON_SIZE = 14
 const PrivacyFieldNote: FC<Props> = ({ fieldLeakIds, testID, ...props }) => {
   const { leaks, style } = props
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
@@ -45,23 +37,12 @@ const PrivacyFieldNote: FC<Props> = ({ fieldLeakIds, testID, ...props }) => {
   if (!worstLeak) return null
 
   const textAppearance = getLeakTextAppearance(worstLeak.type)
-  const NoteIcon = worstLeak.type === 'info' ? InfoIcon : WarningIcon
   const otherLeaksCount = fieldLeaks.length - 1
 
   return (
     <View style={style}>
-      <HoverablePressable
-        testID={testID}
-        onPress={handleOpen}
-        style={[flexbox.directionRow, flexbox.alignCenter]}
-      >
-        <NoteIcon
-          width={ICON_SIZE}
-          height={ICON_SIZE}
-          color={theme[textAppearance]}
-          style={spacings.mrMi}
-        />
-        <Text fontSize={12} appearance={textAppearance} style={flexbox.flex1}>
+      <HoverablePressable testID={testID} onPress={handleOpen}>
+        <Text fontSize={12} appearance={textAppearance}>
           {t(worstLeak.title)}
           {otherLeaksCount > 0 && ` · ${t('{{count}} more', { count: otherLeaksCount })}`}
           {' · '}
