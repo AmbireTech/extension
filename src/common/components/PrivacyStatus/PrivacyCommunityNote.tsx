@@ -20,7 +20,7 @@ const PrivacyCommunityNote: FC<Props> = ({ style }) => {
       <PrivacyPoolsLogoIcon width={16} height={16} style={spacings.mrTy} />
       <Text fontSize={12} appearance="secondaryText" style={flexbox.flex1}>
         <Text fontSize={12} weight="medium" appearance="secondaryText">
-          {t('Privacy Pools is a community effort.')}
+          {t('Privacy is a community effort.')}
         </Text>{' '}
         {t(
           'Each new deposit helps hide yours, so start with a small amount and leave it in for a while.'
