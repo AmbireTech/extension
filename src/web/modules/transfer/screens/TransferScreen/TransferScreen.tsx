@@ -41,6 +41,7 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
+import usePrivacyPoolsDepositFee from '@common/modules/transfer/hooks/usePrivacyPoolsDepositFee'
 import getTransferBuildRequest from '@common/modules/transfer/utils/getTransferBuildRequest'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -64,6 +65,7 @@ const selectAccountsOps = (state: AllControllersMappingType['ActivityController'
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
+  const privacyPoolsDepositFee = usePrivacyPoolsDepositFee()
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { verifiedDomainsStatus, domains } = useController('DomainsController').state
   const {
@@ -742,6 +744,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           Modals={Modals}
+          serviceFee={privacyPoolsDepositFee}
         />
       </Suspense>
     </Wrapper>

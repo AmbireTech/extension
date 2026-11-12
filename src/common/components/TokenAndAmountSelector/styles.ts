@@ -42,6 +42,12 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mbMi,
       minHeight: 24
     },
+    labelAndBalance: {
+      ...flexbox.directionRow,
+      ...flexbox.alignCenter,
+      flexShrink: 1,
+      minWidth: 0
+    },
     switchAmountFieldMode: {
       ...flexbox.directionRow,
       ...flexbox.alignCenter,

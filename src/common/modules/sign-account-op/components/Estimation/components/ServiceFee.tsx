@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import { FeePaymentOption } from '@ambire-common/libs/estimate/interfaces'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import Select from '@common/components/Select'
@@ -15,47 +14,54 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import getStyles from '../styles'
-import { FeeOption } from '../types'
+import { EstimationServiceFee, FeeOption } from '../types'
 import PayOption from './PayOption'
 
 const ServiceFee = ({
-  nativeFeeOption,
+  feeOption,
   paidByNativeValue,
   serviceFee
 }: {
-  nativeFeeOption?: FeePaymentOption
+  /** The account and token that pay the fee */
+  feeOption?: FeePaymentOption
   paidByNativeValue?: FeeOption | null
-  serviceFee?: SwapAndBridgeRoute['serviceFee']
+  serviceFee?: EstimationServiceFee
 }) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
 
-  if (!serviceFee || !paidByNativeValue || !nativeFeeOption) return null
+  if (!serviceFee || !paidByNativeValue || !feeOption) return null
 
   return (
     <>
       <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
         <Text fontSize={12} style={spacings.mvTy}>
-          {t('Additional bridge fee')}
+          {serviceFee.label?.title ?? t('Additional bridge fee')}
         </Text>
         <InfoIcon width={16} height={16} data-tooltip-id="bridge-fee-icon" style={spacings.mlTy} />
         <Tooltip id="bridge-fee-icon" clickable>
           <View>
-            <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
-              {t(
-                `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token?.symbol || 'Unknown token'}. `
-              )}
-              <Pressable
-                onPress={() => {
-                  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                  openInTab({ url: 'https://help.ambire.com/en/articles/13752133-bridge-fees' })
-                }}
-              >
-                <Text fontSize={14} weight="medium" appearance="primary">
-                  {t('Learn more')}
-                </Text>
-              </Pressable>
-            </Text>
+            {serviceFee.label ? (
+              <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
+                {serviceFee.label.tooltip}
+              </Text>
+            ) : (
+              <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
+                {t(
+                  `The selected bridge provider demands an additional service fee, paid out in ${paidByNativeValue.token?.symbol || 'Unknown token'}. `
+                )}
+                <Pressable
+                  onPress={() => {
+                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                    openInTab({ url: 'https://help.ambire.com/en/articles/13752133-bridge-fees' })
+                  }}
+                >
+                  <Text fontSize={14} weight="medium" appearance="primary">
+                    {t('Learn more')}
+                  </Text>
+                </Pressable>
+              </Text>
+            )}
           </View>
         </Tooltip>
       </View>
@@ -70,7 +76,7 @@ const ServiceFee = ({
             <PayOption
               amount={BigInt(serviceFee.amount)}
               amountUsd={serviceFee.amountUSD}
-              feeOption={nativeFeeOption}
+              feeOption={feeOption}
               paidByAccountLabel={paidByNativeValue.paidByAccountLabel}
             />
           </View>

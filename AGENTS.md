@@ -32,6 +32,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 
 - Prefer naming variable ways in a self-explanatory way instead of adding comments
 - Prefer short circuits to nested if statements for better readability
+- NEVER nest ternaries. Use a small function with early returns or a lookup object instead
 - Aim for low cyclomatic complexity unless it's not for parts that are handling large sets of data and performance is critical
 - Use `yarn` in the root directory and `npm` in `src/ambire-common` (if present)
 - NEVER run `yarn install` directly, use `yarn setup` instead

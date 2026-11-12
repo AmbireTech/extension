@@ -9,7 +9,6 @@ import {
   SignAccountOpError,
   SigningStatus
 } from '@ambire-common/interfaces/signAccountOp'
-import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import Button, { BUTTON_HEIGHT } from '@common/components/Button'
@@ -41,6 +40,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { EstimationServiceFee } from '@common/modules/sign-account-op/components/Estimation/types'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
@@ -51,7 +51,7 @@ export type OneClickEstimationProps = {
   signAccountOpController: ISignAccountOpController | null
   hasProceeded: boolean
   updateType: 'Swap&Bridge' | 'Transfer&TopUp' | 'SafeOwnerApproval'
-  serviceFee?: SwapAndBridgeRoute['serviceFee']
+  serviceFee?: EstimationServiceFee
   shouldShowTxnDetails?: boolean
   Modals: React.ComponentType<ModalsProps>
 }
