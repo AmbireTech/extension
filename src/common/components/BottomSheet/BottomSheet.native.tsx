@@ -27,7 +27,7 @@ import {
 } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
-import { PortalHost } from '@gorhom/portal'
+import { Portal, PortalHost } from '@gorhom/portal'
 import { BlurView } from 'expo-blur'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
 
@@ -63,12 +63,6 @@ const EMPTY_STYLE = {}
 const FLEX_GROW_STYLE = { flexGrow: 1 }
 
 const noop = () => {}
-
-/**
- * The context a ScrollView gives its descendants, which a list inside uses to warn about
- * being nested in a ScrollView. Missing from the legacy React Native types this repo uses.
- */
-const ScrollViewContext = (ScrollView as unknown as { Context: React.Context<unknown> }).Context
 
 const reportSheetError = (error: unknown) => {
   console.error('BottomSheet: opening or closing the sheet failed', error)
@@ -412,10 +406,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   )
 
   return (
-    <BottomSheetContext.Provider value={bottomSheetContextValue}>
-      {/* The sheet is presented in its own window, so a list in it isn't nested in the */}
-      {/* ScrollView of the screen that declares it, as it wasn't when Modalize portaled it out */}
-      <ScrollViewContext.Provider value={null}>
+    // At the app root, as with Modalize: in place, the ScrollView of the screen that declares
+    // the sheet would be its ancestor, take the first tap to close the keyboard (the X then
+    // needs two taps) and make lists in the sheet warn about being nested in it
+    <Portal hostName="global">
+      {/* PortalHost renders portals in a keyless array - without this key React matches */}
+      {/* them by position and rebuilds this sheet closed when another one unmounts */}
+      <BottomSheetContext.Provider key={id} value={bottomSheetContextValue}>
         <TrueSheet
           ref={trueSheetRef}
           detents={detents}
@@ -446,8 +443,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         >
           {sheetChildren}
         </TrueSheet>
-      </ScrollViewContext.Provider>
-    </BottomSheetContext.Provider>
+      </BottomSheetContext.Provider>
+    </Portal>
   )
 }
 
