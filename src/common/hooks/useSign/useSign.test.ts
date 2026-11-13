@@ -6,7 +6,10 @@ import { createRoot } from 'react-dom/client'
 
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 
-import useSign, { SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS } from './useSign'
+import useSign, {
+  SAFE_SIGN_AND_CLOSE_FALLBACK_DELAY_MS,
+  SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS
+} from './useSign'
 
 // The same EOA imported as both a Ledger and a QR key, so both keys share its address
 const mockLedgerKey = { addr: '0xeoa', type: 'ledger' }
@@ -383,6 +386,17 @@ describe('useSign - Safe "Sign & Close"', () => {
     })
   }
 
+  // Past the point where even the fallback would have closed the request
+  const UNTIL_FALLBACK_CLOSE_MS =
+    SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS + SAFE_SIGN_AND_CLOSE_FALLBACK_DELAY_MS
+
+  // What the success state does once its exit animation ends
+  const endExitAnimation = () => {
+    act(() => {
+      getHookResult().handleSafeSignatureAddedExitEnd()
+    })
+  }
+
   beforeEach(() => {
     jest.useFakeTimers()
     mockSignAccountOpState.current = buildSafeState()
@@ -397,7 +411,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     jest.useRealTimers()
   })
 
-  it('shows that the signature was added, then closes on its own once', () => {
+  it('shows that the signature was added, then closes once the exit animation ends', () => {
     mount()
     signAndClose()
     completeSigning()
@@ -408,18 +422,50 @@ describe('useSign - Safe "Sign & Close"', () => {
       threshold: 3,
       closesAt: Date.now() + SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS
     })
+
+    // Not when the success state's time is up, as the exit animation may still be running
+    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
 
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS - 1)
+    endExitAnimation()
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+
+    // Neither the fallback nor more controller updates close it again
+    rerender()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes anyway when the exit animation never reports that it ended', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS - 1)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
 
     advanceTimers(1)
     expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
 
-    // More controller updates after closing must not close it again
-    rerender()
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    // The exit animation ending late doesn't close it a second time
+    endExitAnimation()
     expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes again after a later "Sign & Close" in the same window', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+    endExitAnimation()
+
+    // Another Safe request that also needs more signatures
+    mockSignAccountOpState.current = buildSafeState({ id: 'op-2' })
+    rerender()
+    signAndClose()
+    completeSigning([safeOwnerKey.addr], 'op-2')
+    endExitAnimation()
+
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(2)
   })
 
   it('keeps the signature count and the close time from the moment of signing when other owners sign afterwards', () => {
@@ -432,7 +478,7 @@ describe('useSign - Safe "Sign & Close"', () => {
 
     expect(getHookResult().safeSignatureAdded?.signedCount).toBe(1)
 
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS / 2)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS - SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS / 2)
     expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
   })
 
@@ -442,7 +488,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     completeSigning([safeOwnerKey.addr, '0xanotherOwner', '0xthirdOwner'])
 
     expect(getHookResult().safeSignatureAdded).toBeNull()
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
 
@@ -452,7 +498,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     completeSigning(['0xanotherOwner'])
 
     expect(getHookResult().safeSignatureAdded).toBeNull()
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
 
@@ -464,7 +510,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     completeSigning()
 
     expect(getHookResult().safeSignatureAdded).toBeNull()
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
 
@@ -476,7 +522,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     act(() => {
       root.render(null)
     })
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
 
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
@@ -490,7 +536,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     rerender()
 
     expect(getHookResult().safeSignatureAdded).toBeNull()
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
 
@@ -505,7 +551,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     rerender()
 
     expect(getHookResult().safeSignatureAdded).toBeNull()
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
 
@@ -533,7 +579,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     completeSigning()
 
     expect(getHookResult().safeSignatureAdded).toBeNull()
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
 
@@ -548,7 +594,7 @@ describe('useSign - Safe "Sign & Close"', () => {
     completeSigning([safeOwnerKey.addr], 'op-1')
 
     expect(getHookResult().safeSignatureAdded).toBeNull()
-    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
     expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
 })

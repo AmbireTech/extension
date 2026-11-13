@@ -150,7 +150,8 @@ const SignAccountOpScreen = () => {
     signingStep,
     disabledReason,
     showSafeSigners,
-    safeSignatureAdded
+    safeSignatureAdded,
+    handleSafeSignatureAddedExitEnd
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -309,6 +310,7 @@ const SignAccountOpScreen = () => {
           signedCount={safeSignatureAdded.signedCount}
           threshold={safeSignatureAdded.threshold}
           closesAt={safeSignatureAdded.closesAt}
+          onExitEnd={handleSafeSignatureAddedExitEnd}
         />
       </SmallNotificationWindowWrapper>
     )

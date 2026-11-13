@@ -69,10 +69,17 @@ type Props = {
 }
 
 /**
- * How long the success state after a Safe "Sign & Close" stays visible before the request
- * closes on its own
+ * How long the success state after a Safe "Sign & Close" stays visible, including its entry
+ * and exit animations. The request closes once the exit animation ends. Short, so
+ * "Sign & Close" still feels like a one-click action, but long enough to read the message
  */
-export const SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS = 5000
+export const SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS = 2500
+
+/**
+ * How long after `closesAt` the request closes anyway when the exit animation never reports
+ * that it ended, e.g. animations paused in a hidden window
+ */
+export const SAFE_SIGN_AND_CLOSE_FALLBACK_DELAY_MS = 1000
 
 /**
  * A Safe signature added with "Sign & Close", while more signatures are still needed
@@ -83,8 +90,7 @@ export type SafeSignatureAddedState = {
   signedCount: number
   threshold: number
   /**
-   * When the request closes on its own (ms since epoch). The close timer and the
-   * countdown on the success state both read it, so they can't get out of sync
+   * When the exit animation of the success state ends and the request closes (ms since epoch)
    */
   closesAt: number
 }
@@ -119,6 +125,7 @@ const useSign = ({
   } | null>(null)
   const [safeSignatureAdded, setSafeSignatureAdded] = useState<SafeSignatureAddedState | null>(null)
   const onSafeSignCompleteRef = useRef(onSafeSignComplete)
+  const hasClosedAfterSafeSignatureAddedRef = useRef(false)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
   const { ensureOneKeyAccess } = useOneKey()
@@ -572,6 +579,7 @@ const useSign = ({
     // already go through. The request stays open for the user to send it
     if (signedCount >= signAccountOpState.threshold) return
 
+    hasClosedAfterSafeSignatureAddedRef.current = false
     // Captured once, as the controller state keeps changing after the signature
     // (e.g. other owners signing) and the success state must not change under the user
     setSafeSignatureAdded({
@@ -603,18 +611,27 @@ const useSign = ({
     setSafeSignatureAdded(null)
   }, [isSafeSignatureAddedToAnotherOp])
 
+  // Called by the success state once its exit animation ends, so the request doesn't close
+  // while the animation is still running. Closes only once, whichever comes first of this
+  // and the fallback below
+  const handleSafeSignatureAddedExitEnd = useCallback(() => {
+    if (hasClosedAfterSafeSignatureAddedRef.current) return
+
+    hasClosedAfterSafeSignatureAddedRef.current = true
+    onSafeSignCompleteRef.current?.()
+  }, [])
+
   useEffect(() => {
     if (!safeSignatureAddedToCurrentOp) return
 
-    const closeTimeout = setTimeout(
-      () => {
-        onSafeSignCompleteRef.current?.()
-      },
-      Math.max(0, safeSignatureAddedToCurrentOp.closesAt - Date.now())
+    const fallbackCloseTimeout = setTimeout(
+      handleSafeSignatureAddedExitEnd,
+      Math.max(0, safeSignatureAddedToCurrentOp.closesAt - Date.now()) +
+        SAFE_SIGN_AND_CLOSE_FALLBACK_DELAY_MS
     )
 
-    return () => clearTimeout(closeTimeout)
-  }, [safeSignatureAddedToCurrentOp])
+    return () => clearTimeout(fallbackCloseTimeout)
+  }, [safeSignatureAddedToCurrentOp, handleSafeSignatureAddedExitEnd])
 
   const handleChangeFeePayerKeyType = useCallback(
     // Done for compatibility with the select component
@@ -1011,6 +1028,7 @@ const useSign = ({
     disabledReason,
     showSafeSigners: shouldShowSafeSigners,
     safeSignatureAdded: safeSignatureAddedToCurrentOp,
+    handleSafeSignatureAddedExitEnd,
     signingAuthSheetRef,
     cancelSigningAuth,
     signingAuthProps
