@@ -140,9 +140,13 @@ async function createBaseConfig(env, argv) {
       const file = warning.file || warning.module?.resource || ''
       return moduleId.includes('react-native-worklets') || file.includes('react-native-worklets')
     },
-    // ox (viem dep) hides `import('node:worker_threads')` behind a variable on purpose, so
-    // bundlers skip it. It only runs in Node (`process.versions.node`), which the `process`
-    // polyfill doesn't define, so browser builds always take the `Worker` path instead.
+    // Modules that hide `import('node:…')` behind a variable on purpose, so bundlers skip it, and
+    // only take that branch under Node, which browser builds never are:
+    // - ox (viem dep) checks `process.versions.node`, which the `process` polyfill doesn't
+    //   define, so browser builds always take the `Worker` path instead.
+    // - @kohaku-eth/poseidon-lean-imt's parallel tree build reads `node:os` and starts
+    //   `node:worker_threads` only without `Worker`. Privacy Pools asks for it only with
+    //   `Worker` or under Node, so the service worker, which has neither, never starts it.
     (warning, compilation) => {
       if (
         typeof warning.message !== 'string' ||
@@ -155,8 +159,12 @@ async function createBaseConfig(env, argv) {
       const requestShortener = compilation?.requestShortener
       const moduleId = warning.module?.readableIdentifier?.(requestShortener) ?? ''
       const file = warning.file || warning.module?.resource || ''
-      const oxVirtualMasterPoolPath = 'ox/_esm/tempo/internal/virtualMasterPool'
-      return moduleId.includes(oxVirtualMasterPoolPath) || file.includes(oxVirtualMasterPoolPath)
+      const nodeOnlyImportPaths = [
+        'ox/_esm/tempo/internal/virtualMasterPool',
+        '@kohaku-eth/poseidon-lean-imt/dist/parallel',
+        '@kohaku-eth/poseidon-lean-imt/dist/worker'
+      ]
+      return nodeOnlyImportPaths.some((path) => moduleId.includes(path) || file.includes(path))
     }
   ]
 
