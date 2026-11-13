@@ -61,6 +61,9 @@ const BalanceAffectingErrors: FC<Props> = ({
     )
   }, [balanceAffectingErrors.length, balanceAffectingErrorsSnapshot.length, isPortfolioAllReady])
 
+  // The X of the native sheet already closes it
+  const isCloseButtonHidden = !isWeb && areErrorsOutdatedAndPortfolioIsReady
+
   const onButtonPress = useCallback(() => {
     if (!areErrorsOutdatedAndPortfolioIsReady) {
       reloadAccount()
@@ -168,16 +171,22 @@ const BalanceAffectingErrors: FC<Props> = ({
               ]}
             >
               {areErrorsOutdatedAndPortfolioIsReady ? (
-                <Text fontSize={16} style={spacings.mbMd} appearance="secondaryText">
+                <Text
+                  fontSize={16}
+                  style={isCloseButtonHidden ? spacings.mb0 : spacings.mbMd}
+                  appearance="secondaryText"
+                >
                   {t('All errors have been resolved. Feel free to close this modal.')}
                 </Text>
               ) : null}
-              <Button
-                style={{ width: '100%' }}
-                hasBottomSpacing={false}
-                text={!areErrorsOutdatedAndPortfolioIsReady ? t('Reload account') : t('Close')}
-                onPress={onButtonPress}
-              />
+              {!isCloseButtonHidden && (
+                <Button
+                  style={{ width: '100%' }}
+                  hasBottomSpacing={false}
+                  text={!areErrorsOutdatedAndPortfolioIsReady ? t('Reload account') : t('Close')}
+                  onPress={onButtonPress}
+                />
+              )}
             </View>
           ),
           data: balanceAffectingErrorsSnapshot,
