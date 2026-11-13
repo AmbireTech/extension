@@ -88,11 +88,14 @@ export class AccountKeysPage extends BasePage {
     }
 
     const keyEl = this.page.getByTestId(selectors.keystoreMigration.privateKeyValue)
+    const keyBlurContainer = this.page.getByTestId(
+      selectors.keystoreMigration.privateKeyBlurContainer
+    )
     await expect(keyEl).not.toBeEmpty({ timeout: 15000 })
     const copyBtn = this.page.getByTestId(selectors.keystoreMigration.copyPrivateKeyButton)
     await expect(copyBtn).toBeVisible()
     await expect(revealBtn).toHaveText('Show key')
-    await expect(keyEl.locator('..')).toHaveCSS('filter', 'blur(3px)')
+    await expect(keyBlurContainer).toHaveCSS('filter', 'blur(3px)')
 
     await this.context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await this.page.evaluate(() => navigator.clipboard.writeText('clipboard-test-sentinel'))
@@ -109,7 +112,7 @@ export class AccountKeysPage extends BasePage {
     expect(copiedPrivateKeyMatches).toBe(true)
 
     await expect(revealBtn).toHaveText('Show key')
-    await expect(keyEl.locator('..')).toHaveCSS('filter', 'blur(3px)')
+    await expect(keyBlurContainer).toHaveCSS('filter', 'blur(3px)')
 
     await revealBtn.click()
     await expect(revealBtn).toHaveText('Hide key')

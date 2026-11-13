@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 import { Animated } from 'react-native'
-import { NativeGesture } from 'react-native-gesture-handler'
+import { Gesture } from 'react-native-gesture-handler'
 
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 
@@ -18,7 +18,7 @@ export interface DashboardPageHandle {
    * A scrollable page claims a drag before the pull can judge it, and a relation can
    * only be built between gestures - a plain list ref is silently dropped.
    */
-  listGesture: NativeGesture
+  listGesture: ReturnType<typeof Gesture.Native>
 }
 
 /**
