@@ -89,15 +89,6 @@
         "react": true
       }
     },
-    "react-native-gesture-handler>@egjs/hammerjs": {
-      "globals": {
-        "clearTimeout": true,
-        "console": true,
-        "document": true,
-        "navigator.userAgent": true,
-        "setTimeout": true
-      }
-    },
     "eth-crypto>@ethereumjs/tx>@ethereumjs/common": {
       "globals": {
         "Buffer.alloc": true,
@@ -1901,8 +1892,21 @@
         "react-native-quick-crypto>safe-buffer": true
       }
     },
+    "expo": {
+      "globals": {
+        "URL": true,
+        "__filename": true,
+        "document.currentScript.src": true
+      }
+    },
     "expo-application": {
+      "meta": {
+        "webpack-optimization": [
+          "Dependency 'expo' reexports from 'expo>expo-modules-core' and webpack collapsed that to a direct import."
+        ]
+      },
       "packages": {
+        "expo": true,
         "expo>expo-modules-core": true
       }
     },
@@ -1913,7 +1917,7 @@
         "URLSearchParams": true
       },
       "packages": {
-        "react-native>@react-native/assets-registry": true,
+        "expo": true,
         "expo>expo-modules-core": true,
         "react": true,
         "react-native-web": true
@@ -1921,7 +1925,6 @@
     },
     "expo-blur": {
       "packages": {
-        "@babel/runtime": true,
         "react": true,
         "react-native-web": true
       }
@@ -1943,9 +1946,13 @@
         "navigator.clipboard": true,
         "navigator.permissions.query": true
       },
+      "meta": {
+        "webpack-optimization": [
+          "Dependency 'expo' reexports from 'expo>expo-modules-core' and webpack collapsed that to a direct import."
+        ]
+      },
       "packages": {
-        "@babel/runtime": true,
-        "node-polyfill-webpack-plugin>console-browserify": true,
+        "expo": true,
         "expo>expo-modules-core": true,
         "react": true,
         "react-native-web": true
@@ -1955,17 +1962,20 @@
       "globals": {
         "CSSFontFaceRule": true,
         "HTMLStyleElement": true,
+        "clearTimeout": true,
+        "console.warn": true,
         "document.createElement": true,
         "document.createTextNode": true,
+        "document.fonts.load": true,
         "document.getElementById": true,
         "document.head": true,
         "document.removeChild": true,
-        "navigator.userAgent": true
+        "setTimeout": true
       },
       "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true,
         "expo-asset": true,
-        "expo>expo-modules-core": true,
-        "expo-font>fontfaceobserver": true
+        "expo>expo-modules-core": true
       }
     },
     "expo-linear-gradient": {
@@ -1973,7 +1983,6 @@
         "console.warn": true
       },
       "packages": {
-        "@babel/runtime": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "react": true,
         "react-native-web": true
@@ -2020,23 +2029,6 @@
     "react-dropzone>file-selector": {
       "packages": {
         "tslib": true
-      }
-    },
-    "expo-font>fontfaceobserver": {
-      "globals": {
-        "FontFaceObserver": "write",
-        "clearTimeout": true,
-        "document.addEventListener": true,
-        "document.attachEvent": true,
-        "document.body": true,
-        "document.createElement": true,
-        "document.createTextNode": true,
-        "document.detachEvent": true,
-        "document.readyState": true,
-        "document.removeEventListener": true,
-        "navigator.userAgent": true,
-        "navigator.vendor": true,
-        "setTimeout": true
       }
     },
     "@ambire/signature-validator>tape>for-each": {
@@ -2171,11 +2163,6 @@
         "secp256k1>elliptic>minimalistic-crypto-utils": true
       }
     },
-    "react-native-gesture-handler>hoist-non-react-statics": {
-      "packages": {
-        "react-dropzone>prop-types>react-is": true
-      }
-    },
     "react-i18next>html-parse-stringify": {
       "packages": {
         "react-i18next>html-parse-stringify>void-elements": true
@@ -2221,11 +2208,6 @@
     "react-native-web>inline-style-prefixer": {
       "packages": {
         "react-native-web>inline-style-prefixer>css-in-js-utils": true
-      }
-    },
-    "expo-camera>invariant": {
-      "globals": {
-        "process.env.NODE_ENV": true
       }
     },
     "@ledgerhq/context-module>inversify": {
@@ -2675,21 +2657,42 @@
     "react-dom": {
       "globals": {
         "AbortController": true,
+        "AbortSignal": true,
+        "CSS.escape": true,
+        "DOMRect": true,
         "ErrorEvent": true,
         "FormData": true,
+        "HTMLElement.prototype.focus": true,
+        "Node.DOCUMENT_POSITION_CONTAINED_BY": true,
+        "Node.DOCUMENT_POSITION_CONTAINS": true,
+        "Node.DOCUMENT_POSITION_DISCONNECTED": true,
+        "Node.DOCUMENT_POSITION_FOLLOWING": true,
+        "Node.DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC": true,
+        "Node.DOCUMENT_POSITION_PRECEDING": true,
         "__REACT_DEVTOOLS_GLOBAL_HOOK__": true,
         "addEventListener": true,
+        "btoa": true,
         "clearTimeout": true,
         "clipboardData": true,
         "console.error": true,
+        "devicePixelRatio": true,
         "dispatchEvent": true,
         "document": true,
         "event": true,
+        "getComputedStyle": true,
+        "innerHeight": true,
         "matchMedia": true,
+        "navigation": true,
+        "navigator.connection": true,
+        "performance.getEntriesByType": true,
         "process": true,
         "queueMicrotask": true,
         "removeEventListener": true,
         "reportError": true,
+        "requestAnimationFrame": true,
+        "scrollTo": true,
+        "scrollX": true,
+        "scrollY": true,
         "setTimeout": true
       },
       "packages": {
@@ -2775,38 +2778,38 @@
         "react": true
       }
     },
-    "react-dropzone>prop-types>react-is": {
-      "globals": {
-        "process.env.NODE_ENV": true
-      }
-    },
     "react-native-gesture-handler": {
       "globals": {
+        "CustomEvent": true,
+        "DOMMatrix": true,
+        "DOMPoint": true,
+        "DOMRect": true,
         "Element": true,
         "HTMLElement": true,
+        "SVGElement": true,
+        "_RNGH_MODULE_ID": true,
+        "_isViewFlatteningDisabled": true,
+        "cancelAnimationFrame": true,
         "clearTimeout": true,
         "console.error": true,
         "console.warn": true,
-        "document.addEventListener": true,
-        "document.removeEventListener": true,
+        "document": true,
         "getComputedStyle": true,
-        "isViewFlatteningDisabled": true,
-        "nativeFabricUIManager": true,
-        "queueMicrotask.bind": true,
+        "matchMedia": true,
+        "navigator": true,
+        "performance.now": true,
+        "queueMicrotask": true,
         "requestAnimationFrame": true,
         "require": true,
         "setImmediate": true,
         "setTimeout": true
       },
       "packages": {
-        "@babel/runtime": true,
-        "react-native-gesture-handler>@egjs/hammerjs": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
-        "react-native-gesture-handler>hoist-non-react-statics": true,
-        "expo-camera>invariant": true,
         "react": true,
         "react-native-reanimated": true,
-        "react-native-web": true
+        "react-native-web": true,
+        "react-native-worklets": true
       }
     },
     "react-native-modalize": {
@@ -2833,26 +2836,18 @@
         "GravitySensor": true,
         "Gyroscope": true,
         "HTMLElement": true,
-        "LayoutAnimationsManager": "write",
         "Magnetometer": true,
         "MutationObserver": true,
         "RNScreensTurboModule": true,
-        "ReanimatedError": "write",
-        "UpdatePropsManager": "write",
-        "_REANIMATED_IS_REDUCED_MOTION": true,
         "__RUNTIME_KIND": true,
-        "__flushAnimationFrame": true,
-        "__frameTimestamp": "write",
+        "__frameTimestamp": true,
         "__mapperRegistry": "write",
+        "__mapperRun": "write",
         "__reanimatedLoggerConfig": "write",
+        "__requestMapperRunFinalizer": "write",
         "__sensorContainer": "write",
         "_frameCallbackRegistry": "write",
         "_getAnimationTimestamp": true,
-        "_notifyAboutEnd": true,
-        "_notifyAboutProgress": true,
-        "_tagToJSPropNamesMapping": "write",
-        "_updateProps": true,
-        "clearInterval": true,
         "console.error": true,
         "console.warn": true,
         "document.body": true,
@@ -2861,6 +2856,7 @@
         "document.head.append": true,
         "document.head.appendChild": true,
         "getComputedStyle": true,
+        "jest": true,
         "location.protocol": true,
         "matchMedia": true,
         "navigator.userAgent": true,
@@ -2868,8 +2864,6 @@
         "opera": true,
         "queueMicrotask": true,
         "requestAnimationFrame": true,
-        "require": true,
-        "setInterval": true,
         "setTimeout": true,
         "structuredClone": true
       },
@@ -2877,7 +2871,7 @@
         "@babel/runtime": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "react": true,
-        "expo-status-bar>react-native-is-edge-to-edge": true,
+        "react-native-reanimated>react-native-is-edge-to-edge": true,
         "react-native-web": true,
         "react-native-worklets": true
       }
@@ -2885,11 +2879,15 @@
     "react-native-safe-area-context": {
       "globals": {
         "CSS": true,
+        "ResizeObserver": true,
+        "addEventListener": true,
         "document": true,
-        "getComputedStyle": true
+        "getComputedStyle": true,
+        "innerHeight": true,
+        "innerWidth": true,
+        "removeEventListener": true
       },
       "packages": {
-        "@babel/runtime": true,
         "react": true,
         "react-native-web": true
       }
@@ -2898,16 +2896,16 @@
       "globals": {
         "Image": true,
         "XMLSerializer": true,
+        "atob": true,
+        "clearTimeout": true,
         "console": true,
         "document.createElement": true,
         "document.createElementNS": true,
         "fetch": true,
+        "require": true,
         "setTimeout": true
       },
       "packages": {
-        "@babel/runtime": true,
-        "react-native>@react-native/assets-registry": true,
-        "buffer": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "react": true,
         "react-native-web": true
@@ -2968,20 +2966,21 @@
     },
     "react-native-worklets": {
       "globals": {
-        "_ALWAYS_FALSE": true,
         "_WORKLET": "write",
+        "_WORKLETS_BUNDLE_MODE_ENABLED": "write",
         "__RUNTIME_KIND": "write",
         "_getAnimationTimestamp": "write",
         "_log": "write",
+        "console.error": true,
         "console.log": true,
+        "jest": true,
         "performance.now": true,
         "queueMicrotask": true,
         "requestAnimationFrame": "write",
         "setTimeout": true
       },
       "packages": {
-        "node-polyfill-webpack-plugin>console-browserify": true,
-        "react-native-web": true
+        "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
     "react-router-dom": {

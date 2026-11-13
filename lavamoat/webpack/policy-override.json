@@ -415,6 +415,14 @@
       "meta": {
         "note": "Denied, not granted: the generator allows these because the SDK's extension helpers reference them, but chrome.storage.local also holds the keystore and the SDK can fetch, so it must never read it. Its only storage use, the init-code cache, is passed in by PQ1Controller (pq1InitCodeCache in libs/pq1/context.ts) and goes through Ambire's code. The runtime messaging is for permission-granted helpers Ambire never calls."
       }
+    },
+    "react-native-worklets": {
+      "globals": {
+        "requestAnimationFrame": true
+      },
+      "meta": {
+        "note": "Read, not write: the generator sees the jest-only mock assignment, but a 'write' global keeps the root compartment's wrapper, which throws 'Illegal invocation' on the bare requestAnimationFrame() call in threads.ts (0.13), so no Reanimated update ever reached the DOM on web."
+      }
     }
   }
 }

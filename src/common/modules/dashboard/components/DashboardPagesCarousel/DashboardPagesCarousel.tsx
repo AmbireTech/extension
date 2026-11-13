@@ -3,7 +3,6 @@ import {
   Animated,
   Dimensions,
   Easing,
-  InteractionManager,
   LayoutChangeEvent,
   GestureResponderEvent,
   Keyboard,
@@ -40,6 +39,7 @@ import {
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import runWhenIdle from '@common/utils/runWhenIdle'
 
 import CarouselPage from './CarouselPage'
 import DashboardCarouselContext, {
@@ -125,8 +125,8 @@ const WhileFocused = ({
   const isScreenFocused = useIsScreenFocused()
 
   // Every page ends up rendered, so no swipe can outrun them: closest first and one at
-  // a time, never during a gesture or in the same frame as another. Only while this is
-  // the screen the user is on, or the rest would be built over the screen it was left for.
+  // a time, once the JS thread is idle and never in the same frame as another. Only while
+  // this is the screen the user is on, or the rest would be built over the screen it was left for.
   useEffect(() => {
     if (!isScreenFocused) return undefined
 
@@ -149,25 +149,23 @@ const WhileFocused = ({
       timeoutId = setTimeout(() => renderFrom(index + 1), PAGE_RENDER_STEP)
     }
 
-    const interaction = InteractionManager.runAfterInteractions(() => {
+    const cancelIdleRender = runWhenIdle(() => {
       timeoutId = setTimeout(() => renderFrom(0), PAGE_RENDER_DELAY)
     })
 
     return () => {
       isCancelled = true
-      interaction.cancel()
+      cancelIdleRender()
       if (timeoutId) clearTimeout(timeoutId)
     }
   }, [isScreenFocused, openTabIndex, renderTabs, tabs])
 
-  // Deferred until the interactions are over, and a navigation away is one of them,
+  // Deferred until the JS thread is idle, and a navigation away may come first,
   // so this has to ask whether the dashboard is still the screen it was deferred on.
   useEffect(() => {
     if (!isScreenFocused) return undefined
 
-    const interaction = InteractionManager.runAfterInteractions(initAllTabs)
-
-    return () => interaction.cancel()
+    return runWhenIdle(initAllTabs)
   }, [initAllTabs, isScreenFocused])
 
   return null
