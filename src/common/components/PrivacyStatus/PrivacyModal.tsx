@@ -30,7 +30,7 @@ const RATING_SUMMARIES: Partial<Record<PrivacyPoolsRating, string>> = {
   weak: 'Some details make this transfer easier to link to you.',
   traceable: 'This transfer can be linked to you.',
   unchecked:
-    "We could not check this transfer's privacy yet, as the pool is still loading. We cannot warn you about anything that links it to you."
+    'We could not count how many deposits hide yours, so we cannot warn you about anything that links it to you. You can still send it.'
 }
 
 /**
@@ -46,10 +46,12 @@ const PrivacyModal: FC<Props> = ({
   cover,
   decimals,
   symbol,
-  onSetAmount
+  onSetAmount,
+  onRetry
 }) => {
   const { t } = useTranslation()
   const { isPopup } = getUiType()
+  const isUnchecked = rating === 'unchecked'
   const ratingSummary = RATING_SUMMARIES[rating]
 
   const runAction = useCallback(
@@ -62,10 +64,15 @@ const PrivacyModal: FC<Props> = ({
     [closeBottomSheet, onSetAmount]
   )
 
+  const retry = useCallback(() => {
+    closeBottomSheet()
+    onRetry?.()
+  }, [closeBottomSheet, onRetry])
+
   const getActionText = (action: PrivacyPoolsLeakAction | undefined) =>
     action && onSetAmount ? getPrivacyActionText(t, action, decimals, symbol) : undefined
   // Nothing was counted before the pool is read
-  const isCoverShown = rating !== 'unchecked'
+  const isCoverShown = !isUnchecked
   const hasContentBelowCover = !!ratingSummary || leaks.length > 0
 
   return (
@@ -93,6 +100,19 @@ const PrivacyModal: FC<Props> = ({
         <Text fontSize={14} appearance="secondaryText" style={spacings.mbLg}>
           {t(ratingSummary)}
         </Text>
+      )}
+      {isUnchecked && !!onRetry && (
+        <Button
+          testID={`privacy-pools-${stage}-privacy-retry`}
+          type="secondary"
+          // Enter belongs to the send form behind the sheet
+          submitOnEnter={false}
+          size="small"
+          text={t('Try again')}
+          onPress={retry}
+          hasBottomSpacing={false}
+          style={[flexbox.alignSelfStart, spacings.mbLg]}
+        />
       )}
 
       {leaks.map((leak) => {
