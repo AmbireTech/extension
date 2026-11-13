@@ -111,7 +111,7 @@ const InviteVerifyScreen = () => {
       </MobileLayoutWrapperMainContent>
 
       <BottomSheet id="invite-code-help" sheetRef={helpSheetRef} closeBottomSheet={closeHelpSheet}>
-        <ModalHeader handleClose={closeHelpSheet} title={t('How to get mobile access?')} />
+        <ModalHeader handleClose={closeHelpSheet} title={t('Get mobile access')} />
         <Text fontSize={16} appearance="secondaryText" style={spacings.mbLg}>
           {t(
             "We’re rolling out our mobile app in waves, starting with longtime extension users. If you're in, your code is ready."
