@@ -78,6 +78,8 @@ const AddressInput: React.FC<Props> = ({
   onScanAddress,
   plainAddressMaxLength,
   isSuccessHidden = false,
+  // Without the success label, the line kept for messages would be empty most of the time
+  preventJumpOnValidationChange = !isSuccessHidden,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -165,8 +167,7 @@ const AddressInput: React.FC<Props> = ({
               : ''
         }
         renderConfirmAddress={renderConfirmAddress}
-        // Without the success label, the line kept for messages would be empty most of the time
-        preventJumpOnValidationChange={!isSuccessHidden}
+        preventJumpOnValidationChange={preventJumpOnValidationChange}
         childrenBeforeButtons={
           <>
             {childrenBeforeButtons ||

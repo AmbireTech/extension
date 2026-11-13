@@ -23,6 +23,7 @@ import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
+import IS_SHEET_HEADER_FLOATING from '@common/components/BottomSheet/isSheetHeaderFloating'
 import NearIdenticalAddressSuggestion from '@common/components/AddressSelect/NearIdenticalAddressSuggestion'
 import { InputProps } from '@common/components/Input'
 import { INPUT_HEIGHT, INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
@@ -191,6 +192,9 @@ const SelectedMenuOption: React.FC<{
   // On mobile the near-identical address wraps to show all of its mistyped chars, so the
   // input grows to fit it instead of keeping its single line height
   const shouldGrowInput = isMobile && !!addressHighlight?.differingFrom
+  // In a floating sheet header, the gap to the list is the same as in every other sheet, so
+  // no empty line is kept under the input for a message
+  const isInFloatingSheetHeader = type === 'input' && IS_SHEET_HEADER_FLOATING
 
   const content = useMemo(
     () => (
@@ -204,13 +208,14 @@ const SelectedMenuOption: React.FC<{
         autoFocus={autoFocus}
         // Address entry never benefits from the keyboard's autocorrect
         autoCorrect={false}
-        containerStyle={styles.inputContainer}
+        containerStyle={isInFloatingSheetHeader ? spacings.mb0 : styles.inputContainer}
         backgroundColor={inputBackgroundColor}
         resolvedAddress={resolvedAddress}
         resolvedAddressType={resolvedAddressType}
         addressHighlight={addressHighlight}
         plainAddressMaxLength={plainAddressMaxLength}
         isSuccessHidden={isSuccessHidden}
+        preventJumpOnValidationChange={isInFloatingSheetHeader ? false : undefined}
         customBottomLabel={customBottomLabel}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
@@ -284,6 +289,7 @@ const SelectedMenuOption: React.FC<{
       inputBackgroundColor,
       plainAddressMaxLength,
       isSuccessHidden,
+      isInFloatingSheetHeader,
       customBottomLabel,
       type,
       validation
