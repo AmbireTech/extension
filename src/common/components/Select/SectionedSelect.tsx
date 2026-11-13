@@ -32,7 +32,7 @@ const SectionedSelect = ({
   onScrollBeginDrag,
   getSectionHeaderHeight,
   scrollToSelectedOnOpen,
-  isMenuOpen,
+  isMenuOpen: controlledIsMenuOpen,
   setIsMenuOpen,
   withScrollbarPadding,
   listRef: externalListRef,
@@ -50,11 +50,19 @@ const SectionedSelect = ({
     menuPosition,
     renderOption: props.renderOption,
     closeMenuOnSelect: props.closeMenuOnSelect,
-    isMenuOpen,
+    isMenuOpen: controlledIsMenuOpen,
     setIsMenuOpen,
     listRef: externalListRef
   })
-  const { listRef, filteredData, renderItem, keyExtractor, handleScroll, handleLayout } = selectData
+  const {
+    listRef,
+    filteredData,
+    renderItem,
+    keyExtractor,
+    handleScroll,
+    handleLayout,
+    isMenuOpen
+  } = selectData
   const isScrollbarPaddingEnabled = isWeb && !!withScrollbarPadding
   // Refs, so a size change re-renders the list only when the scrollbar appears or disappears
   const listHeightRef = useRef(0)
@@ -164,7 +172,8 @@ const SectionedSelect = ({
   const handleContentSizeChangeAndScrollToSelected = useCallback(
     (width: number, height: number) => {
       if (isScrollbarPaddingEnabled) handleContentSizeChange(width, height)
-      if (hasScrolledToSelectedRef.current || height <= 0) return
+      // A closing sheet keeps the list mounted, and clearing the search on close resizes it
+      if (!isMenuOpen || hasScrolledToSelectedRef.current || height <= 0) return
 
       hasScrolledToSelectedRef.current = true
       if (selectedScrollIndex === undefined) return
@@ -174,6 +183,7 @@ const SectionedSelect = ({
         ?.scrollTo({ y: getItemLayout(null, selectedScrollIndex).offset, animated: false })
     },
     [
+      isMenuOpen,
       isScrollbarPaddingEnabled,
       handleContentSizeChange,
       selectedScrollIndex,

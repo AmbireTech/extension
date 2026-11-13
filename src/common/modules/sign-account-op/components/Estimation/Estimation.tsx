@@ -43,7 +43,9 @@ import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
-import useCallSignAccountOpMethod, { getSignAccountOpType } from '@common/hooks/useCallSignAccountOpMethod'
+import useCallSignAccountOpMethod, {
+  getSignAccountOpType
+} from '@common/hooks/useCallSignAccountOpMethod'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
@@ -548,11 +550,20 @@ const Estimation = ({
       feeOption.token.address === ZERO_ADDRESS
   )
 
+  // A fee in another token is paid by the same account, so only the token changes
+  const serviceFeeOption = useMemo(
+    () =>
+      nativeFeeOption && serviceFee?.token
+        ? { ...nativeFeeOption, token: serviceFee.token }
+        : nativeFeeOption,
+    [nativeFeeOption, serviceFee]
+  )
+
   const paidByNativeValue = useMemo(() => {
     if (!serviceFee || !signAccountOpState?.estimation.availableFeeOptions.length || !hasEstimation)
       return null
 
-    if (!nativeFeeOption) return
+    if (!nativeFeeOption || !serviceFeeOption) return
 
     const mappedFeeOption = mapFeeOptions(
       nativeFeeOption,
@@ -564,12 +575,20 @@ const Estimation = ({
       <PayOption
         amount={BigInt(serviceFee.amount)}
         amountUsd={serviceFee.amountUSD}
-        feeOption={nativeFeeOption}
+        feeOption={serviceFeeOption}
         paidByAccountLabel={mappedFeeOption.paidByAccountLabel}
       />
     )
     return mappedFeeOption
-  }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts, isViewOnly])
+  }, [
+    serviceFee,
+    signAccountOpState,
+    hasEstimation,
+    nativeFeeOption,
+    serviceFeeOption,
+    state.contacts,
+    isViewOnly
+  ])
 
   const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
   const isCancelTransaction =
@@ -879,7 +898,7 @@ const Estimation = ({
         <ServiceFee
           serviceFee={serviceFee}
           paidByNativeValue={paidByNativeValue}
-          nativeFeeOption={nativeFeeOption}
+          feeOption={serviceFeeOption}
         />
       </>
     )
@@ -1015,7 +1034,7 @@ const Estimation = ({
       <ServiceFee
         serviceFee={serviceFee}
         paidByNativeValue={paidByNativeValue}
-        nativeFeeOption={nativeFeeOption}
+        feeOption={serviceFeeOption}
       />
       {v1warning && !signAccountOpState.errors.length && (
         <View

@@ -21,6 +21,41 @@ const DEFAULT_ANIMATION_DURATION: number = 250
 
 const { isPopup } = getUiType()
 
+const SELF_SCROLLING_CONTENT_PROPS = {
+  scrollEnabled: false,
+  nestedScrollEnabled: true,
+  contentContainerStyle: { flex: 1 }
+}
+
+/** The props of Modalize's own ScrollView, which scrolls the content unless a list is given. */
+const getModalizeScrollProps = ({
+  hasList,
+  isScrollEnabled,
+  isListScrollingItself,
+  scrollViewProps
+}: {
+  hasList: boolean
+  isScrollEnabled: boolean
+  isListScrollingItself: boolean
+  scrollViewProps: BottomSheetProps['scrollViewProps']
+}) => {
+  if (!hasList) {
+    return {
+      scrollViewProps: {
+        bounces: false,
+        keyboardShouldPersistTaps: 'handled' as const,
+        ...(!isScrollEnabled && SELF_SCROLLING_CONTENT_PROPS),
+        ...(scrollViewProps || {})
+      }
+    }
+  }
+  // A full height sheet's list scrolls itself, so its sticky headers and
+  // scrollbar work - otherwise Modalize's own ScrollView would scroll it whole
+  if (isListScrollingItself) return { scrollViewProps: SELF_SCROLLING_CONTENT_PROPS }
+
+  return {}
+}
+
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
     id: _id,
@@ -227,30 +262,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               return true
             }}
             panGestureEnabled={shouldBeClosableOnDrag}
-            {...(!flatListProps && !sectionListProps
-              ? {
-                  scrollViewProps: {
-                    bounces: false,
-                    keyboardShouldPersistTaps: 'handled',
-                    ...(!isScrollEnabled && {
-                      scrollEnabled: false,
-                      nestedScrollEnabled: true,
-                      contentContainerStyle: { flex: 1 }
-                    }),
-                    ...(scrollViewProps || {})
-                  }
-                }
-              : // A full height sheet's list scrolls itself, so its sticky headers and
-                // scrollbar work - otherwise Modalize's own ScrollView would scroll it whole
-                !isScrollEnabled && !adjustToContentHeight
-                ? {
-                    scrollViewProps: {
-                      scrollEnabled: false,
-                      nestedScrollEnabled: true,
-                      contentContainerStyle: { flex: 1 }
-                    }
-                  }
-                : {})}
+            {...getModalizeScrollProps({
+              hasList: !!(flatListProps || sectionListProps),
+              isScrollEnabled,
+              isListScrollingItself,
+              scrollViewProps
+            })}
             openAnimationConfig={{
               timing: { duration: animationDuration, delay: 0 }
             }}
