@@ -1,12 +1,11 @@
 import React, { FC, memo, RefObject, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
+import { SvgProps } from 'react-native-svg'
 
 import { PrivacyPoolsBroadcaster } from '@ambire-common/interfaces/privacyPools'
 import KohakuIcon from '@common/assets/svg/KohakuIcon'
 import OxBowIcon from '@common/assets/svg/OxBowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
-import Badge from '@common/components/Badge'
-import { BadgeType } from '@common/components/Badge/types'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import HoverablePressable from '@common/components/HoverablePressable'
@@ -14,7 +13,9 @@ import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import getAccountStyles from '@common/modules/account-select/components/Account/styles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -22,28 +23,27 @@ import type { Modalize } from 'react-native-modalize'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-const ICON_COLUMN_STYLE = { width: 72 }
+const LOGO_SIZE = 32
 const SETTINGS_BUTTON_SIZE = 40
 const SETTINGS_BUTTON_STYLE = { width: SETTINGS_BUTTON_SIZE, height: SETTINGS_BUTTON_SIZE }
 const SHEET_STYLE = isWeb ? { width: '100%' as const, maxWidth: 480 } : undefined
 const RADIO_SIZE = 20
 const RADIO_DOT_SIZE = 10
+const DISABLED_STYLE = { opacity: 0.5 }
 
 const selectBroadcaster = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.broadcaster
 const selectIsErc4337Enabled = (state: AllControllersMappingType['FeatureFlagsController']) =>
   state.flags.erc4337
 
-type BroadcasterBadge = { text: string; type: BadgeType }
-
 /** What sets the broadcasters apart for the user. Translated where shown. */
 type BroadcasterOption = {
   id: PrivacyPoolsBroadcaster
   name: string
-  Icon: FC
-  anonymity: BroadcasterBadge
-  fee: BroadcasterBadge
-  description: string
+  Icon: FC<SvgProps>
+  /** Colored by how well a transfer blends in, the main thing the choice trades off. */
+  anonymity: { text: string; appearance: 'successText' | 'warningText' }
+  fee: string
 }
 
 const BROADCASTER_OPTIONS: BroadcasterOption[] = [
@@ -51,21 +51,19 @@ const BROADCASTER_OPTIONS: BroadcasterOption[] = [
     id: '0xbow',
     name: '0xBow',
     Icon: OxBowIcon,
-    anonymity: { text: 'Mature anonymity', type: 'success' },
-    fee: { text: '0.1% + network fee', type: 'default' },
-    description: 'Most private transfers are sent this way, so yours blends in with them.'
+    anonymity: { text: 'Mature anonymity', appearance: 'successText' },
+    fee: '0.1% + network fee'
   },
   {
     id: 'kohaku',
     name: 'Kohaku',
     Icon: KohakuIcon,
-    anonymity: { text: 'Growing anonymity', type: 'warning' },
-    fee: { text: 'Network fee only', type: 'success' },
-    description:
-      'Few transfers are sent this way so far, so yours is easier to tell apart. Any part of the fee that is not used goes back to the recipient.'
+    anonymity: { text: 'Growing anonymity', appearance: 'warningText' },
+    fee: 'Network fee only'
   }
 ]
 
+/** A card per option, like the account rows: it highlights on hover and the selected one stands out. */
 const BroadcasterRowComponent = ({
   option,
   isSelected,
@@ -74,45 +72,57 @@ const BroadcasterRowComponent = ({
 }: {
   option: BroadcasterOption
   isSelected: boolean
-  /** Shown in place of the description when the option cannot be chosen. */
+  /** Shown under the option when it cannot be chosen. */
   disabledReason: string | null
   onSelect: (broadcaster: PrivacyPoolsBroadcaster) => void
 }) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
-  const { id, name, Icon, anonymity, fee, description } = option
+  const { theme, styles } = useTheme(getAccountStyles)
+  const { id, name, Icon, anonymity, fee } = option
   const handlePress = useCallback(() => onSelect(id), [id, onSelect])
+  const [bindAnim, animStyle] = useCustomHover({
+    property: 'backgroundColor',
+    // The same card as the account rows
+    values: { from: theme.secondaryBackground, to: theme.tertiaryBackground }
+  })
+
+  // The same as the selected account
+  const selectedStyle = useMemo(
+    () => ({ backgroundColor: theme.primaryAccent100, borderColor: theme.primaryAccent }),
+    [theme.primaryAccent, theme.primaryAccent100]
+  )
 
   return (
-    <HoverablePressable
+    <AnimatedPressable
       onPress={handlePress}
       disabled={!!disabledReason}
       accessibilityRole="radio"
       accessibilityState={{ checked: isSelected, disabled: !!disabledReason }}
       testID={`privacy-pools-broadcaster-${id}`}
+      {...bindAnim}
+      style={[styles.accountContainer, spacings.pvSm, animStyle, isSelected && selectedStyle]}
     >
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          spacings.pvSm,
-          { opacity: disabledReason ? 0.5 : 1 }
-        ]}
-      >
-        <View style={ICON_COLUMN_STYLE}>
-          <Icon />
+      <View style={[flexbox.directionRow, flexbox.alignCenter, !!disabledReason && DISABLED_STYLE]}>
+        <View style={spacings.mrSm}>
+          <Icon width={LOGO_SIZE} height={LOGO_SIZE} />
         </View>
         <View style={flexbox.flex1}>
           <Text fontSize={16} weight="medium">
             {name}
           </Text>
-          <View style={[flexbox.directionRow, flexbox.wrap, spacings.mtMi]}>
-            <Badge type={anonymity.type} text={t(anonymity.text)} withRightSpacing />
-            <Badge type={fee.type} text={t(fee.text)} />
-          </View>
-          <Text fontSize={12} appearance="tertiaryText" style={spacings.mtTy}>
-            {disabledReason || t(description)}
+          <Text fontSize={12} weight="medium" style={spacings.mtMi}>
+            <Text fontSize={12} weight="medium" appearance={anonymity.appearance}>
+              {t(anonymity.text)}
+            </Text>
+            <Text fontSize={12} weight="medium" appearance="secondaryText">
+              {` · ${t(fee)}`}
+            </Text>
           </Text>
+          {!!disabledReason && (
+            <Text fontSize={12} appearance="tertiaryText" style={spacings.mtMi}>
+              {disabledReason}
+            </Text>
+          )}
         </View>
         <View
           style={[
@@ -139,7 +149,7 @@ const BroadcasterRowComponent = ({
           )}
         </View>
       </View>
-    </HoverablePressable>
+    </AnimatedPressable>
   )
 }
 
@@ -228,9 +238,7 @@ const PrivacyPoolsBroadcasterBottomSheet = ({
       style={SHEET_STYLE}
     >
       <Text fontSize={14} appearance="secondaryText" style={spacings.mbTy}>
-        {t(
-          'Choose who sends your private transfers and pays their network fee, taking a fee from what you send.'
-        )}
+        {t('Choose who sends your private transfer.')}
       </Text>
       {BROADCASTER_OPTIONS.map((option) => (
         <BroadcasterRow
