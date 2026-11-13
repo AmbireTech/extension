@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
@@ -9,13 +9,13 @@ import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import NftImage from '@common/components/NftImage'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
@@ -70,23 +70,41 @@ const CollectibleModal = ({
     navigate(`${ROUTES.transfer}?address=${address}&chainId=${chainId}&tokenId=${id}`)
   }, [handleClose, navigate, selectedCollectible])
 
-  const modalContent = useMemo(() => {
+  const handleOpenExplorer = useCallback(() => {
+    if (!selectedCollectible) return
+
+    const { address, chainId, id } = selectedCollectible
+    const networkData = networks.find(({ chainId: networkChainId }) => chainId === networkChainId)
+    openInTab({ url: `${networkData?.explorerUrl}/nft/${address}/${String(id)}` }).catch((error) =>
+      console.error(error)
+    )
+  }, [networks, selectedCollectible])
+
+  // Grey Explorer and Hide above a full-width Send, like the Benzin footer
+  const actions = useMemo(() => {
     if (!selectedCollectible) return null
 
-    const { address, image, name, collectionName, chainId, id, lastPrice } = selectedCollectible
-    const networkData = networks.find(({ chainId: networkChainId }) => chainId === networkChainId)
+    const { address, chainId, id } = selectedCollectible
     return (
-      <>
-        <SheetHeaderRow style={common.fullWidth} />
-        <View style={styles.imageContainer}>
-          <NftImage
-            withHint
-            uri={image}
-            size={COLLECTIBLE_IMAGE_SIZE}
-            iconSize={COLLECTIBLE_IMAGE_SIZE / 2}
-            backgroundColor={theme.primaryBackground}
-            imageStyle={styles.image}
-          />
+      <View style={styles.actions}>
+        <View style={styles.secondaryActions}>
+          <Button
+            type="secondary"
+            size="small"
+            text={t('Explorer')}
+            onPress={handleOpenExplorer}
+            childrenPosition="left"
+            hasBottomSpacing={false}
+            style={flexbox.flex1}
+          >
+            <OpenIcon
+              color={theme.primaryText}
+              width={18}
+              height={18}
+              strokeWidth="2"
+              style={spacings.mrTy}
+            />
+          </Button>
           {shouldDisplayHideCollectionAction && (
             <HideCollectibleButton
               address={address}
@@ -96,86 +114,99 @@ const CollectibleModal = ({
             />
           )}
         </View>
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            spacings.mbMd,
-            flexbox.justifyCenter,
-            { width: '100%' }
-          ]}
-        >
-          <Text
-            fontSize={isTab ? 18 : 16}
-            weight="semiBold"
-            style={[spacings.mrMi]}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            selectable
-          >
-            {name || 'Unknown Name'}
-          </Text>
-          <Pressable
-            style={spacings.mlSm}
-            onPress={() =>
-              openInTab({ url: `${networkData?.explorerUrl}/nft/${address}/${String(id)}` })
-            }
-          >
-            {({ hovered }: any) => (
-              <OpenIcon
-                color={hovered ? theme.primaryText : theme.secondaryText}
-                width={20}
-                height={20}
-                strokeWidth="2"
-              />
-            )}
-          </Pressable>
-        </View>
-
-        <View
-          style={[
-            spacings.phSm,
-            spacings.pvSm,
-            {
-              borderRadius: BORDER_RADIUS_PRIMARY,
-              backgroundColor: theme.secondaryBackground,
-              width: '100%'
-            }
-          ]}
-        >
-          <Row title={t('Collection')} text={collectionName} />
-          <Row title={t('Chain')} text={networkData?.name || 'Unknown Network'} />
-          <Row title={t('Last Price')} text={lastPrice || '$-'} noMb />
-        </View>
         {!hideSendNft && (
           <Button
             testID="send-nft-button"
             onPress={handleSendNft}
             childrenPosition="right"
             text={t('Send')}
-            style={{ width: '100%', ...spacings.mb0, ...spacings.mtMd }}
+            hasBottomSpacing={false}
           >
             {/* The same white as the text of a primary button, in both themes */}
             <SendIcon style={spacings.mlTy} color="#fff" width={26} height={26} />
           </Button>
         )}
-      </>
+      </View>
     )
   }, [
     handleClose,
+    handleOpenExplorer,
     handleSendNft,
     hideSendNft,
-    networks,
     selectedCollectible,
     shouldDisplayHideCollectionAction,
+    styles.actions,
+    styles.secondaryActions,
+    t,
+    theme.primaryText
+  ])
+
+  const modalContent = useMemo(() => {
+    if (!selectedCollectible) return null
+
+    const { image, name, collectionName, chainId, lastPrice } = selectedCollectible
+    const networkData = networks.find(({ chainId: networkChainId }) => chainId === networkChainId)
+    return (
+      <>
+        <SheetHeaderRow>
+          <Text
+            fontSize={isTab ? 20 : 18}
+            weight="semiBold"
+            numberOfLines={2}
+            selectable
+            style={isWeb && spacings.mbMd}
+          >
+            {name || t('Unknown NFT')}
+          </Text>
+        </SheetHeaderRow>
+        <View style={styles.imageContainer}>
+          <NftImage
+            withHint
+            uri={image}
+            size="100%"
+            iconSize={COLLECTIBLE_IMAGE_SIZE / 2}
+            backgroundColor={theme.secondaryBackground}
+            imageStyle={styles.image}
+          />
+        </View>
+        <View style={styles.details}>
+          <Row title={t('Collection')} text={collectionName} />
+          <Row title={t('Chain')} text={networkData?.name || t('Unknown network')} />
+          <Row title={t('Last price')} text={lastPrice || '$-'} noMb />
+        </View>
+        {/* Natively they're the sheet's footer, always in view */}
+        {isWeb && actions}
+      </>
+    )
+  }, [
+    actions,
+    networks,
+    selectedCollectible,
+    styles.details,
     styles.image,
     styles.imageContainer,
     t,
-    theme.primaryBackground,
-    theme.primaryText,
-    theme.secondaryBackground,
-    theme.secondaryText
+    theme.secondaryBackground
   ])
+
+  const footer = useMemo(
+    () => (!isWeb && !!actions ? <View style={spacings.ptSm}>{actions}</View> : undefined),
+    [actions]
+  )
+
+  if (!isWeb) {
+    return (
+      <BottomSheet
+        id="collectible-modal"
+        sheetRef={modalRef}
+        closeBottomSheet={handleClose}
+        adjustToContentHeight
+        FooterComponent={footer}
+      >
+        {modalContent}
+      </BottomSheet>
+    )
+  }
 
   return (
     <BottomSheet
