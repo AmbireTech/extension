@@ -18,8 +18,9 @@ const NetworkStatusesHeader: FC<{
     <View
       style={[
         flexbox.directionRow,
-        spacings.pbTy,
-        {
+        // The native sheet's fixed header already sets it apart from the rows, with its own gap
+        !isMobile && spacings.pbTy,
+        !isMobile && {
           borderBottomWidth: 2,
           borderBottomColor: theme.secondaryBackground
         }
@@ -28,6 +29,7 @@ const NetworkStatusesHeader: FC<{
       <View style={{ flex: 1.75 }}>
         <Text
           fontSize={isMobile ? 10 : 12}
+          numberOfLines={1}
           weight="semiBold"
           appearance="secondaryText"
           style={spacings.plTy}
@@ -39,6 +41,7 @@ const NetworkStatusesHeader: FC<{
         <Text
           key={label}
           fontSize={isMobile ? 10 : 12}
+          numberOfLines={1}
           weight="semiBold"
           appearance="secondaryText"
           style={{ flex, textAlign: 'center' }}

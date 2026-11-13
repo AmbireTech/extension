@@ -58,6 +58,23 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     ],
     [t]
   )
+  const privacyPoolsColumns = useMemo(
+    () => [
+      { label: t('Initial sync'), flex: 1 },
+      { label: t('Initial sync time'), flex: 1 },
+      { label: t('Last sync time'), flex: 1 }
+    ],
+    [t]
+  )
+  const tableHeader = useMemo(
+    () => (
+      <NetworkStatusesHeader
+        networkLabel={t('Network')}
+        columns={privacyPoolsAccountId ? privacyPoolsColumns : portfolioColumns}
+      />
+    ),
+    [portfolioColumns, privacyPoolsAccountId, privacyPoolsColumns, t]
+  )
 
   const sortedNetworks = useMemo(() => {
     return networks
@@ -95,6 +112,47 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
       })
   }, [networks, portfolioState])
 
+  const tableRows = privacyPoolsAccountId ? (
+    <PrivacyPoolsNetworkStatuses />
+  ) : (
+    sortedNetworks.map(({ networkKey, totalTime, isLoading, result, lastUpdatedAt, name }) => (
+      <NetworkStatusRow
+        key={networkKey}
+        networkKey={networkKey}
+        name={name as string}
+        lastUpdatedAt={lastUpdatedAt}
+        totalTime={totalTime}
+        isLoading={isLoading}
+        result={result}
+        theme={theme}
+      />
+    ))
+  )
+
+  const title = (
+    <SheetHeaderRow style={spacings.mbLg}>
+      <Text fontSize={20} weight="semiBold" style={isWeb ? spacings.mbLg : undefined}>
+        {t('Network Statuses')}
+      </Text>
+    </SheetHeaderRow>
+  )
+
+  // A native sheet scrolls the rows itself, under its fixed header with the table header
+  if (!isWeb) {
+    return (
+      <BottomSheet
+        id="network-statuses"
+        sheetRef={sheetRef}
+        closeBottomSheet={closeBottomSheet}
+        backgroundColor="primaryBackground"
+        HeaderComponent={tableHeader}
+      >
+        {title}
+        {tableRows}
+      </BottomSheet>
+    )
+  }
+
   return (
     <BottomSheet
       id="network-statuses"
@@ -104,37 +162,13 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
       isScrollEnabled={false}
       containerInnerWrapperStyles={flexbox.flex1}
     >
-      <SheetHeaderRow style={spacings.mbLg}>
-        <Text fontSize={20} weight="semiBold" style={isWeb ? spacings.mbLg : undefined}>
-          {t('Network Statuses')}
-        </Text>
-      </SheetHeaderRow>
-
-      {privacyPoolsAccountId ? (
-        <PrivacyPoolsNetworkStatuses />
-      ) : (
-        <>
-          {/* Table Header */}
-          <NetworkStatusesHeader networkLabel={t('Network')} columns={portfolioColumns} />
-          <ScrollView style={flexbox.flex1} contentContainerStyle={spacings.ptTy}>
-            {/* Table Rows */}
-            {sortedNetworks.map(
-              ({ networkKey, totalTime, isLoading, result, lastUpdatedAt, name }) => (
-                <NetworkStatusRow
-                  key={networkKey}
-                  networkKey={networkKey}
-                  name={name as string}
-                  lastUpdatedAt={lastUpdatedAt}
-                  totalTime={totalTime}
-                  isLoading={isLoading}
-                  result={result}
-                  theme={theme}
-                />
-              )
-            )}
-          </ScrollView>
-        </>
-      )}
+      {title}
+      {/* Table Header */}
+      {tableHeader}
+      <ScrollView style={flexbox.flex1} contentContainerStyle={spacings.ptTy}>
+        {/* Table Rows */}
+        {tableRows}
+      </ScrollView>
     </BottomSheet>
   )
 }
