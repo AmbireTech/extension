@@ -17,6 +17,8 @@ module.exports = [
       'safari-extension/**',
       'build/**',
       'recorder/**',
+      // A separate repo (git submodule) with its own Node scripts and generated files
+      'src/token-and-network-icons/**',
       '.expo/**',
       '.eslintrc.js',
       'eslint.config.js',
