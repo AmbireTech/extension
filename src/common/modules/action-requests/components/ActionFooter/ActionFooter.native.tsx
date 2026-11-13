@@ -11,6 +11,9 @@ import {
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import getButtonStyles from '@common/components/Button/styles'
+import HoldToProceedButton, {
+  HoldToProceedButtonProps
+} from '@common/components/HoldToProceedButton'
 import useTheme from '@common/hooks/useTheme'
 import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
@@ -46,6 +49,15 @@ type Props = {
   rejectOptionText?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  /**
+   * Replaces the resolve button with a hold-to-proceed one, so the request can't be approved by
+   * accident - e.g. when the scam checker flags the app behind it
+   */
+  holdToProceed?: {
+    text: string
+    completeText?: string
+    buttonType: HoldToProceedButtonProps['buttonType']
+  }
   children?: React.ReactNode
 }
 
@@ -63,6 +75,7 @@ const ActionFooter = ({
   rejectOptionsTitle = '',
   rejectOptionText = '',
   resolveNode,
+  holdToProceed,
   children
 }: Props) => {
   const { t } = useTranslation()
@@ -76,6 +89,20 @@ const ActionFooter = ({
       setDoesResolveTextWrap(e.nativeEvent.lines.length > 1),
     []
   )
+
+  const holdToProceedButton = holdToProceed ? (
+    <View style={flexbox.flex1}>
+      <HoldToProceedButton
+        testID={resolveButtonTestID}
+        size="large"
+        text={holdToProceed.text}
+        completeText={holdToProceed.completeText}
+        buttonType={holdToProceed.buttonType}
+        onHoldComplete={handleOnResolve}
+        disabled={resolveDisabled}
+      />
+    </View>
+  ) : null
 
   return (
     <View style={[spacings.ptSm, spacings.phSm]}>
@@ -95,7 +122,7 @@ const ActionFooter = ({
             />
           </View>
         )}
-        {resolveNode || (
+        {resolveNode || holdToProceedButton || (
           <View style={flexbox.flex1}>
             {!!resolveButtonShortText && (
               // An invisible copy of the full text tells whether it fits on one row

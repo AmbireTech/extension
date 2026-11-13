@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useCurrentRequestDappSafety from '@common/modules/action-requests/hooks/useCurrentRequestDappSafety'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useToast from '@common/hooks/useToast'
 
@@ -76,6 +77,22 @@ const useGetEncryptionPublicKeyRequest = () => {
     })
   }, [userRequest, t, requestsDispatch])
 
+  const {
+    banners: dappSafetyBanners,
+    hasSafetyBanners,
+    holdToProceedButtonType
+  } = useCurrentRequestDappSafety()
+
+  const holdToProceed = useMemo(() => {
+    if (!hasSafetyBanners) return undefined
+
+    return {
+      text: t('Hold to provide'),
+      completeText: t('Provide'),
+      buttonType: holdToProceedButtonType
+    }
+  }, [hasSafetyBanners, holdToProceedButtonType, t])
+
   return {
     t,
     userRequest,
@@ -87,7 +104,9 @@ const useGetEncryptionPublicKeyRequest = () => {
     selectedAccountKeyStoreKeys,
     isDisabled,
     handleAccept,
-    handleDeny
+    handleDeny,
+    dappSafetyBanners,
+    holdToProceed
   }
 }
 

@@ -1,3 +1,6 @@
+import { Props as ButtonProps } from '@common/components/Button'
+import { HoldToProceedButtonProps } from '@common/components/HoldToProceedButton'
+
 type Props = {
   onReject?: () => void
   onResolve: () => void
@@ -22,6 +25,15 @@ type Props = {
   rejectOptionText?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  /**
+   * Replaces the resolve button with a hold-to-proceed one, so the request can't be approved by
+   * accident - e.g. when the scam checker flags the app behind it
+   */
+  holdToProceed?: {
+    text: string
+    completeText?: string
+    buttonType: HoldToProceedButtonProps['buttonType']
+  }
   children?: React.ReactNode
 }
 

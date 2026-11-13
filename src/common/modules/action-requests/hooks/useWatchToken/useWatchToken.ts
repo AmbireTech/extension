@@ -3,7 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { getNetworksWithFailedRPC } from '@ambire-common/libs/networks/networks'
 import { getAssetCacheKey, normalizeAssetAddress } from '@ambire-common/libs/portfolio/helpers'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useCurrentRequestDappSafety from '@common/modules/action-requests/hooks/useCurrentRequestDappSafety'
 import {
   getTokenEligibility,
   getTokenFromPortfolio,
@@ -18,6 +20,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
 const useWatchToken = () => {
+  const { t } = useTranslation()
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch
@@ -256,6 +259,22 @@ const useWatchToken = () => {
     return token && token?.flags && getAndFormatTokenDetails(token, networks)
   }, [temporaryToken, portfolioToken, networks])
 
+  const {
+    banners: dappSafetyBanners,
+    hasSafetyBanners,
+    holdToProceedButtonType
+  } = useCurrentRequestDappSafety()
+
+  const holdToProceed = useMemo(() => {
+    if (!hasSafetyBanners) return undefined
+
+    return {
+      text: t('Hold to add token'),
+      completeText: isLoading ? t('Adding token...') : t('Add token'),
+      buttonType: holdToProceedButtonType
+    }
+  }, [hasSafetyBanners, holdToProceedButtonType, isLoading, t])
+
   return {
     userRequest,
     tokenData,
@@ -272,7 +291,9 @@ const useWatchToken = () => {
     temporaryToken,
     portfolioToken,
     handleAddToken,
-    tokenDetails
+    tokenDetails,
+    dappSafetyBanners,
+    holdToProceed
   }
 }
 

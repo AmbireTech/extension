@@ -4,6 +4,9 @@ import { View } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import GlassView from '@common/components/GlassView'
+import HoldToProceedButton, {
+  HoldToProceedButtonProps
+} from '@common/components/HoldToProceedButton'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
 import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
@@ -28,6 +31,15 @@ type Props = {
   rejectOptionText?: string
   /** Optional custom node to replace the default resolve button */
   resolveNode?: React.ReactNode
+  /**
+   * Replaces the resolve button with a hold-to-proceed one, so the request can't be approved by
+   * accident - e.g. when the scam checker flags the app behind it
+   */
+  holdToProceed?: {
+    text: string
+    completeText?: string
+    buttonType: HoldToProceedButtonProps['buttonType']
+  }
   /** Optional content rendered above the footer buttons (e.g. view-only alert) */
   children?: React.ReactNode
 }
@@ -45,6 +57,7 @@ const ActionFooter = ({
   rejectOptionsTitle = '',
   rejectOptionText = '',
   resolveNode,
+  holdToProceed,
   children
 }: Props) => {
   const { t } = useTranslation()
@@ -67,8 +80,25 @@ const ActionFooter = ({
     </View>
   ) : null
 
-  const resolveButton = resolveNode ? (
-    <View style={[flexbox.flex1, { minWidth: 0 }]}>{resolveNode}</View>
+  const holdToProceedButton = holdToProceed ? (
+    <HoldToProceedButton
+      testID={resolveButtonTestID}
+      style={isWideFooterLayout ? flexbox.alignSelfEnd : { width: '100%', alignSelf: 'stretch' }}
+      textStyle={{
+        whiteSpace: 'nowrap'
+      }}
+      size="large"
+      text={holdToProceed.text}
+      completeText={holdToProceed.completeText}
+      buttonType={holdToProceed.buttonType}
+      onHoldComplete={handleOnResolve}
+      disabled={resolveDisabled}
+    />
+  ) : null
+  const customResolveNode = resolveNode || holdToProceedButton
+
+  const resolveButton = customResolveNode ? (
+    <View style={[flexbox.flex1, { minWidth: 0 }]}>{customResolveNode}</View>
   ) : (
     <View style={[flexbox.flex1, { minWidth: 0 }]}>
       <Button
@@ -82,6 +112,9 @@ const ActionFooter = ({
       />
     </View>
   )
+
+  const wideLayoutResolveNode =
+    resolveNode || (holdToProceedButton && <View style={flexbox.flex1}>{holdToProceedButton}</View>)
 
   if (!isWideFooterLayout) {
     return (
@@ -118,7 +151,7 @@ const ActionFooter = ({
             )}
           </View>
           <View style={flexbox.flex1} />
-          {resolveNode || (
+          {wideLayoutResolveNode || (
             <View style={flexbox.flex1}>
               <Button
                 testID={resolveButtonTestID}

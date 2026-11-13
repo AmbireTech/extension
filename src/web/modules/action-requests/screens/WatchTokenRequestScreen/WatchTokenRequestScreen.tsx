@@ -15,6 +15,7 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import DappSafetyBanners from '@common/modules/action-requests/components/DappSafetyBanners'
 import useWatchToken from '@common/modules/action-requests/hooks/useWatchToken'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -47,7 +48,9 @@ const WatchTokenRequestScreen = () => {
     isTokenCustom,
     temporaryToken,
     handleAddToken,
-    tokenDetails
+    tokenDetails,
+    dappSafetyBanners,
+    holdToProceed
   } = useWatchToken()
 
   if (networkWithFailedRPC && networkWithFailedRPC?.length > 0 && !!temporaryToken) {
@@ -69,6 +72,7 @@ const WatchTokenRequestScreen = () => {
         <ActionFooter
           onReject={handleCancel}
           onResolve={handleAddToken}
+          holdToProceed={holdToProceed}
           resolveButtonText={isLoading ? t('Adding token...') : t('Add token')}
           resolveDisabled={
             isLoading ||
@@ -86,6 +90,7 @@ const WatchTokenRequestScreen = () => {
     >
       <View style={[styles.container]}>
         <View style={styles.content}>
+          <DappSafetyBanners banners={dappSafetyBanners} style={spacings.mbLg} />
           <View style={styles.contentHeader}>
             <Text weight="medium" fontSize={20} style={spacings.mb} numberOfLines={1}>
               {t('Add suggested token')}
