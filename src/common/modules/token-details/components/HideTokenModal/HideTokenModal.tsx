@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import Text from '@common/components/Text'
@@ -11,6 +12,7 @@ import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
@@ -38,9 +40,15 @@ const HideTokenModal = ({
       containerInnerWrapperStyles={isWeb ? { flex: 1 } : undefined}
       style={isWeb ? styles.modal : undefined}
     >
-      <Text testID="hide-token-modal-title" style={spacings.mbSm} weight="semiBold">
-        {t('Are you sure you want to hide this token?')}
-      </Text>
+      <SheetHeaderRow style={spacings.mbSm}>
+        <Text
+          testID="hide-token-modal-title"
+          style={isWeb ? spacings.mbSm : text.center}
+          weight="semiBold"
+        >
+          {t('Are you sure you want to hide this token?')}
+        </Text>
+      </SheetHeaderRow>
       <Text testID="hide-token-modal-description">
         {t('You can always unhide it from the Settings menu > Custom assets.')}
       </Text>

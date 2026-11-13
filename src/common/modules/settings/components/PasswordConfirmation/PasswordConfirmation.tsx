@@ -8,6 +8,7 @@ import {
   useIsBottomSheetOpen,
   useIsInsideBottomSheet
 } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -20,6 +21,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useSecretConfirmation from '@common/hooks/useSecretConfirmation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
@@ -236,10 +238,20 @@ const PasswordConfirmation: React.FC<Props> = ({
 
   return (
     <View style={flexbox.flex1}>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-        {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
-        <PanelTitle title={panelTitle} style={isWeb ? textStyles.left : textStyles.center} />
-      </View>
+      {/* In a native sheet the header row adds the X and spaces the title itself */}
+      <SheetHeaderRow style={spacings.mbLg}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            common.fullWidth,
+            !(isInsideBottomSheet && !isWeb) && spacings.mbLg
+          ]}
+        >
+          {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+          <PanelTitle title={panelTitle} style={isWeb ? textStyles.left : textStyles.center} />
+        </View>
+      </SheetHeaderRow>
       {isOfferingBiometrics && isUsingBiometrics ? (
         <BiometricsPrompt
           BiometricsIcon={BiometricsIcon}

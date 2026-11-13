@@ -6,6 +6,7 @@ import { Account } from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
 import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
@@ -18,6 +19,7 @@ import usePrevious from '@common/hooks/usePrevious'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
@@ -143,10 +145,18 @@ const ExportKey = ({
 
   return (
     <View style={flexbox.flex1}>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, isWeb && spacings.mbLg]}>
-        {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrTy} />}
-        <PanelTitle title={t('Private key export')} style={isWeb ? text.left : text.center} />
-      </View>
+      <SheetHeaderRow>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            isWeb ? spacings.mbLg : common.fullWidth
+          ]}
+        >
+          {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrTy} />}
+          <PanelTitle title={t('Private key export')} style={isWeb ? text.left : text.center} />
+        </View>
+      </SheetHeaderRow>
       <Text weight="semiBold" fontSize={fontSize} numberOfLines={1} style={spacings.mb}>
         {keyLabel}
       </Text>

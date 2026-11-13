@@ -5,7 +5,9 @@ import { useModalize } from 'react-native-modalize'
 
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -102,9 +104,11 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
       isScrollEnabled={false}
       containerInnerWrapperStyles={flexbox.flex1}
     >
-      <Text fontSize={20} weight="semiBold" style={spacings.mbLg}>
-        {t('Network Statuses')}
-      </Text>
+      <SheetHeaderRow style={spacings.mbLg}>
+        <Text fontSize={20} weight="semiBold" style={isWeb ? spacings.mbLg : undefined}>
+          {t('Network Statuses')}
+        </Text>
+      </SheetHeaderRow>
 
       {privacyPoolsAccountId ? (
         <PrivacyPoolsNetworkStatuses />

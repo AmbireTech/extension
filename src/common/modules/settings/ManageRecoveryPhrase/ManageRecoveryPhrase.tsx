@@ -11,6 +11,8 @@ import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -27,6 +29,7 @@ import eventBus from '@common/services/event/eventBus'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -164,17 +167,30 @@ const ManageRecoveryPhrase = ({
   const unmountEditNameSheet = useCallback(() => setIsEditNameSheetMounted(false), [])
 
   const isBlurred = blurred || seed === DUMMY_SEED
+  // Manage sits in a sheet on mobile, where the header row spaces the title instead
+  const isInNativeSheet = useIsInsideBottomSheet() && !isWeb
 
   return (
     <>
       <View style={flexbox.flex1}>
-        <View
-          testID="manage-recovery-phrase-header"
-          style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}
-        >
-          {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
-          <PanelTitle title={t('Manage recovery phrase')} style={isWeb ? text.left : text.center} />
-        </View>
+        {/* In a native sheet the header row adds the X and spaces the title itself */}
+        <SheetHeaderRow style={spacings.mbLg}>
+          <View
+            testID="manage-recovery-phrase-header"
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              common.fullWidth,
+              !isInNativeSheet && spacings.mbLg
+            ]}
+          >
+            {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
+            <PanelTitle
+              title={t('Manage recovery phrase')}
+              style={isWeb ? text.left : text.center}
+            />
+          </View>
+        </SheetHeaderRow>
         <View style={[isMobile ? spacings.mbSm : spacings.mb, flexbox.alignStart]}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Text fontSize={16} weight="medium" numberOfLines={1} style={{ flexShrink: 1 }}>
@@ -335,13 +351,24 @@ const ManageRecoveryPhrase = ({
         containerInnerWrapperStyles={{ flex: 1 }}
         style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          {!isMobile && <PanelBackButton onPress={closeDeleteConfirmation} style={spacings.mrSm} />}
-          <PanelTitle
-            title={t('Confirm phrase removal')}
-            style={isMobile ? text.center : text.left}
-          />
-        </View>
+        <SheetHeaderRow style={spacings.mbLg}>
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              common.fullWidth,
+              isWeb && spacings.mbLg
+            ]}
+          >
+            {!isMobile && (
+              <PanelBackButton onPress={closeDeleteConfirmation} style={spacings.mrSm} />
+            )}
+            <PanelTitle
+              title={t('Confirm phrase removal')}
+              style={isMobile ? text.center : text.left}
+            />
+          </View>
+        </SheetHeaderRow>
         <View style={[flexbox.flex1, flexbox.justifyEnd]}>
           {hasPrivacyPoolsAccount && (
             <Alert

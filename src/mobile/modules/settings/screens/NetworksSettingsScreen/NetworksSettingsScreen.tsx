@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 import AddIcon from '@common/assets/svg/AddIcon'
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
@@ -92,6 +93,7 @@ const NetworksSettingsScreen = () => {
           }
           autoOpen={shouldOpenBottomSheet}
         >
+          <SheetHeaderRow />
           <NetworkForm onCancel={closeBottomSheet} onSaved={closeBottomSheet} />
         </BottomSheet>
       </MobileLayoutWrapperMainContent>

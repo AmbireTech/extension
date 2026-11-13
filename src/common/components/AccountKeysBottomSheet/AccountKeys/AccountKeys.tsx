@@ -9,12 +9,14 @@ import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import ExportKey from '@common/components/ExportKey'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
@@ -206,13 +208,21 @@ const AccountKeys: FC<Props> = ({
 
   return (
     <View style={isWeb ? { maxHeight: 384, flex: 1 } : undefined}>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-        {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
-        <PanelTitle
-          title={t('{{accName}} keys', { accName: account.preferences.label })}
-          style={isWeb ? text.left : text.center}
-        />
-      </View>
+      <SheetHeaderRow style={spacings.mbLg}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            isWeb ? spacings.mbLg : common.fullWidth
+          ]}
+        >
+          {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
+          <PanelTitle
+            title={t('{{accName}} keys', { accName: account.preferences.label })}
+            style={isWeb ? text.left : text.center}
+          />
+        </View>
+      </SheetHeaderRow>
       <ScrollView
         bounces={isMobile}
         style={[!!withAlert && spacings.mb, isWeb && flexbox.flex1]}

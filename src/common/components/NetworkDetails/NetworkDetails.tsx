@@ -11,6 +11,7 @@ import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import Dialog from '@common/components/Dialog'
 import DialogButton from '@common/components/Dialog/DialogButton'
@@ -506,6 +507,8 @@ const NetworkDetails = ({
         containerInnerWrapperStyles={isWeb ? { flex: 1 } : {}}
         style={isWeb ? { ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 } : {}}
       >
+        {/* The form's own header is a card, so the X gets a row of its own above it */}
+        <SheetHeaderRow />
         <NetworkForm
           selectedChainId={chainId.toString()}
           onCancel={closeBottomSheet}

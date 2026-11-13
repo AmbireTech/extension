@@ -101,11 +101,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const onOpened = useLatestCallback(() => _onOpened?.())
   const onOpen = useLatestCallback(() => _onOpen?.())
   const onBackdropPress = useLatestCallback(() => _onBackdropPress?.())
-  const { setRef, isModal, isOpen, setIsOpen } = useBottomSheetInternal({
+  const { setRef, isModal, isOpen, setIsOpen, isNested } = useBottomSheetInternal({
     ...props,
     closeBottomSheet
   })
-  const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
+  // A sheet without `closeBottomSheet` is one the user can't close, so it gets no X
+  const bottomSheetContextValue = useBottomSheetContextValue(
+    isOpen,
+    isNested,
+    props.closeBottomSheet ? closeBottomSheet : undefined
+  )
 
   const internalScrollableRef = useRef<any>(null)
   const scrollableRef = externalScrollViewRef || internalScrollableRef

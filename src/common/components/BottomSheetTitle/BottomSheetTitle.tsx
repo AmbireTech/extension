@@ -2,12 +2,15 @@ import React from 'react'
 import { View } from 'react-native'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 type Props = {
   title: string
@@ -25,6 +28,24 @@ const CLOSE_BUTTON_SIZE = 40
 const BottomSheetTitle = ({ title, subtitle, onClose, closeButtonTestID }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+
+  // Native sheets draw their own X (and ‹ back) around the centered title
+  if (!isWeb) {
+    return (
+      <View style={spacings.mbLg}>
+        <SheetHeaderRow style={spacings.mb0}>
+          <Text fontSize={24} weight="semiBold" style={text.center}>
+            {title}
+          </Text>
+        </SheetHeaderRow>
+        {!!subtitle && (
+          <Text fontSize={14} appearance="secondaryText" style={[spacings.mtMi, text.center]}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+    )
+  }
 
   return (
     <View style={spacings.mbLg}>

@@ -4,11 +4,14 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import text from '@common/styles/utils/text'
 
 export type ClearRecentsBottomSheetHandle = {
   open: () => void
@@ -31,9 +34,11 @@ const ClearRecentsBottomSheet = forwardRef<ClearRecentsBottomSheetHandle>((_, re
 
   return (
     <BottomSheet id="clear-recents" sheetRef={sheetRef} closeBottomSheet={close} type="modal">
-      <Text weight="semiBold" fontSize={18} style={spacings.mbSm}>
-        {t('Clear recent apps?')}
-      </Text>
+      <SheetHeaderRow style={spacings.mbSm}>
+        <Text weight="semiBold" fontSize={18} style={isWeb ? spacings.mbSm : text.center}>
+          {t('Clear recent apps?')}
+        </Text>
+      </SheetHeaderRow>
       <Text appearance="secondaryText" fontSize={14} style={spacings.mb}>
         {t(
           'This removes all apps from your Recent list. Your favorites and connections are not affected.'

@@ -9,6 +9,7 @@ import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
@@ -26,7 +27,7 @@ import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -334,23 +335,32 @@ const AccountsSettingsScreen = () => {
           containerInnerWrapperStyles={{ flex: 1 }}
           style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
         >
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-            {!isMobile && (
-              <PanelBackButton
-                onPress={() => {
-                  setAccountToRemove(null)
-                  closeRemoveAccount()
-                }}
-                style={spacings.mrSm}
+          <SheetHeaderRow style={spacings.mbLg}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                common.fullWidth,
+                isWeb && spacings.mbLg
+              ]}
+            >
+              {!isMobile && (
+                <PanelBackButton
+                  onPress={() => {
+                    setAccountToRemove(null)
+                    closeRemoveAccount()
+                  }}
+                  style={spacings.mrSm}
+                />
+              )}
+              <PanelTitle
+                title={t('Remove {{ label }}', {
+                  label: accountToRemove?.preferences?.label || 'account'
+                })}
+                style={isMobile ? text.center : text.left}
               />
-            )}
-            <PanelTitle
-              title={t('Remove {{ label }}', {
-                label: accountToRemove?.preferences?.label || 'account'
-              })}
-              style={isMobile ? text.center : text.left}
-            />
-          </View>
+            </View>
+          </SheetHeaderRow>
           <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
             <Text fontSize={16} weight="medium" style={{ ...spacings.mb, textAlign: 'center' }}>
               {t('Are you sure you want to remove this account?')}

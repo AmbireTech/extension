@@ -8,6 +8,7 @@ import { useModalize } from 'react-native-modalize'
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
@@ -203,9 +204,11 @@ const QrReaderScreen = () => {
         shouldBeClosableOnDrag={false}
         backgroundColor="secondaryBackground"
       >
-        <Text fontSize={18} weight="semiBold" style={spacings.mbLg}>
-          {t('Enter QR code data')}
-        </Text>
+        <SheetHeaderRow style={spacings.mbLg}>
+          <Text fontSize={18} weight="semiBold">
+            {t('Enter QR code data')}
+          </Text>
+        </SheetHeaderRow>
         <Input
           value={manualValue}
           onChangeText={setManualValue}

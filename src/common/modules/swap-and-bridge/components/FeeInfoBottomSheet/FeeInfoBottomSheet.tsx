@@ -7,6 +7,7 @@ import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -132,6 +133,8 @@ const FeeInfoBottomSheet = ({
       adjustToContentHeight
       modalTopOffset={isWeb ? 0 : undefined}
     >
+      {/* No title here, so a native sheet gets a row with just the X */}
+      {!!feeExemptionExplanation && <SheetHeaderRow />}
       {feeExemptionExplanation ? (
         <View style={[styles.feeExemption, spacings.phSm, spacings.pvSm, spacings.mtSm]}>
           <Text appearance="successText" fontSize={14} weight="semiBold">
@@ -143,14 +146,23 @@ const FeeInfoBottomSheet = ({
         </View>
       ) : (
         <>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtMi, spacings.mbTy]}>
-            {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
-            <PanelTitle
-              title={t('Stake $WALLET, pay less in fees')}
-              size={18}
-              style={isWeb ? text.left : text.center}
-            />
-          </View>
+          <SheetHeaderRow style={spacings.mbTy}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                isWeb && spacings.mtMi,
+                isWeb && spacings.mbTy
+              ]}
+            >
+              {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
+              <PanelTitle
+                title={t('Stake $WALLET, pay less in fees')}
+                size={18}
+                style={isWeb ? text.left : text.center}
+              />
+            </View>
+          </SheetHeaderRow>
           <View
             style={[
               flexbox.directionRow,

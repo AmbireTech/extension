@@ -16,6 +16,7 @@ import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import { isAndroid, isiOS } from '@common/config/env'
@@ -344,12 +345,15 @@ const DappWebViewScreen = () => {
 
   const searchHeaderComponent = useMemo(
     () => (
-      <Search
-        control={searchControl}
-        placeholder={t('Search or enter URL')}
-        autoFocus={true}
-        containerStyle={spacings.mbLg}
-      />
+      <>
+        <SheetHeaderRow />
+        <Search
+          control={searchControl}
+          placeholder={t('Search or enter URL')}
+          autoFocus={true}
+          containerStyle={spacings.mbLg}
+        />
+      </>
     ),
     [searchControl, t]
   )

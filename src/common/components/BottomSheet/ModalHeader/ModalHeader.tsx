@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -32,8 +33,9 @@ const ModalHeader: FC<Props> = ({
   headerTestID
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
+  const isInsideBottomSheet = useIsInsideBottomSheet()
   // A native sheet already spaces its content below the grabber, the same for every sheet
-  const isInNativeSheet = useIsInsideBottomSheet() && !isWeb
+  const isInNativeSheet = isInsideBottomSheet && !isWeb
   const containerStyle = {
     ...(isInNativeSheet ? spacings.pt0 : spacings.ptTy),
     ...spacings.pb0,
@@ -51,6 +53,29 @@ const ModalHeader: FC<Props> = ({
     ...(isMobile ? spacings.mb : spacings.mbLg),
     ...style,
     minHeight: 28
+  }
+
+  // Native sheets draw the X (and ‹ back) of the design around a centered title,
+  // with `children` (right side actions) left of the X
+  if (isInNativeSheet) {
+    return (
+      <SheetHeaderRow
+        onBack={forceBackButtonOnMobile ? handleClose : undefined}
+        rightContent={children}
+        style={style}
+      >
+        {!!title && (
+          <Text
+            testID={headerTestID}
+            fontSize={18}
+            weight="medium"
+            style={{ width: '100%', textAlign: titlePosition === 'left' ? 'left' : 'center' }}
+          >
+            {title}
+          </Text>
+        )}
+      </SheetHeaderRow>
+    )
   }
 
   // The row layout places the title right after the arrow. The one below overlays the title

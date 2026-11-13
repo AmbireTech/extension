@@ -3,10 +3,12 @@ import { View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useToast from '@common/hooks/useToast'
@@ -132,9 +134,11 @@ const EditNameBottomSheet = ({
         )
       }
     >
-      <Text fontSize={20} weight="medium" style={[text.center, spacings.mbXl]}>
-        {title}
-      </Text>
+      <SheetHeaderRow style={spacings.mbXl}>
+        <Text fontSize={20} weight="medium" style={[text.center, isWeb && spacings.mbXl]}>
+          {title}
+        </Text>
+      </SheetHeaderRow>
       {children(handleSave)}
       {!isCompactLayout && (
         // On wide screens the buttons sit centered in a glass pill instead of filling the width

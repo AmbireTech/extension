@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import NftImage from '@common/components/NftImage'
 import Text from '@common/components/Text'
@@ -14,7 +15,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
@@ -76,6 +77,7 @@ const CollectibleModal = ({
     const networkData = networks.find(({ chainId: networkChainId }) => chainId === networkChainId)
     return (
       <>
+        <SheetHeaderRow style={common.fullWidth} />
         <View style={styles.imageContainer}>
           <NftImage
             withHint

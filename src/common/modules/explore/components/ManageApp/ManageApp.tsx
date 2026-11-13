@@ -7,6 +7,7 @@ import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import WalletConnectIcon from '@common/assets/svg/WalletConnectIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import AccountOption from '@common/components/Option/AccountOption'
@@ -141,9 +142,15 @@ const ManageApp = ({
         adjustToContentHeight
         style={style}
       >
-        <Text weight="semiBold" fontSize={18} style={[spacings.mb, { textAlign: 'center' }]}>
-          {t('Manage app')}
-        </Text>
+        <SheetHeaderRow>
+          <Text
+            weight="semiBold"
+            fontSize={18}
+            style={[isWeb && spacings.mb, { textAlign: 'center' }]}
+          >
+            {t('Manage app')}
+          </Text>
+        </SheetHeaderRow>
 
         <View style={spacings.mbSm}>
           <DappItem {...dapp} isInSettings onPressOverride={() => {}} />
@@ -320,9 +327,15 @@ const ManageApp = ({
         closeBottomSheet={closeDisconnectChooser}
         adjustToContentHeight
       >
-        <Text weight="semiBold" fontSize={18} style={[spacings.mb, { textAlign: 'center' }]}>
-          {t('Disconnect from')}
-        </Text>
+        <SheetHeaderRow>
+          <Text
+            weight="semiBold"
+            fontSize={18}
+            style={[isWeb && spacings.mb, { textAlign: 'center' }]}
+          >
+            {t('Disconnect from')}
+          </Text>
+        </SheetHeaderRow>
         <Text
           fontSize={14}
           appearance="secondaryText"

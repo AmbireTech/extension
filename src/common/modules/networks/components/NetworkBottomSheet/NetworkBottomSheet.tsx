@@ -6,8 +6,10 @@ import { useModalize } from 'react-native-modalize'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import i18n from '@common/config/localization/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -55,12 +57,14 @@ const NetworkBottomSheet = ({ sheetRef, chainId, closeBottomSheet, openBlockExpl
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
     >
-      <View style={[styles.item, spacings.pvSm, spacings.mbLg]}>
-        {!!chainId && <NetworkIcon size={28} id={chainId.toString()} />}
-        <Text fontSize={16} weight="medium" style={spacings.mlTy}>
-          {networkData?.name || t('Unknown Network')}
-        </Text>
-      </View>
+      <SheetHeaderRow style={spacings.mbLg}>
+        <View style={[styles.item, spacings.pvSm, isWeb ? spacings.mbLg : spacings.mb0]}>
+          {!!chainId && <NetworkIcon size={28} id={chainId.toString()} />}
+          <Text fontSize={16} weight="medium" style={spacings.mlTy}>
+            {networkData?.name || t('Unknown Network')}
+          </Text>
+        </View>
+      </SheetHeaderRow>
       <Option
         renderIcon={<SettingsIcon width={24} height={24} color={theme.secondaryText} />}
         title={t('Go to Network Settings')}

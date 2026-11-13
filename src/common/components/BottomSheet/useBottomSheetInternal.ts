@@ -136,7 +136,9 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
     isBackdropVisible,
     setIsBackdropVisible,
     id,
-    computedZIndex
+    computedZIndex,
+    /** Opened while another sheet was up, so it was opened from that one. */
+    isNested: openCountAtOpenTime > 1
   }
 }
 

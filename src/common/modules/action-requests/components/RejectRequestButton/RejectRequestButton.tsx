@@ -7,15 +7,18 @@ import CloseIcon from '@common/assets/svg/CloseIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import textStyles from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
@@ -124,17 +127,35 @@ const RejectRequestButton = ({
   const handleRejectAll = useCallback(() => rejectAllFromDapp(false), [rejectAllFromDapp])
   const handleSilenceDapp = useCallback(() => rejectAllFromDapp(true), [rejectAllFromDapp])
 
-  const sheetHeader = useMemo(
-    () => (
+  const sheetHeader = useMemo(() => {
+    const subtitle = canSilenceDapp
+      ? t('This app keeps sending requests after you refused it')
+      : t('This app has more than one request waiting')
+
+    // Native sheets draw their own X (and ‹ back) around the centered title
+    if (!isWeb) {
+      return (
+        <View style={spacings.mbLg}>
+          <SheetHeaderRow style={spacings.mbMi}>
+            <Text fontSize={18} weight="semiBold" style={textStyles.center}>
+              {optionsTitle}
+            </Text>
+          </SheetHeaderRow>
+          <Text fontSize={14} appearance="secondaryText" style={styles.sheetSubtitle}>
+            {subtitle}
+          </Text>
+        </View>
+      )
+    }
+
+    return (
       <View style={styles.sheetHeader}>
         <View style={flexbox.flex1}>
           <Text fontSize={18} weight="semiBold" style={styles.sheetTitle}>
             {optionsTitle}
           </Text>
           <Text fontSize={14} appearance="secondaryText" style={styles.sheetSubtitle}>
-            {canSilenceDapp
-              ? t('This app keeps sending requests after you refused it')
-              : t('This app has more than one request waiting')}
+            {subtitle}
           </Text>
         </View>
         <HoverablePressable
@@ -147,9 +168,8 @@ const RejectRequestButton = ({
           <CloseIcon color={theme.iconPrimary} width={14} height={14} />
         </HoverablePressable>
       </View>
-    ),
-    [canSilenceDapp, handleClose, optionsTitle, styles, t, theme.iconPrimary]
-  )
+    )
+  }, [canSilenceDapp, handleClose, optionsTitle, styles, t, theme.iconPrimary])
 
   return (
     <>

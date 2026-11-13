@@ -5,9 +5,11 @@ import { useModalize } from 'react-native-modalize'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import FullScreenMessage from '@common/components/FullScreenMessage'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SupportLink from '@common/components/SupportLink'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { LeanThemeProvider } from '@common/contexts/themeContext/context'
 import useTheme from '@common/hooks/useTheme'
@@ -76,14 +78,16 @@ const ErrorBoundaryInner = ({ error, title, description, logo }: Props) => {
         }}
         containerInnerWrapperStyles={flexbox.flex1}
       >
-        <Text
-          fontSize={20}
-          weight="semiBold"
-          numberOfLines={1}
-          style={{ ...spacings.mbLg, textAlign: 'center' }}
-        >
-          {t('Error Details')}
-        </Text>
+        <SheetHeaderRow style={spacings.mbLg}>
+          <Text
+            fontSize={20}
+            weight="semiBold"
+            numberOfLines={1}
+            style={{ ...(isWeb && spacings.mbLg), textAlign: 'center' }}
+          >
+            {t('Error Details')}
+          </Text>
+        </SheetHeaderRow>
 
         <Text style={{ ...spacings.mbTy, textAlign: 'center' }}>
           {t('This report provides technical details.')}

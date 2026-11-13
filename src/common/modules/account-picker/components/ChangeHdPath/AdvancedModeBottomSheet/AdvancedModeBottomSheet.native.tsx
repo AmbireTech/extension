@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import NumberInput from '@common/components/NumberInput'
 import { SelectValue } from '@common/components/Select/types'
@@ -70,9 +71,11 @@ const CustomHDPathBottomSheet: FC<Props> = ({
 
   return (
     <BottomSheet id="custom-hd-path" sheetRef={sheetRef} closeBottomSheet={closeBottomSheetWrapped}>
-      <Text fontSize={20} weight="medium" style={[text.center, spacings.mbXl]}>
-        {t('Custom address HD path')}
-      </Text>
+      <SheetHeaderRow style={spacings.mbXl}>
+        <Text fontSize={20} weight="medium" style={text.center}>
+          {t('Custom address HD path')}
+        </Text>
+      </SheetHeaderRow>
 
       <Text fontSize={16} weight="medium" style={spacings.mbSm}>
         {t('Select HD path')}

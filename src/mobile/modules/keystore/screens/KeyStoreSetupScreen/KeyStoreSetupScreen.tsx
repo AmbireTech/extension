@@ -4,6 +4,7 @@ import { useModalize } from 'react-native-modalize'
 
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Checkbox from '@common/components/Checkbox'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import FatToggle from '@common/components/FatToggle'
@@ -143,6 +144,7 @@ const KeyStoreSetupScreen = () => {
         </KeyStoreSetupForm>
       </MobileLayoutWrapperMainContent>
       <BottomSheet id="terms-modal" closeBottomSheet={closeTermsModal} sheetRef={termsModalRef}>
+        <SheetHeaderRow />
         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
           <AmbireLogo style={[spacings.mbLg, flexbox.alignCenter]} width={185} height={92} />
           <Text fontSize={32} weight="regular" style={[{ textAlign: 'center' }, spacings.mbXl]}>

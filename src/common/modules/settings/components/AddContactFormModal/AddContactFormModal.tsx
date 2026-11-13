@@ -9,6 +9,7 @@ import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddressInput from '@common/components/AddressInput'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Input from '@common/components/Input'
@@ -221,9 +222,11 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
         />
       ) : (
         <View>
-          <Text weight="medium" fontSize={20} style={[spacings.mbLg, text.center]}>
-            {t('Add new contact')}
-          </Text>
+          <SheetHeaderRow style={spacings.mbLg}>
+            <Text weight="medium" fontSize={20} style={text.center}>
+              {t('Add new contact')}
+            </Text>
+          </SheetHeaderRow>
           {formFields}
           {/* One row, each button growing from its label, so the long one still fits next to Cancel */}
           <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>

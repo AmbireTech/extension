@@ -5,6 +5,7 @@ import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import NetworkDetails from '@common/components/NetworkDetails'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
@@ -190,6 +191,7 @@ const NetworksSettings = () => {
         closeBottomSheet={closeNetworkDetailsSheet}
         onClosed={() => setSelectedChainId(undefined)}
       >
+        <SheetHeaderRow />
         <View style={spacings.mbSm}>
           <NetworkDetails
             name={selectedNetwork?.name || '-'}
