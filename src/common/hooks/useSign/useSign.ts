@@ -73,7 +73,7 @@ type Props = {
  * and exit animations. The request closes once the exit animation ends. Short, so
  * "Sign & Close" still feels like a one-click action, but long enough to read the message
  */
-export const SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS = 2500
+export const SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS = 1300
 
 /**
  * How long after `closesAt` the request closes anyway when the exit animation never reports
