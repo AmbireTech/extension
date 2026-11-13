@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, TouchableOpacity, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
-import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import BottomSheet from '@common/components/BottomSheet'
 import Checkbox from '@common/components/Checkbox'
 import DualChoiceModal from '@common/components/DualChoiceModal'
@@ -147,7 +147,7 @@ const KeyStoreSetupScreen = () => {
         sheetRef={termsModalRef}
       >
         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-          <AmbireLogo style={[spacings.mbLg, flexbox.alignCenter]} width={185} height={92} />
+          <AmbireLogoWithBackgroundAndLogotype withText={false} style={spacings.mbLg} />
           <Text fontSize={32} weight="regular" style={[{ textAlign: 'center' }, spacings.mbXl]}>
             {t('Terms Of Service')}
           </Text>
