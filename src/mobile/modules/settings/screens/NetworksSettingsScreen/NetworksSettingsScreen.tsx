@@ -1,3 +1,4 @@
+import { PortalHost } from '@gorhom/portal'
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useModalize } from 'react-native-modalize'
@@ -18,6 +19,8 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import NetworkSettings from '@mobile/modules/network-settings/components'
+
+const FOOTER_HOST_NAME = 'add-new-network-footer'
 
 const NetworksSettingsScreen = () => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -92,9 +95,15 @@ const NetworksSettingsScreen = () => {
             isWeb ? { ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 } : {}
           }
           autoOpen={shouldOpenBottomSheet}
+          // The form's buttons portal into it, so they stay in view while the form scrolls
+          FooterComponent={isWeb ? undefined : <PortalHost name={FOOTER_HOST_NAME} />}
         >
           <SheetHeaderRow />
-          <NetworkForm onCancel={closeBottomSheet} onSaved={closeBottomSheet} />
+          <NetworkForm
+            onCancel={closeBottomSheet}
+            onSaved={closeBottomSheet}
+            footerHostName={isWeb ? undefined : FOOTER_HOST_NAME}
+          />
         </BottomSheet>
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

@@ -1,3 +1,4 @@
+import { PortalHost } from '@gorhom/portal'
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
@@ -28,6 +29,8 @@ import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/s
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+const EDIT_NETWORK_FOOTER_HOST_NAME = 'edit-network-footer'
 
 type Props = {
   name: string
@@ -506,6 +509,8 @@ const NetworkDetails = ({
         }
         containerInnerWrapperStyles={isWeb ? { flex: 1 } : {}}
         style={isWeb ? { ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 } : {}}
+        // The form's buttons portal into it, so they stay in view while the form scrolls
+        FooterComponent={isWeb ? undefined : <PortalHost name={EDIT_NETWORK_FOOTER_HOST_NAME} />}
       >
         {/* The form's own header is a card, so the X gets a row of its own above it */}
         <SheetHeaderRow />
@@ -513,6 +518,7 @@ const NetworkDetails = ({
           selectedChainId={chainId.toString()}
           onCancel={closeBottomSheet}
           onSaved={closeBottomSheet}
+          footerHostName={isWeb ? undefined : EDIT_NETWORK_FOOTER_HOST_NAME}
         />
       </BottomSheet>
     </>

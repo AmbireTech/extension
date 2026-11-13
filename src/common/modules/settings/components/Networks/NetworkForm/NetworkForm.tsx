@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { Portal } from '@gorhom/portal'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
@@ -203,11 +204,14 @@ const getRpcChainId = async (rpcUrl: string, expectedChainId?: string | number) 
 const NetworkForm = ({
   selectedChainId = 'add-custom-network',
   onCancel,
-  onSaved
+  onSaved,
+  footerHostName
 }: {
   selectedChainId?: bigint | string
   onCancel: () => void
   onSaved: () => void
+  /** A PortalHost in the sheet's footer: the buttons render there, always in view */
+  footerHostName?: string
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
@@ -789,6 +793,52 @@ const NetworkForm = ({
     ]
   )
 
+  const buttons = (
+    <View
+      style={[
+        isWeb && flexbox.alignEnd,
+        !isMobile && spacings.ptXl,
+        !!footerHostName && spacings.ptSm
+      ]}
+    >
+      {selectedChainId === 'add-custom-network' ? (
+        <Button
+          onPress={handleSubmitButtonPress}
+          text={t('Add network')}
+          disabled={isSaveOrAddButtonDisabled}
+          hasBottomSpacing={false}
+          size="large"
+        />
+      ) : (
+        <View style={[flexbox.directionRow, isMobile && { columnGap: SPACING_SM }]}>
+          {!isInNativeSheet && (
+            <Button
+              onPress={onCancel}
+              text={t('Cancel')}
+              type="outline"
+              hasBottomSpacing={false}
+              style={[
+                flexbox.flex1,
+                isWeb && spacings.mrSm,
+                isWeb && { width: 90 },
+                isMobile && { backgroundColor: theme.neutral100 }
+              ]}
+              size="smaller"
+            />
+          )}
+          <Button
+            onPress={handleSubmitButtonPress}
+            text={isSomethingUpdated ? t('Save') : t('No changes')}
+            disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
+            style={[isWeb && spacings.mlMi, flexbox.flex1, isWeb && { minWidth: 124 }]}
+            hasBottomSpacing={false}
+            size="smaller"
+          />
+        </View>
+      )}
+    </View>
+  )
+
   return (
     <>
       <View style={styles.modalHeader}>
@@ -1190,43 +1240,7 @@ const NetworkForm = ({
                 </View>
               </ScrollableWrapper>
             )}
-            <View style={[isWeb && flexbox.alignEnd, isMobile ? {} : spacings.ptXl]}>
-              {selectedChainId === 'add-custom-network' ? (
-                <Button
-                  onPress={handleSubmitButtonPress}
-                  text={t('Add network')}
-                  disabled={isSaveOrAddButtonDisabled}
-                  hasBottomSpacing={false}
-                  size="large"
-                />
-              ) : (
-                <View style={[flexbox.directionRow, isMobile && { columnGap: SPACING_SM }]}>
-                  {!isInNativeSheet && (
-                    <Button
-                      onPress={onCancel}
-                      text={t('Cancel')}
-                      type="outline"
-                      hasBottomSpacing={false}
-                      style={[
-                        flexbox.flex1,
-                        isWeb && spacings.mrSm,
-                        isWeb && { width: 90 },
-                        isMobile && { backgroundColor: theme.neutral100 }
-                      ]}
-                      size="smaller"
-                    />
-                  )}
-                  <Button
-                    onPress={handleSubmitButtonPress}
-                    text={isSomethingUpdated ? t('Save') : t('No changes')}
-                    disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
-                    style={[isWeb && spacings.mlMi, flexbox.flex1, isWeb && { minWidth: 124 }]}
-                    hasBottomSpacing={false}
-                    size="smaller"
-                  />
-                </View>
-              )}
-            </View>
+            {footerHostName ? <Portal hostName={footerHostName}>{buttons}</Portal> : buttons}
           </View>
         </View>
       </View>
