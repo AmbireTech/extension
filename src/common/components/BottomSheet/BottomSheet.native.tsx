@@ -60,7 +60,10 @@ const FLEX_STYLE = { flex: 1 }
 const BELOW_GRABBER_PADDING = isiOS ? SPACING_MD : SPACING_XL
 // Shared defaults, as a new `{}` per render would defeat the memoization below
 const EMPTY_STYLE = {}
-const FLEX_GROW_STYLE = { flexGrow: 1 }
+// Content sized to fit may still shrink: under a header that isn't floating, a list taller than
+// the sheet then ends at its bottom edge, instead of below it out of reach of the scroll
+const FLEX_GROW_STYLE = { flexGrow: 1, flexShrink: 1 }
+const FLEX_SHRINK_STYLE = { flexShrink: 1 }
 
 const noop = () => {}
 
@@ -392,7 +395,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     [horizontalPadding, footerBottomPadding, theme, backgroundColor]
   )
   const sheetStyle = useMemo(
-    () => [{ paddingHorizontal: horizontalPadding }, isFixedHeight && { flex: 1 }, style],
+    () => [
+      { paddingHorizontal: horizontalPadding },
+      isFixedHeight ? FLEX_STYLE : FLEX_SHRINK_STYLE,
+      style
+    ],
     [horizontalPadding, isFixedHeight, style]
   )
   const sheetChildren = useMemo(
