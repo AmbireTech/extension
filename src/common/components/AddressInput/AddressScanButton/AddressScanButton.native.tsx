@@ -14,7 +14,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import CameraScanner from '@mobile/components/CameraScanner'
 
@@ -124,22 +124,14 @@ const AddressScanButton = ({ onScanned }: AddressScanButtonProps) => {
                 {t('To scan a QR code, camera access needs to be enabled.')}
               </Text>
             )}
-            <FooterGlassView
-              size="sm"
-              absolute={false}
-              style={{ ...spacings.ptSm, marginTop: 'auto' }}
-              // One row, each button growing from its label, so "Grant camera access" fits next to Back
-              mobileStyle={{ ...spacings.ptLg, ...flexbox.directionRow, columnGap: SPACING_TY }}
-            >
-              <Button
-                size="regular"
-                hasBottomSpacing
-                type="secondary"
-                text={t('Back')}
-                onPress={() => closeBottomSheet()}
-                style={{ flexGrow: 1 }}
-              />
-              {!permissionGranted && (
+            {/* The sheet's X closes it, so only granting camera access needs a button */}
+            {!permissionGranted && (
+              <FooterGlassView
+                size="sm"
+                absolute={false}
+                style={{ ...spacings.ptSm, marginTop: 'auto' }}
+                mobileStyle={{ ...spacings.ptLg, ...flexbox.directionRow, columnGap: SPACING_TY }}
+              >
                 <Button
                   size="regular"
                   hasBottomSpacing
@@ -155,8 +147,8 @@ const AddressScanButton = ({ onScanned }: AddressScanButtonProps) => {
                       : void requestPermission()
                   }
                 />
-              )}
-            </FooterGlassView>
+              </FooterGlassView>
+            )}
           </View>
         </View>
       </BottomSheet>
