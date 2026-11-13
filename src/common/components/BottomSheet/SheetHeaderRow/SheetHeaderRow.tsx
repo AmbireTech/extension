@@ -1,3 +1,4 @@
+import { Portal } from '@gorhom/portal'
 import React, { FC, useCallback, useState } from 'react'
 import { LayoutChangeEvent, StyleProp, View, ViewStyle } from 'react-native'
 
@@ -27,10 +28,12 @@ const SIDE_SLOT_STYLE = { minWidth: SHEET_HEADER_BUTTON_SIZE, flexShrink: 0 }
 /**
  * The header row of a native bottom sheet: ‹ back on the left when there is somewhere to
  * go back to, the X on the right and the title centered between them. The X of a nested
- * sheet closes every sheet. On web, and outside a sheet, only the title is rendered.
+ * sheet closes every sheet. It renders in the sheet's fixed header, above the scrolling
+ * content. On web, and outside a sheet, only the title is rendered, in place.
  */
 const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) => {
-  const { isInsideBottomSheet, isNested, close } = useBottomSheet()
+  const { isInsideBottomSheet, isNested, close, headerHostName, isHeaderFloating } =
+    useBottomSheet()
   // The left side is as wide as the right one, so the title stays centered
   const [rightSideWidth, setRightSideWidth] = useState(SHEET_HEADER_BUTTON_SIZE)
   const handleRightSideLayout = useCallback(
@@ -45,14 +48,16 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
   const handleClose = close && (isNested ? closeAllSheets : close)
   const hasSides = !!handleBack || !!handleClose || !!rightContent
 
-  return (
+  const row = (
     <View
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
         spacings.mb,
         { minHeight: SHEET_HEADER_BUTTON_SIZE, columnGap: SPACING_TY },
-        style
+        style,
+        // A floating header spaces the row from its edge itself, the same in every sheet
+        isHeaderFloating && spacings.mb0
       ]}
     >
       {hasSides && (
@@ -77,6 +82,11 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
       )}
     </View>
   )
+
+  // Rendered in the sheet's fixed header, so it doesn't scroll away with the content
+  if (!headerHostName) return row
+
+  return <Portal hostName={headerHostName}>{row}</Portal>
 }
 
 export default React.memo(SheetHeaderRow)

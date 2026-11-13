@@ -8,6 +8,10 @@ type BottomSheetContextValue = {
   isNested: boolean
   /** Closes the sheet. Missing when the sheet can't be closed by the user. */
   close?: () => void
+  /** The portal host in the sheet's fixed header, where the header row renders. */
+  headerHostName?: string
+  /** Whether that header floats over the content, spacing itself from it. */
+  isHeaderFloating?: boolean
 }
 
 export const BottomSheetContext = createContext<BottomSheetContextValue>({
@@ -31,6 +35,18 @@ export const useBottomSheet = () => useContext(BottomSheetContext)
 export const useBottomSheetContextValue = (
   isOpen: boolean,
   isNested = false,
-  close?: () => void
+  close?: () => void,
+  headerHostName?: string,
+  isHeaderFloating?: boolean
 ): BottomSheetContextValue =>
-  useMemo(() => ({ isInsideBottomSheet: true, isOpen, isNested, close }), [isOpen, isNested, close])
+  useMemo(
+    () => ({
+      isInsideBottomSheet: true,
+      isOpen,
+      isNested,
+      close,
+      headerHostName,
+      isHeaderFloating
+    }),
+    [isOpen, isNested, close, headerHostName, isHeaderFloating]
+  )

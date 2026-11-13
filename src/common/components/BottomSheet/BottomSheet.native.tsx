@@ -1,11 +1,13 @@
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   FlatList,
   FlatListProps,
+  LayoutChangeEvent,
   ScrollView,
   ScrollViewProps,
   SectionList,
   SectionListProps,
+  StyleSheet,
   View
 } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -25,10 +27,13 @@ import {
 } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import { PortalHost } from '@gorhom/portal'
+import { BlurView } from 'expo-blur'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
 
 import { BottomSheetProps } from './BottomSheet'
 import { BottomSheetContext, useBottomSheetContextValue } from './BottomSheetContext'
+import getIsSheetHeaderFloating from './getIsSheetHeaderFloating'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
 /**
@@ -44,6 +49,9 @@ const AUTO_DETENTS: SheetDetent[] = ['auto']
 const IOS_DIM_COLOR = '#0D0E0F'
 const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.52, [THEME_TYPES.DARK]: 0.65 }
 const FULL_HEIGHT_DETENTS: SheetDetent[] = [1]
+const ABSOLUTE_HEADER_OPTIONS = { position: 'absolute' as const }
+const HEADER_COMPONENT_GAP_STYLE = { marginTop: SPACING_SM }
+const HEADER_BLUR_INTENSITY = 90
 const FLEX_STYLE = { flex: 1 }
 /**
  * Where the content starts below the native grabber, which overlays the top of the sheet:
@@ -101,15 +109,23 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const onOpened = useLatestCallback(() => _onOpened?.())
   const onOpen = useLatestCallback(() => _onOpen?.())
   const onBackdropPress = useLatestCallback(() => _onBackdropPress?.())
-  const { setRef, isModal, isOpen, setIsOpen, isNested } = useBottomSheetInternal({
+  const isHeaderFloating = getIsSheetHeaderFloating(
+    sectionListProps as { stickySectionHeadersEnabled?: boolean } | undefined
+  )
+  const { setRef, isModal, isOpen, setIsOpen, isNested, id } = useBottomSheetInternal({
     ...props,
     closeBottomSheet
   })
+  // The header row (title, ‹ back and X) portals into the sheet's fixed header, so it
+  // stays in place while the content scrolls
+  const headerHostName = `${id}-header`
   // A sheet without `closeBottomSheet` is one the user can't close, so it gets no X
   const bottomSheetContextValue = useBottomSheetContextValue(
     isOpen,
     isNested,
-    props.closeBottomSheet ? closeBottomSheet : undefined
+    props.closeBottomSheet ? closeBottomSheet : undefined,
+    headerHostName,
+    isHeaderFloating
   )
 
   const internalScrollableRef = useRef<any>(null)
@@ -166,6 +182,21 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   // footer is absolute, but in the sheet's color and with the list ending above it, it looks
   // like the Modalize footer below the content
   const scrollableOptions = useMemo(() => ({ contentInsetAdjustment: 'footer' as const }), [])
+  // A floating header covers the top of the content, which starts below it instead
+  // The height of what the header holds: its row and the caller's `HeaderComponent`
+  const [headerContentHeight, setHeaderContentHeight] = useState(0)
+  const handleHeaderLayout = useCallback(
+    (e: LayoutChangeEvent) => setHeaderContentHeight(e.nativeEvent.layout.height),
+    []
+  )
+  // A floating header with something in it keeps a gap below what it holds, above its edge
+  const headerEdgeGap = isHeaderFloating && headerContentHeight > 0 ? SPACING_SM : 0
+  const contentTopPaddingStyle = useMemo(
+    () => ({
+      paddingTop: isHeaderFloating ? topPadding + headerContentHeight + headerEdgeGap : 0
+    }),
+    [isHeaderFloating, topPadding, headerContentHeight, headerEdgeGap]
+  )
   // Above the keyboard the footer keeps only a small gap, as the keyboard covers the safe area
   const footerOptions = useMemo(
     () => ({
@@ -217,27 +248,45 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
     if (customRenderer) {
       return (
-        <View testID={testID} style={[common.fullWidth, containerInnerWrapperStyles]}>
+        <View
+          testID={testID}
+          style={[common.fullWidth, containerInnerWrapperStyles, contentTopPaddingStyle]}
+        >
           {customRenderer}
         </View>
       )
     }
+    // iOS leaves rows a list adds while it's in the sheet's window undrawn until it scrolls
+    // (a new section, rows shown again) when it clips its offscreen rows, so lists here
+    // don't clip there; their virtualization still bounds what they render
     if (flatListProps) {
+      const listProps = flatListProps as FlatListProps<unknown>
       // Typed by Modalize as Animated props, which the plain lists accept
       return (
         <FlatList
           ref={scrollableRef}
           {...sharedScrollProps}
-          {...(flatListProps as FlatListProps<unknown>)}
+          {...listProps}
+          removeClippedSubviews={isiOS ? false : listProps.removeClippedSubviews}
+          contentContainerStyle={[
+            listProps.contentContainerStyle ?? sharedScrollProps.contentContainerStyle,
+            contentTopPaddingStyle
+          ]}
         />
       )
     }
     if (sectionListProps) {
+      const listProps = sectionListProps as SectionListProps<unknown>
       return (
         <SectionList
           ref={scrollableRef}
           {...sharedScrollProps}
-          {...(sectionListProps as SectionListProps<unknown>)}
+          {...listProps}
+          removeClippedSubviews={isiOS ? false : listProps.removeClippedSubviews}
+          contentContainerStyle={[
+            listProps.contentContainerStyle ?? sharedScrollProps.contentContainerStyle,
+            contentTopPaddingStyle
+          ]}
         />
       )
     }
@@ -252,6 +301,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         })}
         {...((scrollViewProps || {}) as ScrollViewProps)}
       >
+        {/* In the inner view, so the caller's `contentContainerStyle` can't drop it */}
+        <View style={contentTopPaddingStyle} />
         <View testID={testID} style={[common.fullWidth, containerInnerWrapperStyles]}>
           {children}
         </View>
@@ -268,19 +319,61 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     isScrollEnabled,
     contentBottomPadding,
     scrollViewProps,
+    contentTopPaddingStyle,
     children
   ])
+  // Always there, so the spacing below the grabber is the header's whether a sheet has a
+  // header row or not
+  // A floating header frosts what scrolls under it across the sheet's full width, with a
+  // sharp edge and no divider (UIKit's own scroll edge effect stops at the scroll view's
+  // sides and draws a line under its hard style)
   const header = useMemo(
-    () => (HeaderComponent ? <>{HeaderComponent}</> : undefined),
-    [HeaderComponent]
+    () => (
+      <View
+        style={{
+          paddingTop: topPadding,
+          paddingBottom: headerEdgeGap,
+          paddingHorizontal: isHeaderFloating ? horizontalPadding : 0
+        }}
+      >
+        {isHeaderFloating && (
+          <BlurView
+            intensity={HEADER_BLUR_INTENSITY}
+            tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <View onLayout={handleHeaderLayout}>
+          <PortalHost name={headerHostName} />
+          {/* Below the row, whose own margin the floating header drops (pickers' search) */}
+          {!!HeaderComponent && (
+            <View style={isHeaderFloating && HEADER_COMPONENT_GAP_STYLE}>{HeaderComponent}</View>
+          )}
+        </View>
+      </View>
+    ),
+    [
+      isHeaderFloating,
+      topPadding,
+      headerEdgeGap,
+      horizontalPadding,
+      themeType,
+      handleHeaderLayout,
+      headerHostName,
+      HeaderComponent
+    ]
   )
   const footer = useMemo(
     () => (FooterComponent ? <>{FooterComponent}</> : undefined),
     [FooterComponent]
   )
   const headerStyle = useMemo(
-    () => ({ paddingTop: topPadding, paddingHorizontal: horizontalPadding }),
-    [topPadding, horizontalPadding]
+    () => ({
+      // A floating header pads itself, so its blur spans the sheet's full width
+      paddingHorizontal: isHeaderFloating ? 0 : horizontalPadding,
+      backgroundColor: isHeaderFloating ? undefined : theme[backgroundColor]
+    }),
+    [isHeaderFloating, horizontalPadding, theme, backgroundColor]
   )
   const footerStyle = useMemo(
     () => ({
@@ -291,12 +384,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     [horizontalPadding, footerBottomPadding, theme, backgroundColor]
   )
   const sheetStyle = useMemo(
-    () => [
-      { paddingTop: HeaderComponent ? 0 : topPadding, paddingHorizontal: horizontalPadding },
-      isFixedHeight && { flex: 1 },
-      style
-    ],
-    [HeaderComponent, topPadding, horizontalPadding, isFixedHeight, style]
+    () => [{ paddingHorizontal: horizontalPadding }, isFixedHeight && { flex: 1 }, style],
+    [horizontalPadding, isFixedHeight, style]
   )
   const sheetChildren = useMemo(
     () => (
@@ -329,6 +418,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           dismissible={shouldBeClosableOnDrag}
           header={header}
           headerStyle={headerStyle}
+          headerOptions={isHeaderFloating ? ABSOLUTE_HEADER_OPTIONS : undefined}
           footer={footer}
           footerStyle={footerStyle}
           footerOptions={footerOptions}

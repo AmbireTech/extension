@@ -11,13 +11,9 @@ import { isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
-
-// The row sits next to the close icon in the header, so it takes the space and adds no margin
-const HEADER_ROW_STYLE = [flexbox.flex1, spacings.mb0]
 
 export interface Props {
   title?: string | ReactNode
@@ -58,15 +54,21 @@ const DualChoiceModal: FC<Props> = ({
 
   return (
     <View>
-      {!hideHeader && (
+      {/* In a native sheet the title goes to the sheet's fixed header row, whose X replaces
+      the close icon */}
+      {!hideHeader && isInNativeSheet && (
+        <SheetHeaderRow>
+          <Text weight="medium" fontSize={20} style={text.center}>
+            {title}
+          </Text>
+        </SheetHeaderRow>
+      )}
+      {!hideHeader && !isInNativeSheet && (
         <View style={styles.modalHeader}>
-          {/* In a native sheet the row adds the sheet's X, which replaces the close icon */}
-          <SheetHeaderRow style={HEADER_ROW_STYLE}>
-            <Text weight="medium" fontSize={20} style={isInNativeSheet && text.center}>
-              {title}
-            </Text>
-          </SheetHeaderRow>
-          {!!onCloseIconPress && !isInNativeSheet && (
+          <Text weight="medium" fontSize={20}>
+            {title}
+          </Text>
+          {!!onCloseIconPress && (
             <Pressable onPress={onCloseIconPress}>
               <CloseIcon />
             </Pressable>
