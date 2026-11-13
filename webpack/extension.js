@@ -304,6 +304,12 @@ module.exports = async function buildExtension(
       from: './src/web/assets',
       to: 'assets'
     },
+    // Token and network icons (the token-and-network-icons submodule), copied to the output
+    // root and loaded by path (see getBundledIconUri.ts), so they stay out of the JS
+    {
+      from: './src/token-and-network-icons/assets',
+      to: '.'
+    },
     {
       from: './src/web/public/style.css',
       to: 'style.css',
