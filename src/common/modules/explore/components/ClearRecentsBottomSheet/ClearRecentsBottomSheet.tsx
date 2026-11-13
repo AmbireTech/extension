@@ -33,7 +33,13 @@ const ClearRecentsBottomSheet = forwardRef<ClearRecentsBottomSheetHandle>((_, re
   const handleCancel = useCallback(() => close(), [close])
 
   return (
-    <BottomSheet id="clear-recents" sheetRef={sheetRef} closeBottomSheet={close} type="modal">
+    <BottomSheet
+      id="clear-recents"
+      sheetRef={sheetRef}
+      closeBottomSheet={close}
+      // A centered modal on web; natively a regular sheet, padded like the others
+      type={isWeb ? 'modal' : undefined}
+    >
       <SheetHeaderRow style={spacings.mbSm}>
         <Text weight="semiBold" fontSize={18} style={isWeb ? spacings.mbSm : text.center}>
           {t('Clear recent apps?')}
