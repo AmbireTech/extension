@@ -18,6 +18,10 @@ import text from '@common/styles/utils/text'
 import getStyles from './styles'
 import { FormData, Props } from './types'
 
+const DESCRIPTION_CELL_STYLE = { width: '100%' as const }
+const OVERLAID_CELL_STYLE = { marginLeft: '-100%' as const }
+const HIDDEN_STYLE = { opacity: 0 }
+
 const CustomHDPathBottomSheet: FC<Props> = ({
   sheetRef,
   closeBottomSheet,
@@ -70,10 +74,24 @@ const CustomHDPathBottomSheet: FC<Props> = ({
   )
 
   return (
-    <BottomSheet id="custom-hd-path" sheetRef={sheetRef} closeBottomSheet={closeBottomSheetWrapped}>
+    <BottomSheet
+      id="custom-hd-path"
+      sheetRef={sheetRef}
+      closeBottomSheet={closeBottomSheetWrapped}
+      FooterComponent={
+        <View style={spacings.ptLg}>
+          <Button
+            testID="hd-path-confirm-btn"
+            text={t('Confirm')}
+            onPress={handleSubmit(onSubmit)}
+            hasBottomSpacing={false}
+          />
+        </View>
+      }
+    >
       <SheetHeaderRow style={spacings.mbXl}>
         <Text fontSize={20} weight="medium" style={text.center}>
-          {t('Custom address HD path')}
+          {t('Custom HD path')}
         </Text>
       </SheetHeaderRow>
 
@@ -117,14 +135,30 @@ const CustomHDPathBottomSheet: FC<Props> = ({
         )
       })}
 
-      <View style={[spacings.mtTy, spacings.mbXl, { height: 40 }]}>
-        {!!options.find((o) => o.value === selectedOption.value)?.description && (
-          <Text fontSize={14} appearance="secondaryText">
-            {options.find((o) => o.value === selectedOption.value)?.description}
-          </Text>
-        )}
+      {/* Every description is laid over the others and only the selected one is shown, so the */}
+      {/* box keeps the height of the longest and the sheet doesn't resize on an option change */}
+      <View style={[flexbox.directionRow, spacings.mtTy, spacings.mbXl]}>
+        {options.map((option, index) => {
+          const isActive = selectedOption.value === option.value
+          return (
+            <View
+              key={option.value}
+              style={[
+                DESCRIPTION_CELL_STYLE,
+                index > 0 && OVERLAID_CELL_STYLE,
+                !isActive && HIDDEN_STYLE
+              ]}
+              accessibilityElementsHidden={!isActive}
+              importantForAccessibility={isActive ? 'auto' : 'no-hide-descendants'}
+            >
+              <Text fontSize={14} appearance="secondaryText">
+                {option.description}
+              </Text>
+            </View>
+          )
+        })}
       </View>
-      <View style={[spacings.mbXl]}>
+      <View>
         <Text fontSize={16} weight="medium" style={[spacings.mbTy]}>
           {t('Enter a page number to jump to')}:
         </Text>
@@ -148,15 +182,6 @@ const CustomHDPathBottomSheet: FC<Props> = ({
               error={errors.startIndex && errors.startIndex.message}
             />
           )}
-        />
-      </View>
-      <View style={[flexbox.directionRow, flexbox.center]}>
-        <Button
-          testID="hd-path-confirm-btn"
-          style={{ width: 200 }}
-          text={t('Confirm')}
-          onPress={handleSubmit(onSubmit)}
-          hasBottomSpacing={false}
         />
       </View>
     </BottomSheet>
