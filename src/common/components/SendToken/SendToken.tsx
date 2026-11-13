@@ -1,4 +1,4 @@
-import React, { FC, memo, useCallback, useMemo } from 'react'
+import React, { FC, memo, ReactNode, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
@@ -29,6 +29,10 @@ const SECTION_MENU_HEADER_HEIGHT = 50
 
 type Props = {
   label: string
+  /** Puts the label left of the balance, on the same row, to save height. */
+  isLabelInline?: boolean
+  /** Amounts to pick with one tap, shown in place of the slider. */
+  amountPresets?: ReactNode
   fromTokenOptions: SelectValue[]
   fromTokenValue?: SelectValue
   fromAmountValue: string
@@ -59,6 +63,8 @@ type Props = {
   isMaxAmountLoading?: boolean
   /** Extra styling for the amount slider's own row, e.g. to give it room before the panel ends. */
   sliderStyle?: ViewStyle
+  /** Shown at the bottom of the panel, e.g. what makes the amount a risk. */
+  customBottomLabel?: ReactNode
 }
 
 const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
@@ -66,6 +72,8 @@ const selectPortfolio = (state: AllControllersMappingType['SelectedAccountContro
 
 const SendToken: FC<Props> = ({
   label,
+  isLabelInline,
+  amountPresets,
   fromTokenOptions,
   fromTokenValue,
   fromAmountValue,
@@ -88,7 +96,8 @@ const SendToken: FC<Props> = ({
   sections,
   renderSectionHeader,
   isMaxAmountLoading,
-  sliderStyle
+  sliderStyle,
+  customBottomLabel
 }) => {
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { theme } = useTheme()
@@ -243,6 +252,7 @@ const SendToken: FC<Props> = ({
   return (
     <TokenAndAmountSelector
       label={label}
+      isLabelInline={isLabelInline}
       token={tokenSelect}
       balance={balance}
       amountFieldModeSwitch={amountFieldModeSwitch}
@@ -251,6 +261,7 @@ const SendToken: FC<Props> = ({
       onAmountChange={handleOnChangeTextAndFormat}
       disabled={fromTokenAmountSelectDisabled}
       slider={slider}
+      amountPresets={amountPresets}
       onMaxPress={handleSetMaxFromAmount}
       isMaxDisabled={maxAmountDisabled || !Number(maxFromAmount)}
       message={message}
@@ -286,6 +297,7 @@ const SendToken: FC<Props> = ({
           </View>
         </View>
       )}
+      {customBottomLabel}
     </TokenAndAmountSelector>
   )
 }
