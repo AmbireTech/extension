@@ -10,7 +10,7 @@ import {
 } from 'react-native'
 
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import getIsSheetHeaderFloating from '@common/components/BottomSheet/getIsSheetHeaderFloating'
+import IS_SHEET_HEADER_FLOATING from '@common/components/BottomSheet/isSheetHeaderFloating'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -102,7 +102,6 @@ const SelectContainer: FC<Props> = ({
   // render passes a new `HeaderComponent` element to `BottomSheetContainer`,
   // which defeats `React.memo` on the inner `BottomSheet` and feeds the
   // nested-Portal infinite-update loop.
-  const isSheetHeaderFloating = getIsSheetHeaderFloating(sectionListProps)
   const bottomSheetHeader = useMemo(
     () => (
       <View>
@@ -118,7 +117,7 @@ const SelectContainer: FC<Props> = ({
             setInputRef={setInputRef}
             control={control}
             // A floating sheet header pads itself below the search
-            containerStyle={isSheetHeaderFloating ? spacings.mb0 : spacings.mb}
+            containerStyle={IS_SHEET_HEADER_FLOATING ? spacings.mb0 : spacings.mb}
           />
         )}
         {menuHeader}
@@ -138,8 +137,7 @@ const SelectContainer: FC<Props> = ({
       searchPlaceholder,
       t,
       setInputRef,
-      control,
-      isSheetHeaderFloating
+      control
     ]
   )
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
+  Animated,
   FlatList,
   FlatListProps,
   LayoutChangeEvent,
@@ -7,7 +8,6 @@ import {
   ScrollViewProps,
   SectionList,
   SectionListProps,
-  StyleSheet,
   View
 } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -28,12 +28,17 @@ import {
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { Portal, PortalHost } from '@gorhom/portal'
-import { BlurView } from 'expo-blur'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
 
 import { BottomSheetProps } from './BottomSheet'
 import { BottomSheetContext, useBottomSheetContextValue } from './BottomSheetContext'
-import getIsSheetHeaderFloating from './getIsSheetHeaderFloating'
+import IS_SHEET_HEADER_FLOATING from './isSheetHeaderFloating'
+import SheetHeaderBlur from './SheetHeaderBlur/SheetHeaderBlur'
+import { SheetSectionHeaderGlassContext } from './SheetStickyHeader/SheetSectionHeaderGlassContext'
+import SheetStickyHeader, {
+  SheetStickyHeaderLayout,
+  SheetStickyHeaderLayoutContext
+} from './SheetStickyHeader/SheetStickyHeader'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
 /**
@@ -51,7 +56,6 @@ const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.52, [THEME_TYPES.DARK]: 0.65 }
 const FULL_HEIGHT_DETENTS: SheetDetent[] = [1]
 const ABSOLUTE_HEADER_OPTIONS = { position: 'absolute' as const }
 const HEADER_COMPONENT_GAP_STYLE = { marginTop: SPACING_SM }
-const HEADER_BLUR_INTENSITY = 90
 const FLEX_STYLE = { flex: 1 }
 /**
  * Where the content starts below the native grabber, which overlays the top of the sheet:
@@ -106,15 +110,19 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const onOpened = useLatestCallback(() => _onOpened?.())
   const onOpen = useLatestCallback(() => _onOpen?.())
   const onBackdropPress = useLatestCallback(() => _onBackdropPress?.())
-  const isHeaderFloating = getIsSheetHeaderFloating(
-    sectionListProps as { stickySectionHeadersEnabled?: boolean } | undefined
-  )
+  const isHeaderFloating = IS_SHEET_HEADER_FLOATING
   // A header with only buttons (no title, nothing below the row) is no bar: just the buttons
   // float, while the content still starts below them
   const [isHeaderRowTitleless, setIsHeaderRowTitleless] = useState(false)
   const isHeaderButtonsOnly = isHeaderRowTitleless && !HeaderComponent
   const isHeaderOverContent = isHeaderFloating || isHeaderButtonsOnly
   const isHeaderFrosted = isHeaderFloating && !isHeaderButtonsOnly
+  // Below a frosted header, a list's sticky section headers are glass: the pinned one frosts
+  // the header's area too, so both read as one glass (iOS sticks them unless told not to)
+  const isSectionHeaderGlass =
+    isHeaderFrosted &&
+    !!sectionListProps &&
+    (sectionListProps as SectionListProps<unknown>).stickySectionHeadersEnabled !== false
   const { setRef, isModal, isOpen, setIsOpen, isNested, id } = useBottomSheetInternal({
     ...props,
     closeBottomSheet
@@ -202,6 +210,20 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     }),
     [isHeaderOverContent, topPadding, headerContentHeight, headerEdgeGap]
   )
+  // A list scrolled as the sheet opens (to its selected row) moves its sticky headers only once
+  // scrolled again, as the native scroll value they follow is hooked up after that scroll. Until
+  // the user drags it, the list's JS scroll events, which still arrive, set the value too
+  const stickyScrollValueRef = useRef<Animated.Value | null>(null)
+  const hasUserScrolledListRef = useRef(false)
+  // Sticky section headers pin right below a header over the content, not under it
+  const stickyHeaderLayout = useMemo<SheetStickyHeaderLayout>(
+    () => ({
+      offset: contentTopPaddingStyle.paddingTop,
+      sidePadding: isSectionHeaderGlass ? horizontalPadding : 0,
+      scrollValueRef: stickyScrollValueRef
+    }),
+    [contentTopPaddingStyle.paddingTop, isSectionHeaderGlass, horizontalPadding]
+  )
   // Above the keyboard the footer keeps only a small gap, as the keyboard covers the safe area
   const footerOptions = useMemo(
     () => ({
@@ -221,6 +243,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     const isUserDismissal = !isClosingProgrammaticallyRef.current
     isPresentedRef.current = false
     isClosingProgrammaticallyRef.current = false
+    // Reset on close, as the list scrolls to its selected row before the sheet is presented
+    hasUserScrolledListRef.current = false
     setIsOpen(false)
     // TrueSheet doesn't say whether a swipe or a tap outside closed it, so both run
     // what the Modalize backdrop tap ran
@@ -282,17 +306,41 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     }
     if (sectionListProps) {
       const listProps = sectionListProps as SectionListProps<unknown>
+      const handleListScroll: SectionListProps<unknown>['onScroll'] = (e) => {
+        if (!hasUserScrolledListRef.current) {
+          stickyScrollValueRef.current?.setValue(e.nativeEvent.contentOffset.y)
+        }
+        listProps.onScroll?.(e)
+      }
+      const handleListScrollBeginDrag: SectionListProps<unknown>['onScrollBeginDrag'] = (e) => {
+        hasUserScrolledListRef.current = true
+        listProps.onScrollBeginDrag?.(e)
+      }
+      // The glass of a pinned section header spans the sheet's full width, so the list does
+      // too and pads its content instead
       return (
-        <SectionList
-          ref={scrollableRef}
-          {...sharedScrollProps}
-          {...listProps}
-          removeClippedSubviews={isiOS ? false : listProps.removeClippedSubviews}
-          contentContainerStyle={[
-            listProps.contentContainerStyle ?? sharedScrollProps.contentContainerStyle,
-            contentTopPaddingStyle
-          ]}
-        />
+        <SheetStickyHeaderLayoutContext.Provider value={stickyHeaderLayout}>
+          <SheetSectionHeaderGlassContext.Provider value={isSectionHeaderGlass}>
+            <SectionList
+              ref={scrollableRef}
+              {...sharedScrollProps}
+              StickyHeaderComponent={SheetStickyHeader}
+              {...listProps}
+              onScroll={handleListScroll}
+              onScrollBeginDrag={handleListScrollBeginDrag}
+              removeClippedSubviews={isiOS ? false : listProps.removeClippedSubviews}
+              style={[
+                listProps.style ?? sharedScrollProps.style,
+                isSectionHeaderGlass && { marginHorizontal: -horizontalPadding }
+              ]}
+              contentContainerStyle={[
+                listProps.contentContainerStyle ?? sharedScrollProps.contentContainerStyle,
+                isSectionHeaderGlass && { paddingHorizontal: horizontalPadding },
+                contentTopPaddingStyle
+              ]}
+            />
+          </SheetSectionHeaderGlassContext.Provider>
+        </SheetStickyHeaderLayoutContext.Provider>
       )
     }
 
@@ -325,6 +373,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     contentBottomPadding,
     scrollViewProps,
     contentTopPaddingStyle,
+    stickyHeaderLayout,
+    isSectionHeaderGlass,
+    horizontalPadding,
     children
   ])
   // Always there, so the spacing below the grabber is the header's whether a sheet has a
@@ -342,13 +393,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           paddingHorizontal: isHeaderOverContent ? horizontalPadding : 0
         }}
       >
-        {isHeaderFrosted && (
-          <BlurView
-            intensity={HEADER_BLUR_INTENSITY}
-            tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
+        {/* Over glass section headers the pinned one frosts this area instead */}
+        {isHeaderFrosted && !isSectionHeaderGlass && <SheetHeaderBlur />}
         <View pointerEvents="box-none" onLayout={handleHeaderLayout}>
           <PortalHost name={headerHostName} />
           {/* Below the row, whose own margin the floating header drops (pickers' search) */}
@@ -361,12 +407,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     [
       isHeaderButtonsOnly,
       isHeaderFrosted,
+      isSectionHeaderGlass,
       isHeaderOverContent,
       isHeaderFloating,
       topPadding,
       headerEdgeGap,
       horizontalPadding,
-      themeType,
       handleHeaderLayout,
       headerHostName,
       HeaderComponent
