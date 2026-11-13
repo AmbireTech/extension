@@ -1,5 +1,5 @@
 import { Portal } from '@gorhom/portal'
-import React, { FC, useCallback, useLayoutEffect, useState } from 'react'
+import React, { FC, useCallback, useLayoutEffect, useMemo, useState } from 'react'
 import { LayoutChangeEvent, StyleProp, View, ViewStyle } from 'react-native'
 
 import { useBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
@@ -11,8 +11,10 @@ import { isWeb } from '@common/config/env'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import { SheetHeaderTitleContext, SheetHeaderTitleContextValue } from './SheetHeaderTitleContext'
+
 type Props = {
-  /** The sheet's title, centered between the buttons. */
+  /** The sheet's title, centered between the buttons, or on the left when too long for that. */
   children?: React.ReactNode
   /** Steps back inside the sheet. Without it a nested sheet's ‹ returns to its parent. */
   onBack?: () => void
@@ -47,6 +49,26 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
     []
   )
   const hasTitle = !!children
+  const handleBack = onBack || (isNested ? close : undefined)
+  // A title that wraps while centered moves left over the space the centering kept free,
+  // where it may take a second line (only without a back button, as the X alone is on the right)
+  const [isTitleLeft, setIsTitleLeft] = useState(false)
+  const canTitleMoveLeft = !handleBack && hasTitle
+  const isTitleOnLeft = canTitleMoveLeft && isTitleLeft
+  // The first line of a title that wraps, which the buttons line up with instead of its middle
+  const [wrappedTitleFirstLineHeight, setWrappedTitleFirstLineHeight] = useState<number | null>(
+    null
+  )
+  const titleContextValue = useMemo<SheetHeaderTitleContextValue>(
+    () => ({
+      align: isTitleOnLeft ? 'left' : 'center',
+      reportLines: (lineCount, firstLineHeight) => {
+        if (lineCount > 1 && canTitleMoveLeft) setIsTitleLeft(true)
+        setWrappedTitleFirstLineHeight(lineCount > 1 ? firstLineHeight : null)
+      }
+    }),
+    [isTitleOnLeft, canTitleMoveLeft]
+  )
   // Before paint, so the sheet never shows a header bar behind the buttons of a title-less row
   useLayoutEffect(() => {
     if (!setIsHeaderRowTitleless || !headerHostName) return undefined
@@ -56,10 +78,10 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
 
   if (isWeb || !isInsideBottomSheet) return <>{children}</>
 
-  const handleBack = onBack || (isNested ? close : undefined)
   // A sheet the user can't close gets no X, nested or not
   const handleClose = close && (isNested ? closeAllSheets : close)
   const hasSides = !!handleBack || !!handleClose || !!rightContent
+  const isTitleWrapped = wrappedTitleFirstLineHeight !== null
 
   // Only the buttons take touches, as a title-less row floats over the content
   const row = (
@@ -67,7 +89,7 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
       pointerEvents="box-none"
       style={[
         flexbox.directionRow,
-        flexbox.alignCenter,
+        isTitleWrapped ? flexbox.alignStart : flexbox.alignCenter,
         spacings.mb,
         { minHeight: SHEET_HEADER_BUTTON_SIZE, columnGap: SPACING_TY },
         style,
@@ -75,13 +97,25 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
         isHeaderFloating && spacings.mb0
       ]}
     >
-      {hasSides && (
+      {hasSides && !isTitleOnLeft && (
         <View pointerEvents="box-none" style={[SIDE_SLOT_STYLE, { minWidth: rightSideWidth }]}>
           {!!handleBack && <SheetHeaderButton type="back" onPress={handleBack} />}
         </View>
       )}
-      <View pointerEvents="box-none" style={[flexbox.flex1, flexbox.alignCenter]}>
-        {children}
+      <View
+        pointerEvents="box-none"
+        style={[
+          flexbox.flex1,
+          isTitleOnLeft ? flexbox.alignStart : flexbox.alignCenter,
+          // Centers the first line on the buttons, which sit at the top of the row
+          isTitleWrapped && {
+            paddingTop: Math.max(0, (SHEET_HEADER_BUTTON_SIZE - wrappedTitleFirstLineHeight) / 2)
+          }
+        ]}
+      >
+        <SheetHeaderTitleContext.Provider value={titleContextValue}>
+          {children}
+        </SheetHeaderTitleContext.Provider>
       </View>
       {hasSides && (
         <View
