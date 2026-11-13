@@ -112,6 +112,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const isHeaderFloating = getIsSheetHeaderFloating(
     sectionListProps as { stickySectionHeadersEnabled?: boolean } | undefined
   )
+  // A header with only buttons (no title, nothing below the row) is no bar: just the buttons
+  // float, while the content still starts below them
+  const [isHeaderRowTitleless, setIsHeaderRowTitleless] = useState(false)
+  const isHeaderButtonsOnly = isHeaderRowTitleless && !HeaderComponent
+  const isHeaderOverContent = isHeaderFloating || isHeaderButtonsOnly
+  const isHeaderFrosted = isHeaderFloating && !isHeaderButtonsOnly
   const { setRef, isModal, isOpen, setIsOpen, isNested, id } = useBottomSheetInternal({
     ...props,
     closeBottomSheet
@@ -125,7 +131,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     isNested,
     props.closeBottomSheet ? closeBottomSheet : undefined,
     headerHostName,
-    isHeaderFloating
+    isHeaderFloating,
+    setIsHeaderRowTitleless
   )
 
   const internalScrollableRef = useRef<any>(null)
@@ -190,12 +197,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     []
   )
   // A floating header with something in it keeps a gap below what it holds, above its edge
+  // (the row keeps its own margin when the header isn't floating, which the height includes)
   const headerEdgeGap = isHeaderFloating && headerContentHeight > 0 ? SPACING_SM : 0
   const contentTopPaddingStyle = useMemo(
     () => ({
-      paddingTop: isHeaderFloating ? topPadding + headerContentHeight + headerEdgeGap : 0
+      paddingTop: isHeaderOverContent ? topPadding + headerContentHeight + headerEdgeGap : 0
     }),
-    [isHeaderFloating, topPadding, headerContentHeight, headerEdgeGap]
+    [isHeaderOverContent, topPadding, headerContentHeight, headerEdgeGap]
   )
   // Above the keyboard the footer keeps only a small gap, as the keyboard covers the safe area
   const footerOptions = useMemo(
@@ -330,20 +338,21 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const header = useMemo(
     () => (
       <View
+        pointerEvents={isHeaderButtonsOnly ? 'box-none' : 'auto'}
         style={{
           paddingTop: topPadding,
           paddingBottom: headerEdgeGap,
-          paddingHorizontal: isHeaderFloating ? horizontalPadding : 0
+          paddingHorizontal: isHeaderOverContent ? horizontalPadding : 0
         }}
       >
-        {isHeaderFloating && (
+        {isHeaderFrosted && (
           <BlurView
             intensity={HEADER_BLUR_INTENSITY}
             tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
             style={StyleSheet.absoluteFill}
           />
         )}
-        <View onLayout={handleHeaderLayout}>
+        <View pointerEvents="box-none" onLayout={handleHeaderLayout}>
           <PortalHost name={headerHostName} />
           {/* Below the row, whose own margin the floating header drops (pickers' search) */}
           {!!HeaderComponent && (
@@ -353,6 +362,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       </View>
     ),
     [
+      isHeaderButtonsOnly,
+      isHeaderFrosted,
+      isHeaderOverContent,
       isHeaderFloating,
       topPadding,
       headerEdgeGap,
@@ -370,10 +382,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const headerStyle = useMemo(
     () => ({
       // A floating header pads itself, so its blur spans the sheet's full width
-      paddingHorizontal: isHeaderFloating ? 0 : horizontalPadding,
-      backgroundColor: isHeaderFloating ? undefined : theme[backgroundColor]
+      paddingHorizontal: isHeaderOverContent ? 0 : horizontalPadding,
+      backgroundColor: isHeaderOverContent ? undefined : theme[backgroundColor],
+      // Touches between the floating buttons reach the content below
+      pointerEvents: isHeaderButtonsOnly ? ('box-none' as const) : undefined
     }),
-    [isHeaderFloating, horizontalPadding, theme, backgroundColor]
+    [isHeaderOverContent, isHeaderButtonsOnly, horizontalPadding, theme, backgroundColor]
   )
   const footerStyle = useMemo(
     () => ({
@@ -418,7 +432,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           dismissible={shouldBeClosableOnDrag}
           header={header}
           headerStyle={headerStyle}
-          headerOptions={isHeaderFloating ? ABSOLUTE_HEADER_OPTIONS : undefined}
+          headerOptions={isHeaderOverContent ? ABSOLUTE_HEADER_OPTIONS : undefined}
           footer={footer}
           footerStyle={footerStyle}
           footerOptions={footerOptions}

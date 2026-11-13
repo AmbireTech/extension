@@ -1,5 +1,5 @@
 import { Portal } from '@gorhom/portal'
-import React, { FC, useCallback, useState } from 'react'
+import React, { FC, useCallback, useLayoutEffect, useState } from 'react'
 import { LayoutChangeEvent, StyleProp, View, ViewStyle } from 'react-native'
 
 import { useBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
@@ -32,14 +32,27 @@ const SIDE_SLOT_STYLE = { minWidth: SHEET_HEADER_BUTTON_SIZE, flexShrink: 0 }
  * content. On web, and outside a sheet, only the title is rendered, in place.
  */
 const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) => {
-  const { isInsideBottomSheet, isNested, close, headerHostName, isHeaderFloating } =
-    useBottomSheet()
+  const {
+    isInsideBottomSheet,
+    isNested,
+    close,
+    headerHostName,
+    isHeaderFloating,
+    setIsHeaderRowTitleless
+  } = useBottomSheet()
   // The left side is as wide as the right one, so the title stays centered
   const [rightSideWidth, setRightSideWidth] = useState(SHEET_HEADER_BUTTON_SIZE)
   const handleRightSideLayout = useCallback(
     (e: LayoutChangeEvent) => setRightSideWidth(e.nativeEvent.layout.width),
     []
   )
+  const hasTitle = !!children
+  // Before paint, so the sheet never shows a header bar behind the buttons of a title-less row
+  useLayoutEffect(() => {
+    if (!setIsHeaderRowTitleless || !headerHostName) return undefined
+    setIsHeaderRowTitleless(!hasTitle)
+    return () => setIsHeaderRowTitleless(false)
+  }, [hasTitle, headerHostName, setIsHeaderRowTitleless])
 
   if (isWeb || !isInsideBottomSheet) return <>{children}</>
 
@@ -48,8 +61,10 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
   const handleClose = close && (isNested ? closeAllSheets : close)
   const hasSides = !!handleBack || !!handleClose || !!rightContent
 
+  // Only the buttons take touches, as a title-less row floats over the content
   const row = (
     <View
+      pointerEvents="box-none"
       style={[
         flexbox.directionRow,
         flexbox.alignCenter,
@@ -61,13 +76,16 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
       ]}
     >
       {hasSides && (
-        <View style={[SIDE_SLOT_STYLE, { minWidth: rightSideWidth }]}>
+        <View pointerEvents="box-none" style={[SIDE_SLOT_STYLE, { minWidth: rightSideWidth }]}>
           {!!handleBack && <SheetHeaderButton type="back" onPress={handleBack} />}
         </View>
       )}
-      <View style={[flexbox.flex1, flexbox.alignCenter]}>{children}</View>
+      <View pointerEvents="box-none" style={[flexbox.flex1, flexbox.alignCenter]}>
+        {children}
+      </View>
       {hasSides && (
         <View
+          pointerEvents="box-none"
           style={[
             SIDE_SLOT_STYLE,
             flexbox.directionRow,

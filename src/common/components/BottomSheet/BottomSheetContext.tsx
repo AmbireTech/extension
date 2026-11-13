@@ -12,6 +12,8 @@ type BottomSheetContextValue = {
   headerHostName?: string
   /** Whether that header floats over the content, spacing itself from it. */
   isHeaderFloating?: boolean
+  /** Tells the sheet its header row has no title, so only the row's buttons float over the content. */
+  setIsHeaderRowTitleless?: (isTitleless: boolean) => void
 }
 
 export const BottomSheetContext = createContext<BottomSheetContextValue>({
@@ -37,7 +39,8 @@ export const useBottomSheetContextValue = (
   isNested = false,
   close?: () => void,
   headerHostName?: string,
-  isHeaderFloating?: boolean
+  isHeaderFloating?: boolean,
+  setIsHeaderRowTitleless?: (isTitleless: boolean) => void
 ): BottomSheetContextValue =>
   useMemo(
     () => ({
@@ -46,7 +49,8 @@ export const useBottomSheetContextValue = (
       isNested,
       close,
       headerHostName,
-      isHeaderFloating
+      isHeaderFloating,
+      setIsHeaderRowTitleless
     }),
-    [isOpen, isNested, close, headerHostName, isHeaderFloating]
+    [isOpen, isNested, close, headerHostName, isHeaderFloating, setIsHeaderRowTitleless]
   )
