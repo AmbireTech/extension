@@ -2,9 +2,21 @@
 set -e
 
 # A plain `git pull` doesn't fetch a submodule that was added after the clone, and without the
-# bundled token and network icons the app can't resolve their imports. Also moves an existing
-# checkout of it to the commit this branch points to
-git submodule update --init src/token-and-network-icons
+# bundled token and network icons the app can't resolve their imports. When this branch points to
+# another commit of it, moves it there too, unless someone is working on the icons in it
+ICONS_SUBMODULE="src/token-and-network-icons"
+# The first character is `-` when it isn't initialized, `+` when it's at another commit
+ICONS_SUBMODULE_STATE=$(git submodule status "$ICONS_SUBMODULE" | cut -c1)
+
+if [ "$ICONS_SUBMODULE_STATE" = "-" ]; then
+  git submodule update --init "$ICONS_SUBMODULE"
+elif [ "$ICONS_SUBMODULE_STATE" = "+" ]; then
+  if git -C "$ICONS_SUBMODULE" symbolic-ref -q HEAD >/dev/null || [ -n "$(git -C "$ICONS_SUBMODULE" status --porcelain)" ]; then
+    echo "Leaving $ICONS_SUBMODULE as it is, since it's on a branch or has local changes. Run 'git submodule update $ICONS_SUBMODULE' to use the icons this branch expects."
+  else
+    git submodule update "$ICONS_SUBMODULE"
+  fi
+fi
 
 STALE_NODE_MODULES="src/ambire-common/node_modules"
 

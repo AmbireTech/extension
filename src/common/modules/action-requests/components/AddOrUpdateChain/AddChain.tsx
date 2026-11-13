@@ -142,6 +142,7 @@ const AddChain = ({
             style={[
               styles.boxWrapper,
               isTwoColumnLayout ? { width: '50%', maxHeight: '100%' } : { width: '100%' },
+              // `fit-content` is a web (CSS) value
               { height: 'fit-content' }
             ]}
           >

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { AMBIRE_SPONSOR } from '@ambire-common/consts/sponsors'
 import { Sponsor } from '@ambire-common/libs/erc7677/types'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
@@ -17,12 +18,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
   state.currentUserRequest
 
-/**
- * The icon ambire-common's swap sponsorship sets (src/libs/paymaster/paymaster.ts). It's shown
- * from the app's own logo, so it needs no network request. Matching the URL trusts it no more
- * than loading it did: any sponsor that sends it got the same Ambire logo either way.
- */
-const AMBIRE_SPONSOR_ICON_URL = 'https://cena.ambire.com/public/ambire-logos/symbol-color.svg'
 const SPONSOR_ICON_SIZE = 64
 
 const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: boolean }) => {
@@ -32,7 +27,9 @@ const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: bo
     selectCurrentUserRequest
   )
   const { theme } = useTheme()
-  const isAmbireSponsor = sponsor?.icon === AMBIRE_SPONSOR_ICON_URL
+  // Shown from the app's own logo, so it needs no network request. Matching the URL trusts it no
+  // more than loading it did: any sponsor that sends it got the same Ambire logo either way
+  const isAmbireSponsor = sponsor?.icon === AMBIRE_SPONSOR.icon
 
   const iconContainerStyle = useMemo(
     () => [

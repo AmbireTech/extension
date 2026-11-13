@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Image, ImageProps, ImageSourcePropType, View, ViewStyle } from 'react-native'
+import { Image, ImageProps, View, ViewStyle } from 'react-native'
 import { SvgUri } from 'react-native-svg'
 
 import useBenzinNetworksContext from '@benzin/hooks/useBenzinNetworksContext'
@@ -85,12 +85,15 @@ const TokenIcon: React.FC<Props> = ({
   // Icons shipped with the app take priority: they need no network request, so they also
   // show up when token & DeFi auto-discovery (which allows loading remote icons) is off
   const bundledIconSource = useMemo(() => getBundledTokenIcon(chainId, address), [chainId, address])
-  const [failedBundledIconSource, setFailedBundledIconSource] =
-    useState<ImageSourcePropType | null>(null)
+  const [failedBundledIconSource, setFailedBundledIconSource] = useState<{ uri: string } | null>(
+    null
+  )
   const shouldUseBundledIcon = !!bundledIconSource && bundledIconSource !== failedBundledIconSource
 
   const handleBundledIconError = useCallback(() => {
-    handleBundledTokenIconLoadFailure()
+    if (!bundledIconSource) return
+
+    handleBundledTokenIconLoadFailure(bundledIconSource.uri)
     setFailedBundledIconSource(bundledIconSource)
   }, [bundledIconSource])
 
