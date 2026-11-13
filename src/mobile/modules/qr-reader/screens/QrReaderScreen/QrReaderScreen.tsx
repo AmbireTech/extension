@@ -221,14 +221,6 @@ const QrReaderScreen = () => {
         />
         <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
           <Button
-            type="ghost"
-            text={t('Cancel')}
-            size="large"
-            onPress={handleManualCancel}
-            hasBottomSpacing={false}
-            style={{ height: 44, ...spacings.phLg }}
-          />
-          <Button
             type="primary"
             size="large"
             text={t('Done')}

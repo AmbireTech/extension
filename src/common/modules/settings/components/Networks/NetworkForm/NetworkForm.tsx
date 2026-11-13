@@ -18,6 +18,7 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -210,6 +211,8 @@ const NetworkForm = ({
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
+  // A native sheet's X closes the form, so it has no Cancel there
+  const isInNativeSheet = useIsInsideBottomSheet() && !isWeb
   const {
     state: { allNetworks, networkToAddOrUpdate, statuses },
     dispatch: networksDispatch
@@ -1198,19 +1201,21 @@ const NetworkForm = ({
                 />
               ) : (
                 <View style={[flexbox.directionRow, isMobile && { columnGap: SPACING_SM }]}>
-                  <Button
-                    onPress={onCancel}
-                    text={t('Cancel')}
-                    type="outline"
-                    hasBottomSpacing={false}
-                    style={[
-                      flexbox.flex1,
-                      isWeb && spacings.mrSm,
-                      isWeb && { width: 90 },
-                      isMobile && { backgroundColor: theme.neutral100 }
-                    ]}
-                    size="smaller"
-                  />
+                  {!isInNativeSheet && (
+                    <Button
+                      onPress={onCancel}
+                      text={t('Cancel')}
+                      type="outline"
+                      hasBottomSpacing={false}
+                      style={[
+                        flexbox.flex1,
+                        isWeb && spacings.mrSm,
+                        isWeb && { width: 90 },
+                        isMobile && { backgroundColor: theme.neutral100 }
+                      ]}
+                      size="smaller"
+                    />
+                  )}
                   <Button
                     onPress={handleSubmitButtonPress}
                     text={isSomethingUpdated ? t('Save') : t('No changes')}

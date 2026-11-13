@@ -84,18 +84,23 @@ const EditNameBottomSheet = ({
     }
   }, [addToast, canSave, close, onSave, successMessage, t])
 
+  // On mobile the sheet's X closes it, so there is no Cancel next to Save
   const renderButtons = ({ buttonStyle }: { buttonStyle?: ViewStyle } = {}) => [
-    <Button
-      type="secondary"
-      size="smaller"
-      text={t('Cancel')}
-      onPress={handleClose}
-      disabled={isSaving}
-      hasBottomSpacing={false}
-      style={buttonStyle}
-      testID={`${testID}-cancel-button`}
-      key="cancel"
-    />,
+    ...(isWeb
+      ? [
+          <Button
+            type="secondary"
+            size="smaller"
+            text={t('Cancel')}
+            onPress={handleClose}
+            disabled={isSaving}
+            hasBottomSpacing={false}
+            style={buttonStyle}
+            testID={`${testID}-cancel-button`}
+            key="cancel"
+          />
+        ]
+      : []),
     <ButtonWithLoader
       type="primary"
       size="smaller"

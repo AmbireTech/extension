@@ -9,6 +9,7 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
+import { isWeb } from '@common/config/env'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import useTheme from '@common/hooks/useTheme'
@@ -97,7 +98,8 @@ const GasFeeUpdatedModal = ({ signAccountOpState, onAccept, onCancel }: Props) =
       title={hasEnoughFunds ? t('Gas fee updated') : t('Insufficient funds')}
       description={t('Network fee changed significantly while preparing the transaction')}
       primaryButtonText={t('Accept and continue')}
-      secondaryButtonText={t('Cancel')}
+      // On mobile the sheet's X closes it
+      secondaryButtonText={isWeb ? t('Cancel') : undefined}
       onPrimaryButtonPress={onAccept}
       onSecondaryButtonPress={onCancel}
       type={hasEnoughFunds ? 'info' : 'error'}

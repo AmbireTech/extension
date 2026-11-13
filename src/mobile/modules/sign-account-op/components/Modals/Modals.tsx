@@ -74,7 +74,8 @@ const Modals: FC<ModalsProps> = ({
             title={t(warningToPromptBeforeSign.title)}
             description={t(warningToPromptBeforeSign.text || '')}
             primaryButtonText={t('Proceed')}
-            secondaryButtonText={t('Cancel')}
+            // A closable warning has the sheet's X instead
+            secondaryButtonText={slowPaymasterRequest ? t('Cancel') : undefined}
             onPrimaryButtonPress={acknowledgeWarning}
             onSecondaryButtonPress={dismissWarning}
             type={warningToPromptBeforeSign?.type}

@@ -253,17 +253,6 @@ const EditApproval = ({
                   // flex: 1 would squash the height of the stacked narrow view buttons
                   style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}
                 />
-                {/* On web the header's back arrow already closes the sheet */}
-                {isMobile && (
-                  <Button
-                    type={'secondary'}
-                    text={t('Cancel')}
-                    onPress={() => closeEditApprovals()}
-                    hasBottomSpacing={false}
-                    size="smaller"
-                    style={[flexbox.flex1, spacings.mrTy]}
-                  />
-                )}
               </>
             ) : (
               // No Cancel here, the header's back arrow already closes the sheet

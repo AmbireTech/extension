@@ -506,17 +506,6 @@ const CustomGasPrice = ({
               testID="reset-custom-gas-button"
             />
           )}
-          {/* On web the header's back arrow already closes the sheet */}
-          {isMobile && !hasCustomGasPrices && (
-            <Button
-              type="secondary"
-              text={t('Cancel')}
-              onPress={closeBottomSheet}
-              hasBottomSpacing={false}
-              style={[spacings.mrTy, flexbox.flex1]}
-              size="smaller"
-            />
-          )}
           <Button
             type="primary"
             text={t('Save')}

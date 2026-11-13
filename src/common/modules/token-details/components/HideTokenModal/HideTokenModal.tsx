@@ -69,12 +69,8 @@ const HideTokenModal = ({
           { columnGap: SPACING_TY }
         ]}
       >
-        <Button
-          text={t('Cancel')}
-          type="tertiary"
-          onPress={handleClose}
-          style={isWeb ? undefined : flexbox.flex1}
-        />
+        {/* On mobile the sheet's X closes it */}
+        {isWeb && <Button text={t('Cancel')} type="tertiary" onPress={handleClose} />}
         <Button
           testID="yes-hide-it-text"
           type="primary"

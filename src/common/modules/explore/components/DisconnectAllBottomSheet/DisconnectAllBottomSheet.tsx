@@ -55,13 +55,16 @@ const DisconnectAllBottomSheet = forwardRef<DisconnectAllBottomSheetHandle>((_, 
           { columnGap: SPACING_SM }
         ]}
       >
-        <Button
-          type="secondary"
-          text={t('Cancel')}
-          onPress={handleCancel}
-          hasBottomSpacing={false}
-          style={{ flex: 1 }}
-        />
+        {/* On mobile the sheet's X closes it */}
+        {isWeb && (
+          <Button
+            type="secondary"
+            text={t('Cancel')}
+            onPress={handleCancel}
+            hasBottomSpacing={false}
+            style={{ flex: 1 }}
+          />
+        )}
         <Button
           type="danger"
           text={t('Disconnect')}

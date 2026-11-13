@@ -20,7 +20,7 @@ import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
@@ -228,17 +228,8 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
             </Text>
           </SheetHeaderRow>
           {formFields}
-          {/* One row, each button growing from its label, so the long one still fits next to Cancel */}
-          <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
-            <Button
-              testID="cancel-add-to-address-book-button"
-              text={t('Cancel')}
-              onPress={handleClose}
-              type="tertiary"
-              size="large"
-              hasBottomSpacing={false}
-              style={{ flexGrow: 1, ...spacings.phSm }}
-            />
+          {/* The sheet's X closes it, so the only button is the full width primary */}
+          <View style={flexbox.directionRow}>
             <Button
               testID="add-to-address-book-button"
               text={t('Add to Address Book')}
