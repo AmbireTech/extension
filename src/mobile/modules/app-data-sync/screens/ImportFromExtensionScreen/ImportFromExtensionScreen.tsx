@@ -3,7 +3,6 @@ import { Image, ImageSourcePropType, LayoutChangeEvent, View } from 'react-nativ
 import { useModalize } from 'react-native-modalize'
 import { Carousel } from 'react-native-reanimated-carousel'
 
-import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
 import Alert from '@common/components/Alert'
@@ -11,6 +10,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
@@ -24,7 +24,6 @@ import SyncImportSteps, {
 import SyncPasswordOptions from '@common/modules/app-data-sync/components/SyncPasswordOptions'
 import SyncScanFeedbackAlert from '@common/modules/app-data-sync/components/SyncScanFeedbackAlert'
 import useAppDataSyncImport from '@common/modules/app-data-sync/hooks/useAppDataSyncImport'
-import type { AppDataSyncImportResult } from '@common/modules/app-data-sync/hooks/useAppDataSyncImport/useAppDataSyncImport'
 import useSyncedPasswordSetup from '@common/modules/app-data-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
@@ -39,6 +38,7 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
+import type { AppDataSyncImportResult } from '@common/modules/app-data-sync/hooks/useAppDataSyncImport/useAppDataSyncImport'
 import type { CarouselRef } from 'react-native-reanimated-carousel'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
