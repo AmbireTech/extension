@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
 
+# A plain `git pull` doesn't fetch a submodule that was added after the clone, and without the
+# bundled token and network icons the app can't resolve their imports. Also moves an existing
+# checkout of it to the commit this branch points to
+git submodule update --init src/token-and-network-icons
+
 STALE_NODE_MODULES="src/ambire-common/node_modules"
 
 if [ -d "$STALE_NODE_MODULES" ]; then
