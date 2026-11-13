@@ -198,13 +198,22 @@ const QrReaderScreen = () => {
       </MobileLayoutWrapperMainContent>
       <BottomSheet
         id="qr-manual-entry"
-        type="modal"
         sheetRef={manualEntrySheetRef}
         closeBottomSheet={handleManualCancel}
         shouldBeClosableOnDrag={false}
         backgroundColor="secondaryBackground"
+        FooterComponent={
+          <View style={spacings.ptLg}>
+            <Button
+              text={t('Done')}
+              onPress={handleManualSubmit}
+              disabled={!manualValue.trim()}
+              hasBottomSpacing={false}
+            />
+          </View>
+        }
       >
-        <SheetHeaderRow style={spacings.mbLg}>
+        <SheetHeaderRow>
           <Text fontSize={18} weight="semiBold">
             {t('Enter QR code data')}
           </Text>
@@ -217,19 +226,8 @@ const QrReaderScreen = () => {
           onSubmitEditing={handleManualSubmit}
           returnKeyType="done"
           placeholder="wc: ..."
-          containerStyle={spacings.mbLg}
+          containerStyle={spacings.mb0}
         />
-        <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
-          <Button
-            type="primary"
-            size="large"
-            text={t('Done')}
-            onPress={handleManualSubmit}
-            disabled={!manualValue.trim()}
-            hasBottomSpacing={false}
-            style={{ borderRadius: 50, height: 44, ...spacings.phLg }}
-          />
-        </View>
       </BottomSheet>
     </MobileLayoutContainer>
   )
