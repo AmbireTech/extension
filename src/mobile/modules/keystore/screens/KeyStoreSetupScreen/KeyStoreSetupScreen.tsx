@@ -6,7 +6,6 @@ import AmbireLogo from '@common/assets/svg/AmbireLogo'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Checkbox from '@common/components/Checkbox'
-import DualChoiceModal from '@common/components/DualChoiceModal'
 import FatToggle from '@common/components/FatToggle'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -19,7 +18,6 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import KeyStoreSetupForm from '@common/modules/keystore/components/KeyStoreSetupForm'
 import TermsComponent from '@common/modules/terms/components'
 import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
@@ -151,14 +149,8 @@ const KeyStoreSetupScreen = () => {
             {t('Terms Of Service')}
           </Text>
         </View>
-        <DualChoiceModal
-          hideHeader
-          description={<TermsComponent />}
-          primaryButtonText={t('Ok')}
-          onPrimaryButtonPress={closeTermsModal}
-          primaryButtonTestID="terms-accept-btn"
-          style={common.borderRadiusPrimary}
-        />
+        {/* No Ok button, the sheet's X closes it */}
+        <TermsComponent hasBottomSpacing={false} />
       </BottomSheet>
     </MobileLayoutContainer>
   )
