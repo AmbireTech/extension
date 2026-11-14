@@ -93,7 +93,8 @@ const mapFeeOptions = (
     (speed) => speed.type === signAccountOpState.selectedFeeSpeed
   )
   const feeSpeedAmount = feeSpeed?.amount || 0n
-  const feeSpeedUsd = feeSpeed?.amountUsd || '0'
+  // Empty when the fee token has no price, so the option shows the fee in the token alone
+  const feeSpeedUsd = feeSpeed ? feeSpeed.amountUsd : '0'
 
   if (!speedCoverage.includes(FeeSpeed.Slow)) {
     const hasBundlerFailure = signAccountOpState.warnings.some(
