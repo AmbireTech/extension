@@ -156,11 +156,12 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
             return
           }
 
+          // TODO: Remove the Vivaldi message once VB-133598 is fixed in a Vivaldi release.
           // Vivaldi doesn't show the device prompt on extension pages (it does on
           // regular websites), so a new device can't be allowed there. Reported as
           // VB-133598, see https://forum.vivaldi.net/post/930284
           const message = (await isVivaldi())
-            ? "A known Vivaldi issue blocks connecting a new Ledger to browser extensions. We've reported it to Vivaldi. Ledgers you've already connected still work."
+            ? "A known Vivaldi issue blocks connecting a new Ledger to browser extensions. We've reported it to Vivaldi. Ledgers you've already connected still work. [Learn more](https://help.ambire.com/en/articles/18457958-why-can-t-i-connect-my-ledger-in-vivaldi)"
             : 'No Ledger device was selected. Please try again and pick your Ledger device from the list.'
           reject(new ExternalSignerError(message))
         }
