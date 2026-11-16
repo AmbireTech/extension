@@ -9,7 +9,7 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import ExportIcon from '@common/assets/svg/ExportIcon'
-import ImportIcon from '@common/assets/svg/ImportIcon'
+import ImportArrowIcon from '@common/assets/svg/ImportArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
@@ -219,7 +219,7 @@ const AccountKey: React.FC<Props> = ({
             style={{ height: 32 }}
             hasBottomSpacing={false}
           >
-            <ImportIcon style={[spacings.mlTy]} color={theme.primary} width={16} height={16} />
+            <ImportArrowIcon style={spacings.mlTy} color={theme.primary} width={16} height={16} />
           </Button>
         </View>
       )}
