@@ -132,27 +132,17 @@ const DeFiPositionHeader: FC<Props> = ({
       ]}
       {...bindAnim}
     >
-      <View
-        style={[
-          styles.providerData,
-          shouldStackHealthRateBadge && { flex: 1, minWidth: 0, flexShrink: 1 }
-        ]}
-      >
+      {/* Shrinks so a long provider name is truncated instead of pushing the value out */}
+      <View style={[styles.providerData, flexbox.flex1, { minWidth: 0 }]}>
         <ProtocolIcon iconUrl={iconUrl} providerName={providerName} chainId={chainId} />
-        <View style={shouldStackHealthRateBadge ? { flex: 1, minWidth: 0 } : undefined}>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              shouldStackHealthRateBadge && { minWidth: 0 }
-            ]}
-          >
+        <View style={[{ flexShrink: 1, minWidth: 0 }, shouldStackHealthRateBadge && flexbox.flex1]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
             <Text
               fontSize={isCompactLayout ? 14 : 16}
               weight="semiBold"
-              numberOfLines={shouldStackHealthRateBadge ? 1 : undefined}
-              ellipsizeMode={shouldStackHealthRateBadge ? 'tail' : undefined}
-              style={[spacings.mrMi, shouldStackHealthRateBadge && { flexShrink: 1, minWidth: 0 }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[spacings.mrMi, { flexShrink: 1, minWidth: 0 }]}
             >
               {providerName}
             </Text>
@@ -171,12 +161,12 @@ const DeFiPositionHeader: FC<Props> = ({
           )}
         </View>
         {isWeb && !isCompactLayout && !!healthRate && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlLg]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}>
             <Badge text={healthRateBadgeText} type={healthRateBadgeType} />
           </View>
         )}
       </View>
-      <View style={[styles.positionData, { flexShrink: 0 }]}>
+      <View style={[styles.positionData, spacings.mlSm, { flexShrink: 0 }]}>
         <Text
           fontSize={isCompactLayout ? 14 : 16}
           weight="semiBold"
