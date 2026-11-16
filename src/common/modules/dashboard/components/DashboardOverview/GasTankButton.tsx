@@ -50,7 +50,7 @@ const GasTankButton = ({ onPress, account }: Props) => {
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
   const isGasTankEnabled =
-    isErc4337Enabled && flags.gasTank && flags.tokenPrices && (!requiresEip7702 || isEip7702Enabled)
+    isErc4337Enabled && flags.gasTank && (!requiresEip7702 || isEip7702Enabled)
 
   const { state: networks } = useController('NetworksController', selectNetworks)
 

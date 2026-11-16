@@ -82,7 +82,9 @@ export const ControllersMiddlewareProvider: React.FC<{
         fetch: fetch as any,
         isTokenPricesEnabled: () => featureFlagsCtrl.isFeatureEnabled('tokenPrices'),
         // No Privacy Pools account exists here, so there's nothing for the assets to cover
-        addsPrivacyPoolsAssets: false
+        addsPrivacyPoolsAssets: false,
+        // Read lazily, as the providers controller is created right after (and depends on this one)
+        getProvider: (chainId) => ctrls.ProvidersController.providers[chainId.toString()]
       })
       ctrls.ProvidersController = new ProvidersController({
         eventEmitterRegistry: eventEmitterRegistry.current,
