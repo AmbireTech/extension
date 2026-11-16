@@ -9,9 +9,9 @@ body:has(#modalBackdrop) [data-blurred-behind-sheets] {
 }
 
 /* TrueSheet draws the sheets and their dimming outside the app's tree without a z-index, which
-   would leave them under anything in the app that has one. Matches BOTTOM_SHEET_Z_INDEX */
+   would leave them under anything in the app that has one. Matches BOTTOM_SHEET_Z_INDEX. The drawer
+   is left out: it's inside the wrapper, where a z-index would draw it over the sheet's footer */
 [data-vaul-overlay],
-[data-vaul-drawer],
 [data-vaul-detached-wrapper] {
   z-index: 900;
 }
