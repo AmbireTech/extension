@@ -46,6 +46,8 @@ interface Props {
   addr: Key['addr']
   type: Key['type']
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
+  /** Shows the Sign button, but it can't be pressed */
+  isSignDisabled?: boolean
   shouldSignAndClose?: boolean
   /** Replaces the Sign label, e.g. for owners that approve onchain instead of signing */
   signButtonText?: string
@@ -58,6 +60,7 @@ const SafeKeyWrapper = ({
   hasSigned,
   isSignLoading,
   onSign,
+  isSignDisabled,
   addr,
   type,
   shouldSignAndClose,
@@ -78,6 +81,7 @@ const SafeKeyWrapper = ({
           <ButtonWithLoader
             type="primary"
             isLoading={isSignLoading}
+            disabled={isSignDisabled}
             text={signButtonText || t(shouldSignAndClose ? 'Sign & Close' : 'Sign')}
             onPress={() => onSign(addr, type)}
             size="tiny"

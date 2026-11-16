@@ -14,16 +14,18 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import SafeApiDisabledAlert from '@common/modules/auth/components/SafeApiDisabledAlert'
 import SigningKeySelect from '@common/modules/sign-message/components/SignKeySelect'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 
-import { getSignAndCloseOwnerAddr } from './helpers'
+import { canOwnersHereMeetThreshold, getSignAndCloseOwnerAddr } from './helpers'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -169,6 +171,7 @@ const SafeOwners = ({
   const { state: accountStates } = useController('AccountsController', selectAccountStates)
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const [ownerAddrToChooseKeyFor, setOwnerAddrToChooseKeyFor] = useState<Key['addr'] | null>(null)
+  const { isSafeApiEnabled } = useSafeApiSetting()
 
   const owners = useMemo(() => {
     const state = accountStates[account.addr]?.[chainId]
@@ -241,6 +244,17 @@ const SafeOwners = ({
     [owners, threshold]
   )
 
+  // Opted out of the Safe API while owners elsewhere have to sign too: they'd never see it, so
+  // signing here can't get it sent. Allowed again once the user turns sync back on. Only when
+  // an owner here can still sign, as there's nothing to block otherwise
+  const isSigningBlockedBySyncOff = useMemo(
+    () =>
+      !isSafeApiEnabled &&
+      owners.some((owner) => owner.isImported && !owner.hasSigned) &&
+      !canOwnersHereMeetThreshold(owners, threshold),
+    [isSafeApiEnabled, owners, threshold]
+  )
+
   const ownerToChooseKeyFor = useMemo(
     () => owners.find((o) => o.addr === ownerAddrToChooseKeyFor) || null,
     [owners, ownerAddrToChooseKeyFor]
@@ -265,11 +279,13 @@ const SafeOwners = ({
   const handleChooseKey = useCallback(
     (keyAddr: Key['addr'], keyType: Key['type']) => {
       setOwnerAddrToChooseKeyFor(null)
+      // Sync may have been turned off while the key was being chosen
+      if (isSigningBlockedBySyncOff) return
 
       const sign = signAndCloseOwnerAddr === keyAddr && onSignAndClose ? onSignAndClose : onSign
       sign?.(keyAddr, keyType)
     },
-    [signAndCloseOwnerAddr, onSign, onSignAndClose]
+    [signAndCloseOwnerAddr, onSign, onSignAndClose, isSigningBlockedBySyncOff]
   )
 
   return (
@@ -300,6 +316,7 @@ const SafeOwners = ({
             shouldSignAndClose={signAndCloseOwnerAddr === o.addr && !!onSignAndClose}
             style={[i === owners.length - 1 ? spacings.mb0 : spacings.mbTy, { width: '100%' }]}
             onSign={getOwnerSignHandler(o)}
+            isSignDisabled={isSigningBlockedBySyncOff}
             isSignLoading={
               o.isSmartAccount
                 ? // until the user goes back, or the sent approval is confirmed or fails
@@ -317,6 +334,14 @@ const SafeOwners = ({
           </SafeKeyWrapper>
         ))}
       </ScrollableWrapper>
+      {isSigningBlockedBySyncOff && (
+        <SafeApiDisabledAlert
+          style={spacings.mt}
+          text={t(
+            "Owners on other devices or in the Safe app also need to sign, but with sync turned off they won't see this request or your signature, so it can't be completed. Turn on sync to sign it and share it with them."
+          )}
+        />
+      )}
       {!!ownerToChooseKeyFor && (
         <SigningKeySelect
           type="signing"

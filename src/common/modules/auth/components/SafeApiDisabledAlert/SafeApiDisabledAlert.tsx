@@ -6,11 +6,18 @@ import { useTranslation } from '@common/config/localization'
 import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 
 /**
- * Shown on the Safe import screens while the user has opted out of the Safe API ("Sync Safe
- * accounts" in the privacy settings), which the import needs. Turning it back on lets the
- * import continue right away.
+ * Shown while the user has opted out of the Safe API ("Sync Safe accounts" in the privacy
+ * settings) where it's needed: on the Safe import screens, and when signing needs owners on
+ * other devices. Turning it back on lets the user continue right away.
  */
-const SafeApiDisabledAlert = ({ style }: { style?: ViewStyle }) => {
+const SafeApiDisabledAlert = ({
+  text,
+  style
+}: {
+  /** Why sync is needed here. By default, for importing Safe accounts */
+  text?: string
+  style?: ViewStyle
+}) => {
   const { t } = useTranslation()
   const { enableSafeApi } = useSafeApiSetting()
 
@@ -21,9 +28,12 @@ const SafeApiDisabledAlert = ({ style }: { style?: ViewStyle }) => {
       style={style}
       title={t('Safe accounts sync is turned off')}
       titleWeight="semiBold"
-      text={t(
-        'You turned off "Sync Safe accounts" in the privacy settings. Turn it on to find and import your Safe accounts.'
-      )}
+      text={
+        text ||
+        t(
+          'You turned off "Sync Safe accounts" in the privacy settings. Turn it on to find and import your Safe accounts.'
+        )
+      }
       buttonProps={{ text: t('Turn on'), onPress: enableSafeApi }}
     />
   )
