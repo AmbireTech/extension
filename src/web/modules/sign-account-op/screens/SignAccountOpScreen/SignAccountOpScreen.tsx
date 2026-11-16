@@ -27,6 +27,7 @@ import SafeOwnerApprovalSheet, {
   useSafeOwnerApproval
 } from '@common/modules/sign-account-op/components/SafeOwnerApproval'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
+import SafeSignatureAdded from '@common/modules/sign-account-op/components/SafeSignatureAdded'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import SpeedUpNotNeededFee from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpNotNeededFee'
@@ -148,7 +149,9 @@ const SignAccountOpScreen = () => {
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners
+    showSafeSigners,
+    safeSignatureAdded,
+    handleSafeSignatureAddedExitEnd
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -299,6 +302,19 @@ const SignAccountOpScreen = () => {
     signAccountOpState?.readyToSign,
     signAccountOpState?.account.safeCreation
   ])
+
+  if (safeSignatureAdded) {
+    return (
+      <SmallNotificationWindowWrapper>
+        <SafeSignatureAdded
+          signedCount={safeSignatureAdded.signedCount}
+          threshold={safeSignatureAdded.threshold}
+          closesAt={safeSignatureAdded.closesAt}
+          onExitEnd={handleSafeSignatureAddedExitEnd}
+        />
+      </SmallNotificationWindowWrapper>
+    )
+  }
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
 
