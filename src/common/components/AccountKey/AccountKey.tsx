@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View, ViewStyle } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -19,6 +19,7 @@ import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import AccountRow from '@common/modules/account-select/components/Account'
 import { isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -28,8 +29,6 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { getUiType } from '@common/utils/uiType'
-
-import AccountKeyNameAndAddress from './AccountKeyNameAndAddress'
 
 export type AccountKeyType = {
   isImported: boolean
@@ -55,8 +54,9 @@ type Props = AccountKeyType & {
   onExportKeyPress?: ({ addr, label }: { addr: string; label?: string }) => void
   singleLineLabel?: boolean
   /**
-   * Shows the key like a row of the account list: the name, the address below it, and a badge
-   * that tells what the key is. Also shows the address of a dedicated key
+   * Shows the key as a row of the account list: the name, the address below it, and a badge
+   * that tells what the key is. With no name, the address is the title. A dedicated key also
+   * shows its address
    */
   withNameAndAddress?: boolean
   /** The contact, account or key label to show above the address, with `withNameAndAddress` */
@@ -66,6 +66,8 @@ type Props = AccountKeyType & {
 }
 
 const { isPopup } = getUiType()
+/** Short enough for the address to fit next to the Export / Import buttons */
+const KEY_ADDRESS_MAX_LENGTH = 20
 
 const AccountKey: React.FC<Props> = ({
   label,
@@ -152,6 +154,97 @@ const AccountKey: React.FC<Props> = ({
     </View>
   )
   const actionsSpacing = !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
+  const keyActions = !!canExportOrImportKey && (
+    <View>
+      {isImported ? (
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View>
+            {/*
+          When making the Pressable disabled, it disables literally everything in it.
+          So even the tooltip will not work.
+          The workaround is to set a wrapping <View> and make it the tooltip target
+        */}
+            <View
+              dataSet={createGlobalTooltipDataSet({
+                id: `export-${addr}-${type}-tooltip`,
+                content: t('Export unavailable as this is a hardware wallet key'),
+                hidden: canExportKey
+              })}
+            >
+              <Button
+                testID={`export-key-button-${addr}`}
+                style={{ height: 32 }}
+                hasBottomSpacing={false}
+                onPress={handleExportKeyPress}
+                size="small"
+                disabled={!canExportKey}
+                type="secondary"
+                text={t('Export')}
+              >
+                <ExportIcon
+                  style={spacings.mlTy}
+                  color={theme.iconPrimary}
+                  width={16}
+                  height={16}
+                />
+              </Button>
+            </View>
+          </View>
+          <AnimatedPressable
+            onPress={handleToggleDetails}
+            style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}
+            {...bindKeyDetailsAnim}
+          >
+            <Animated.View style={keyDetailsAnimStyles}>
+              <RightArrowIcon
+                width={16}
+                height={16}
+                color={theme.secondaryText}
+                style={
+                  isShowingDetails
+                    ? { transform: [{ rotate: '270deg' }] }
+                    : { transform: [{ rotate: '90deg' }] }
+                }
+              />
+            </Animated.View>
+          </AnimatedPressable>
+        </View>
+      ) : (
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <Button
+            onPress={reimportAccount}
+            size="small"
+            type="secondary"
+            text={t('Import')}
+            style={{ height: 32 }}
+            hasBottomSpacing={false}
+          >
+            <ImportIcon style={[spacings.mlTy]} color={theme.primary} width={16} height={16} />
+          </Button>
+        </View>
+      )}
+    </View>
+  )
+
+  // The key as an account, so it is shown like one: under the name it has in the wallet,
+  // with the badge of its keys, or with only its address when it has no name
+  const keyAsAccount = useMemo((): Account => {
+    const rowLabel = dedicatedToOneSA ? t('(dedicated key)') : name || ''
+
+    if (ownerAccount) {
+      return { ...ownerAccount, preferences: { ...ownerAccount.preferences, label: rowLabel } }
+    }
+
+    return {
+      addr,
+      associatedKeys: [addr],
+      initialPrivileges: [],
+      creation: null,
+      preferences: { label: rowLabel, pfp: addr }
+    }
+  }, [addr, dedicatedToOneSA, name, ownerAccount, t])
+  const renderKeyActions = () => keyActions
+  const renderNetworkIcons = () => networkIcons
 
   return (
     <View
@@ -164,33 +257,31 @@ const AccountKey: React.FC<Props> = ({
         isLast ? spacings.mb0 : spacings.mbTy
       ]}
     >
-      <View
-        style={[
-          spacings.phSm,
-          spacings.pvTy,
-          flexbox.directionRow,
-          flexbox.justifySpaceBetween,
-          flexbox.alignCenter,
-          flexbox.flex1,
-          { minHeight: itemHeight },
-          style
-        ]}
-      >
-        {withNameAndAddress ? (
-          <AccountKeyNameAndAddress
-            addr={addr}
-            type={type}
-            isImported={isImported}
-            isDedicatedKey={!!dedicatedToOneSA}
-            name={name}
-            ownerAccount={ownerAccount}
-            fontSize={fontSize}
-            tooltipContent={tooltipContent}
-            style={actionsSpacing}
-          >
-            {networkIcons}
-          </AccountKeyNameAndAddress>
-        ) : (
+      {withNameAndAddress ? (
+        <AccountRow
+          account={keyAsAccount}
+          withSettings={false}
+          isSelectable={false}
+          switchAccountOnPress={false}
+          withBalance={false}
+          maxAccountAddrLength={KEY_ADDRESS_MAX_LENGTH}
+          renderRightChildren={renderKeyActions}
+          renderExtraBadges={renderNetworkIcons}
+          containerStyle={spacings.mb0}
+        />
+      ) : (
+        <View
+          style={[
+            spacings.phSm,
+            spacings.pvTy,
+            flexbox.directionRow,
+            flexbox.justifySpaceBetween,
+            flexbox.alignCenter,
+            flexbox.flex1,
+            { minHeight: itemHeight },
+            style
+          ]}
+        >
           <View
             style={[
               flexbox.directionRow,
@@ -245,85 +336,10 @@ const AccountKey: React.FC<Props> = ({
               {!!networkIcons && <View style={spacings.mlTy}>{networkIcons}</View>}
             </>
           </View>
-        )}
 
-        {!!canExportOrImportKey && (
-          <View>
-            {isImported ? (
-              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                <View>
-                  {/*
-                When making the Pressable disabled, it disables literally everything in it.
-                So even the tooltip will not work.
-                The workaround is to set a wrapping <View> and make it the tooltip target
-              */}
-                  <View
-                    dataSet={createGlobalTooltipDataSet({
-                      id: `export-${addr}-${type}-tooltip`,
-                      content: t('Export unavailable as this is a hardware wallet key'),
-                      hidden: canExportKey
-                    })}
-                  >
-                    <Button
-                      testID={`export-key-button-${addr}`}
-                      style={{ height: 32 }}
-                      hasBottomSpacing={false}
-                      onPress={handleExportKeyPress}
-                      size="small"
-                      disabled={!canExportKey}
-                      type="secondary"
-                      text={t('Export')}
-                    >
-                      <ExportIcon
-                        style={spacings.mlTy}
-                        color={theme.iconPrimary}
-                        width={16}
-                        height={16}
-                      />
-                    </Button>
-                  </View>
-                </View>
-                <AnimatedPressable
-                  onPress={handleToggleDetails}
-                  style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}
-                  {...bindKeyDetailsAnim}
-                >
-                  <Animated.View style={keyDetailsAnimStyles}>
-                    <RightArrowIcon
-                      width={16}
-                      height={16}
-                      color={theme.secondaryText}
-                      style={
-                        isShowingDetails
-                          ? { transform: [{ rotate: '270deg' }] }
-                          : { transform: [{ rotate: '90deg' }] }
-                      }
-                    />
-                  </Animated.View>
-                </AnimatedPressable>
-              </View>
-            ) : (
-              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                <Button
-                  onPress={reimportAccount}
-                  size="small"
-                  type="secondary"
-                  text={t('Import')}
-                  style={{ height: 32 }}
-                  hasBottomSpacing={false}
-                >
-                  <ImportIcon
-                    style={[spacings.mlTy]}
-                    color={theme.primary}
-                    width={16}
-                    height={16}
-                  />
-                </Button>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
+          {keyActions}
+        </View>
+      )}
       {!!isKeyAmbireV1 && (
         <View style={[spacings.phSm, spacings.mbTy]}>
           <Text appearance="secondaryText" weight="medium" fontSize={14} numberOfLines={2}>

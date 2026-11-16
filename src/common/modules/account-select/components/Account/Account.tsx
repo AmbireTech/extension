@@ -60,6 +60,7 @@ const Account = ({
   withKeyType = true,
   renderLeftChildren,
   renderRightChildren,
+  renderExtraBadges,
   inverseInteractionColors = false,
   options = {
     withOptionsButton: false
@@ -84,6 +85,8 @@ const Account = ({
   /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
   renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
+  /** Rendered after the other badges, e.g. the networks a key is a Safe owner on */
+  renderExtraBadges?: () => React.ReactNode
   options?: {
     withOptionsButton?: boolean
     markSelected?: boolean
@@ -317,12 +320,16 @@ const Account = ({
     </View>
   )
 
+  // With no label, e.g. a key that is not an account of the wallet, the address is the title
+  const hasLabel = !!preferences.label
+
   const address = (
     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
       <AccountAddress
         {...reverseLookup}
         containerStyle={spacings.pb0}
         address={addr}
+        fontSize={hasLabel ? undefined : 14}
         plainAddressMaxLength={maxAccountAddrLength}
         // On web the copy button fits next to the address, unlike on mobile, where it
         // sits next to the account to keep the touch targets apart
@@ -404,6 +411,7 @@ const Account = ({
         withViewOnly={!withKeyType}
       />
       {withSafeSignerBadges && <SafeSignerBadges account={account} />}
+      {renderExtraBadges && renderExtraBadges()}
     </View>
   )
 
@@ -489,7 +497,7 @@ const Account = ({
               showTooltip
             />
             <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-              {label}
+              {hasLabel && label}
               {address}
             </View>
             {actions}
