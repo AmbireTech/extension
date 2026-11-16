@@ -5,7 +5,6 @@ import { View } from 'react-native'
 import AddIcon from '@common/assets/svg/AddIcon'
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
 import BottomSheet from '@common/components/BottomSheet'
-import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
@@ -232,8 +231,6 @@ const NetworksSettings = () => {
         // The form's buttons portal into it, so they stay in view while the form scrolls
         FooterComponent={<PortalHost name={FOOTER_HOST_NAME} />}
       >
-        {/* The form's own header is a card, so the X gets a row of its own above it */}
-        <SheetHeaderRow />
         <NetworkForm
           onCancel={closeBottomSheet}
           onSaved={closeBottomSheet}

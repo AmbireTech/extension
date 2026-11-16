@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next'
 import AddIcon from '@common/assets/svg/AddIcon'
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
 import BottomSheet from '@common/components/BottomSheet'
-import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
@@ -98,7 +97,6 @@ const NetworksSettingsScreen = () => {
           // The form's buttons portal into it, so they stay in view while the form scrolls
           FooterComponent={isWeb ? undefined : <PortalHost name={FOOTER_HOST_NAME} />}
         >
-          <SheetHeaderRow />
           <NetworkForm
             onCancel={closeBottomSheet}
             onSaved={closeBottomSheet}

@@ -20,6 +20,7 @@ import InfoIcon from '@common/assets/svg/InfoIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -840,63 +841,17 @@ const NetworkForm = ({
     </View>
   )
 
+  const isAddingNetwork = selectedChainId === 'add-custom-network'
+  const editedNetworkChainId = !isAddingNetwork ? selectedNetwork?.chainId.toString() : undefined
+  const renderNetworkNameIcon = useCallback(
+    () => (editedNetworkChainId ? <NetworkIcon id={editedNetworkChainId} size={24} /> : null),
+    [editedNetworkChainId]
+  )
+
   return (
     <>
-      <View style={styles.modalHeader}>
-        {selectedChainId === 'add-custom-network' && (
-          <Text
-            fontSize={20}
-            weight="medium"
-            numberOfLines={1}
-            style={[text.center, flexbox.flex1]}
-          >
-            {t('Add custom network')}
-          </Text>
-        )}
-        {selectedChainId !== 'add-custom-network' && !!selectedNetwork && (
-          <>
-            {isWeb && (
-              <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-                <NetworkIcon
-                  id={selectedNetwork.chainId.toString()}
-                  style={spacings.mrTy}
-                  size={28}
-                />
-                <Text
-                  appearance="secondaryText"
-                  weight="regular"
-                  style={spacings.mrMi}
-                  fontSize={16}
-                >
-                  {selectedNetwork.name || t('Unknown network')}
-                </Text>
-              </View>
-            )}
-            <Text fontSize={20} weight="medium" numberOfLines={1}>
-              {t('Edit network')}
-            </Text>
-            <View style={[flexbox.flex1, flexbox.alignEnd]}>
-              {isMobile && (
-                <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-                  <NetworkIcon
-                    id={selectedNetwork.chainId.toString()}
-                    style={spacings.mrTy}
-                    size={28}
-                  />
-                  <Text
-                    appearance="secondaryText"
-                    weight="regular"
-                    style={spacings.mrMi}
-                    fontSize={16}
-                  >
-                    {selectedNetwork.name || t('Unknown network')}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </>
-        )}
-      </View>
+      {/* The title sits in the sheet's row with the X */}
+      <ModalHeader title={isAddingNetwork ? t('Add custom network') : t('Edit network')} />
       <View
         style={[
           isWeb && spacings.phXl,
@@ -925,6 +880,8 @@ const NetworkForm = ({
                     inputStyle={{ height: 40 }}
                     containerStyle={{ ...spacings.mb, ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                     label={t('Network name')}
+                    // The edited network's icon, in its name
+                    leftIcon={editedNetworkChainId ? renderNetworkNameIcon : undefined}
                     disabled={selectedChainId !== 'add-custom-network'}
                     error={handleErrors(errors.name)}
                   />

@@ -12,7 +12,6 @@ import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
-import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import Dialog from '@common/components/Dialog'
 import DialogButton from '@common/components/Dialog/DialogButton'
@@ -505,8 +504,6 @@ const NetworkDetails = ({
         // The form's buttons portal into it, so they stay in view while the form scrolls
         FooterComponent={<PortalHost name={EDIT_NETWORK_FOOTER_HOST_NAME} />}
       >
-        {/* The form's own header is a card, so the X gets a row of its own above it */}
-        <SheetHeaderRow />
         <NetworkForm
           selectedChainId={chainId.toString()}
           onCancel={closeBottomSheet}
