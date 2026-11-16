@@ -220,7 +220,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   // A `customRenderer` controls its own layout, so it gets no content padding.
   const bottomInset = bottom || SPACING_SM
   const contentBottomPadding = isModal || FooterComponent ? 0 : bottomInset
-  const footerBottomPadding = isModal ? 0 : bottomInset
+  // A centered card's footer keeps the spacing of its sides from the bottom edge
+  const footerBottomPadding = isModal ? SPACING_LG : bottomInset
 
   // The keyboard is handled natively: the sheet keeps its size and slides up with it, and the
   // list is inset by it. TrueSheet only lifts an absolute footer above the keyboard, so the
