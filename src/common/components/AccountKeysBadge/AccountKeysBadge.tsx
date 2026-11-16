@@ -41,9 +41,10 @@ const KEY_TYPE_NAMES: { [type in Key['type']]: string } = {
 const KEY_TYPES_WITHOUT_ICON: Key['type'][] = ['internal', 'pq1']
 
 interface Props {
-  account: Account
+  /** Only tells if the account is a Safe, so a key with no account of its own can use the badge */
+  account: Pick<Account, 'safeCreation'>
   /** The account's own keystore keys, so a list of rows subscribes to them only once */
-  accountKeys: Key[]
+  accountKeys: Pick<Key, 'type'>[]
 }
 
 /**

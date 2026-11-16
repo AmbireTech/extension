@@ -17,7 +17,6 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import HumanizerAddress from '@common/components/HumanizerAddress'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -29,6 +28,8 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
 import { getUiType } from '@common/utils/uiType'
+
+import AccountKeyNameAndAddress from './AccountKeyNameAndAddress'
 
 export type AccountKeyType = {
   isImported: boolean
@@ -53,6 +54,15 @@ type Props = AccountKeyType & {
   itemHeight?: number
   onExportKeyPress?: ({ addr, label }: { addr: string; label?: string }) => void
   singleLineLabel?: boolean
+  /**
+   * Shows the key like a row of the account list: the name, the address below it, and a badge
+   * that tells what the key is. Also shows the address of a dedicated key
+   */
+  withNameAndAddress?: boolean
+  /** The contact, account or key label to show above the address, with `withNameAndAddress` */
+  name?: string
+  /** The wallet account at the key's address, if there is one, with `withNameAndAddress` */
+  ownerAccount?: Account
 }
 
 const { isPopup } = getUiType()
@@ -76,7 +86,10 @@ const AccountKey: React.FC<Props> = ({
   tooltipContent,
   itemHeight = 48,
   onExportKeyPress,
-  singleLineLabel = false
+  singleLineLabel = false,
+  withNameAndAddress = false,
+  name,
+  ownerAccount
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -105,9 +118,6 @@ const AccountKey: React.FC<Props> = ({
   }, [addr, addToast, t])
 
   const shortAddr = shortenAddress(addr, 13)
-  // Safe owners get their account label / contact name resolved, like in the Safe signing screen
-  const safeOwnerChainId = account.safeCreation ? onChains?.[0] : undefined
-  const shouldResolveSafeOwnerName = !!safeOwnerChainId && !label && !dedicatedToOneSA
 
   const isInternal = !type || type === 'internal'
   const canExportKey = isImported && isInternal
@@ -128,6 +138,20 @@ const AccountKey: React.FC<Props> = ({
   const handleToggleDetails = useCallback(() => {
     setIsShowingDetails((p) => !p)
   }, [])
+
+  const networkIcons = !!onChains?.length && (
+    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+      {onChains.map((c, i) => (
+        <NetworkIcon
+          key={c}
+          id={c.toString()}
+          style={i === 0 ? { marginLeft: 0 } : { marginLeft: -11 }}
+          size={20}
+        />
+      ))}
+    </View>
+  )
+  const actionsSpacing = !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
 
   return (
     <View
@@ -152,45 +176,43 @@ const AccountKey: React.FC<Props> = ({
           style
         ]}
       >
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            singleLineLabel && { flex: 1, minWidth: 0 },
-            // Lets a long resolved name truncate instead of pushing out the action buttons
-            shouldResolveSafeOwnerName && { flexShrink: 1, minWidth: 0 },
-            !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
-          ]}
-        >
-          {!!isImported && (
-            <View style={spacings.mrTy}>
-              <AccountKeyIcon iconSize={20} type={type || 'internal'} color={keyIconColor} />
-            </View>
-          )}
+        {withNameAndAddress ? (
+          <AccountKeyNameAndAddress
+            addr={addr}
+            type={type}
+            isImported={isImported}
+            isDedicatedKey={!!dedicatedToOneSA}
+            name={name}
+            ownerAccount={ownerAccount}
+            fontSize={fontSize}
+            tooltipContent={tooltipContent}
+            style={actionsSpacing}
+          >
+            {networkIcons}
+          </AccountKeyNameAndAddress>
+        ) : (
+          <View
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              singleLineLabel && { flex: 1, minWidth: 0 },
+              actionsSpacing
+            ]}
+          >
+            {!!isImported && (
+              <View style={spacings.mrTy}>
+                <AccountKeyIcon iconSize={20} type={type || 'internal'} color={keyIconColor} />
+              </View>
+            )}
 
-          <>
-            <View
-              style={[
-                singleLineLabel && { flex: 1, minWidth: 0 },
-                shouldResolveSafeOwnerName && { flexShrink: 1, minWidth: 0 },
-                shouldResolveSafeOwnerName && isImported && spacings.mlMi
-              ]}
-              dataSet={createGlobalTooltipDataSet({
-                id: `key-${addr}-${type}-tooltip`,
-                content: tooltipContent ?? addr
-              })}
-            >
-              {shouldResolveSafeOwnerName ? (
-                <HumanizerAddress
-                  address={addr}
-                  chainId={safeOwnerChainId}
-                  fontSize={fontSize - 1}
-                  numberOfLines={1}
-                  hideActions
-                  actionsMode="inline"
-                  shouldWrapInlineActions={false}
-                />
-              ) : (
+            <>
+              <View
+                style={singleLineLabel && { flex: 1, minWidth: 0 }}
+                dataSet={createGlobalTooltipDataSet({
+                  id: `key-${addr}-${type}-tooltip`,
+                  content: tooltipContent ?? addr
+                })}
+              >
                 <Text
                   color={dedicatedToOneSA ? theme.infoDecorative : theme.primaryText}
                   fontSize={fontSize - 1}
@@ -206,31 +228,24 @@ const AccountKey: React.FC<Props> = ({
                 >
                   {dedicatedToOneSA ? t('(dedicated key)') : label ? `${label}` : shortAddr}
                 </Text>
-              )}
-            </View>
-            {!!showCopyAddr && (
-              <AnimatedPressable
-                style={[spacings.mlMi, copyIconAnimStyle]}
-                onPress={handleCopy}
-                {...bindCopyIconAnim}
-              >
-                <CopyIcon width={fontSize + 2} height={fontSize + 2} color={theme.secondaryText} />
-              </AnimatedPressable>
-            )}
-            {onChains && onChains.length && (
-              <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
-                {onChains.map((c, i) => (
-                  <NetworkIcon
-                    key={c}
-                    id={c.toString()}
-                    style={i === 0 ? { marginLeft: 0 } : { marginLeft: -11 }}
-                    size={20}
-                  />
-                ))}
               </View>
-            )}
-          </>
-        </View>
+              {!!showCopyAddr && (
+                <AnimatedPressable
+                  style={[spacings.mlMi, copyIconAnimStyle]}
+                  onPress={handleCopy}
+                  {...bindCopyIconAnim}
+                >
+                  <CopyIcon
+                    width={fontSize + 2}
+                    height={fontSize + 2}
+                    color={theme.secondaryText}
+                  />
+                </AnimatedPressable>
+              )}
+              {!!networkIcons && <View style={spacings.mlTy}>{networkIcons}</View>}
+            </>
+          </View>
+        )}
 
         {!!canExportOrImportKey && (
           <View>

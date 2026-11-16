@@ -30,6 +30,10 @@ interface Props {
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) =>
   state.networks || []
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys || []
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts || []
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) =>
+  state.contacts || []
 
 const AccountKeys: FC<Props> = ({
   account,
@@ -51,6 +55,8 @@ const AccountKeys: FC<Props> = ({
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: contacts } = useController('AddressBookController', selectContacts)
   const accountStateRefreshRef = useRef<{ accountAddr: string | null; chainIds: Set<string> }>({
     accountAddr: null,
     chainIds: new Set()
@@ -173,6 +179,16 @@ const AccountKeys: FC<Props> = ({
     ]
   }, [associatedKeys, keys])
 
+  // Looked up once for the whole list, so that the rows do not subscribe to the accounts and contacts
+  const accountsByAddr = useMemo(
+    () => new Map(accounts.map((acc) => [acc.addr.toLowerCase(), acc])),
+    [accounts]
+  )
+  const contactNamesByAddr = useMemo(
+    () => new Map(contacts.map((contact) => [contact.address.toLowerCase(), contact.name])),
+    [contacts]
+  )
+
   const withAlert = useMemo(
     () => associatedKeys.length > 1 && isAmbireV1LinkedAccount(account.creation?.factoryAddr),
     [account.creation?.factoryAddr, associatedKeys.length]
@@ -205,9 +221,13 @@ const AccountKeys: FC<Props> = ({
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={isWeb}
       >
-        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA }, index) => {
+        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA, label }, index) => {
           const isLast = index === accountKeys.length - 1
           const accountKeyProps = { addr, type, isLast, isImported }
+          const ownerAccount = accountsByAddr.get(addr.toLowerCase())
+          // The key label ("Key 2") tells the least, so it is shown only when there is no other name
+          const name =
+            contactNamesByAddr.get(addr.toLowerCase()) || ownerAccount?.preferences.label || label
 
           return (
             <AccountKey
@@ -222,6 +242,9 @@ const AccountKeys: FC<Props> = ({
               showExportImport={showExportImport}
               onExportKeyPress={handleExportKeyPress}
               onChains={safeOwnersByNetwork[addr]}
+              withNameAndAddress
+              name={name}
+              ownerAccount={ownerAccount}
             />
           )
         })}
