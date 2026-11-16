@@ -27,8 +27,6 @@ import type { OverviewCollapse } from '../DashboardPagesCarousel/DashboardPagesC
 import RefreshIcon from './RefreshIcon'
 import getStyles from './styles'
 
-import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
-
 interface Props {
   openGasTankModal?: () => void
   /** The overview is never resized: the pages slide over its collapsing part instead. */
@@ -44,8 +42,6 @@ export const OVERVIEW_CARD_GAP = SPACING_TY
 /** The card's corner radius, which `OverviewCollapseCover` rounds the cut-off card by. */
 export const OVERVIEW_CARD_RADIUS = BORDER_RADIUS_PRIMARY
 
-const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
-
 const DashboardOverview: FC<Props> = ({
   openGasTankModal,
   onCollapsibleHeightChange,
@@ -57,10 +53,6 @@ const DashboardOverview: FC<Props> = ({
   const { state: areNetworksFetchingFromRelayer } = useController(
     'NetworksController',
     'areNetworksFetchingFromRelayer'
-  )
-  const { state: isTokenPricesEnabled } = useController(
-    'FeatureFlagsController',
-    selectTokenPricesEnabled
   )
 
   const {
@@ -168,7 +160,6 @@ const DashboardOverview: FC<Props> = ({
                         : 'ready'
                     }
                     totalAmount={totalPortfolioAmount}
-                    isTokenPricesEnabled={isTokenPricesEnabled}
                     color={totalPortfolioAmountColor}
                     isPrivacyModeEnabled={isPrivacyModeEnabled}
                     onPress={togglePrivacyMode}

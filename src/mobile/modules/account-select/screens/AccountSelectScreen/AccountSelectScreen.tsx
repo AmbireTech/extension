@@ -186,7 +186,9 @@ const AccountSelectScreen = () => {
           {isReadyToRender && (
             <ScrollableWrapper
               type={WRAPPER_TYPES.FLAT_LIST}
-              style={[styles.container, { opacity: shouldDisplayAccounts ? 1 : 0 }]}
+              style={{ opacity: shouldDisplayAccounts ? 1 : 0 }}
+              // Not on the list itself: Android leaves a list's own padding out of how far it scrolls
+              contentContainerStyle={styles.container}
               wrapperRef={flatlistRef}
               data={accounts}
               renderItem={renderItem}

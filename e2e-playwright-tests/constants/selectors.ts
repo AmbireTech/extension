@@ -361,6 +361,7 @@ const selectors = {
     copyRecoveryPhraseButton: 'copy-recovery-phrase-button',
     exportKeyButton: (addr: string) => `export-key-button-${addr}`,
     privateKeyValue: 'private-key-value',
+    privateKeyBlurContainer: 'private-key-blur-container',
     revealPrivateKeyButton: 'reveal-private-key-button',
     copyPrivateKeyButton: 'copy-private-key-button'
   }
