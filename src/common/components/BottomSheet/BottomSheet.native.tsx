@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   FlatList,
@@ -147,17 +147,34 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const isPresentedRef = useRef(false)
   // Tells a dismissal started by close() apart from one started by a swipe or a tap outside
   const isClosingProgrammaticallyRef = useRef(false)
+  // TrueSheet presents as soon as its content mounts, before the header over it is measured, and
+  // fits the content only after the open animation, so a sheet opened in two steps. Instead, the
+  // content mounts unpresented (not lazy) and the sheet presents once the header is measured
+  const [isMountRequested, setIsMountRequested] = useState(false)
+  // A fresh TrueSheet after each close unmounts the content again, as one that isn't lazy keeps it
+  const [sheetKey, setSheetKey] = useState(0)
+  const [presentRequestId, setPresentRequestId] = useState(0)
+  const sheetInstanceRef = useRef<TrueSheet | null>(null)
+  const headerContentRef = useRef<View>(null)
+  // Until then, nothing is on screen to dismiss
+  const hasCalledPresentRef = useRef(false)
 
   const trueSheetRef = useCallback(
     (sheet: TrueSheet | null) => {
+      sheetInstanceRef.current = sheet
       const adapter: SheetRefAdapter | null = sheet && {
         open: () => {
           isPresentedRef.current = true
-          sheet.present().catch(reportSheetError)
+          setIsMountRequested(true)
         },
         close: () => {
           if (!isPresentedRef.current) return
           isPresentedRef.current = false
+          if (!hasCalledPresentRef.current) {
+            setIsMountRequested(false)
+            setSheetKey((key) => key + 1)
+            return
+          }
           isClosingProgrammaticallyRef.current = true
           sheet.dismiss().catch(reportSheetError)
         }
@@ -233,6 +250,22 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     [footerBottomPadding]
   )
 
+  // Fabric measures synchronously, so the padding below the header lands in the same commit
+  const handleMount = useCallback(() => {
+    if (!isPresentedRef.current) return
+    headerContentRef.current?.measure((_x, _y, _width, height) => {
+      setHeaderContentHeight(height)
+      setPresentRequestId((requestId) => requestId + 1)
+    })
+  }, [])
+
+  // After the commit with the measured header, so the sheet opens straight to its final height
+  useLayoutEffect(() => {
+    if (!presentRequestId || !isPresentedRef.current) return
+    hasCalledPresentRef.current = true
+    sheetInstanceRef.current?.present().catch(reportSheetError)
+  }, [presentRequestId])
+
   const handleWillPresent = useCallback(() => {
     KeyboardController.dismiss().catch(reportSheetError)
     setIsOpen(true)
@@ -245,6 +278,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     isClosingProgrammaticallyRef.current = false
     // Reset on close, as the list scrolls to its selected row before the sheet is presented
     hasUserScrolledListRef.current = false
+    // Lazy again by the time it's dismissed, so TrueSheet unmounts the content
+    setIsMountRequested(false)
     setIsOpen(false)
     // TrueSheet doesn't say whether a swipe or a tap outside closed it, so both run
     // what the Modalize backdrop tap ran
@@ -252,6 +287,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     closeBottomSheet()
     onBackdropPress()
   }, [closeBottomSheet, onBackdropPress, setIsOpen])
+
+  const handleDidDismiss = useCallback(() => {
+    hasCalledPresentRef.current = false
+    setSheetKey((key) => key + 1)
+    onClosed()
+  }, [onClosed])
 
   const handleBackPress = useCallback(() => {
     closeBottomSheet()
@@ -395,7 +436,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       >
         {/* Over glass section headers the pinned one frosts this area instead */}
         {isHeaderFrosted && !isSectionHeaderGlass && <SheetHeaderBlur />}
-        <View pointerEvents="box-none" onLayout={handleHeaderLayout}>
+        <View ref={headerContentRef} pointerEvents="box-none" onLayout={handleHeaderLayout}>
           <PortalHost name={headerHostName} />
           {/* Below the row, whose own margin the floating header drops (pickers' search) */}
           {!!HeaderComponent && (
@@ -467,7 +508,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       {/* them by position and rebuilds this sheet closed when another one unmounts */}
       <BottomSheetContext.Provider key={id} value={bottomSheetContextValue}>
         <TrueSheet
+          key={sheetKey}
           ref={trueSheetRef}
+          lazy={!isMountRequested}
           detents={detents}
           scrollableRef={scrollableRef}
           scrollableOptions={scrollableOptions}
@@ -488,10 +531,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           footerOptions={footerOptions}
           insetAdjustment="never"
           style={sheetStyle}
+          onMount={handleMount}
           onWillPresent={handleWillPresent}
           onDidPresent={onOpened}
           onWillDismiss={handleWillDismiss}
-          onDidDismiss={onClosed}
+          onDidDismiss={handleDidDismiss}
           onBackPress={handleBackPress}
         >
           {sheetChildren}
