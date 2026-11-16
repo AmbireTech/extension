@@ -143,18 +143,13 @@ const PayOption = ({
             <Text weight="semiBold" fontSize={14} numberOfLines={1}>
               {formatDecimals(Number(amountUsd), 'value')}
             </Text>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text fontSize={12} numberOfLines={1} style={spacings.mrTy}>
-                {formattedAmount} {feeOption.token.symbol}
-              </Text>
-              <Text
-                fontSize={isMobile ? 10 : 12}
-                numberOfLines={1}
-                appearance={disabledTextAppearance}
-              >
+            {/* One text, so the reason follows the amount and wraps onto a second line, uncut */}
+            <Text fontSize={12}>
+              {formattedAmount} {feeOption.token.symbol}{' '}
+              <Text fontSize={isMobile ? 10 : 12} appearance={disabledTextAppearance}>
                 {disabledReason}
               </Text>
-            </View>
+            </Text>
           </View>
         ) : (
           <View>
