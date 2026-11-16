@@ -2933,10 +2933,10 @@
     "@scure/bip39" "^2.2.0"
     ox "^0.12.0"
 
-"@kohaku-eth/poseidon-lean-imt@0.0.1-alpha.1":
-  version "0.0.1-alpha.1"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/poseidon-lean-imt/-/poseidon-lean-imt-0.0.1-alpha.1.tgz#a06e793c5aef4a46400d2e3a8844bc93fb5589b6"
-  integrity sha512-rnDJ6v4GHi2bvtLK+sMVTi7pOEW1Kl7fEcXvTmKhnmZtC5G35gS+TWQfrX7+WnfCgCNI1xhPhJU4+yNzU2iAKQ==
+"@kohaku-eth/poseidon-lean-imt@0.0.1-alpha.2":
+  version "0.0.1-alpha.2"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/poseidon-lean-imt/-/poseidon-lean-imt-0.0.1-alpha.2.tgz#dfc60bf5f0783bf7c1124b2ea8413df55b1c3cdb"
+  integrity sha512-MMKeOVto7RWS1oUau+v8Yc1gx3rqC1Qup9o1laV7B4mf5yeowX3vyFL2KJ/Ur6JE6ukXEyEaYdJEIg1dyZkWew==
   dependencies:
     "@kohaku-eth/poseidon" "0.0.1"
 
@@ -2945,15 +2945,15 @@
   resolved "https://registry.yarnpkg.com/@kohaku-eth/poseidon/-/poseidon-0.0.1.tgz#da1e22e4694519411c5eed4233ce4d132491ac5e"
   integrity sha512-qbMzNo6uBx+9R/TW8G2vJNbXkzkVxmFABAEVpiSxynTSrOed4sA6Y8ZoT7/BTDX6o+/ch6OrJItOULfoUW1dJw==
 
-"@kohaku-eth/privacy-pools@0.1.0-alpha.39":
-  version "0.1.0-alpha.39"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.39.tgz#3f7695049e0fe762744ee67711ea4d68263071fb"
-  integrity sha512-xs8biGdPcuIxz64H0RB/diL/4o7EiuXFfP5/+sTU+pZQhHUXKxy2GekEAsQrDLotyC+hkxkoRWIeLtfDx07vMQ==
+"@kohaku-eth/privacy-pools@0.1.0-alpha.40":
+  version "0.1.0-alpha.40"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.40.tgz#8d50dae167a161c62012dc28a6fde9725118eed7"
+  integrity sha512-oX6zqOxi2MfxdggTz8+LAM93jmuavtJvWgv+Pjd7r4Gf8QS1SV5Oqw9aHNumwre9NZg+gfiis5ekiVM+IrzTpg==
   dependencies:
     "@fatsolutions/privacy-pools-core-circuits" "1.0.5"
     "@kohaku-eth/plugins" "0.0.1-alpha.20"
     "@kohaku-eth/poseidon" "0.0.1"
-    "@kohaku-eth/poseidon-lean-imt" "0.0.1-alpha.1"
+    "@kohaku-eth/poseidon-lean-imt" "0.0.1-alpha.2"
     "@kohaku-eth/provider" "0.1.0-alpha.14"
     "@reduxjs/toolkit" "^2.11.2"
     "@saga-sync/client" "^0.3.0"
