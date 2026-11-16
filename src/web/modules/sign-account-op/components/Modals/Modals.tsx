@@ -153,6 +153,7 @@ const Modals: FC<ModalsProps> = ({
           currentRequest={currentRequest}
           signingStep={signingStep}
           signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
+          humanization={signAccountOpState?.humanization}
           transactionProgress={transactionProgress}
           submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
           onReject={handleQrSigningFlowOnRejectPressed}
@@ -169,9 +170,11 @@ const Modals: FC<ModalsProps> = ({
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
         hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
+        humanization={signAccountOpState.humanization}
         isPaymasterSlow={slowPaymasterRequest}
         accountOp={signAccountOpState.accountOp}
-        actionType={actionType}
+        // A Safe owner approval is signed in the Safe request's window, so it isn't moved to one
+        actionType={actionType === 'safeOwnerApproval' ? undefined : actionType}
         cancelReq={() => {
           if (actionType === 'swapAndBridge') {
             return swapAndBridgeDispatch({
@@ -188,6 +191,15 @@ const Modals: FC<ModalsProps> = ({
               params: {
                 method: 'cancelSignReq',
                 args: []
+              }
+            })
+          }
+          if (actionType === 'safeOwnerApproval') {
+            return signAccountOpDispatch({
+              type: 'method',
+              params: {
+                method: 'callSafeOwnerApprovalMethod',
+                args: ['cancelSignReq', []]
               }
             })
           }

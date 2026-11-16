@@ -6,7 +6,10 @@ import { createRoot } from 'react-dom/client'
 
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 
-import useSign from './useSign'
+import useSign, {
+  SAFE_SIGN_AND_CLOSE_FALLBACK_DELAY_MS,
+  SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS
+} from './useSign'
 
 // The same EOA imported as both a Ledger and a QR key, so both keys share its address
 const mockLedgerKey = { addr: '0xeoa', type: 'ledger' }
@@ -58,6 +61,7 @@ const mockControllerDispatches: Record<string, jest.Mock> = {
 
 const mockHandleUpdate = jest.fn()
 const mockHandleUpdateStatus = jest.fn()
+const mockOnSafeSignComplete = jest.fn()
 
 jest.mock('@common/hooks/useController', () => ({
   __esModule: true,
@@ -155,7 +159,8 @@ const Consumer = () => {
     handleUpdateStatus: mockHandleUpdateStatus,
     handleUpdate: mockHandleUpdate,
     signAccountOpState: mockSignAccountOpState.current,
-    hasReachedBottom: true
+    hasReachedBottom: true,
+    onSafeSignComplete: mockOnSafeSignComplete
   })
 
   return null
@@ -166,6 +171,14 @@ const mount = () => {
 
   root = createRoot(document.createElement('div'))
 
+  act(() => {
+    root.render(createElement(Consumer))
+  })
+}
+
+// Re-renders with whatever mockSignAccountOpState.current holds now,
+// the same way a controller update reaches the screen
+const rerender = () => {
   act(() => {
     root.render(createElement(Consumer))
   })
@@ -326,5 +339,262 @@ describe('useSign - signing flow selection after choosing a key', () => {
 
     expect(getHookResult().renderedButNotNecessarilyVisibleModal).toBe('qr-sign')
     expect(broadcastDispatches()).toHaveLength(1)
+  })
+})
+
+describe('useSign - Safe "Sign & Close"', () => {
+  // A 3 of 4 Safe with a single imported owner - signing with it still leaves the Safe
+  // short of signatures, which is when "Sign & Close" is offered
+  const safeOwnerKey = { addr: '0xowner', type: 'internal' }
+
+  const buildSafeState = (accountOpOverrides: Record<string, unknown> = {}) =>
+    buildSignAccountOpState({
+      account: { safeCreation: {} },
+      accountKeyStoreKeys: [safeOwnerKey],
+      feePayerKeyStoreKeys: [],
+      threshold: 3,
+      safeSmartAccountOwners: [],
+      pendingSafeOwnerApprovals: [],
+      canBroadcast: false,
+      status: { type: SigningStatus.ReadyToSign },
+      accountOp: {
+        id: 'op-1',
+        signingKeyAddr: safeOwnerKey.addr,
+        signingKeyType: safeOwnerKey.type,
+        signed: [],
+        ...accountOpOverrides
+      }
+    })
+
+  const signAndClose = () => {
+    act(() => {
+      getHookResult().handleChangeSigningKeyAndClose(safeOwnerKey.addr, 'internal')
+    })
+  }
+
+  const completeSigning = (signed: string[] = [safeOwnerKey.addr], id = 'op-1') => {
+    mockSignAccountOpState.current = {
+      ...buildSafeState({ id, signed }),
+      status: { type: SigningStatus.Queued }
+    } as ISignAccountOpController
+    rerender()
+  }
+
+  const advanceTimers = (ms: number) => {
+    act(() => {
+      jest.advanceTimersByTime(ms)
+    })
+  }
+
+  // Past the point where even the fallback would have closed the request
+  const UNTIL_FALLBACK_CLOSE_MS =
+    SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS + SAFE_SIGN_AND_CLOSE_FALLBACK_DELAY_MS
+
+  // What the success state does once its exit animation ends
+  const endExitAnimation = () => {
+    act(() => {
+      getHookResult().handleSafeSignatureAddedExitEnd()
+    })
+  }
+
+  beforeEach(() => {
+    jest.useFakeTimers()
+    mockSignAccountOpState.current = buildSafeState()
+  })
+
+  afterEach(() => {
+    // Unmounted while the fake timers are still on, so the hook's own cleanup clears its
+    // timers. The outer afterEach unmounting again is a no-op
+    act(() => {
+      root.unmount()
+    })
+    jest.useRealTimers()
+  })
+
+  it('shows that the signature was added, then closes once the exit animation ends', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+
+    expect(getHookResult().safeSignatureAdded).toEqual({
+      accountOpId: 'op-1',
+      signedCount: 1,
+      threshold: 3,
+      closesAt: Date.now() + SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS
+    })
+
+    // Not when the success state's time is up, as the exit animation may still be running
+    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+
+    endExitAnimation()
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+
+    // Neither the fallback nor more controller updates close it again
+    rerender()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes anyway when the exit animation never reports that it ended', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS - 1)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+
+    advanceTimers(1)
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+
+    // The exit animation ending late doesn't close it a second time
+    endExitAnimation()
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes again after a later "Sign & Close" in the same window', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+    endExitAnimation()
+
+    // Another Safe request that also needs more signatures
+    mockSignAccountOpState.current = buildSafeState({ id: 'op-2' })
+    rerender()
+    signAndClose()
+    completeSigning([safeOwnerKey.addr], 'op-2')
+    endExitAnimation()
+
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps the signature count and the close time from the moment of signing when other owners sign afterwards', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+
+    advanceTimers(SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS / 2)
+    completeSigning([safeOwnerKey.addr, '0xanotherOwner'])
+
+    expect(getHookResult().safeSignatureAdded?.signedCount).toBe(1)
+
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS - SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS / 2)
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves the request open when another owner signed meanwhile and it can already go through', () => {
+    mount()
+    signAndClose()
+    completeSigning([safeOwnerKey.addr, '0xanotherOwner', '0xthirdOwner'])
+
+    expect(getHookResult().safeSignatureAdded).toBeNull()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+  })
+
+  it('does not show the success state before the own signature is added', () => {
+    mount()
+    signAndClose()
+    completeSigning(['0xanotherOwner'])
+
+    expect(getHookResult().safeSignatureAdded).toBeNull()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+  })
+
+  it('does not show the success state after a regular sign, without "Sign & Close"', () => {
+    mount()
+    act(() => {
+      getHookResult().handleChangeSigningKey(safeOwnerKey.addr, 'internal')
+    })
+    completeSigning()
+
+    expect(getHookResult().safeSignatureAdded).toBeNull()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+  })
+
+  it('does not close when the screen is left before the success state ends', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+
+    act(() => {
+      root.render(null)
+    })
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+  })
+
+  it('drops the success state and does not close when another request takes over', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+
+    mockSignAccountOpState.current = buildSafeState({ id: 'op-2' })
+    rerender()
+
+    expect(getHookResult().safeSignatureAdded).toBeNull()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+  })
+
+  it('leaves the request open when the signature could not be shared with the other owners', () => {
+    mount()
+    signAndClose()
+    mockSignAccountOpState.current = {
+      ...buildSafeState({ signed: [safeOwnerKey.addr] }),
+      status: { type: SigningStatus.Queued },
+      hasSafeApiFailed: true
+    } as ISignAccountOpController
+    rerender()
+
+    expect(getHookResult().safeSignatureAdded).toBeNull()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+  })
+
+  it('closes right away, without the success state, when how many signatures are needed is unknown', () => {
+    mount()
+    signAndClose()
+    mockSignAccountOpState.current = {
+      ...buildSafeState({ signed: [safeOwnerKey.addr] }),
+      status: { type: SigningStatus.Queued },
+      threshold: 0
+    } as ISignAccountOpController
+    rerender()
+
+    expect(getHookResult().safeSignatureAdded).toBeNull()
+    expect(mockOnSafeSignComplete).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not close after a plain sign that follows a "Sign & Close" which never finished', () => {
+    mount()
+    // e.g. the password prompt was cancelled, so the signature was never added
+    signAndClose()
+    act(() => {
+      getHookResult().handleChangeSigningKey(safeOwnerKey.addr, 'internal')
+    })
+    completeSigning()
+
+    expect(getHookResult().safeSignatureAdded).toBeNull()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
+  })
+
+  it('does not show the success state again when the window goes back to the request it was added to', () => {
+    mount()
+    signAndClose()
+    completeSigning()
+
+    mockSignAccountOpState.current = buildSafeState({ id: 'op-2' })
+    rerender()
+    // op-1 still waits for the other owners, so it is still Queued with this owner's signature
+    completeSigning([safeOwnerKey.addr], 'op-1')
+
+    expect(getHookResult().safeSignatureAdded).toBeNull()
+    advanceTimers(UNTIL_FALLBACK_CLOSE_MS)
+    expect(mockOnSafeSignComplete).not.toHaveBeenCalled()
   })
 })

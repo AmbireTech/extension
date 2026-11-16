@@ -95,7 +95,6 @@ type MainControllerAccountPickerInitNfcWalletAction = {
   type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_NFC_WALLET'
   params: { payload: NfcExportedKey; requestId?: string }
 }
-
 type MainControllerHandleSignMessage = {
   type: 'MAIN_CONTROLLER_HANDLE_SIGN_MESSAGE'
   params: { signers: { addr: Key['addr']; type: Key['type'] }[] }

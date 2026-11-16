@@ -38,7 +38,7 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mbXl
     },
     overlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: 'white',
       opacity: 0.5,
       zIndex: 1

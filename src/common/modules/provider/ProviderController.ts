@@ -17,6 +17,7 @@ import {
   getVersion
 } from '@ambire-common/libs/5792/5792'
 import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import {
   AccountOpIdentifiedBy,
   isIdentifiedByMultipleTxn
@@ -27,6 +28,13 @@ import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
+import {
+  buildPq1Capabilities,
+  isEthGetCodeParams,
+  isPq1AccountCodeQuery,
+  isPq1Key,
+  resolvePq1AccountCode
+} from '@common/modules/hardware-wallet/libs/pq1DappProvider'
 import { SAFE_RPC_METHODS } from '@common/modules/inpage/methods'
 import { metadata } from '@common/modules/provider/metadata'
 import { RequestRes, Web3WalletPermission } from '@common/modules/provider/types'
@@ -148,6 +156,36 @@ export class ProviderController {
 
       throw error
     }
+  }
+
+  // A PQ1 account is a smart-contract wallet, but one not deployed on this
+  // chain yet has no code, so a dapp connected to it would take it for an
+  // EOA. Its answer comes from the PQ1 module — see
+  // `hardware-wallet/libs/pq1DappProvider.ts`. Every other query is a plain
+  // `ethRpc` read. SAFE, like the `ethRpc` fallback in `rpcFlow`, so reading
+  // code never asks the user to unlock or connect.
+  @metadata('SAFE', true)
+  ethGetCode = async (request: DappProviderRequest) => {
+    const { params, session } = request
+    const { id } = session
+
+    const isConnectedAndUnlocked =
+      this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) && this.isUnlocked
+    if (!isConnectedAndUnlocked || !isEthGetCodeParams(params)) return this.ethRpc(request)
+
+    const chainId = this.getDappNetwork(id).chainId
+    const isPq1Query = isPq1AccountCodeQuery(
+      this.mainCtrl.keystore.keys,
+      this._internalGetAccounts(id),
+      chainId,
+      params[0]
+    )
+    if (!isPq1Query) return this.ethRpc(request)
+
+    const provider = this.mainCtrl.providers.providers[chainId.toString()]
+    if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
+
+    return resolvePq1AccountCode(provider, params)
   }
 
   ethRequestAccounts = async ({ session }: DappProviderRequest) => {
@@ -479,6 +517,12 @@ export class ProviderController {
       throw ethErrors.rpc.invalidParams(`account with address ${accountAddr} does not exist`)
     }
 
+    // PQ1 wallets batch atomically in one userOp, but `getBaseAccount` sees
+    // them as EOAs — answer from the PQ1 module instead.
+    if (isPq1Key(this.mainCtrl.keystore.keys, accountAddr)) {
+      return buildPq1Capabilities(this.mainCtrl.networks.networks)
+    }
+
     const states = await this.mainCtrl.accounts.getOrFetchAccountStates(accountAddr)
     const capabilities: any = {}
     const isErc4337Enabled = this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
@@ -588,12 +632,26 @@ export class ProviderController {
 
     const selectedAccount = this._getSelectedAccount(data.session.id)
 
-    const accOp = selectedAccount
+    const requestedAccOp = selectedAccount
       ? this.mainCtrl.activity.findByIdentifiedBy(identifiedBy, selectedAccount, network.chainId)
       : undefined
-    const version = getVersion(accOp)
+    const version = getVersion(requestedAccOp)
 
-    if (!accOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+    if (!requestedAccOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+
+    // A speed up or a cancel takes the place of the op the app sent, so the app is told how the
+    // op that went through in its place did
+    const canBeReplaced =
+      requestedAccOp.status === AccountOpStatus.UnknownButPastNonce ||
+      requestedAccOp.status === AccountOpStatus.BroadcastButStuck
+    const accOp =
+      (canBeReplaced &&
+        this.mainCtrl.activity.findReplacement(
+          identifiedBy,
+          requestedAccOp.accountAddr,
+          network.chainId
+        )) ||
+      requestedAccOp
 
     if (
       accOp.status === AccountOpStatus.Rejected ||
@@ -616,6 +674,13 @@ export class ProviderController {
       }
     }
 
+    // A cancel never runs the calls the app sent
+    if (isCancelAccountOp(accOp)) {
+      return {
+        status: getFailureStatus(version)
+      }
+    }
+
     const provider = this.mainCtrl.providers.providers[network.chainId.toString()]
 
     // check to satisfy the TS; should never happen
@@ -625,7 +690,7 @@ export class ProviderController {
       )
     }
 
-    if (identifiedBy.type === 'UserOperation') {
+    if (accOp.identifiedBy.type === 'UserOperation') {
       return {
         version,
         id: identifiedBy,
@@ -646,7 +711,7 @@ export class ProviderController {
     }
 
     const receipts = []
-    const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
+    const isMultipleTxn = isIdentifiedByMultipleTxn(accOp.identifiedBy)
     if (!isMultipleTxn) {
       receipts.push({
         logs: [],

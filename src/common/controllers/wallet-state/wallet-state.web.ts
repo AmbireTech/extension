@@ -94,7 +94,6 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
         'isSidePanelModeEnabled',
         this.isSidePanelModeEnabled
       )
-      await applyPanelMode(this.isSidePanelModeEnabled)
 
       this.isPinned = await this.#checkIsPinned()
       if (!this.isPinned) this.#initContinuousCheckIsPinned()
@@ -114,13 +113,17 @@ export class WalletStateController extends EventEmitter implements IWalletStateC
       }
     } catch (error) {
       // The settings that didn't load keep their defaults. The controller is still marked ready
-      // below, as views wait for that (e.g. the Firefox sidebar shows the splash until then).
+      // below, as views wait for that (e.g. the side panel shows the splash until then).
       this.emitError({
         message: "Some of your settings couldn't be loaded, so their defaults are used for now.",
         level: 'major',
         error: error as Error
       })
     } finally {
+      // Also when the settings didn't load, so the toolbar action matches the mode the wallet uses
+      // instead of keeping the one the browser remembers from the last session
+      await applyPanelMode(this.isSidePanelModeEnabled)
+
       this.isReady = true
       this.emitUpdate()
     }

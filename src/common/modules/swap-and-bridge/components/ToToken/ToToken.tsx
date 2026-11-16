@@ -1,14 +1,16 @@
 import { formatUnits, isAddress } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
-import { View } from 'react-native'
+import { SectionListData, View } from 'react-native'
 
+import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
-import Select from '@common/components/Select'
+import { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
 import getStyles from '@common/components/TokenAndAmountSelector/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -19,6 +21,7 @@ import useController from '@common/hooks/useController'
 import useExchangesInfo from '@common/hooks/useExchangesInfo'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
+import useSafeActivation from '@common/hooks/useSafeActivation'
 import useTheme from '@common/hooks/useTheme'
 import SwitchTokensButton from '@common/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
@@ -41,6 +44,17 @@ type Props = {
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
+
+const AVAILABLE_NETWORKS_SECTION_KEY = 'available-networks'
+const SAFE_ACTIVATION_SECTION_KEY = 'safe-activation-networks'
+// Fixed, as the list positions its rows by height. It fits a description wrapped to two lines
+const SAFE_ACTIVATION_SECTION_HEADER_HEIGHT = 88
+
+/** Only the networks the Safe account must be activated on get a header, explaining why */
+const getToNetworksSectionHeaderHeight = (section: SectionListData<SelectValue>) =>
+  section.key === SAFE_ACTIVATION_SECTION_KEY && section.data.length > 0
+    ? SAFE_ACTIVATION_SECTION_HEADER_HEIGHT
+    : 0
 
 const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
   const { theme, themeType, styles } = useTheme(getStyles)
@@ -83,6 +97,8 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
       )
     }
   })
+  const { activateSafe, activatingChainIds } = useSafeActivation(account)
+  const isSafeAccount = !!account?.safeCreation
 
   const handleSwitchFromAndToTokens = useCallback(
     () =>
@@ -171,27 +187,54 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
     () =>
       sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
         const tooltipId = `network-${n.chainId}-not-supported-tooltip`
+        // The service provider supports the network, so it's unavailable only because
+        // the Safe account isn't activated on it yet
+        const isSafeNotActivated =
+          isSafeAccount && !!n.isNotSupported && supportedChainIds.includes(n.chainId)
+        const canActivateSafe = isSafeNotActivated && SAFE_NETWORKS.includes(Number(n.chainId))
+        // Safe can't be activated at all on networks it doesn't support
+        const isSafeNotSupported = isSafeNotActivated && !canActivateSafe
+        const isActivatingSafe = activatingChainIds.includes(n.chainId.toString())
 
         return {
           value: String(n.chainId),
           extraSearchProps: { name: n.name },
           disabled: n.isNotSupported,
+          // Listed in their own section, whose header explains why they can't be picked yet
+          isSafeActivationNeeded: canActivateSafe,
+          keepEnabledLook: canActivateSafe,
           label: (
             <>
               <Text
                 fontSize={14}
                 appearance="secondaryText"
                 weight="medium"
-                dataSet={{ tooltipId }}
+                dataSet={canActivateSafe ? undefined : { tooltipId }}
                 style={flexbox.flex1}
                 numberOfLines={1}
               >
                 {n.name}
               </Text>
-              {n.isNotSupported && (
+              {n.isNotSupported && !canActivateSafe && (
                 <NotSupportedNetworkTooltip
                   tooltipId={tooltipId}
-                  message={n.notSupportedReason || t('Network unavailable')}
+                  message={
+                    isSafeNotSupported
+                      ? t('Safe account not supported on this network')
+                      : n.notSupportedReason || t('Network unavailable')
+                  }
+                />
+              )}
+              {canActivateSafe && (
+                <Button
+                  type="outline"
+                  size="tiny"
+                  hasBottomSpacing={false}
+                  style={[spacings.mlTy, { minWidth: 78, height: 28 }]}
+                  disabled={isActivatingSafe}
+                  onPress={() => activateSafe(n.chainId)}
+                  text={isActivatingSafe ? t('Preparing...') : t('Activate')}
+                  testID={`activate-safe-${n.chainId}`}
                 />
               )}
             </>
@@ -199,7 +242,15 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
           icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
         }
       }),
-    [networks, balancePerNetwork, t]
+    [
+      networks,
+      balancePerNetwork,
+      isSafeAccount,
+      supportedChainIds,
+      activatingChainIds,
+      activateSafe,
+      t
+    ]
   )
 
   const getToNetworkSelectValue = useMemo(() => {
@@ -208,6 +259,53 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
 
     return toNetworksOptions.filter((opt) => opt.value === String(network.chainId))[0]
   }, [networks, toChainId, toNetworksOptions])
+
+  const toNetworksSections = useMemo(
+    () => [
+      {
+        key: AVAILABLE_NETWORKS_SECTION_KEY,
+        data: toNetworksOptions.filter((option) => !option.isSafeActivationNeeded)
+      },
+      {
+        key: SAFE_ACTIVATION_SECTION_KEY,
+        data: toNetworksOptions.filter((option) => option.isSafeActivationNeeded)
+      }
+    ],
+    [toNetworksOptions]
+  )
+
+  const renderToNetworksSectionHeader = useCallback(
+    ({ section }: { section: SectionListData<SelectValue> }) => {
+      if (getToNetworksSectionHeaderHeight(section) === 0) return null
+
+      return (
+        <View
+          style={[
+            spacings.mtTy,
+            spacings.ptSm,
+            spacings.pbTy,
+            spacings.phTy,
+            flexbox.justifyCenter,
+            {
+              height: SAFE_ACTIVATION_SECTION_HEADER_HEIGHT,
+              borderTopWidth: 1,
+              borderTopColor: theme.secondaryBorder
+            }
+          ]}
+        >
+          <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mbMi}>
+            {t('Not activated yet')}
+          </Text>
+          <Text fontSize={12} appearance="tertiaryText" numberOfLines={2}>
+            {t(
+              'Your Safe account needs a one-time activation on these networks before it can receive tokens there.'
+            )}
+          </Text>
+        </View>
+      )
+    },
+    [theme.secondaryBorder, t]
+  )
 
   const handleChangeToToken = useCallback(
     ({ address: toSelectedTokenAddr }: SelectValue) => {
@@ -292,10 +390,14 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSe
           {t('You receive')}
         </Text>
         <View style={isWeb ? styles.networkColumn : undefined}>
-          <Select
+          <SectionedSelect
             setValue={handleSetToNetworkValue}
             containerStyle={{ ...spacings.mb0, width: isWeb ? '100%' : 150 }}
-            options={toNetworksOptions}
+            sections={toNetworksSections}
+            renderSectionHeader={renderToNetworksSectionHeader}
+            headerHeight={0}
+            getSectionHeaderHeight={getToNetworksSectionHeaderHeight}
+            stickySectionHeadersEnabled={false}
             selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
             size="sm"
             value={getToNetworkSelectValue}

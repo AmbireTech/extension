@@ -1,5 +1,5 @@
 import React, { FC } from 'react'
-import { Animated, Pressable } from 'react-native'
+import { Animated, ColorValue, Pressable } from 'react-native'
 
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
@@ -32,6 +32,11 @@ interface Props {
   tooltipText?: string
   testID?: string
   iconWidth?: number
+  /**
+   * Replaces the icon's default color (`theme.primaryText`), e.g. red for Rage quit. On hover the
+   * icon still turns `theme.primaryAccent`, like on every other action.
+   */
+  iconColor?: ColorValue
   /** Uses the narrow action layout even when the surrounding screen is not compact. */
   forceCompact?: boolean
   /**
@@ -47,6 +52,7 @@ const TokenDetailsButton: FC<Props> = ({
   id,
   strokeWidth,
   iconWidth = 28,
+  iconColor,
   text: btnText,
   isDisabled,
   tooltipText,
@@ -116,7 +122,7 @@ const TokenDetailsButton: FC<Props> = ({
           ]}
         >
           <Icon
-            color={isHovered ? theme.primaryAccent : theme.primaryText}
+            color={isHovered ? theme.primaryAccent : iconColor || theme.primaryText}
             width={shouldUseSmallLayout ? Math.round(iconWidth * 0.8) : iconWidth}
             strokeWidth={strokeWidth}
           />

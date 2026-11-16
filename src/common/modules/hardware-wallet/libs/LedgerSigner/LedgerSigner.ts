@@ -2,7 +2,7 @@ import { Signature, toBeHex, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { Hex } from '@ambire-common/interfaces/hex'
-import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
+import { HdExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
@@ -12,13 +12,14 @@ import {
   LedgerControllerInterface,
   LedgerSignature
 } from '@common/modules/hardware-wallet/interfaces/ledgerController'
+import { getUnsignedTransaction } from '@common/modules/hardware-wallets/utils/getUnsignedTransaction'
 
 class LedgerSigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: LedgerControllerInterface | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: HdExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 
@@ -77,12 +78,8 @@ class LedgerSigner implements KeystoreSignerInterface {
   signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {
     await this.#prepareForSigning()
 
-    // In case `maxFeePerGas` is provided, treat as an EIP-1559 transaction,
-    // since there's no other better way to distinguish between the two in here.
-    const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
-
     try {
-      const unsignedTxn: TransactionLike = { ...txnRequest, type }
+      const unsignedTxn = getUnsignedTransaction(txnRequest)
       const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
       const strippedTxn = stripHexPrefix(unsignedSerializedTxn)
       const transactionBytes = hexStringToUint8Array(strippedTxn)
@@ -179,16 +176,11 @@ class LedgerSigner implements KeystoreSignerInterface {
 
     try {
       const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
-      // sign7702 is deliberately NOT on LedgerControllerInterface: only the web
-      // controller implements it (it needs the sideloaded "Ambire Signer" app,
-      // which is extension-only). Don't "fix" this by adding it to the interface -
-      // on mobile the call would still blow up at runtime.
-      // @ts-expect-error see above
       const signature = await this.controller.sign7702(path, chainId, contract, nonce)
       const v = Signature.getNormalizedV(signature.v)
 
       const yParity = v === 27 ? '0x00' : '0x01'
-      return { r: signature.r, s: signature.s, yParity }
+      return { r: signature.r as Hex, s: signature.s as Hex, yParity }
     } catch (e: any) {
       throw new ExternalSignerError(
         e?.message || 'ledgerSigner: singing failed for unknown reason',

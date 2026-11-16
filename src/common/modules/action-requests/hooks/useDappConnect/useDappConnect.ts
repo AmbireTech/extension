@@ -25,6 +25,7 @@ const useDappConnect = () => {
   const { trustDapp, untrustDapp } = useTrustDapp()
 
   const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
+  const websiteContentUpdate = dappsState.dappToConnectWebsiteContentUpdate
   const connectedApps = useMemo(
     () =>
       dappsState.dapps.filter((dapp) => dapp.isConnected).map(({ name, url }) => ({ name, url })),
@@ -143,6 +144,7 @@ const useDappConnect = () => {
   return {
     t,
     dappToConnect,
+    websiteContentUpdate,
     userRequest,
     isAuthorizing,
     handleDenyButtonPress,

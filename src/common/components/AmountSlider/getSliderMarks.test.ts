@@ -27,10 +27,18 @@ describe('getSliderMarks', () => {
       expect(keysFor(0n)).toEqual(keysFor(10n ** 18n))
     })
 
-    it('snaps to the exact quarter amounts', () => {
+    it('snaps to the exact quarter amounts when they are already round', () => {
       const marks = getSliderMarks({ maximumValue: 1000n, tierOffset: 0n })
 
       expect(marks.map(({ amount }) => amount)).toEqual([0n, 250n, 500n, 750n, 1000n])
+      expect(marks.map(({ steps }) => steps)).toEqual(EVENLY_SPACED_STEPS)
+    })
+
+    it('rounds the quarters in between to nice amounts but keeps the maximum exact', () => {
+      // $1,001.48 in cents, moving in $10 steps
+      const marks = getSliderMarks({ maximumValue: 100148n, tierOffset: 0n })
+
+      expect(marks.map(({ amount }) => amount)).toEqual([0n, 25000n, 50000n, 75000n, 100148n])
       expect(marks.map(({ steps }) => steps)).toEqual(EVENLY_SPACED_STEPS)
     })
   })

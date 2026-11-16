@@ -228,7 +228,7 @@ const Benzin = ({
         pointerEvents="none"
         style={
           isWeb
-            ? { ...StyleSheet.absoluteFillObject, zIndex: -1 }
+            ? { ...StyleSheet.absoluteFill, zIndex: -1 }
             : {
                 position: 'absolute',
                 top: -insets.top - SPACING_SM,
@@ -249,7 +249,7 @@ const Benzin = ({
       {!!showConfetti && viewSize.width > 0 && viewSize.height > 0 && (
         <View
           pointerEvents="none"
-          style={[StyleSheet.absoluteFillObject, { zIndex: 2, overflow: 'hidden' }]}
+          style={[StyleSheet.absoluteFill, { zIndex: 2, overflow: 'hidden' }]}
         >
           <ConfettiAnimation
             type="tertiary"

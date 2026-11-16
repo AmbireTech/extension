@@ -18,7 +18,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 // As wide as the resolve button's text, which is inset by the button's padding and border
 const RESOLVE_TEXT_MEASURE_STYLE: ViewStyle = {
-  ...StyleSheet.absoluteFillObject,
+  ...StyleSheet.absoluteFill,
   ...spacings.phXl,
   borderWidth: 1,
   borderColor: 'transparent',

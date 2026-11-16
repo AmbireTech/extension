@@ -2,6 +2,7 @@ import React, { FC, useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { DappWebsiteContentUpdate } from '@ambire-common/interfaces/dapp'
 import { BlacklistedStatus } from '@ambire-common/interfaces/phishing'
 import { Impersonation } from '@ambire-common/libs/dapps/impersonation'
 import CheckIcon from '@common/assets/svg/CheckIcon'
@@ -19,9 +20,11 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 import DAppPermissions from './DAppPermissions'
+import DAppWebsiteContentUpdate from './DAppWebsiteContentUpdate'
 import getStyles from './styles'
 
 const DAppConnectBody: FC<{
+  id: string
   responsiveSizeMultiplier?: number
   securityCheck?: BlacklistedStatus
   isTrustedByUser?: boolean
@@ -29,6 +32,7 @@ const DAppConnectBody: FC<{
   onToggleTrust?: () => void
   onEnableScamChecker?: () => void
   isScamCheckerEnabled?: boolean
+  websiteContentUpdate?: DappWebsiteContentUpdate | null
   /**
    * Whether the app is part of the default Ambire app catalog. Passing the security checks only
    * means the app isn't known to be malicious, so only catalog apps get the "Passed" badge.
@@ -37,12 +41,14 @@ const DAppConnectBody: FC<{
   /** Set when the site pretends to be a well-known app it is not */
   impersonation?: Impersonation | null
 }> = ({
+  id,
   securityCheck,
   isTrustedByUser = false,
   canBeTrustedByUser = false,
   onToggleTrust,
   onEnableScamChecker,
   isScamCheckerEnabled = true,
+  websiteContentUpdate,
   isInAppCatalog = false,
   impersonation = null,
   responsiveSizeMultiplier = 1
@@ -313,6 +319,13 @@ const DAppConnectBody: FC<{
           </View>
         )}
       </View>
+      {!!websiteContentUpdate && (
+        <DAppWebsiteContentUpdate
+          id={id}
+          websiteContentUpdate={websiteContentUpdate}
+          responsiveSizeMultiplier={responsiveSizeMultiplier}
+        />
+      )}
       <DAppPermissions responsiveSizeMultiplier={responsiveSizeMultiplier} />
       {!(isBlacklisted || hasWarning) && (
         <Text

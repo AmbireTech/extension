@@ -25,8 +25,13 @@ import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
+import SafeOwnerApprovalSheet, {
+  useSafeOwnerApproval
+} from '@common/modules/sign-account-op/components/SafeOwnerApproval'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
+import SafeSignatureAdded from '@common/modules/sign-account-op/components/SafeSignatureAdded'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import SpeedUpNotNeededFee from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpNotNeededFee'
@@ -141,6 +146,8 @@ const SignAccountOpScreen = () => {
     holdToProceedButtonType,
     disabledReason,
     showSafeSigners,
+    safeSignatureAdded,
+    handleSafeSignatureAddedExitEnd,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
@@ -159,6 +166,8 @@ const SignAccountOpScreen = () => {
     hasReachedBottom,
     onSafeSignComplete: handleAddToCart
   })
+  const { approvingOwnerAddr, approvalToReview, startApproval, closeApproval } =
+    useSafeOwnerApproval(signAccountOpState)
 
   const accountOpRequest = useMemo(() => {
     if (currentUserRequest?.kind !== 'calls') return undefined
@@ -186,6 +195,8 @@ const SignAccountOpScreen = () => {
 
   const shouldRejectOnchain = useMemo(() => {
     if (!signAccountOpState?.account.safeCreation) return false
+    // re-sending an already sent transaction is simply dropped, the sent one stays as it is
+    if (signAccountOpState.accountOp.meta?.isResend) return false
     // A speed up reuses the signatures of the pending transaction it replaces, and a cancel
     // replaces it with an empty transaction, so rejecting either only closes the request.
     // The pending transaction itself is left as it is
@@ -299,6 +310,17 @@ const SignAccountOpScreen = () => {
     signAccountOpState?.account.safeCreation
   ])
 
+  if (safeSignatureAdded) {
+    return (
+      <SafeSignatureAdded
+        signedCount={safeSignatureAdded.signedCount}
+        threshold={safeSignatureAdded.threshold}
+        closesAt={safeSignatureAdded.closesAt}
+        onExitEnd={handleSafeSignatureAddedExitEnd}
+      />
+    )
+  }
+
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
 
   return (
@@ -340,6 +362,13 @@ const SignAccountOpScreen = () => {
             : undefined
         }
       />
+      {!!approvalToReview && (
+        <SafeOwnerApprovalSheet
+          approval={approvalToReview}
+          onClose={closeApproval}
+          Modals={Modals}
+        />
+      )}
       <MobileLayoutContainer
         withHorizontalPadding
         header={<ActionHeader />}
@@ -385,6 +414,10 @@ const SignAccountOpScreen = () => {
                     chainId={signAccountOpState.accountOp.chainId.toString()}
                     signed={signAccountOpState.accountOp.signed || []}
                     importedKeys={signAccountOpState.accountKeyStoreKeys}
+                    smartAccountOwners={signAccountOpState.safeSmartAccountOwners}
+                    pendingApprovalOwners={signAccountOpState.pendingSafeOwnerApprovals}
+                    approvingOwnerAddr={approvingOwnerAddr}
+                    onApprove={startApproval}
                     threshold={signAccountOpState.threshold}
                   />
                 </View>
@@ -539,6 +572,7 @@ const SignAccountOpScreen = () => {
                   chainId={signAccountOpState?.accountOp?.chainId}
                 />
               )}
+              <EarlierPendingTransaction style={spacings.mt} />
             </>
           ) : (
             <SafeEip712Data

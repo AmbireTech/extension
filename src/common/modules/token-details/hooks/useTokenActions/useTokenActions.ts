@@ -22,6 +22,7 @@ import useNetworks from '@common/hooks/useNetworks'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
 import { storage } from '@common/services/storage'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 
 import type { SwapAndBridgeController } from '@ambire-common/controllers/swapAndBridge/swapAndBridge'
@@ -189,7 +190,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
     let isActive = true
 
     // Fetch gas tank assets
-    fetch(`${RELAYER_URL}/gas-tank/assets`)
+    fetchWithRelayerCustomHeaders(`${RELAYER_URL}/gas-tank/assets`)
       .then((r) => r.json())
       .then((assets) => {
         if (!isActive) return

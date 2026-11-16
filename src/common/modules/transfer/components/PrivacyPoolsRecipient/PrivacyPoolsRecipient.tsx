@@ -13,13 +13,15 @@ import flexbox from '@common/styles/utils/flexbox'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 type Props = {
-  label: string
+  name: string
+  /** Where the account was added from, shown like in the recipient options */
+  sourceLabel?: string
   /** Goes back to entering an address. */
   onClear: () => void
 }
 
 /** Replaces the address field once a Privacy Pools account is picked. Laid out like `Recipient`. */
-const PrivacyPoolsRecipient = ({ label, onClear }: Props) => {
+const PrivacyPoolsRecipient = ({ name, sourceLabel, onClear }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
@@ -36,17 +38,25 @@ const PrivacyPoolsRecipient = ({ label, onClear }: Props) => {
           spacings.phSm,
           spacings.pvTy,
           spacings.mbTy,
-          { borderRadius: BORDER_RADIUS_PRIMARY, backgroundColor: theme.secondaryBackground }
+          // Like the address field holding a valid address
+          {
+            borderRadius: BORDER_RADIUS_PRIMARY,
+            borderWidth: 1,
+            borderColor: theme.successDecorative,
+            backgroundColor: theme.primaryBackground
+          }
         ]}
       >
-        <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+        <PrivacyPoolsAccountAvatar size={36} style={spacings.mrTy} />
         <View style={flexbox.flex1}>
           <Text fontSize={14} weight="medium" numberOfLines={1}>
-            {label}
+            {name}
           </Text>
-          <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-            {t('Privacy Pools account')}
-          </Text>
+          {!!sourceLabel && (
+            <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
+              {t('From {{seedLabel}}', { seedLabel: sourceLabel })}
+            </Text>
+          )}
         </View>
         <HoverablePressable
           testID="privacy-pools-recipient-clear"

@@ -1,5 +1,7 @@
 import { parseUnits } from 'ethers'
 
+import { FeeSpeed, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
+
 /** The gas values that the user can set manually in the advanced gas options. */
 export type CustomGasPriceField = 'maxFeePerGas' | 'maxPriorityFeePerGas' | 'gas'
 
@@ -133,4 +135,67 @@ export const validateCustomGasPrice = ({
       ...(parsedGas !== null && { gas: parsedGas })
     }
   }
+}
+
+/**
+ * Why a valid custom gas value may still be a bad idea:
+ * - `belowSlowest` - lower than the slow speed, so the transaction can be stuck
+ * - `farAboveFastest` - more than `OVERPAY_WARNING_MULTIPLIER` times the ape speed, so the user overpays
+ * - `belowEstimatedGas` - the gas limit is lower than the estimate, so the transaction can fail
+ */
+export type CustomGasPriceWarningReason = 'belowSlowest' | 'farAboveFastest' | 'belowEstimatedGas'
+
+/** The warnings, one per field, so that each input shows only its own warning. */
+export type CustomGasPriceWarnings = Partial<
+  Record<CustomGasPriceField, CustomGasPriceWarningReason>
+>
+
+/** How many times the fastest network fee a custom fee can be before the user is warned of overpaying. */
+export const OVERPAY_WARNING_MULTIPLIER = 2n
+
+/**
+ * Compares valid custom gas values with the network fee speeds. Returns no warnings
+ * when the slow or the ape speed is missing, as there is nothing to compare with.
+ */
+export const getCustomGasPriceWarnings = ({
+  values,
+  networkSpeeds,
+  is1559
+}: {
+  values: CustomGasPriceValues
+  /** The fee speeds at the network gas prices, not at the custom ones */
+  networkSpeeds: SpeedCalc[]
+  is1559: boolean
+}): CustomGasPriceWarnings => {
+  const slowSpeed = networkSpeeds.find(({ type }) => type === FeeSpeed.Slow)
+  const apeSpeed = networkSpeeds.find(({ type }) => type === FeeSpeed.Ape)
+  if (!slowSpeed || !apeSpeed) return {}
+
+  const warnings: CustomGasPriceWarnings = {}
+
+  if (values.maxFeePerGas < slowSpeed.gasPrice) {
+    warnings.maxFeePerGas = 'belowSlowest'
+  } else if (!is1559 && values.maxFeePerGas > apeSpeed.gasPrice * OVERPAY_WARNING_MULTIPLIER) {
+    // With EIP-1559 only the priority fee is paid in full, so a high max fee alone costs nothing
+    warnings.maxFeePerGas = 'farAboveFastest'
+  }
+
+  // Undefined when the network asks for no priority fee at all
+  const { maxPriorityFeePerGas: slowPriorityFee } = slowSpeed
+  const { maxPriorityFeePerGas: apePriorityFee } = apeSpeed
+  if (is1559 && slowPriorityFee !== undefined && values.maxPriorityFeePerGas < slowPriorityFee) {
+    warnings.maxPriorityFeePerGas = 'belowSlowest'
+  } else if (
+    is1559 &&
+    apePriorityFee !== undefined &&
+    values.maxPriorityFeePerGas > apePriorityFee * OVERPAY_WARNING_MULTIPLIER
+  ) {
+    warnings.maxPriorityFeePerGas = 'farAboveFastest'
+  }
+
+  if (values.gas !== undefined && values.gas < slowSpeed.simulatedGasLimit) {
+    warnings.gas = 'belowEstimatedGas'
+  }
+
+  return warnings
 }

@@ -22,6 +22,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import AccountRow from '@common/modules/account-select/components/Account'
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -73,6 +74,15 @@ const KEY_ADDRESS_MAX_LENGTH = 20
 const OWNER_CHAIN_ICON_SIZE = 14
 const OWNER_CHAIN_ICON_OVERLAP = 5
 
+// A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
+// The popup is barely wider than the width cap, so the modal there takes the popup's full width
+// instead of leaving a thin gap on each side
+const WIDE_LAYOUT_SHEET_STYLE = {
+  minHeight: 432,
+  ...spacings.pvLg,
+  ...(isPopup ? {} : { maxWidth: 432 })
+}
+
 const AccountKey: React.FC<Props> = ({
   label,
   addr,
@@ -100,6 +110,7 @@ const AccountKey: React.FC<Props> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
+  const { isCompactLayout } = useCompactLayout()
 
   const [bindKeyDetailsAnim, keyDetailsAnimStyles] = useCustomHover({
     property: 'bottom',
@@ -393,7 +404,7 @@ const AccountKey: React.FC<Props> = ({
           closeBottomSheet={closeExportKey}
           scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
           containerInnerWrapperStyles={{ flex: 1 }}
-          style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+          style={isCompactLayout ? undefined : WIDE_LAYOUT_SHEET_STYLE}
         >
           <ExportKey
             account={account}

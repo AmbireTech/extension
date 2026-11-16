@@ -19,7 +19,9 @@ import AccountsLoadingAnimation from '@common/modules/account-personalize/compon
 import AccountsSectionTitle from '@common/modules/account-personalize/components/AccountsSectionTitle'
 import AccountsToRemoveSection from '@common/modules/account-personalize/components/AccountsToRemoveSection'
 import PersonalizeAccountsList from '@common/modules/account-personalize/components/PersonalizeAccountsList'
+import PrivacyPoolsAccountPersonalizeCard from '@common/modules/account-personalize/components/PrivacyPoolsAccountPersonalizeCard'
 import useAccountPersonalize from '@common/modules/account-personalize/hooks/useAccountPersonalize'
+import SafeCreateSummary from '@common/modules/auth/components/SafeCreateSummary'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { FORWARD_NAVIGATION_STATE, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -39,6 +41,8 @@ export const CARD_WIDTH = 400
 
 // As tall as the header's back button (28), also while the button is hidden
 const HEADER_STYLE = { minHeight: 28 }
+// Renders nothing unless the account being named is the Safe from Safe create
+const SAFE_CREATE_SUMMARY = <SafeCreateSummary />
 
 const selectIsWalletOpen = (state: AllControllersMappingType['UiController']) =>
   state.views.some(isExtensionOverlayView)
@@ -60,6 +64,9 @@ const AccountPersonalizeScreen = () => {
     canProceed,
     handleSaveAccountName,
     handleProceed,
+    privacyPoolsAccount,
+    addedPrivacyPoolsAccount,
+    handleSavePrivacyPoolsAccountName,
     title,
     proceedText,
     removalOnlyText,
@@ -69,12 +76,13 @@ const AccountPersonalizeScreen = () => {
   } = useAccountPersonalize()
   const { state: isPinned } = useController('WalletStateController', selectIsPinned)
   const { state: isWalletOpen } = useController('UiController', selectIsWalletOpen)
+  // What the tab added: its accounts, or its Privacy Pools account
+  const added = addedAccounts || addedPrivacyPoolsAccount
   // Once added, the wallet opens on its own (see `openWallet`). Kept for these accounts after it
   // closes again, and not for the next ones the tab adds.
-  const [walletOpenedFor, setWalletOpenedFor] = useState<typeof addedAccounts>(null)
-  if (addedAccounts && isWalletOpen && walletOpenedFor !== addedAccounts)
-    setWalletOpenedFor(addedAccounts)
-  const hasWalletOpened = !!addedAccounts && walletOpenedFor === addedAccounts
+  const [walletOpenedFor, setWalletOpenedFor] = useState<typeof added>(null)
+  if (added && isWalletOpen && walletOpenedFor !== added) setWalletOpenedFor(added)
+  const hasWalletOpened = !!added && walletOpenedFor === added
 
   const listEmpty = useMemo(
     () => (
@@ -86,7 +94,7 @@ const AccountPersonalizeScreen = () => {
   )
 
   // Added, and the flow went on in the popup - this tab stays up to show them
-  if (addedAccounts) {
+  if (added) {
     return (
       <>
         {/* Pinned, it only says to open the wallet, which has opened already */}
@@ -106,10 +114,18 @@ const AccountPersonalizeScreen = () => {
                 {removedAccounts.length ? t('Accounts updated') : t('Added successfully')}
               </Text>
               <ScrollView style={spacings.mbLg}>
-                {!!addedAccounts.length && !!removedAccounts.length && (
+                {!!addedPrivacyPoolsAccount && !!privacyPoolsAccount && (
+                  <PrivacyPoolsAccountPersonalizeCard
+                    name={privacyPoolsAccount.name}
+                    sourceText={privacyPoolsAccount.sourceText}
+                    disableEdit
+                    onSaveName={handleSavePrivacyPoolsAccountName}
+                  />
+                )}
+                {!!addedAccounts?.length && !!removedAccounts.length && (
                   <AccountsSectionTitle title={t('Added')} count={addedAccounts.length} />
                 )}
-                {addedAccounts.map((account, index) => (
+                {addedAccounts?.map((account, index) => (
                   <AccountPersonalizeCard
                     key={account.addr}
                     control={control}
@@ -121,7 +137,7 @@ const AccountPersonalizeScreen = () => {
                   />
                 ))}
                 {!!removedAccounts.length && (
-                  <View style={!!addedAccounts.length && spacings.mtXl}>
+                  <View style={!!addedAccounts?.length && spacings.mtXl}>
                     <AccountsToRemoveSection
                       accounts={removedAccounts}
                       title={t('Removed')}
@@ -175,16 +191,29 @@ const AccountPersonalizeScreen = () => {
                   {removalOnlyText}
                 </Text>
               )}
-              <PersonalizeAccountsList
-                fields={fields}
-                control={control}
-                accountsToRemove={accountsToRemove}
-                isAdding={isAdding}
-                onSaveName={handleSaveAccountName}
-                removalNote={removalNote}
-                ListEmptyComponent={listEmpty}
-                style={spacings.mbLg}
-              />
+              {privacyPoolsAccount ? (
+                // Fills the panel like the accounts list does, so Proceed sits at its bottom
+                <View style={[flexbox.flex1, spacings.mbLg]}>
+                  <PrivacyPoolsAccountPersonalizeCard
+                    name={privacyPoolsAccount.name}
+                    sourceText={privacyPoolsAccount.sourceText}
+                    disableEdit={isAdding}
+                    onSaveName={handleSavePrivacyPoolsAccountName}
+                  />
+                </View>
+              ) : (
+                <PersonalizeAccountsList
+                  fields={fields}
+                  control={control}
+                  accountsToRemove={accountsToRemove}
+                  isAdding={isAdding}
+                  onSaveName={handleSaveAccountName}
+                  removalNote={removalNote}
+                  ListEmptyComponent={listEmpty}
+                  footer={SAFE_CREATE_SUMMARY}
+                  style={spacings.mbLg}
+                />
+              )}
               <Button
                 testID="button-proceed"
                 size="large"
