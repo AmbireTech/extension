@@ -26,7 +26,7 @@ const SEGMENT_PADDING_LEFT = 6
 const SEGMENT_ICON_GAP = 3
 
 /** The name of each kind of key on the badge, in words that a user new to wallets understands */
-export const KEY_TYPE_NAMES: { [type in Key['type']]: string } = {
+const KEY_TYPE_NAMES: { [type in Key['type']]: string } = {
   internal: 'Private key',
   ledger: 'Ledger',
   trezor: 'Trezor',
