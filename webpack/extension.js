@@ -31,6 +31,8 @@ const LAVAMOAT_UNSAFE_ENTRIES = new Set([
   'ethereum-inpage',
   'content-script',
   'onekey-offscreen',
+  // Hashes public tree leaves in a worker, which has no LavaMoat runtime to load: see the entry
+  'privacy-pools-tree-worker',
   'content-script-ambire-injection',
   'content-script-ethereum-injection'
 ])
@@ -284,7 +286,12 @@ module.exports = async function buildExtension(
       // Privacy Pools prover's offscreen document. Firefox and Safari prove in the background.
       ...(isWebkit &&
         !isSafari && {
-          'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts'
+          'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts',
+          // The module worker the document hashes Merkle tree levels on, one per core. Its own entry
+          // (PRIVACY_POOLS_TREE_WORKER_PATH): the worker webpack emits for the package's
+          // `new Worker(new URL(...))` loads its code with `importScripts`, which module workers lack.
+          // It gets only public leaves and returns hashes the SDK checks against the chain.
+          'privacy-pools-tree-worker': '@kohaku-eth/poseidon-lean-imt/worker.js'
         }),
       ...(isWebkit &&
         !isSafari && {
@@ -562,6 +569,8 @@ module.exports = async function buildExtension(
           chunk.name !== 'ethereum-inpage' &&
           chunk.name !== 'content-script' &&
           chunk.name !== 'onekey-offscreen' &&
+          // A worker cannot load other chunks
+          chunk.name !== 'privacy-pools-tree-worker' &&
           (!enableLavaMoat || chunk.name !== 'background')
         )
       }
@@ -599,6 +608,7 @@ module.exports = async function buildExtension(
       'ethereum-inpage',
       'content-script',
       'background',
+      'privacy-pools-tree-worker',
       ...(isGecko ? ['content-script-ambire-injection', 'content-script-ethereum-injection'] : [])
     ])
 
