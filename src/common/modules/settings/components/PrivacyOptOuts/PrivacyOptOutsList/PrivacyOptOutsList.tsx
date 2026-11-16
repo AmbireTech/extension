@@ -6,6 +6,7 @@ import EnsIcon from '@common/assets/svg/EnsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import LightningIcon from '@common/assets/svg/LightningIcon'
+import SafeIconGray from '@common/assets/svg/SafeIconGray'
 import TrendingIcon from '@common/assets/svg/TrendingIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -20,6 +21,9 @@ import SwapProviderControlOption from '@common/modules/settings/components/Priva
 import spacings from '@common/styles/spacings'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectHasSafeAccounts = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts.some((account) => !!account.safeCreation)
 
 const selectHasKeystoreRecovery = (state: AllControllersMappingType['EmailVaultController']) =>
   state.hasKeystoreRecovery
@@ -38,6 +42,20 @@ const PrivacyOptOutsList = () => {
   const { state: hasKeystoreRecovery } = useController(
     'EmailVaultController',
     selectHasKeystoreRecovery
+  )
+  // Only worth a warning when there are Safe accounts to stop syncing
+  const { state: hasSafeAccounts } = useController('AccountsController', selectHasSafeAccounts)
+  const safeApiDisableConfirmation = useMemo(
+    () =>
+      hasSafeAccounts
+        ? {
+            title: t('Stop syncing Safe accounts?'),
+            text: t(
+              "Your Safe accounts will no longer sync between Ambire on your phone and in your browser. Transactions and messages started by the other owners or in the Safe app won't show up here, and what you sign here won't reach them."
+            )
+          }
+        : undefined,
+    [hasSafeAccounts, t]
   )
   const emailVaultAction = useMemo(
     () =>
@@ -113,6 +131,15 @@ const PrivacyOptOutsList = () => {
         )}
         icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
         flag="keepEnsProfilesUpToDate"
+      />
+      <OptOutControlOption
+        title={t('Sync Safe accounts')}
+        description={t(
+          "Find Safe accounts to import, keep their pending transactions and messages in sync across your devices and with the other owners, and share your signatures with them. Your Safe and owner addresses are sent to Safe's servers to do this."
+        )}
+        icon={<SafeIconGray width={24} height={24} />}
+        flag="safeApi"
+        disableConfirmation={safeApiDisableConfirmation}
       />
       <SwapProviderControlOption />
       <CrashAnalyticsControlOption />

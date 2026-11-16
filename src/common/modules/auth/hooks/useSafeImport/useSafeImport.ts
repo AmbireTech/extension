@@ -5,6 +5,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
@@ -21,6 +22,7 @@ const getSplitAddress = (value: string) => {
 
 const useSafeImport = () => {
   const { dispatch: safeDispatch, state } = useController('SafeController')
+  const { isSafeApiEnabled } = useSafeApiSetting()
   const { state: accountsState } = useController('AccountsController')
   const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
   const { statuses, importError, safeInfo } = state
@@ -45,7 +47,8 @@ const useSafeImport = () => {
   const [safe, setSafe] = useState<string | null>('')
 
   const submitSafe = useCallback(async () => {
-    if (!safe || !safeInfo || isLoading) return
+    // Also submitted with Enter, which skips the disabled button
+    if (!safe || !safeInfo || isLoading || !isSafeApiEnabled) return
 
     try {
       setIsLoading(true)
@@ -101,7 +104,8 @@ const useSafeImport = () => {
     safeInfo,
     reset,
     isLoading,
-    accounts
+    accounts,
+    isSafeApiEnabled
   ])
 
   const handleFormSubmit = useCallback(() => {
@@ -127,6 +131,8 @@ const useSafeImport = () => {
       setSafe('')
       return
     }
+    // Searched once the user turns the Safe API back on
+    if (!isSafeApiEnabled) return
 
     // checksum before both storing and searching so the controller's importError.address
     // matches `safe` - otherwise a lowercase input hides the error while disabling the button
@@ -137,7 +143,7 @@ const useSafeImport = () => {
     if (checksummedSafeAddr !== safeInfo?.address) {
       safeDispatch({ type: 'method', params: { method: 'findSafe', args: [checksummedSafeAddr] } })
     }
-  }, [safeDispatch, safeAddressValue, safeInfo?.address, safe])
+  }, [safeDispatch, safeAddressValue, safeInfo?.address, safe, isSafeApiEnabled])
 
   // run on unmount
   useEffect(() => {
@@ -168,6 +174,7 @@ const useSafeImport = () => {
     isSafeImported,
     btnText,
     isLoading,
+    isSafeApiEnabled,
     handleValidation,
     handleFormSubmit,
     goToPrevRoute

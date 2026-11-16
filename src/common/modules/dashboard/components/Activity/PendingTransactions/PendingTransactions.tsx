@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react'
 import { View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
 import HoverablePressable from '@common/components/HoverablePressable'
@@ -7,12 +8,14 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import useTheme from '@common/hooks/useTheme'
 import usePendingSafeTransactions from '@common/modules/dashboard/hooks/usePendingSafeTransactions'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import PendingChainTransactions from './PendingChainTransactions'
+import SafeSyncOffBottomSheet from './SafeSyncOffBottomSheet'
 import getStyles from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -34,13 +37,30 @@ const PendingTransactions = () => {
     'MainController',
     selectIsFetchingSafeTxns
   )
+  const { isSafeApiEnabled } = useSafeApiSetting()
+  const {
+    ref: safeSyncOffSheetRef,
+    open: openSafeSyncOffSheet,
+    close: closeSafeSyncOffSheet
+  } = useModalize()
   const { networkGroups, currentNonces } = usePendingSafeTransactions()
   const fetchPendingTransactions = useCallback(() => {
+    // Opted out of the Safe API, so nothing can be checked until the user turns it back on
+    if (!isSafeApiEnabled) {
+      openSafeSyncOffSheet()
+      return
+    }
+
     mainDispatch({
       type: 'method',
       params: { method: 'refreshSafeTxns', args: [] }
     })
-  }, [mainDispatch])
+  }, [mainDispatch, isSafeApiEnabled, openSafeSyncOffSheet])
+
+  const handleCloseSafeSyncOffSheet = useCallback(
+    () => closeSafeSyncOffSheet(),
+    [closeSafeSyncOffSheet]
+  )
 
   if (!account?.safeCreation) return null
 
@@ -96,6 +116,10 @@ const PendingTransactions = () => {
           currentNonce={currentNonces[group.network.chainId.toString()]}
         />
       ))}
+      <SafeSyncOffBottomSheet
+        sheetRef={safeSyncOffSheetRef}
+        closeBottomSheet={handleCloseSafeSyncOffSheet}
+      />
     </View>
   )
 }

@@ -14,6 +14,7 @@ import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
+import SafeApiDisabledAlert from '@common/modules/auth/components/SafeApiDisabledAlert'
 import useSafeImport from '@common/modules/auth/hooks/useSafeImport'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -32,6 +33,7 @@ const SafeImportScreen = () => {
     safeInfo,
     safe,
     isSafeImported,
+    isSafeApiEnabled,
     btnText,
     handleValidation,
     handleFormSubmit,
@@ -49,7 +51,9 @@ const SafeImportScreen = () => {
           text={`${t(btnText)}`}
           hasBottomSpacing={false}
           onPress={handleFormSubmit}
-          disabled={!isValid || !!importError || statuses.findSafe === 'LOADING'}
+          disabled={
+            !isSafeApiEnabled || !isValid || !!importError || statuses.findSafe === 'LOADING'
+          }
         />
       }
     >
@@ -89,6 +93,7 @@ const SafeImportScreen = () => {
                 )
               }}
             />
+            {!isSafeApiEnabled && <SafeApiDisabledAlert />}
             {statuses.findSafe === 'LOADING' ? (
               <View style={[flexbox.directionRow, flexbox.alignSelfCenter]}>
                 <Spinner />
