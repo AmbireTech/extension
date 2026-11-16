@@ -178,6 +178,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const headerContentRef = useRef<View>(null)
   // Until then, nothing is on screen to dismiss
   const hasCalledPresentRef = useRef(false)
+  // Set once the caller unmounts the sheet, whose dismissal then reports to no one
+  const isUnmountedRef = useRef(false)
 
   const trueSheetRef = useCallback(
     (sheet: TrueSheet | null) => {
@@ -310,9 +312,25 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const handleDidDismiss = useCallback(() => {
     hasCalledPresentRef.current = false
+    if (isUnmountedRef.current) return
     setSheetKey((key) => key + 1)
     onClosed()
   }, [onClosed])
+
+  // A sheet unmounted while presented would stay on screen, frozen: iOS swaps its content for a
+  // snapshot and dismisses it only when the view is deallocated, which view recycling skips.
+  // So it stays at the app root until dismissed, without telling the gone caller it closed
+  const handlePortalUnmount = useCallback((unmount: () => void) => {
+    isUnmountedRef.current = true
+    const sheet = sheetInstanceRef.current
+    if (!sheet || !isPresentedRef.current || !hasCalledPresentRef.current) {
+      unmount()
+      return
+    }
+    isPresentedRef.current = false
+    isClosingProgrammaticallyRef.current = true
+    sheet.dismiss().catch(reportSheetError).finally(unmount)
+  }, [])
 
   const handleBackPress = useCallback(() => {
     closeBottomSheet()
@@ -523,7 +541,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     // At the app root, as with Modalize: in place, the ScrollView of the screen that declares
     // the sheet would be its ancestor, take the first tap to close the keyboard (the X then
     // needs two taps) and make lists in the sheet warn about being nested in it
-    <Portal hostName="global">
+    <Portal hostName="global" handleOnUnmount={handlePortalUnmount}>
       {/* PortalHost renders portals in a keyless array - without this key React matches */}
       {/* them by position and rebuilds this sheet closed when another one unmounts */}
       <BottomSheetContext.Provider key={id} value={bottomSheetContextValue}>
