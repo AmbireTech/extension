@@ -21,14 +21,19 @@ const Row: FC<Props> = ({ rowKey, value, tooltip, suffix }) => {
   const { theme } = useTheme()
   return (
     <View style={[flexbox.directionRow, flexbox.justifySpaceBetween, spacings.mbMi]}>
-      <Text fontSize={14}>{rowKey}: </Text>
+      {/* Never wraps, so that the value is the part that does */}
+      <Text fontSize={14} style={{ flexShrink: 0 }}>
+        {rowKey}:{' '}
+      </Text>
       <Text
         fontSize={12}
         selectable
         weight="medium"
         style={{
-          // @ts-ignore missing in the types, but React Native Web supports it
-          wordBreak: 'break-all',
+          flexShrink: 1,
+          // Breaks a long address anywhere, but wraps words, like network names, between them
+          // @ts-expect-error missing in the types, but React Native Web supports it
+          overflowWrap: 'anywhere',
           textAlign: 'right'
         }}
       >

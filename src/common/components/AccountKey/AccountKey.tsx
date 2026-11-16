@@ -154,6 +154,28 @@ const AccountKey: React.FC<Props> = ({
     </View>
   )
   const actionsSpacing = !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
+  // The owners of a Safe have details even when they are not imported, e.g. its networks
+  const safeAccount = account.safeCreation ? account : undefined
+  const detailsToggle = (
+    <AnimatedPressable
+      onPress={handleToggleDetails}
+      style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}
+      {...bindKeyDetailsAnim}
+    >
+      <Animated.View style={keyDetailsAnimStyles}>
+        <RightArrowIcon
+          width={16}
+          height={16}
+          color={theme.secondaryText}
+          style={
+            isShowingDetails
+              ? { transform: [{ rotate: '270deg' }] }
+              : { transform: [{ rotate: '90deg' }] }
+          }
+        />
+      </Animated.View>
+    </AnimatedPressable>
+  )
   const keyActions = !!canExportOrImportKey && (
     <View>
       {isImported ? (
@@ -190,24 +212,7 @@ const AccountKey: React.FC<Props> = ({
               </Button>
             </View>
           </View>
-          <AnimatedPressable
-            onPress={handleToggleDetails}
-            style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}
-            {...bindKeyDetailsAnim}
-          >
-            <Animated.View style={keyDetailsAnimStyles}>
-              <RightArrowIcon
-                width={16}
-                height={16}
-                color={theme.secondaryText}
-                style={
-                  isShowingDetails
-                    ? { transform: [{ rotate: '270deg' }] }
-                    : { transform: [{ rotate: '90deg' }] }
-                }
-              />
-            </Animated.View>
-          </AnimatedPressable>
+          {detailsToggle}
         </View>
       ) : (
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -221,6 +226,7 @@ const AccountKey: React.FC<Props> = ({
           >
             <ImportArrowIcon style={spacings.mlTy} color={theme.primary} width={16} height={16} />
           </Button>
+          {!!safeAccount && detailsToggle}
         </View>
       )}
     </View>
@@ -348,7 +354,10 @@ const AccountKey: React.FC<Props> = ({
         </View>
       )}
       {!!isShowingDetails && (
-        <AccountKeyDetails details={{ type, addr, label, isImported, meta, dedicatedToOneSA }} />
+        <AccountKeyDetails
+          details={{ type, addr, label, isImported, meta, dedicatedToOneSA, onChains }}
+          safeAccount={safeAccount}
+        />
       )}
       {!onExportKeyPress && (
         <BottomSheet
