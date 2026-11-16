@@ -32,9 +32,8 @@
     <a href="https://apps.apple.com/app/apple-store/id6444863857?pt=125821868&ct=github-readme&mt=8" target="_blank"><img src=".github/readme/app-store-badge.svg" height="40" alt="Download on the App Store" align="absmiddle"></a>
     <a href="https://play.google.com/store/apps/details?id=com.ambire.wallet&referrer=utm_source%3Dgithub%26utm_medium%3Dreferral%26utm_campaign%3Dreadme_android" target="_blank"><img src=".github/readme/google-play-badge.png" height="40" alt="Get it on Google Play" align="absmiddle"></a>
     <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.ambire.wallet%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FAmbireTech%2Fextension%22%2C%22author%22%3A%22AmbireTech%22%2C%22name%22%3A%22Ambire%20Web3%20Wallet%22%7D" target="_blank"><img src=".github/readme/obtainium-badge.png" height="40" alt="Get it on Obtainium" align="absmiddle"></a>
-    <br />
-    Or <a href="https://www.ambire.com/download/apk" target="_blank">download the APK directly</a>.
   </p>
+  <p>Or <a href="https://www.ambire.com/download/apk" target="_blank">download the APK directly</a>.</p>
 
   <p>
     👥 Join the community:
