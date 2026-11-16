@@ -55,9 +55,9 @@ interface Props {
 
 const transactionSummaryStyle = { marginBottom: SPACING_MD }
 
-/** Through 0xBow the fee also pays the relayer, so it is not only the network's. Translated where shown. */
+/** Through 0xBow the relayer's service fee is taken too, besides the network fee. Translated where shown. */
 const FEE_NOTICES: { [broadcaster in PrivacyPoolsBroadcaster]: string } = {
-  '0xbow': 'The fee is deducted automatically from the {{symbol}} you send.',
+  '0xbow': 'The service and network fees are deducted automatically from the {{symbol}} you send.',
   kohaku: 'The network fee is deducted automatically from the {{symbol}} you send.'
 }
 
