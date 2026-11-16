@@ -35,8 +35,6 @@ const DisconnectAllBottomSheet = forwardRef<DisconnectAllBottomSheetHandle>((_, 
     close()
   }, [dispatch, close])
 
-  const handleCancel = useCallback(() => close(), [close])
-
   return (
     <BottomSheet id="disconnect-all" sheetRef={sheetRef} closeBottomSheet={close} type="modal">
       <SheetHeaderRow style={spacings.mbSm}>
@@ -55,16 +53,6 @@ const DisconnectAllBottomSheet = forwardRef<DisconnectAllBottomSheetHandle>((_, 
           { columnGap: SPACING_SM }
         ]}
       >
-        {/* On mobile the sheet's X closes it */}
-        {isWeb && (
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={handleCancel}
-            hasBottomSpacing={false}
-            style={{ flex: 1 }}
-          />
-        )}
         <Button
           type="danger"
           text={t('Disconnect')}

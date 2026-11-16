@@ -65,13 +65,11 @@ const HideTokenModal = ({
           { columnGap: SPACING_TY }
         ]}
       >
-        {/* On mobile the sheet's X closes it */}
-        {isWeb && <Button text={t('Cancel')} type="tertiary" onPress={handleClose} />}
         <Button
           testID="yes-hide-it-text"
           type="primary"
           text={t('Yes, hide it!')}
-          style={isWeb ? undefined : flexbox.flex1}
+          style={flexbox.flex1}
           onPress={() => {
             handleHideToken(doNotShowModalAgain).catch(() =>
               addToast('Failed to hide token. Please refresh and try again.', { type: 'error' })

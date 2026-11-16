@@ -145,7 +145,7 @@ const selectors = {
       txnConfirmedStep: 'finalized-rows',
       recepientAddressBlock: 'recipient-address-undefined'
     },
-    backButton: 'back-button',
+    closeSheetButton: 'bottom-sheet-close-button',
     amountField: 'amount-field',
     proceedBtn: 'proceed-btn',
     transactionError: '//span[contains(text(),"Error")]', // e.g. snackbar when relayer is down,
@@ -327,7 +327,7 @@ const selectors = {
   networkDetailEditButton: '//div[.//div[text()="Network details"]]//div[text()="Edit"]',
   // edit network modal
   editNetworkModalTitle: '//div[text()="Edit network"]',
-  editNetworkCancelButton: '//div[contains(text(),"Cancel")]',
+  editNetworkCloseButton: '[data-testid="bottom-sheet-close-button"]',
   editNetworkSaveButton: '//div[contains(text(),"Save")]',
   networkSettingsSavedSnackbar: (networkName: string) =>
     `((//div[contains(normalize-space(), "${networkName} settings saved!")]))[4]`, // TODO: snackbar selector finding 8 elements; change once we have ID on FE

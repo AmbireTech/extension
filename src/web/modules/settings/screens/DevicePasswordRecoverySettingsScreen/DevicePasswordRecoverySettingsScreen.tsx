@@ -249,8 +249,12 @@ const DevicePasswordRecoverySettingsScreen = () => {
         text={t('Please enter your extension password to disable email recovery.')}
         onPasswordConfirmed={handlePasswordConfirmed}
       />
-      <BottomSheet id="backup-password-confirmation-modal" sheetRef={confirmationModalRef}>
-        <EmailConfirmation email={email} handleCancelLoginAttempt={handleCancelLoginAttempt} />
+      <BottomSheet
+        id="backup-password-confirmation-modal"
+        sheetRef={confirmationModalRef}
+        closeBottomSheet={handleCancelLoginAttempt}
+      >
+        <EmailConfirmation email={email} />
       </BottomSheet>
       <BottomSheet
         id="backup-password-success-modal"

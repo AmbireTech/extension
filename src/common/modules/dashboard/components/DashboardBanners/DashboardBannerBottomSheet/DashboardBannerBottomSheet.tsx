@@ -93,8 +93,6 @@ const DashboardBannerBottomSheet: FC<Props> = ({
               }
             })
           }
-          secondaryButtonText={t('Cancel')}
-          onSecondaryButtonPress={closeBottomSheet}
         />
       )}
       {sheetKind === BRIDGE_IN_PROGRESS && (

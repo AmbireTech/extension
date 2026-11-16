@@ -61,8 +61,8 @@ const BalanceAffectingErrors: FC<Props> = ({
     )
   }, [balanceAffectingErrors.length, balanceAffectingErrorsSnapshot.length, isPortfolioAllReady])
 
-  // The X of the native sheet already closes it
-  const isCloseButtonHidden = !isWeb && areErrorsOutdatedAndPortfolioIsReady
+  // The sheet's X already closes it
+  const isCloseButtonHidden = areErrorsOutdatedAndPortfolioIsReady
 
   const onButtonPress = useCallback(() => {
     if (!areErrorsOutdatedAndPortfolioIsReady) {

@@ -30,8 +30,6 @@ const ClearRecentsBottomSheet = forwardRef<ClearRecentsBottomSheetHandle>((_, re
     close()
   }, [dispatch, close])
 
-  const handleCancel = useCallback(() => close(), [close])
-
   return (
     <BottomSheet
       id="clear-recents"
@@ -58,16 +56,6 @@ const ClearRecentsBottomSheet = forwardRef<ClearRecentsBottomSheetHandle>((_, re
           { columnGap: SPACING_SM }
         ]}
       >
-        {/* On mobile the sheet's X closes it */}
-        {isWeb && (
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={handleCancel}
-            hasBottomSpacing={false}
-            style={{ flex: 1 }}
-          />
-        )}
         <Button
           type="danger"
           text={t('Clear')}

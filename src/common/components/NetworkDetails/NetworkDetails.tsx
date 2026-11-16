@@ -477,16 +477,9 @@ const NetworkDetails = ({
         )}
         closeDialog={closeDialog}
       >
-        <DialogFooter
-          horizontalAlignment="justifyEnd"
-          style={isMobile ? { columnGap: SPACING_SM } : {}}
-        >
-          <View style={isMobile && flexbox.flex1}>
-            <DialogButton text={t('Close')} type="secondary" onPress={() => closeDialog()} />
-          </View>
-          <View style={isMobile && flexbox.flex1}>
+        <DialogFooter horizontalAlignment="justifyEnd">
+          <View style={flexbox.flex1}>
             <DialogButton
-              style={isWeb && spacings.ml}
               text={t('Disable')}
               testID="disable-network-confirm-btn"
               type="danger"

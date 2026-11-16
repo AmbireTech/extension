@@ -12,7 +12,7 @@ import {
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import Button, { BUTTON_HEIGHT } from '@common/components/Button'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -30,16 +30,13 @@ import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import getFeeFooterContainerStyle from '@common/modules/sign-account-op/components/Footer/getFeeFooterContainerStyle'
-import CompactFooterButtons, {
-  COMPACT_FEE_TO_BUTTONS_SPACING
-} from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
+import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -320,43 +317,11 @@ const OneClickEstimation = ({
           updateType={updateType}
           hasMarginTop
         />
-        {/* On mobile the sheet's X goes back, so signing is the only button */}
-        {isMobile && (
+        {/* The sheet's X goes back, so signing is the only button */}
+        {isMobile || isCompactLayout ? (
           <View style={{ paddingTop: COMPACT_FEE_TO_BUTTONS_SPACING }}>{signButton}</View>
-        )}
-        {!isMobile && isCompactLayout && (
-          <View style={{ paddingTop: COMPACT_FEE_TO_BUTTONS_SPACING }}>
-            <CompactFooterButtons
-              isEvenSplit
-              secondaryActions={
-                <Button
-                  testID="back-button"
-                  // The web secondary background matches the sheet, tertiary keeps it visible
-                  type={isWeb ? 'tertiary' : 'secondary'}
-                  text={t('Back')}
-                  onPress={closeEstimationModal}
-                  hasBottomSpacing={false}
-                  disabled={isSignLoading}
-                  size="regular"
-                  style={flexbox.flex1}
-                />
-              }
-              primaryAction={signButton}
-            />
-          </View>
-        )}
-        {!isCompactLayout && (
+        ) : (
           <FooterGlassView size="sm" absolute={false} isSimpleBlur={false} style={spacings.pt}>
-            <Button
-              testID="back-button"
-              type="secondary"
-              text={t('Back')}
-              onPress={closeEstimationModal}
-              hasBottomSpacing={false}
-              disabled={isSignLoading}
-              style={{ width: 98, height: BUTTON_HEIGHT, ...spacings.mrLg }}
-              size="smaller"
-            />
             {signButton}
           </FooterGlassView>
         )}
@@ -424,7 +389,7 @@ const OneClickEstimation = ({
         sheetRef={estimationModalRef}
         type={isEstimationSheetModal ? 'modal' : 'bottom-sheet'}
         style={spacings.pb}
-        closeBottomSheet={isWeb ? undefined : closeEstimationModal}
+        closeBottomSheet={closeEstimationModal}
         // Dragging the sheet down closes it without calling closeBottomSheet, which would leave the
         // flow marked as proceeded and the Proceed button disabled. Every other close already resets it
         onClosed={isMobile ? onEstimationModalClosed : undefined}
@@ -433,8 +398,8 @@ const OneClickEstimation = ({
         shouldBeClosableOnDrag={isMobile}
         FooterComponent={footerComponent}
       >
-        {/* The title with the sheet's X, which closes it like Back does on web */}
-        {isMobile && <ModalHeader title={sheetTitle} />}
+        {/* The title with the sheet's X, which closes it */}
+        <ModalHeader title={sheetTitle} />
         {!!banners && !!banners.length && (
           <View style={spacings.mbTy}>
             {banners.map((banner) => (

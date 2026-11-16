@@ -282,11 +282,20 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     sheet.present().catch(reportSheetError)
   }, [])
 
+  // The scroll view overflows while the sheet sizes itself, which flashes its scrollbar on web
+  const [hasPresented, setHasPresented] = useState(false)
+  const showsScrollIndicator = SHOWS_SCROLL_INDICATOR && hasPresented
+
   const handleWillPresent = useCallback(() => {
     dismissKeyboard().catch(reportSheetError)
     setIsOpen(true)
     onOpen()
   }, [onOpen, setIsOpen])
+
+  const handleDidPresent = useCallback(() => {
+    setHasPresented(true)
+    onOpened()
+  }, [onOpened])
 
   const handleWillDismiss = useCallback(() => {
     const isUserDismissal = !isClosingProgrammaticallyRef.current
@@ -296,6 +305,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     hasUserScrolledListRef.current = false
     // Lazy again by the time it's dismissed, so TrueSheet unmounts the content
     setIsMountRequested(false)
+    setHasPresented(false)
     setIsOpen(false)
     // TrueSheet doesn't say whether a swipe or a tap outside closed it, so both run
     // what the Modalize backdrop tap ran
@@ -336,11 +346,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     () => ({
       bounces: false,
       keyboardShouldPersistTaps: 'handled' as const,
-      showsVerticalScrollIndicator: SHOWS_SCROLL_INDICATOR,
+      showsVerticalScrollIndicator: showsScrollIndicator,
       contentContainerStyle: { paddingBottom: contentBottomPadding },
       style: { marginBottom: isModal ? SPACING_LG : 0 }
     }),
-    [contentBottomPadding, isModal]
+    [contentBottomPadding, isModal, showsScrollIndicator]
   )
 
   // Memoized with the sheet's other props, so TrueSheet (a PureComponent) skips re-renders
@@ -564,7 +574,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           style={sheetStyle}
           onMount={handleMount}
           onWillPresent={handleWillPresent}
-          onDidPresent={onOpened}
+          onDidPresent={handleDidPresent}
           onWillDismiss={handleWillDismiss}
           onDidDismiss={handleDidDismiss}
           onBackPress={handleBackPress}

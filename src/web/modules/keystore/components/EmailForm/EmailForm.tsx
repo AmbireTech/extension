@@ -144,11 +144,12 @@ const EmailForm = () => {
       <BottomSheet
         id="keystore-reset-confirmation-modal"
         sheetRef={confirmationModalRef}
+        closeBottomSheet={handleCancelLoginAttempt}
         style={{ width: 400 }}
         autoOpen={isWaitingConfirmation}
         shouldBeClosableOnDrag={false}
       >
-        <EmailConfirmation email={formEmail} handleCancelLoginAttempt={handleCancelLoginAttempt} />
+        <EmailConfirmation email={formEmail} />
       </BottomSheet>
     </>
   )

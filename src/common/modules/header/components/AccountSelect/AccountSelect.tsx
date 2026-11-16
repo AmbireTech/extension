@@ -403,17 +403,6 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
           {/* With the 8 above it, from the footer or the pinned header, the gap is 12 like other footers */}
           {isDirty && (
             <View style={[flexbox.directionRow, spacings.ptMi, { columnGap: SPACING_SM }]}>
-              {/* On mobile the sheet's X closes it and drops the changes */}
-              {isWeb && (
-                <Button
-                  type="secondary"
-                  text={t('Cancel')}
-                  onPress={closeSheet}
-                  hasBottomSpacing={false}
-                  style={flexbox.flex1}
-                  testID="account-select-cancel"
-                />
-              )}
               <Button
                 // Managing saves right away, while connecting only applies on Connect
                 text={dappToManage ? t('Save') : t('Done')}

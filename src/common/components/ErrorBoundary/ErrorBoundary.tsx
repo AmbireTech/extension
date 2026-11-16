@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useState } from 'react'
 import { Trans } from 'react-i18next'
-import { Pressable, TouchableOpacity, View } from 'react-native'
+import { Pressable, TouchableOpacity } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import BottomSheet from '@common/components/BottomSheet'
@@ -131,16 +131,6 @@ const ErrorBoundaryInner = ({ error, title, description, logo }: Props) => {
             {error.stack}
           </Text>
         </ScrollableWrapper>
-
-        <View style={[spacings.ptMd, flexbox.alignCenter]}>
-          <Button
-            text={t('Close')}
-            type="secondary"
-            size="small"
-            onPress={() => closeBottomSheet()}
-            hasBottomSpacing={false}
-          />
-        </View>
       </BottomSheet>
 
       <FullScreenMessage
