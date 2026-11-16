@@ -1,6 +1,3 @@
 [submodule "ambire-common"]
 	path = src/ambire-common
 	url = git@github.com:AmbireTech/ambire-common.git
-[submodule "src/token-and-network-icons"]
-	path = src/token-and-network-icons
-	url = https://github.com/AmbireTech/token-and-network-icons.git

@@ -108,12 +108,13 @@ android {
 
     namespace 'com.ambire.wallet'
 
-    // Token and network icons (the token-and-network-icons submodule) ship inside the native app,
-    // not the JS bundle, so OTA updates don't carry them again each time.
+    // Token and network icons (@ambire/token-and-network-icons, whose `assets` folder holds only the
+    // tokenIcons and networkIcons folders) ship inside the native app, not the JS bundle, so OTA
+    // updates don't carry them again each time.
     // Loaded as `asset:/tokenIcons/...` and `asset:/networkIcons/...`
     sourceSets {
         main {
-            assets.srcDirs += ["$rootDir/../src/token-and-network-icons/assets"]
+            assets.srcDirs += ["$rootDir/../node_modules/@ambire/token-and-network-icons/assets"]
         }
     }
 

@@ -91,11 +91,11 @@ const TokenIcon: React.FC<Props> = ({
   const shouldUseBundledIcon = !!bundledIconSource && bundledIconSource !== failedBundledIconSource
 
   const handleBundledIconError = useCallback(() => {
-    if (!bundledIconSource) return
+    if (!bundledIconSource || chainId === undefined) return
 
-    handleBundledTokenIconLoadFailure(bundledIconSource.uri)
+    handleBundledTokenIconLoadFailure(chainId, address)
     setFailedBundledIconSource(bundledIconSource)
-  }, [bundledIconSource])
+  }, [bundledIconSource, chainId, address])
 
   const handleImageLoaded = useCallback(() => setUriStatus(UriStatus.IMAGE_EXISTS), [])
   const attemptToLoadFallbackImage = useCallback(async () => {

@@ -304,11 +304,15 @@ module.exports = async function buildExtension(
       from: './src/web/assets',
       to: 'assets'
     },
-    // Token and network icons (the token-and-network-icons submodule), copied to the output
-    // root and loaded by path (see getBundledIconUri.ts), so they stay out of the JS
+    // Token and network icons from @ambire/token-and-network-icons, copied next to the pages and
+    // loaded by path (see getBundledIconUri.ts), so they stay out of the JS
     {
-      from: './src/token-and-network-icons/assets',
-      to: '.'
+      from: './node_modules/@ambire/token-and-network-icons/assets/tokenIcons',
+      to: 'tokenIcons'
+    },
+    {
+      from: './node_modules/@ambire/token-and-network-icons/assets/networkIcons',
+      to: 'networkIcons'
     },
     {
       from: './src/web/public/style.css',

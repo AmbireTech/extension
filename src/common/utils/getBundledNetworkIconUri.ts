@@ -1,10 +1,11 @@
+import networkIconChainIds from '@ambire/token-and-network-icons/index/networkIconChainIds.json'
 import { getBundledIconUri } from '@common/utils/getBundledIconUri'
 
-import { BUNDLED_NETWORK_ICON_CHAIN_IDS } from '../../token-and-network-icons/index/bundledNetworkIconChainIds'
+const BUNDLED_NETWORK_ICON_CHAIN_IDS: ReadonlySet<string> = new Set(networkIconChainIds)
 
 /**
- * Returns the URI of the network icon shipped with the app (from the token-and-network-icons
- * submodule), or `null` when the network isn't bundled.
+ * Returns the URI of the network icon shipped with the app (from
+ * `@ambire/token-and-network-icons`), or `null` when the network isn't bundled.
  *
  * The icons are loaded by path, not bundled into the JS (see `getBundledIconUri`), so OTA updates
  * don't ship them. An OTA can still run on an app build made before they were added, so callers
@@ -13,5 +14,5 @@ import { BUNDLED_NETWORK_ICON_CHAIN_IDS } from '../../token-and-network-icons/in
 export const getBundledNetworkIconUri = (chainId: string | undefined): string | null => {
   if (!chainId || !BUNDLED_NETWORK_ICON_CHAIN_IDS.has(chainId)) return null
 
-  return getBundledIconUri(`networkIcons/${chainId}.png`)
+  return getBundledIconUri(`networkIcons/${chainId}.webp`)
 }
