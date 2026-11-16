@@ -76,6 +76,26 @@ const reportSheetError = (error: unknown) => {
   captureException(error)
 }
 
+/**
+ * Presents the sheet after the commit that carries the measured header into the portaled sheet,
+ * so it opens straight to its final height. Placed after TrueSheet, whose ref is attached by then.
+ */
+const SheetPresentTrigger = ({
+  requestId,
+  onRequest
+}: {
+  requestId: number
+  onRequest: () => void
+}) => {
+  useLayoutEffect(() => {
+    if (requestId) onRequest()
+    // Only a new request presents, not a new callback
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestId])
+
+  return null
+}
+
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
     scrollViewRef: externalScrollViewRef,
@@ -259,12 +279,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     })
   }, [])
 
-  // After the commit with the measured header, so the sheet opens straight to its final height
-  useLayoutEffect(() => {
-    if (!presentRequestId || !isPresentedRef.current) return
+  const presentSheet = useCallback(() => {
+    const sheet = sheetInstanceRef.current
+    if (!isPresentedRef.current || !sheet) return
     hasCalledPresentRef.current = true
-    sheetInstanceRef.current?.present().catch(reportSheetError)
-  }, [presentRequestId])
+    sheet.present().catch(reportSheetError)
+  }, [])
 
   const handleWillPresent = useCallback(() => {
     KeyboardController.dismiss().catch(reportSheetError)
@@ -540,6 +560,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         >
           {sheetChildren}
         </TrueSheet>
+        <SheetPresentTrigger requestId={presentRequestId} onRequest={presentSheet} />
       </BottomSheetContext.Provider>
     </Portal>
   )
