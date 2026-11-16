@@ -13,6 +13,7 @@ import ImportArrowIcon from '@common/assets/svg/ImportArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
+import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import ExportKey from '@common/components/ExportKey'
@@ -24,7 +25,7 @@ import { isWeb } from '@common/config/env'
 import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -68,6 +69,9 @@ type Props = AccountKeyType & {
 const { isPopup } = getUiType()
 /** Short enough for the address to fit next to the Export / Import buttons */
 const KEY_ADDRESS_MAX_LENGTH = 20
+/** The chain icons in the "Owner on" badge, as small as in the "Safe active on" badge */
+const OWNER_CHAIN_ICON_SIZE = 14
+const OWNER_CHAIN_ICON_OVERLAP = 5
 
 const AccountKey: React.FC<Props> = ({
   label,
@@ -250,7 +254,25 @@ const AccountKey: React.FC<Props> = ({
     }
   }, [addr, dedicatedToOneSA, name, ownerAccount, t])
   const renderKeyActions = () => keyActions
-  const renderNetworkIcons = () => networkIcons
+  // Labeled, as the owner may be a Safe of the wallet, deployed on other chains than these
+  const renderOwnerNetworksBadge = () =>
+    !!onChains?.length && (
+      <Badge type="info" style={{ columnGap: SPACING_MI, paddingRight: SPACING_MI }}>
+        <Text fontSize={12} weight="medium" color={theme.infoText} numberOfLines={1}>
+          {t('Owner on')}
+        </Text>
+        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          {onChains.map((chainId, index) => (
+            <NetworkIcon
+              key={chainId}
+              id={chainId.toString()}
+              size={OWNER_CHAIN_ICON_SIZE}
+              style={{ marginLeft: index ? -OWNER_CHAIN_ICON_OVERLAP : 0 }}
+            />
+          ))}
+        </View>
+      </Badge>
+    )
 
   return (
     <View
@@ -272,7 +294,8 @@ const AccountKey: React.FC<Props> = ({
           withBalance={false}
           maxAccountAddrLength={KEY_ADDRESS_MAX_LENGTH}
           renderRightChildren={renderKeyActions}
-          renderExtraBadges={renderNetworkIcons}
+          renderExtraBadges={renderOwnerNetworksBadge}
+          withAccountStatus={false}
           containerStyle={spacings.mb0}
         />
       ) : (

@@ -73,6 +73,7 @@ const Account = ({
   withSafeSignerBadges = false,
   isOnSecondaryBackground = false,
   withBadges = true,
+  withAccountStatus = true,
   onExtraHeightChange
 }: {
   account: AccountInterface
@@ -109,6 +110,11 @@ const Account = ({
   isOnSecondaryBackground?: boolean
   /** Set to false to show only the avatar, the label and the address, without the badges row */
   withBadges?: boolean
+  /**
+   * Set to false where the row stands for a key of another account, e.g. an owner of a Safe, so
+   * it leaves out this account's own pending requests and the chains its Safe is deployed on
+   */
+  withAccountStatus?: boolean
   /**
    * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is, mostly because
    * its badges wrapped, so a list that lays its rows out by height can make room for it. Such a
@@ -358,9 +364,11 @@ const Account = ({
         ) : (
           balance !== null && <BalanceBadge balance={balance} />
         ))}
-      {!!pendingRequestsCount && <PendingRequestsBadge count={pendingRequestsCount} />}
+      {withAccountStatus && !!pendingRequestsCount && (
+        <PendingRequestsBadge count={pendingRequestsCount} />
+      )}
       {!!withKeyType &&
-        (safeDeployedChainIds.length ? (
+        (withAccountStatus && safeDeployedChainIds.length ? (
           // The Safe key badge, telling also which chains the Safe is deployed on
           <Badge
             type="secondaryAccent"
