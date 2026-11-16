@@ -17,6 +17,20 @@ interface Props {
   suffix?: string
 }
 
+/**
+ * Lets the value shrink and wrap: a long address or HD path breaks anywhere, while words, like
+ * network names, wrap between them. `wordBreak: 'break-word'` does that where `overflowWrap`
+ * is not applied. Both are missing in the types, but React Native Web supports them, so the
+ * style is a constant rather than an inline object, which TypeScript would reject
+ */
+const VALUE_STYLE = {
+  flexShrink: 1,
+  minWidth: 0,
+  wordBreak: 'break-word',
+  overflowWrap: 'anywhere',
+  textAlign: 'right'
+} as const
+
 const Row: FC<Props> = ({ rowKey, value, tooltip, suffix }) => {
   const { theme } = useTheme()
   return (
@@ -25,18 +39,7 @@ const Row: FC<Props> = ({ rowKey, value, tooltip, suffix }) => {
       <Text fontSize={14} style={{ flexShrink: 0 }}>
         {rowKey}:{' '}
       </Text>
-      <Text
-        fontSize={12}
-        selectable
-        weight="medium"
-        style={{
-          flexShrink: 1,
-          // Breaks a long address anywhere, but wraps words, like network names, between them
-          // @ts-expect-error missing in the types, but React Native Web supports it
-          overflowWrap: 'anywhere',
-          textAlign: 'right'
-        }}
-      >
+      <Text fontSize={12} selectable weight="medium" style={VALUE_STYLE}>
         {value}
         {tooltip && (
           <>
