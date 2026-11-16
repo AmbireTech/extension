@@ -160,6 +160,7 @@ const AccountKey: React.FC<Props> = ({
   const actionsSpacing = !!showExportImport && !isKeyAmbireV1 && spacings.mrSm
   // The owners of a Safe have details even when they are not imported, e.g. its networks
   const safeAccount = account.safeCreation ? account : undefined
+  const hasDetails = !!canExportOrImportKey && (isImported || !!safeAccount)
   const detailsToggle = (
     <AnimatedPressable
       onPress={handleToggleDetails}
@@ -230,7 +231,7 @@ const AccountKey: React.FC<Props> = ({
           >
             <ImportArrowIcon style={spacings.mlTy} color={theme.primary} width={16} height={16} />
           </Button>
-          {!!safeAccount && detailsToggle}
+          {hasDetails && detailsToggle}
         </View>
       )}
     </View>
@@ -289,7 +290,9 @@ const AccountKey: React.FC<Props> = ({
         <AccountRow
           account={keyAsAccount}
           withSettings={false}
-          isSelectable={false}
+          // Pressing anywhere on the row opens the details, not only on the arrow
+          isSelectable={hasDetails}
+          onSelect={hasDetails ? handleToggleDetails : undefined}
           switchAccountOnPress={false}
           withBalance={false}
           maxAccountAddrLength={KEY_ADDRESS_MAX_LENGTH}
