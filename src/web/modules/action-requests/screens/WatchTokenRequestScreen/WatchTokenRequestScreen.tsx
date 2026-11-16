@@ -89,8 +89,8 @@ const WatchTokenRequestScreen = () => {
       style={isNarrowWebLayout ? undefined : spacings.mt}
     >
       <View style={[styles.container]}>
+        <DappSafetyBanners banners={dappSafetyBanners} style={styles.dappSafetyBanners} />
         <View style={styles.content}>
-          <DappSafetyBanners banners={dappSafetyBanners} style={spacings.mbLg} />
           <View style={styles.contentHeader}>
             <Text weight="medium" fontSize={20} style={spacings.mb} numberOfLines={1}>
               {t('Add suggested token')}

@@ -91,8 +91,8 @@ const WatchTokenRequestScreen = () => {
       {/* Scrolls on short screens, so the whole body can be seen */}
       <MobileLayoutWrapperMainContent withScroll withHorizontalPadding={false}>
         <View style={styles.container}>
+          <DappSafetyBanners banners={dappSafetyBanners} style={styles.dappSafetyBanners} />
           <View style={styles.content}>
-            <DappSafetyBanners banners={dappSafetyBanners} style={spacings.mbLg} />
             <View style={styles.contentHeader}>
               <Text weight="medium" fontSize={20} style={spacings.mbLg} numberOfLines={1}>
                 {t('Add suggested token')}
