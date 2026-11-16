@@ -2,7 +2,6 @@ import Fuse from 'fuse.js'
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
@@ -25,6 +24,7 @@ import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBo
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
 import IS_SHEET_HEADER_FLOATING from '@common/components/BottomSheet/isSheetHeaderFloating'
 import NearIdenticalAddressSuggestion from '@common/components/AddressSelect/NearIdenticalAddressSuggestion'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { InputProps } from '@common/components/Input'
 import { INPUT_HEIGHT, INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
@@ -344,7 +344,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const contactAddressMaxLength = isNarrowWebLayout || withShortenedAddresses ? 16 : undefined
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { state: contacts } = useController('AddressBookController', 'contacts')
   const {
     state: { domains }

@@ -1,9 +1,9 @@
 import React, { ReactNode, useCallback, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import GlassView from '@common/components/GlassView'
@@ -56,7 +56,7 @@ const EditNameBottomSheet = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { isCompactLayout } = useCompactLayout()
-  const { ref: sheetRef, close } = useModalize()
+  const { ref: sheetRef, close } = useSheetRef()
   const [isSaving, setIsSaving] = useState(false)
 
   const canSave = canSaveName && !isSaving
@@ -140,7 +140,7 @@ const EditNameBottomSheet = ({
       }
     >
       <SheetHeaderRow style={spacings.mbXl}>
-        <Text fontSize={20} weight="medium" style={[text.center, isWeb && spacings.mbXl]}>
+        <Text fontSize={20} weight="medium" style={text.center}>
           {title}
         </Text>
       </SheetHeaderRow>

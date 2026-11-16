@@ -1,11 +1,11 @@
 import React, { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import NoKeysIcon from '@common/assets/svg/NoKeysIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -29,8 +29,8 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const NoKeysToSignAlert: FC<Props> = ({ style, isTransaction = true, type = 'long', chainId }) => {
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { ref: addAccountsRef, open: openAddAccounts, close: closeAddAccounts } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
+  const { ref: addAccountsRef, open: openAddAccounts, close: closeAddAccounts } = useSheetRef()
   const { t } = useTranslation()
   const { theme } = useTheme()
 

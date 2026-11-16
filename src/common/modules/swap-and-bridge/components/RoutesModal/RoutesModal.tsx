@@ -351,11 +351,9 @@ const RoutesModal = ({
     <BottomSheet
       id="select-routes-modal"
       sheetRef={sheetRef}
-      // On mobile, the list is rendered by Modalize, which ignores `flatListProps.ref` and
-      // attaches this ref instead. On web, the list is rendered by the BottomSheet, so the
-      // ref is passed with `flatListProps`. The cast is needed because the prop is typed
-      // as a ScrollView, while Modalize attaches it to the FlatList it renders.
-      scrollViewRef={isMobile ? (scrollRef as unknown as RefObject<ScrollView>) : undefined}
+      // The sheet attaches it to the FlatList it renders, which it also tracks the scroll of.
+      // The cast is needed because the prop is typed as a ScrollView
+      scrollViewRef={scrollRef as unknown as RefObject<ScrollView>}
       closeBottomSheet={closeBottomSheet}
       adjustToContentHeight={isWeb}
       onClosed={handleRoutesModalClosed}
@@ -374,9 +372,6 @@ const RoutesModal = ({
         </ModalHeader>
       }
       flatListProps={{
-        // Spread, as Modalize's `flatListProps` type doesn't include `ref`, though the web
-        // BottomSheet renders the FlatList with these props and attaches it
-        ...{ ref: scrollRef },
         data: isQuoteLoading || !quote ? ([{ isSkeleton: true }] as any) : quote?.routes,
         renderItem,
         keyExtractor: (r: SwapAndBridgeRoute) =>

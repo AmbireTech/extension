@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Text from '@common/components/Text'
 import { tooltipManager } from '@common/components/Tooltip/TooltipManager'
 import useTheme from '@common/hooks/useTheme'
@@ -14,7 +13,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 export function GlobalTooltip() {
   const [activeTooltip, setActiveTooltip] = useState(tooltipManager.getActiveTooltip())
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
   const isClosingRef = React.useRef(false)
   const { theme } = useTheme()
   // Only update state from the subscription
@@ -47,7 +46,6 @@ export function GlobalTooltip() {
       id="global-tooltip-sheet"
       sheetRef={sheetRef}
       type="modal"
-      customZIndex={BOTTOM_SHEET_Z_INDEX + 10}
       onClosed={() => {
         // Guard: only call hide() once per close to prevent infinite loop
         if (isClosingRef.current) return

@@ -1,17 +1,15 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { DAPP_SILENCE_DURATION } from '@ambire-common/consts/safeguards/dappRequestSpam'
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -81,8 +79,8 @@ const RejectRequestButton = ({
   ...buttonProps
 }: Props) => {
   const { t } = useTranslation()
-  const { theme, styles } = useTheme(getStyles)
-  const { ref: sheetRef, open, close } = useModalize()
+  const { styles } = useTheme(getStyles)
+  const { ref: sheetRef, open, close } = useSheetRef()
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: rejectOptions, dispatch: requestsDispatch } = useController(
     'RequestsController',
@@ -132,44 +130,20 @@ const RejectRequestButton = ({
       ? t('This app keeps sending requests after you refused it')
       : t('This app has more than one request waiting')
 
-    // Native sheets draw their own X (and ‹ back) around the centered title
-    if (!isWeb) {
-      return (
-        <View style={spacings.mbLg}>
-          <SheetHeaderRow style={spacings.mbMi}>
-            <Text fontSize={18} weight="semiBold" style={textStyles.center}>
-              {optionsTitle}
-            </Text>
-          </SheetHeaderRow>
-          <Text fontSize={14} appearance="secondaryText" style={styles.sheetSubtitle}>
-            {subtitle}
-          </Text>
-        </View>
-      )
-    }
-
+    // The sheet draws its own X (and ‹ back) around the centered title
     return (
-      <View style={styles.sheetHeader}>
-        <View style={flexbox.flex1}>
-          <Text fontSize={18} weight="semiBold" style={styles.sheetTitle}>
+      <View style={spacings.mbLg}>
+        <SheetHeaderRow style={spacings.mbMi}>
+          <Text fontSize={18} weight="semiBold" style={textStyles.center}>
             {optionsTitle}
           </Text>
-          <Text fontSize={14} appearance="secondaryText" style={styles.sheetSubtitle}>
-            {subtitle}
-          </Text>
-        </View>
-        <HoverablePressable
-          onPress={handleClose}
-          hitSlop={8}
-          style={styles.closeButton}
-          accessibilityRole="button"
-          accessibilityLabel={t('Close')}
-        >
-          <CloseIcon color={theme.iconPrimary} width={14} height={14} />
-        </HoverablePressable>
+        </SheetHeaderRow>
+        <Text fontSize={14} appearance="secondaryText" style={styles.sheetSubtitle}>
+          {subtitle}
+        </Text>
       </View>
     )
-  }, [canSilenceDapp, handleClose, optionsTitle, styles, t, theme.iconPrimary])
+  }, [canSilenceDapp, optionsTitle, styles, t])
 
   return (
     <>

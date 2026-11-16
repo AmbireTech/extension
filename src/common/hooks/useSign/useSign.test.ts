@@ -136,8 +136,9 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key })
 }))
 
-jest.mock('react-native-modalize', () => ({
-  useModalize: () => ({ ref: { current: null }, open: jest.fn(), close: jest.fn() })
+jest.mock('@common/components/BottomSheet/useSheetRef', () => ({
+  __esModule: true,
+  default: () => ({ ref: { current: null }, open: jest.fn(), close: jest.fn() })
 }))
 
 jest.mock('@web/modules/sign-account-op/utils/helpers', () => ({

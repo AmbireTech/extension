@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import GasTankModal from '@common/components/GasTankModal'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
@@ -27,7 +27,7 @@ const selectSelectedType = (state: AllControllersMappingType['SelectedAccountCon
 
 const AccountDashboardScreen = () => {
   const { styles } = useTheme(getStyles)
-  const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
+  const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useSheetRef()
   // The pager starts where the collapsed overview ends and slides over the part that
   // collapses, so a collapse never resizes or lays out anything. Both heights are static.
   const [overviewHeight, setOverviewHeight] = useState(0)

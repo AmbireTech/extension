@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
@@ -10,8 +9,10 @@ import SyncIcon from '@common/assets/svg/SyncIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -104,7 +105,7 @@ const AccountsSettingsScreen = () => {
     selectPrivacyPoolsAccountId
   )
   const { dispatch: privacyPoolsDispatch } = useController('PrivacyPoolsController')
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
@@ -116,32 +117,32 @@ const AccountsSettingsScreen = () => {
     ref: sheetRefExportImportKey,
     open: openExportImportKey,
     close: closeExportImportKey
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefRemoveAccount,
     open: openRemoveAccount,
     close: closeRemoveAccount
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefRemovePrivacyPoolsAccount,
     open: openRemovePrivacyPoolsAccount,
     close: closeRemovePrivacyPoolsAccount
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefAccountSmartSettings,
     open: openAccountSmartSettings,
     close: closeAccountSmartSettings
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefAccountDeploySettings,
     open: openAccountDeploySettings,
     close: closeAccountDeploySettings
-  } = useModalize()
+  } = useSheetRef()
 
   useEffect(() => {
     setCurrentSettingsPage('accounts')
@@ -513,21 +514,14 @@ const AccountsSettingsScreen = () => {
         containerInnerWrapperStyles={{ flex: 1 }}
         style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          <PanelBackButton
-            onPress={() => {
-              setAccountToRemove(null)
-              closeRemoveAccount()
-            }}
-            style={spacings.mrSm}
-          />
+        <SheetHeaderRow style={spacings.mbLg}>
           <PanelTitle
             title={t('Remove {{ label }}', {
               label: accountToRemove?.preferences?.label || 'account'
             })}
-            style={text.left}
+            style={text.center}
           />
-        </View>
+        </SheetHeaderRow>
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Text fontSize={16} weight="medium" style={{ ...spacings.mb, textAlign: 'center' }}>
             {t('Are you sure you want to remove this account?')}
@@ -553,15 +547,14 @@ const AccountsSettingsScreen = () => {
         containerInnerWrapperStyles={{ flex: 1 }}
         style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          <PanelBackButton onPress={cancelRemovePrivacyPoolsAccount} style={spacings.mrSm} />
+        <SheetHeaderRow style={spacings.mbLg}>
           <PanelTitle
             title={t('Remove {{ label }}', {
               label: privacyPoolsAccountToRemove?.label || t('account')
             })}
-            style={text.left}
+            style={text.center}
           />
-        </View>
+        </SheetHeaderRow>
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Text fontSize={16} weight="medium" style={{ ...spacings.mbSm, textAlign: 'center' }}>
             {t('Are you sure you want to remove the Private account from {{seedLabel}}?', {

@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
@@ -8,9 +7,10 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -35,7 +35,7 @@ const getUsdPrice = (token?: TokenResult) =>
   token?.priceIn.find(({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd')?.price
 
 type Props = {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
   feePercent: number
   feeExemptionReason?: FeeExemptionReason
@@ -147,19 +147,11 @@ const FeeInfoBottomSheet = ({
       ) : (
         <>
           <SheetHeaderRow style={spacings.mbTy}>
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                isWeb && spacings.mtMi,
-                isWeb && spacings.mbTy
-              ]}
-            >
-              {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
+            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
               <PanelTitle
                 title={t('Stake $WALLET, pay less in fees')}
                 size={18}
-                style={isWeb ? text.left : text.center}
+                style={text.center}
               />
             </View>
           </SheetHeaderRow>

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import FingerprintIcon from '@common/assets/svg/FingerprintIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ControlOption from '@common/components/ControlOption'
 import FatToggle from '@common/components/FatToggle'
 import useBiometrics from '@common/hooks/useBiometrics'
@@ -28,7 +28,7 @@ const BiometricsOption = () => {
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
     close: closeConfirmPassword
-  } = useModalize()
+  } = useSheetRef()
 
   const [isBusy, setIsBusy] = useState(false)
   const shouldCleanUpWebAuthnCredential = useRef(false)

@@ -1,12 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Image, ImageSourcePropType, LayoutChangeEvent, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import { Carousel } from 'react-native-reanimated-carousel'
 
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -66,7 +66,7 @@ const ImportFromExtensionScreen = () => {
     ref: passwordSheetRef,
     open: openPasswordSheet,
     close: closePasswordSheet
-  } = useModalize()
+  } = useSheetRef()
   const [isScanning, setIsScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState<QrScanProgress | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
@@ -390,7 +390,6 @@ const ImportFromExtensionScreen = () => {
           onCustomSubmit={importScannedData}
           // Only called when the local keystore gets unlocked, which this flow never does
           onPasswordConfirmed={() => {}}
-          onBackButtonPress={handleClosePasswordSheet}
         >
           <Alert
             type="info"

@@ -9,6 +9,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import FatToggle from '@common/components/FatToggle'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
@@ -21,7 +22,6 @@ import common, { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { SwapProviderInfo } from '@ambire-common/interfaces/swapAndBridge'
-import type { Modalize } from 'react-native-modalize'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -285,7 +285,7 @@ const ProviderSettingsBottomSheet = ({
   sheetRef,
   closeBottomSheet
 }: {
-  sheetRef: RefObject<Modalize>
+  sheetRef: RefObject<SheetRef | null>
   closeBottomSheet: () => void
 }) => {
   const { t } = useTranslation()

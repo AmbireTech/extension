@@ -2,7 +2,6 @@ import React, { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
@@ -10,6 +9,7 @@ import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddressInput from '@common/components/AddressInput'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Input from '@common/components/Input'
@@ -28,7 +28,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 type Props = {
   id: string
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
 }
 

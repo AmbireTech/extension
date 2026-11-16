@@ -1,15 +1,15 @@
 import type { ViewStyle } from 'react-native'
-import type { Modalize } from 'react-native-modalize'
 
 import type { FC, ReactNode, RefObject } from 'react'
 import { memo } from 'react'
 
 import BottomSheet from '@common/components/BottomSheet'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import spacings from '@common/styles/spacings'
 
 interface Props {
-  sheetRef: RefObject<Modalize>
+  sheetRef: RefObject<SheetRef | null>
   closeBottomSheet: () => void
   onPasswordConfirmed: (password: string) => void
   text: string
@@ -52,7 +52,6 @@ const BottomSheetPasswordConfirmationComponent: FC<Props> = ({
         title={title}
         onPasswordConfirmed={onPasswordConfirmed}
         onCustomSubmit={onCustomSubmit}
-        onBackButtonPress={closeBottomSheet}
         submitText={submitText}
         isSubmitting={isSubmitting}
       >

@@ -8,7 +8,6 @@ import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModal/DualChoiceModal'
 import CommonText, { Props } from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
@@ -134,17 +133,17 @@ const DualChoiceWarningModal = ({
 }) => {
   const { theme } = useTheme()
   const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
-  const isInNativeSheet = useIsInsideBottomSheet() && !isWeb
+  const isInSheet = useIsInsideBottomSheet()
 
   return (
     <Wrapper>
       <ContentWrapper style={contentStyle}>
-        {/* In a native sheet the header row adds the X and spaces the title itself */}
+        {/* In a sheet the header row adds the X and spaces the title itself */}
         <SheetHeaderRow>
           <TitleAndIcon
             type={type}
             title={title}
-            style={isInNativeSheet ? NATIVE_SHEET_TITLE_STYLE : TITLE_STYLE}
+            style={isInSheet ? NATIVE_SHEET_TITLE_STYLE : TITLE_STYLE}
           />
         </SheetHeaderRow>
         {!!description && (

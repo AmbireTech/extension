@@ -1,7 +1,7 @@
 import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Dialog from '@common/components/Dialog'
 import DialogButton from '@common/components/Dialog/DialogButton'
 import DialogFooter from '@common/components/Dialog/DialogFooter'
@@ -23,7 +23,7 @@ const ManageContact: FC<Props> = ({ address, name }) => {
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch: addressBookDispatch } = useController('AddressBookController')
-  const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
+  const { ref: dialogRef, open: openDialog, close: closeDialog } = useSheetRef()
 
   const menu = useMemo(
     () => [

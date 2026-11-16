@@ -423,8 +423,6 @@ const OneClickEstimation = ({
         id="estimation-modal"
         sheetRef={estimationModalRef}
         type={isEstimationSheetModal ? 'modal' : 'bottom-sheet'}
-        // NOTE: This must be lower than SigningKeySelect's z-index
-        customZIndex={5}
         style={spacings.pb}
         closeBottomSheet={isWeb ? undefined : closeEstimationModal}
         // Dragging the sheet down closes it without calling closeBottomSheet, which would leave the

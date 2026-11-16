@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import useCallSignAccountOpMethod, {
   getSignAccountOpType
 } from '@common/hooks/useCallSignAccountOpMethod'
@@ -177,12 +177,12 @@ const useSign = ({
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
   const [acknowledgedWarnings, setAcknowledgedWarnings] = useState<string[]>([])
-  const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useModalize()
+  const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useSheetRef()
   const {
     ref: gasFeeUpdatedModalRef,
     open: openGasFeeUpdatedModal,
     close: closeGasFeeUpdatedModal
-  } = useModalize()
+  } = useSheetRef()
 
   const hasEstimation = useMemo(
     () =>

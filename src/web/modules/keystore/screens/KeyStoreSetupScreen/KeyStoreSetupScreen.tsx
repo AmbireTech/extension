@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, TouchableOpacity, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Checkbox from '@common/components/Checkbox'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import FatToggle from '@common/components/FatToggle'
@@ -32,7 +33,7 @@ const KeyStoreSetupScreen = () => {
   const { goToPrevRoute } = useOnboardingNavigation()
   const { theme } = useTheme()
   const [agreedWithTerms, setAgreedWithTerms] = useState(true)
-  const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useModalize()
+  const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useSheetRef()
   const animation = useRef(new Animated.Value(0)).current
 
   const { saveBiometricsSecret } = useBiometrics()
@@ -146,6 +147,8 @@ const KeyStoreSetupScreen = () => {
         closeBottomSheet={closeTermsModal}
         sheetRef={termsModalRef}
       >
+        {/* Just the sheet's X, floating over the logo */}
+        <SheetHeaderRow />
         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
           <AmbireLogoWithBackgroundAndLogotype withText={false} style={spacings.mbLg} />
           <Text fontSize={32} weight="regular" style={[{ textAlign: 'center' }, spacings.mbXl]}>

@@ -1,6 +1,5 @@
 import { formatUnits, parseUnits } from 'ethers'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
@@ -11,6 +10,7 @@ import {
   SWAP_AND_BRIDGE_FEE_THRESHOLDS
 } from '@ambire-common/libs/swapAndBridge/fee'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -102,7 +102,7 @@ const useWalletStakingForm = () => {
     ref: feeInfoSheetRef,
     open: openFeeInfoBottomSheet,
     close: closeFeeInfoBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { state: account } = useController('SelectedAccountController', selectAccount)
   const { state: portfolioTokens } = useController(
     'SelectedAccountController',

@@ -1,6 +1,5 @@
 import { getAddress } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useModalize } from 'react-native-modalize'
 
 import { STK_WALLET, WALLET_STAKING_ADDR } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
@@ -14,6 +13,7 @@ import TopUpIcon from '@common/assets/svg/TopUpIcon'
 import UnstakeIcon from '@common/assets/svg/UnstakeIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import WithdrawIcon from '@common/assets/svg/WithdrawIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useHasGasTank from '@common/hooks/useHasGasTank'
@@ -93,7 +93,7 @@ const useTokenActions = (token: TokenResult | null, options: UseTokenActionsOpti
     ref: hideTokenModalRef,
     open: openHideTokenModal,
     close: closeHideTokenModal
-  } = useModalize()
+  } = useSheetRef()
   const { addToast } = useToast()
   const { t } = useTranslation()
   const { state: account } = useController('SelectedAccountController', selectAccount)

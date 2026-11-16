@@ -1,0 +1,26 @@
+diff --git a/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js b/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js
+index 8eb7036..96014bb 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js
++++ b/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js
+@@ -1129,7 +1129,7 @@ const TrueSheetComponent = /*#__PURE__*/forwardRef((props, ref) => {
+     // Mobile portrait ignores width sizing entirely (matches iOS/Android:
+     // both apply `maxContentWidth` only when not on a portrait phone).
+     // `detached` + `detachedOffset` are still respected via the wrapper.
+-    const maxWidth = isLandscapeOrTablet ? presentation === 'form' ? DEFAULT_FORM_SHEET_WIDTH : maxContentWidth ?? DEFAULT_MAX_WIDTH : undefined;
++    const maxWidth = isLandscapeOrTablet ? presentation === 'form' ? maxContentWidth ?? DEFAULT_FORM_SHEET_WIDTH : maxContentWidth ?? DEFAULT_MAX_WIDTH : undefined;
+     const needsMargins = maxWidth != null || effectiveDetached;
+     if (!needsMargins && !dropShadow) return undefined;
+     const next = {};
+diff --git a/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx b/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx
+index ee26704..d6ee769 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx
++++ b/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx
+@@ -1282,7 +1282,7 @@ const TrueSheetComponent = forwardRef<TrueSheetMethods, TrueSheetProps>((props,
+     // `detached` + `detachedOffset` are still respected via the wrapper.
+     const maxWidth = isLandscapeOrTablet
+       ? presentation === 'form'
+-        ? DEFAULT_FORM_SHEET_WIDTH
++        ? (maxContentWidth ?? DEFAULT_FORM_SHEET_WIDTH)
+         : (maxContentWidth ?? DEFAULT_MAX_WIDTH)
+       : undefined;
+ 

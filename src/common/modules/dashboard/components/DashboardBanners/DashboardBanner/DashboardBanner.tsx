@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import {
   Action,
@@ -10,6 +9,7 @@ import {
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import SparklesIcon from '@common/assets/svg/SparklesIcon'
 import Banner from '@common/components/Banner'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
@@ -66,7 +66,7 @@ const DashboardBanner = ({
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch: emailVaultDispatch } = useController('EmailVaultController')
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
-  const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useModalize()
+  const { ref: sheetRef, close: closeBottomSheet, open: openBottomSheet } = useSheetRef()
   const primaryAction = actions[0]
   const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
   const isPendingSignatureRequest = banner.id === 'safe-message-request-banner'

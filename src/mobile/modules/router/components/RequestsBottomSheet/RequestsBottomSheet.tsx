@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
-import { Modalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -16,7 +16,7 @@ import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAcc
 import SignMessageScreen from '@mobile/modules/sign-message/screens/SignMessageScreen'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   onClosed?: () => void
   onOpened?: () => void
 }

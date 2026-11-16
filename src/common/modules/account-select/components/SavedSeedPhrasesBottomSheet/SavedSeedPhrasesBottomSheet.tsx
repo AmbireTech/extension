@@ -1,13 +1,13 @@
 import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ListRenderItemInfo, Pressable, View } from 'react-native'
-import { IHandles } from 'react-native-modalize/lib/options'
 
 import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
@@ -40,7 +40,7 @@ const SavedSeedPhrasesBottomSheet = ({
   close,
   handleClose
 }: {
-  sheetRef: React.RefObject<IHandles>
+  sheetRef: React.RefObject<SheetRef | null>
   open: (dest?: 'default' | 'top' | undefined) => void
   close: (dest?: 'default' | 'alwaysOpen' | undefined) => void
   handleClose: () => void

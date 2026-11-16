@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
 import { Account } from '@ambire-common/interfaces/account'
@@ -14,6 +13,7 @@ import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -96,7 +96,7 @@ const AccountKey: React.FC<Props> = ({
     property: 'bottom',
     values: { from: 0, to: -2 }
   })
-  const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useModalize()
+  const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useSheetRef()
   const [bindCopyIconAnim, copyIconAnimStyle] = useHover({
     preset: 'opacityInverted'
   })

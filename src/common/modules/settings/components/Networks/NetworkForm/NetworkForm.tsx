@@ -215,8 +215,8 @@ const NetworkForm = ({
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  // A native sheet's X closes the form, so it has no Cancel there
-  const isInNativeSheet = useIsInsideBottomSheet() && !isWeb
+  // A sheet's X closes the form, so it has no Cancel there
+  const isInSheet = useIsInsideBottomSheet()
   const {
     state: { allNetworks, networkToAddOrUpdate, statuses },
     dispatch: networksDispatch
@@ -797,7 +797,8 @@ const NetworkForm = ({
     <View
       style={[
         isWeb && flexbox.alignEnd,
-        !isMobile && spacings.ptXl,
+        // In a sheet's footer the footer spaces them from the form
+        !footerHostName && !isMobile && spacings.ptXl,
         !!footerHostName && spacings.ptSm
       ]}
     >
@@ -811,7 +812,7 @@ const NetworkForm = ({
         />
       ) : (
         <View style={[flexbox.directionRow, isMobile && { columnGap: SPACING_SM }]}>
-          {!isInNativeSheet && (
+          {!isInSheet && (
             <Button
               onPress={onCancel}
               text={t('Cancel')}

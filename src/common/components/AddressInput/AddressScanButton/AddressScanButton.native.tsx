@@ -1,12 +1,12 @@
 import { useCameraPermissions } from 'expo-camera'
 import React, { useCallback, useRef } from 'react'
 import { Linking, Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { validateAddress } from '@ambire-common/services/validations'
 import ScanIcon from '@common/assets/svg/ScanIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
@@ -48,7 +48,7 @@ const AddressScanButton = ({ onScanned }: AddressScanButtonProps) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { addToast } = useToast()
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const [permission, requestPermission] = useCameraPermissions()
   // CameraScanner fires onScan on every decoded frame, so guard against
   // processing the same result more than once.

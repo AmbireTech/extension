@@ -1,9 +1,9 @@
 import React, { FC, useCallback } from 'react'
-import { Modalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
 import AccountKeys from '@common/components/AccountKeysBottomSheet/AccountKeys'
 import BottomSheet from '@common/components/BottomSheet'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
@@ -11,7 +11,7 @@ import spacings from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
   account: Account | null
   openAddAccountBottomSheet?: () => void
@@ -48,7 +48,6 @@ const AccountKeysBottomSheet: FC<Props> = ({
     <BottomSheet
       id="account-keys-bottom-sheet"
       sheetRef={sheetRef}
-      animationDuration={isWeb ? 0 : undefined}
       closeBottomSheet={closeBottomSheet}
       scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
       isScrollEnabled={false}
@@ -60,7 +59,6 @@ const AccountKeysBottomSheet: FC<Props> = ({
         <AccountKeys
           account={account}
           openAddAccountBottomSheet={handleOpenAccountBottomSheet}
-          closeBottomSheet={closeBottomSheet}
           keyIconColor={theme.iconPrimary as string}
           showExportImport={showExportImport}
           chainId={chainId}

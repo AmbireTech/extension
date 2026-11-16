@@ -2,13 +2,13 @@ import { formatUnits } from 'ethers'
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, GestureResponderEvent, StyleProp, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { getTokenAmount } from '@ambire-common/libs/portfolio/helpers'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import AmountInput from '@common/components/AmountInput'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import EditButton from '@common/components/EditButton'
 import FooterGlassView from '@common/components/FooterGlassView'
@@ -139,7 +139,7 @@ const EditApproval = ({
     ref: editApprovalsSheetRef,
     open: openEditApprovals,
     close: closeEditApprovals
-  } = useModalize()
+  } = useSheetRef()
   const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const amountRef = useRef<string>('0')
   const [initialAmount, setInitialAmount] = useState<string>('0')
@@ -218,7 +218,7 @@ const EditApproval = ({
         <ModalHeader
           title={t('Grant approval for')}
           handleClose={closeEditApprovals}
-          style={isMobile ? spacings.mbSm : spacings.mbLg}
+          style={spacings.mbSm}
         />
         <View style={flexbox.alignCenter}>
           <View style={{ width: '100%' }}>

@@ -1,8 +1,8 @@
 import React, { Suspense, useCallback, useMemo, useState } from 'react'
 import { StyleProp, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { getAccountOpNonce } from '@ambire-common/libs/accountOp/accountOp'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import ClockIcon from '@common/assets/svg/ClockIcon'
@@ -241,7 +241,7 @@ const PendingRequests = ({ style }: Props) => {
   const { styles } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
   const [shouldRenderHumanization, setShouldRenderHumanization] = useState(false)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { state: currentUserRequest, dispatch: requestsDispatch } = useController(
     'RequestsController',
     selectCurrentUserRequest

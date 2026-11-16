@@ -3,12 +3,12 @@ import * as ImagePicker from 'expo-image-picker'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppState, Linking, Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
@@ -41,7 +41,7 @@ const QrReaderScreen = () => {
     ref: manualEntrySheetRef,
     open: openManualEntrySheet,
     close: closeManualEntrySheet
-  } = useModalize()
+  } = useSheetRef()
   const [manualValue, setManualValue] = useState('')
 
   useEffect(() => {

@@ -1,8 +1,8 @@
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { PortalHost } from '@gorhom/portal'
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { isColibriProviderAvailable } from '@ambire-common/libs/networks/colibri'
 import colibriLogo from '@common/assets/images/colibri-logo.png'
@@ -70,10 +70,10 @@ const NetworkDetails = ({
     state: { statuses, allNetworks },
     dispatch: networksDispatch
   } = useController('NetworksController')
-  const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
+  const { ref: dialogRef, open: openDialog, close: closeDialog } = useSheetRef()
 
   const { pathname } = useRoute()
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const [showAllRpcUrls, setShowAllRpcUrls] = useState(false)
   const isEmpty = useMemo(
     () => [name, rpcUrls[0], chainId].some((p) => p === '-'),
@@ -510,7 +510,7 @@ const NetworkDetails = ({
         containerInnerWrapperStyles={isWeb ? { flex: 1 } : {}}
         style={isWeb ? { ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 } : {}}
         // The form's buttons portal into it, so they stay in view while the form scrolls
-        FooterComponent={isWeb ? undefined : <PortalHost name={EDIT_NETWORK_FOOTER_HOST_NAME} />}
+        FooterComponent={<PortalHost name={EDIT_NETWORK_FOOTER_HOST_NAME} />}
       >
         {/* The form's own header is a card, so the X gets a row of its own above it */}
         <SheetHeaderRow />
@@ -518,7 +518,7 @@ const NetworkDetails = ({
           selectedChainId={chainId.toString()}
           onCancel={closeBottomSheet}
           onSaved={closeBottomSheet}
-          footerHostName={isWeb ? undefined : EDIT_NETWORK_FOOTER_HOST_NAME}
+          footerHostName={EDIT_NETWORK_FOOTER_HOST_NAME}
         />
       </BottomSheet>
     </>

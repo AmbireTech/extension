@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { isiOS } from '@common/config/env'
@@ -37,7 +37,7 @@ const getIsSheetVisible = (step: NfcSessionState['step']) =>
  */
 const NfcCardSessionModal = () => {
   const { t } = useTranslation()
-  const { ref, open, close } = useModalize()
+  const { ref, open, close } = useSheetRef()
   const { step, purpose, error, nfcWalletType, submitPrompt, cancel } = useNfcCardSession()
 
   // Named after the card the session is running with, so the copy fits whichever

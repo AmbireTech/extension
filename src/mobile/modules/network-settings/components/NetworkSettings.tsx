@@ -2,10 +2,10 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import NetworkDetails from '@common/components/NetworkDetails'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
@@ -37,7 +37,7 @@ const NetworksSettings = () => {
     ref: networkDetailsSheetRef,
     open: openNetworkDetailsSheet,
     close: closeNetworkDetailsSheet
-  } = useModalize()
+  } = useSheetRef()
   const { state: allNetworks } = useController('NetworksController', selectAllNetworks)
   const {
     state: { providers }

@@ -168,7 +168,7 @@ const SectionedSelect = ({
     if (!isMenuOpen) hasScrolledToSelectedRef.current = false
   }, [isMenuOpen])
 
-  // On the content size rather than the list layout: Modalize replaces the list's `onLayout`
+  // On the content size, which grows as the rows render, rather than the list's own layout
   const handleContentSizeChangeAndScrollToSelected = useCallback(
     (width: number, height: number) => {
       if (isScrollbarPaddingEnabled) handleContentSizeChange(width, height)

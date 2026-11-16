@@ -7,3 +7,11 @@
 body:has(#modalBackdrop) [data-blurred-behind-sheets] {
   filter: blur(3px);
 }
+
+/* TrueSheet draws the sheets and their dimming outside the app's tree without a z-index, which
+   would leave them under anything in the app that has one. Matches BOTTOM_SHEET_Z_INDEX */
+[data-vaul-overlay],
+[data-vaul-drawer],
+[data-vaul-detached-wrapper] {
+  z-index: 900;
+}

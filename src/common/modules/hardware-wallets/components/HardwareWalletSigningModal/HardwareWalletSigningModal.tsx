@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { ExternalKey } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
 import DriveIcon from '@common/assets/svg/DriveIcon'
@@ -58,7 +58,7 @@ const HardwareWalletSigningModal = ({
   humanization
 }: Props) => {
   const { t } = useTranslation()
-  const { ref, open, close } = useModalize()
+  const { ref, open, close } = useSheetRef()
   const { theme } = useTheme()
 
   useEffect(() => {
@@ -99,7 +99,6 @@ const HardwareWalletSigningModal = ({
       id="hardware-wallet-signing-modal"
       // The modal is displayed in tab in swap and bridge
       type={!isTab ? 'bottom-sheet' : 'modal'}
-      autoWidth
       sheetRef={ref}
       shouldBeClosableOnDrag={false}
       autoOpen={isVisible}

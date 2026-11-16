@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react'
 import { ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -32,7 +32,7 @@ const selectAreNftImagesEnabled = (state: IFeatureFlagsController) =>
 const NftImagesDisabledHint = ({ style }: Props) => {
   const { t } = useTranslation()
   const { isPopup } = getUiType()
-  const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
+  const { ref: modalRef, open: openModal, close: closeModal } = useSheetRef()
   const { state: areNftImagesEnabled, dispatch: featureFlagsDispatch } = useController(
     'FeatureFlagsController',
     selectAreNftImagesEnabled

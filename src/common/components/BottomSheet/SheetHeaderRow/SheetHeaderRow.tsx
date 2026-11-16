@@ -7,7 +7,6 @@ import { bottomSheetCloseEventStream } from '@common/components/BottomSheet/bott
 import SheetHeaderButton, {
   SHEET_HEADER_BUTTON_SIZE
 } from '@common/components/BottomSheet/SheetHeaderButton'
-import { isWeb } from '@common/config/env'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -28,10 +27,10 @@ const closeAllSheets = () => bottomSheetCloseEventStream.next()
 const SIDE_SLOT_STYLE = { minWidth: SHEET_HEADER_BUTTON_SIZE, flexShrink: 0 }
 
 /**
- * The header row of a native bottom sheet: ‹ back on the left when there is somewhere to
+ * The header row of a bottom sheet: ‹ back on the left when there is somewhere to
  * go back to, the X on the right and the title centered between them. The X of a nested
  * sheet closes every sheet. It renders in the sheet's fixed header, above the scrolling
- * content. On web, and outside a sheet, only the title is rendered, in place.
+ * content. Outside a sheet only the title is rendered, in place.
  */
 const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) => {
   const {
@@ -76,7 +75,7 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
     return () => setIsHeaderRowTitleless(false)
   }, [hasTitle, headerHostName, setIsHeaderRowTitleless])
 
-  if (isWeb || !isInsideBottomSheet) return <>{children}</>
+  if (!isInsideBottomSheet) return <>{children}</>
 
   // A sheet the user can't close gets no X, nested or not
   const handleClose = close && (isNested ? closeAllSheets : close)

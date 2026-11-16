@@ -1,9 +1,9 @@
 import React from 'react'
 import { Animated, Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
 import NetworkStatusesIcon from '@common/assets/svg/NetworkStatusIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { isAmbireNext, isDev, isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover from '@common/hooks/useHover'
@@ -38,7 +38,7 @@ const DashboardHeader = () => {
     ref: networkStatusesSheetRef,
     open: openNetworkStatusesSheet,
     close: closeNetworkStatusesSheet
-  } = useModalize()
+  } = useSheetRef()
 
   if (!account) return null
 

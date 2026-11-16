@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import {
   addEventListener,
   removeEventListener,
@@ -11,7 +10,7 @@ import {
 
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -43,7 +42,7 @@ const RETRY_TIMEOUT = 10000
  */
 const MandatoryOtaUpdateModal = () => {
   const { t } = useTranslation()
-  const { ref, open, close } = useModalize()
+  const { ref, open, close } = useSheetRef()
   const { newReleaseBundle, isRestartRequired } = useStallionUpdate()
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [hasDownloadFailed, setHasDownloadFailed] = useState(false)
@@ -171,7 +170,6 @@ const MandatoryOtaUpdateModal = () => {
       shouldBeClosableOnDrag={false}
       // Above any other sheet (nested ones stack 2 apart from the base), so nothing else
       // can be used until the update is applied. Still below the global tooltip.
-      customZIndex={BOTTOM_SHEET_Z_INDEX + 9}
     >
       <ModalHeader title={t('Update required')} style={spacings.mbLg} />
       <Text fontSize={14} style={[spacings.mbLg, text.center]}>

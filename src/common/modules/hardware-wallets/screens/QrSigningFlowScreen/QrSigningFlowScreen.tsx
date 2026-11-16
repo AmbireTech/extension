@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -53,7 +53,7 @@ const QrSigningFlowScreen = ({
   onReject,
   handleQrSigningFlowOnBackPressed
 }: Props) => {
-  const { ref, open, close } = useModalize()
+  const { ref, open, close } = useSheetRef()
   const { isCompactLayout: withMobileLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -119,7 +119,6 @@ const QrSigningFlowScreen = ({
     <BottomSheet
       id="qr-signing-flow-screen"
       sheetRef={ref}
-      autoWidth={false}
       adjustToContentHeight={withMobileLayout}
       modalHeight={isWeb && !withMobileLayout ? 585 : undefined}
       onClosed={handleClose}

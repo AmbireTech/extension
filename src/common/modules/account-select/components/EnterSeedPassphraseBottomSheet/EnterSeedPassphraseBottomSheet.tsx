@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import InputPassword from '@common/components/InputPassword'
 import PassphraseBadge from '@common/components/PassphraseBadge'
@@ -44,7 +44,7 @@ const EnterSeedPassphraseBottomSheet = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { ref: sheetRef, close } = useModalize()
+  const { ref: sheetRef, close } = useSheetRef()
   const [passphrase, setPassphrase] = useState('')
   const [shouldSavePassphrase, setShouldSavePassphrase] = useState(false)
   const [isWrongPassphrase, setIsWrongPassphrase] = useState(false)

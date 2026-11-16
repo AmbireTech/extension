@@ -1,8 +1,8 @@
 import React, { FC, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { PrivacyPoolsLeakId } from '@ambire-common/interfaces/privacyPools'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -25,7 +25,7 @@ type Props = Omit<PrivacyStatusProps, 'stage'> & {
 const PrivacyFieldNote: FC<Props> = ({ fieldLeakIds, testID, ...props }) => {
   const { leaks, style } = props
   const { t } = useTranslation()
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
   const fieldLeaks = useMemo(

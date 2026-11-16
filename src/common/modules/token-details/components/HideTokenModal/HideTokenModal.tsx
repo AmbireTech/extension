@@ -41,11 +41,7 @@ const HideTokenModal = ({
       style={isWeb ? styles.modal : undefined}
     >
       <SheetHeaderRow style={spacings.mbSm}>
-        <Text
-          testID="hide-token-modal-title"
-          style={isWeb ? spacings.mbSm : text.center}
-          weight="semiBold"
-        >
+        <Text testID="hide-token-modal-title" style={text.center} weight="semiBold">
           {t('Are you sure you want to hide this token?')}
         </Text>
       </SheetHeaderRow>

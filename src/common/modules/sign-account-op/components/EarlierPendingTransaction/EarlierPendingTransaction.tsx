@@ -1,6 +1,5 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { findPendingAccountOpById } from '@ambire-common/libs/accountOp/earlierPendingAccountOp'
@@ -14,6 +13,7 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
@@ -123,7 +123,7 @@ const EarlierPendingTransaction = ({
     action: Replacement
     fromRequestId: string | number | undefined
   } | null>(null)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { state: signScreenEarlierPendingAccountOpId, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController', selectEarlierPendingAccountOpId)
   const { state: signScreenCanReplace } = useController(

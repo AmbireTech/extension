@@ -1,7 +1,7 @@
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { PortalHost } from '@gorhom/portal'
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import AddIcon from '@common/assets/svg/AddIcon'
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
@@ -23,7 +23,7 @@ import NetworkSettings from '@mobile/modules/network-settings/components'
 const FOOTER_HOST_NAME = 'add-new-network-footer'
 
 const NetworksSettingsScreen = () => {
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { search: searchParams, pathname } = useRoute()
   const { t } = useTranslation()
   const { navigate } = useNavigation()

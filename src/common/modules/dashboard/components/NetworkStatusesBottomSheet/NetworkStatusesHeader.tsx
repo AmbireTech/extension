@@ -3,7 +3,6 @@ import { View } from 'react-native'
 
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
-import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -12,20 +11,9 @@ const NetworkStatusesHeader: FC<{
   networkLabel: string
   columns: { label: string; flex: number }[]
 }> = ({ networkLabel, columns }) => {
-  const { theme } = useTheme()
-
   return (
-    <View
-      style={[
-        flexbox.directionRow,
-        // The native sheet's fixed header already sets it apart from the rows, with its own gap
-        !isMobile && spacings.pbTy,
-        !isMobile && {
-          borderBottomWidth: 2,
-          borderBottomColor: theme.secondaryBackground
-        }
-      ]}
-    >
+    // The sheet's fixed header already sets it apart from the rows, with its own gap
+    <View style={flexbox.directionRow}>
       <View style={{ flex: 1.75 }}>
         <Text
           fontSize={isMobile ? 10 : 12}
