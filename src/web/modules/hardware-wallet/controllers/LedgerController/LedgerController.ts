@@ -27,6 +27,12 @@ export type LedgerSignature = Signature
 
 const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
 
+/**
+ * The reason the Ledger DMK WebHID transport gives (as `originalError`) when
+ * the browser's device prompt resolves without a selected device.
+ */
+const NO_SELECTED_DEVICE_ERROR = 'No selected device'
+
 class LedgerController implements ExternalSignerController, LedgerControllerInterface {
   unlockedPath: string = ''
 
@@ -116,6 +122,12 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     // In emulator mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
     if (isLedgerEmulator) return
 
+    // `getDevices()` lists only connected devices this extension already has
+    // access to, so prompting again is not needed. It's also required on
+    // Vivaldi, where the prompt resolves with no device in this case.
+    const grantedDevices = await navigator.hid.getDevices()
+    if (grantedDevices.some((device) => device.vendorId === LedgerController.vendorId)) return
+
     const dmk = new DeviceManagementKitBuilder()
       // .addLogger(new ConsoleLogger()) // for debugging only
       .addTransport(webHidTransportFactory)
@@ -131,9 +143,26 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
           dmk.close()
           resolve(device)
         },
-        error: (error) => {
+        error: async (error) => {
           subscription?.unsubscribe()
-          reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
+          dmk.close()
+
+          // DMK errors have no `message`, the reason is in `originalError`.
+          // The device prompt resolves with no device when the user closes it
+          // without picking one, or when the browser doesn't show it at all.
+          const isNoDeviceSelected = error?.originalError?.message === NO_SELECTED_DEVICE_ERROR
+          if (!isNoDeviceSelected) {
+            reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
+            return
+          }
+
+          // Vivaldi doesn't show the device prompt on extension pages (it does on
+          // regular websites), so a new device can't be allowed there. Reported as
+          // VB-133598, see https://forum.vivaldi.net/post/930284
+          const message = (await isVivaldi())
+            ? "A known Vivaldi issue blocks connecting a new Ledger to browser extensions. We've reported it to Vivaldi. Ledgers you've already connected still work."
+            : 'No Ledger device was selected. Please try again and pick your Ledger device from the list.'
+          reject(new ExternalSignerError(message))
         }
       })
     })
