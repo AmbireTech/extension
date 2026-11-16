@@ -177,6 +177,8 @@ const Input = ({
               autoCorrect={false}
               autoComplete="off"
               editable={editable ?? !disabled}
+              // A disabled field takes no focus, which a read-only input on web otherwise does
+              focusable={!disabled}
               onBlur={handleOnBlur}
               onFocus={handleOnFocus}
               ref={setAutoFocusInputRef}
@@ -185,6 +187,7 @@ const Input = ({
               style={[
                 styles.nativeInput,
                 !!customInputContent && { position: 'absolute', zIndex: -1, opacity: 0 },
+                disabled && { pointerEvents: 'none' },
                 nativeInputStyle
               ]}
             />
