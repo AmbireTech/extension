@@ -39,6 +39,7 @@ const PayOption = ({
   // showAccountBalanceBadge = false // Note: Under discussion
 }: {
   feeOption: FeePaymentOption
+  /** Empty when the fee token has no price, then the fee is shown in the token alone */
   amountUsd: string
   amount: bigint
   paidByAccountLabel: string | undefined
@@ -64,6 +65,13 @@ const PayOption = ({
   const formattedAmount = useMemo(() => {
     return formatDecimals(Number(formatUnits(amount, feeOption.token.decimals)), 'amount')
   }, [amount, feeOption.token.decimals])
+  const formattedTokenAmount = `${formattedAmount} ${feeOption.token.symbol}`
+  // The fee in USD, or in the token when it has no price. Then the token amount isn't repeated
+  // next to it, as it would be when the fee is in USD
+  const hasUsdAmount = !!amountUsd
+  const formattedFee = hasUsdAmount
+    ? formatDecimals(Number(amountUsd), 'value')
+    : formattedTokenAmount
 
   const warning = useMemo(() => {
     if (!signAccountOpState) return
@@ -141,12 +149,14 @@ const PayOption = ({
         {disabledReason && !isPaidByAnotherAccount ? (
           <View>
             <Text weight="semiBold" fontSize={14} numberOfLines={1}>
-              {formatDecimals(Number(amountUsd), 'value')}
+              {formattedFee}
             </Text>
             <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              <Text fontSize={12} numberOfLines={1} style={spacings.mrTy}>
-                {formattedAmount} {feeOption.token.symbol}
-              </Text>
+              {hasUsdAmount && (
+                <Text fontSize={12} numberOfLines={1} style={spacings.mrTy}>
+                  {formattedTokenAmount}
+                </Text>
+              )}
               <Text
                 fontSize={isMobile ? 10 : 12}
                 numberOfLines={1}
@@ -163,7 +173,7 @@ const PayOption = ({
               {disabledReason ? (
                 <>
                   <Text weight="semiBold" fontSize={14} numberOfLines={1} style={spacings.mrTy}>
-                    {formattedAmount} {feeOption.token.symbol}
+                    {formattedTokenAmount}
                   </Text>
                   <Text
                     fontSize={isMobile ? 10 : 12}
@@ -182,9 +192,9 @@ const PayOption = ({
                     numberOfLines={1}
                     appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'primaryText'}
                   >
-                    {formatDecimals(Number(amountUsd), 'value')}
+                    {formattedFee}
                   </Text>
-                  {isPaidByAnotherAccount && (
+                  {isPaidByAnotherAccount && hasUsdAmount && (
                     <Text
                       appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
                       weight="medium"
@@ -192,7 +202,7 @@ const PayOption = ({
                       numberOfLines={1}
                       style={[spacings.mlTy, { flexShrink: 1 }]}
                     >
-                      {formattedAmount} {feeOption.token.symbol}
+                      {formattedTokenAmount}
                     </Text>
                   )}
                 </>
@@ -244,14 +254,16 @@ const PayOption = ({
                 )}
               </View>
             ) : (
-              <Text
-                appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
-                weight="medium"
-                fontSize={12}
-                numberOfLines={1}
-              >
-                {formattedAmount} {feeOption.token.symbol}
-              </Text>
+              hasUsdAmount && (
+                <Text
+                  appearance={shouldHighlightExtremeGasFee ? 'warningText' : 'secondaryText'}
+                  weight="medium"
+                  fontSize={12}
+                  numberOfLines={1}
+                >
+                  {formattedTokenAmount}
+                </Text>
+              )
             )}
           </View>
         )}
