@@ -1,11 +1,14 @@
 import { useMemo } from 'react'
-import { ViewStyle } from 'react-native'
+import { Dimensions, useWindowDimensions, ViewStyle } from 'react-native'
 import { KeyboardController } from 'react-native-keyboard-controller'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { isiOS } from '@common/config/env'
+import { isAndroid, isiOS } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MD, SPACING_XL } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
+
+import { SHEET_TOP_GAP } from './sheetPlatform.types'
 
 const IOS_DIM_COLOR = '#0D0E0F'
 const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.52, [THEME_TYPES.DARK]: 0.65 }
@@ -34,13 +37,20 @@ export const getSheetContentStyle = (style: ViewStyle) => style
 /** The TrueSheet props that differ between the platforms (a modal is a bottom sheet here too). */
 export const useSheetPlatformProps = () => {
   const { themeType } = useTheme()
+  const { height: windowHeight } = useWindowDimensions()
+  const { top } = useSafeAreaInsets()
+  // Android sizes the sheet against the whole screen (edge-to-edge), iOS against the window
+  const sheetAreaHeight = isAndroid ? Dimensions.get('screen').height : windowHeight
+  // A full height sheet stops below the status bar with a gap, instead of reaching it
+  const maxContentHeight = sheetAreaHeight - top - SHEET_TOP_GAP
 
   // The design's iOS backdrop (a plain dark tint, no blur outside the sheet), a bit darker
   return useMemo(
     () => ({
       dimColor: isiOS ? IOS_DIM_COLOR : undefined,
-      dimOpacity: isiOS ? IOS_DIM_OPACITY[themeType] : undefined
+      dimOpacity: isiOS ? IOS_DIM_OPACITY[themeType] : undefined,
+      maxContentHeight
     }),
-    [themeType]
+    [themeType, maxContentHeight]
   )
 }

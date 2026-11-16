@@ -6,7 +6,7 @@ import { StyleSheet, useWindowDimensions, ViewStyle } from 'react-native'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MD } from '@common/styles/spacings'
 
-import { SheetPlatformOptions } from './sheetPlatform.types'
+import { SHEET_TOP_GAP, SheetPlatformOptions } from './sheetPlatform.types'
 
 /** How wide a centered sheet is unless its style says otherwise, as the Modalize modal was. */
 const MODAL_MAX_WIDTH = 540
@@ -63,8 +63,8 @@ export const useSheetPlatformProps = ({ isModal, modalTopOffset, style }: SheetP
       // on the phone
       presentation: isModal ? ('form' as const) : ('page' as const),
       maxContentWidth: isModal ? modalMaxWidth : undefined,
-      // A full height sheet stops below the app's header, as it did with Modalize
-      maxContentHeight: isModal ? undefined : height - modalTopOffset,
+      // A full height sheet stops below the app's header, as it did with Modalize, with a gap
+      maxContentHeight: isModal ? undefined : height - modalTopOffset - SHEET_TOP_GAP,
       // The app's backdrop color, which carries its own opacity
       dimColor: theme.backdrop,
       dimOpacity: 1,
