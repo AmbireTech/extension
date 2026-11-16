@@ -1,6 +1,6 @@
 import { formatUnits } from 'ethers'
-import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import React, { memo, useMemo } from 'react'
+import { SectionListData, View } from 'react-native'
 
 import { getPrivacyPoolsDepositId } from '@ambire-common/consts/privacyPools'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
@@ -9,11 +9,20 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import type usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const TOKEN_ICON_CONTAINER_SIZE = 32
+const TOKEN_ICON_SIZE = 28
+/** A deposit row is lower than a token's, as it holds one line of text. */
+export const PRIVACY_POOLS_DEPOSIT_OPTION_HEIGHT = 40
+const TOKEN_SECTION_HEADER_HEIGHT = 50
+/** Moves a deposit's text under its token's symbol, past the token icon and its spacing. */
+const DEPOSIT_INDENT_STYLE = { paddingLeft: TOKEN_ICON_CONTAINER_SIZE + 8 }
 
 export type PrivacyPoolsTokenOption = SelectValue & {
   // Each chain has its own pools and entrypoint
@@ -30,81 +39,102 @@ export type PrivacyPoolsTokenOption = SelectValue & {
   availableAmount: bigint
 }
 
+/** A token on one network, listing its deposits that can be sent. */
+type PrivacyPoolsTokenSection = {
+  key: string
+  chainId: string
+  tokenAddress: string
+  symbol: string
+  networkName: string
+  /** What all of the token's deposits can send, formatted. */
+  totalAmount: string
+  data: PrivacyPoolsTokenOption[]
+}
+
 const selectSendableDeposits = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.sendableDeposits
 
-const getTokenOption = ({
+const formatAmount = (amount: bigint, decimals: number) =>
+  formatDecimals(Number(formatUnits(amount, decimals)), 'amount')
+
+const TokenIconWithNetwork = ({
   chainId,
-  tokenAddress,
-  isNative,
-  symbol,
-  decimals,
-  depositNumber,
-  title,
-  note,
-  networkName,
-  availableAmount
+  tokenAddress
 }: {
   chainId: string
   tokenAddress: string
-  isNative: boolean
-  symbol: string
-  decimals: number
-  depositNumber: number
-  // Translated by the caller
-  title: string
-  note: string
-  networkName: string
-  availableAmount: bigint
-}): PrivacyPoolsTokenOption => ({
-  value: getPrivacyPoolsDepositId(chainId, tokenAddress, depositNumber),
-  chainId,
-  tokenAddress,
-  isNative,
-  symbol,
-  decimals,
-  depositNumber,
-  availableAmount,
-  extraSearchProps: { symbol, address: tokenAddress, network: networkName },
-  icon: (
-    <TokenIcon
-      chainId={BigInt(chainId)}
-      address={tokenAddress}
-      withContainer
-      // Tells same-symbol entries on different networks apart
-      withNetworkIcon
-      containerWidth={32}
-      containerHeight={32}
-      width={28}
-      height={28}
-    />
-  ),
-  label: (
-    <>
+}) => (
+  <TokenIcon
+    chainId={BigInt(chainId)}
+    address={tokenAddress}
+    withContainer
+    // Tells same-symbol entries on different networks apart
+    withNetworkIcon
+    containerWidth={TOKEN_ICON_CONTAINER_SIZE}
+    containerHeight={TOKEN_ICON_CONTAINER_SIZE}
+    width={TOKEN_ICON_SIZE}
+    height={TOKEN_ICON_SIZE}
+  />
+)
+
+/** A token, its network and what all of its deposits can send, above the deposits. */
+const TokenSectionHeaderComponent = ({ section }: { section: PrivacyPoolsTokenSection }) => {
+  const { theme } = useTheme()
+
+  return (
+    <View
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        spacings.ph,
+        // Opaque, as it stays on top of the deposits scrolling under it
+        { height: TOKEN_SECTION_HEADER_HEIGHT, backgroundColor: theme.primaryBackground }
+      ]}
+    >
+      <View style={spacings.mrTy}>
+        <TokenIconWithNetwork chainId={section.chainId} tokenAddress={section.tokenAddress} />
+      </View>
       <View style={flexbox.flex1}>
         <Text fontSize={16} weight="medium" numberOfLines={1}>
-          {title}
+          {section.symbol}
         </Text>
         <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-          {`${networkName} · ${note}`}
+          {section.networkName}
         </Text>
       </View>
-      <Text
-        fontSize={14}
-        weight="number_regular"
-        appearance="secondaryText"
-        numberOfLines={1}
-        style={spacings.mlSm}
-      >
-        {formatDecimals(Number(formatUnits(availableAmount, decimals)), 'amount')}
+      <Text fontSize={14} weight="number_medium" numberOfLines={1} style={spacings.mlSm}>
+        {section.totalAmount}
       </Text>
-    </>
+    </View>
   )
-})
+}
+
+const TokenSectionHeader = memo(TokenSectionHeaderComponent)
+
+/** Draws a token's header, or nothing when a search left none of its deposits. */
+export const renderPrivacyPoolsTokenSectionHeader = ({
+  section
+}: {
+  section: SectionListData<SelectValue>
+}) => {
+  if (!section.data.length) return null
+
+  // The sections are built below as `PrivacyPoolsTokenSection`s
+  return <TokenSectionHeader section={section as unknown as PrivacyPoolsTokenSection} />
+}
+
+/** Zero for a token a search left without deposits, as its header is not drawn. */
+export const getPrivacyPoolsTokenSectionHeaderHeight = (section: SectionListData<SelectValue>) =>
+  section.data.length ? TOKEN_SECTION_HEADER_HEIGHT : 0
 
 /**
  * Send form token options: one per deposit, as a send spends exactly one, and only approved ones,
  * as pending ones cannot be sent.
+ *
+ * - `withdrawTokens` is what the select shows once one is picked: the token, the deposit and the
+ *   network.
+ * - `withdrawTokenSections` is the list to pick from: each token once, with what it can send in
+ *   total, and its deposits under it. Its options share their `value` with `withdrawTokens`.
  */
 const usePrivacyPoolsTokens = ({
   getNetworkName
@@ -115,31 +145,110 @@ const usePrivacyPoolsTokens = ({
     selectSendableDeposits
   )
 
-  const withdrawTokens: PrivacyPoolsTokenOption[] = useMemo(
+  const withdrawTokenSections: PrivacyPoolsTokenSection[] = useMemo(
     () =>
-      Object.entries(sendableDeposits || {}).flatMap(([chainId, deposits]) =>
-        deposits.map((deposit) =>
-          getTokenOption({
+      Object.entries(sendableDeposits || {}).flatMap(([chainId, deposits]) => {
+        const networkName = getNetworkName(chainId)
+        const sectionsByToken = new Map<string, PrivacyPoolsTokenSection>()
+        const totalsByToken = new Map<string, bigint>()
+
+        deposits.forEach((deposit) => {
+          const key = `${chainId}:${deposit.tokenAddress}`
+          const section = sectionsByToken.get(key) ?? {
+            key,
+            chainId,
+            tokenAddress: deposit.tokenAddress,
+            symbol: deposit.symbol,
+            networkName,
+            totalAmount: '',
+            data: []
+          }
+          const amount = formatAmount(deposit.availableAmount, deposit.decimals)
+          const depositTitle = t('Deposit #{{number}}', { number: deposit.number })
+
+          const total = (totalsByToken.get(key) ?? 0n) + deposit.availableAmount
+          totalsByToken.set(key, total)
+          section.totalAmount = formatAmount(total, deposit.decimals)
+          section.data.push({
+            value: getPrivacyPoolsDepositId(chainId, deposit.tokenAddress, deposit.number),
             chainId,
             tokenAddress: deposit.tokenAddress,
             isNative: deposit.isNative,
             symbol: deposit.symbol,
             decimals: deposit.decimals,
             depositNumber: deposit.number,
-            title: t('{{symbol}} (deposit #{{number}})', {
+            availableAmount: deposit.availableAmount,
+            extraSearchProps: {
               symbol: deposit.symbol,
-              number: deposit.number
-            }),
-            networkName: getNetworkName(chainId),
-            note: t('ready to send'),
-            availableAmount: deposit.availableAmount
+              address: deposit.tokenAddress,
+              network: networkName
+            },
+            label: (
+              <View
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.flex1,
+                  DEPOSIT_INDENT_STYLE
+                ]}
+              >
+                <Text
+                  fontSize={14}
+                  appearance="secondaryText"
+                  numberOfLines={1}
+                  style={flexbox.flex1}
+                >
+                  {depositTitle}
+                </Text>
+                <Text fontSize={14} weight="number_regular" numberOfLines={1} style={spacings.mlSm}>
+                  {amount}
+                </Text>
+              </View>
+            )
           })
-        )
-      ),
+          sectionsByToken.set(key, section)
+        })
+
+        return Array.from(sectionsByToken.values())
+      }),
     [sendableDeposits, getNetworkName, t]
   )
 
-  return { withdrawTokens }
+  const withdrawTokens: PrivacyPoolsTokenOption[] = useMemo(
+    () =>
+      withdrawTokenSections.flatMap(({ networkName, data }) =>
+        data.map((option) => ({
+          ...option,
+          icon: (
+            <TokenIconWithNetwork chainId={option.chainId} tokenAddress={option.tokenAddress} />
+          ),
+          label: (
+            <>
+              <View style={flexbox.flex1}>
+                <Text fontSize={16} weight="medium" numberOfLines={1}>
+                  {option.symbol}
+                </Text>
+                <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
+                  {`${t('Deposit #{{number}}', { number: option.depositNumber })} · ${networkName}`}
+                </Text>
+              </View>
+              <Text
+                fontSize={14}
+                weight="number_regular"
+                appearance="secondaryText"
+                numberOfLines={1}
+                style={spacings.mlSm}
+              >
+                {formatAmount(option.availableAmount, option.decimals)}
+              </Text>
+            </>
+          )
+        }))
+      ),
+    [withdrawTokenSections, t]
+  )
+
+  return { withdrawTokens, withdrawTokenSections }
 }
 
 export default usePrivacyPoolsTokens

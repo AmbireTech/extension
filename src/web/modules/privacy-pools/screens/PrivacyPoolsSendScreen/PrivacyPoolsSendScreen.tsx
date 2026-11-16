@@ -54,7 +54,11 @@ import loadTransactionSummary, {
 } from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet/loadTransactionSummary'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
 import usePrivacyPoolsSendCheck from '@web/modules/privacy-pools/hooks/usePrivacyPoolsSendCheck'
-import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
+import usePrivacyPoolsTokens, {
+  getPrivacyPoolsTokenSectionHeaderHeight,
+  PRIVACY_POOLS_DEPOSIT_OPTION_HEIGHT,
+  renderPrivacyPoolsTokenSectionHeader
+} from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 import type { PrivacyPoolsTokenOption } from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens/usePrivacyPoolsTokens'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -115,7 +119,7 @@ const PrivacyPoolsSendScreen = () => {
     dismissOperation,
     isAvailable
   } = usePrivacyPools()
-  const { withdrawTokens } = usePrivacyPoolsTokens({ getNetworkName })
+  const { withdrawTokens, withdrawTokenSections } = usePrivacyPoolsTokens({ getNetworkName })
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
   const {
     ref: broadcasterSheetRef,
@@ -548,6 +552,11 @@ const PrivacyPoolsSendScreen = () => {
             label={t('Send token')}
             isLabelInline
             fromTokenOptions={withdrawTokens}
+            // Each token once, with its deposits under it
+            sections={withdrawTokenSections}
+            renderSectionHeader={renderPrivacyPoolsTokenSectionHeader}
+            getSectionHeaderHeight={getPrivacyPoolsTokenSectionHeaderHeight}
+            sectionOptionHeight={PRIVACY_POOLS_DEPOSIT_OPTION_HEIGHT}
             fromTokenValue={selectedToken || noTokensOption}
             fromAmountValue={fieldMode === 'token' ? amount : amounts.amountInFiat}
             fromTokenAmountSelectDisabled={!withdrawTokens.length || isTransferInFlight}
