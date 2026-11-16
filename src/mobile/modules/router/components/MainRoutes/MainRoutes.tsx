@@ -13,9 +13,9 @@ import ImportExistingAccountSelectorScreen from '@mobile/modules/auth/screens/Im
 import ImportSmartAccountJsonScreen from '@mobile/modules/auth/screens/ImportSmartAccountJson'
 import MigrationOnboardingScreen from '@mobile/modules/auth/screens/MigrationOnboardingScreen'
 import PrivateKeyImportScreen from '@mobile/modules/auth/screens/PrivateKeyImportScreen'
+import SafeCreateScreen from '@mobile/modules/auth/screens/SafeCreateScreen'
 import SafeImportScreen from '@mobile/modules/auth/screens/SafeImportScreen'
 import SafeImportByOwnerScreen from '@mobile/modules/auth/screens/SafeImportByOwnerScreen'
-import SafeImportMethodScreen from '@mobile/modules/auth/screens/SafeImportMethodScreen'
 import SeedPhraseImportScreen from '@mobile/modules/auth/screens/SeedPhraseImportScreen'
 import ViewOnlyAccountAdderScreen from '@mobile/modules/auth/screens/ViewOnlyAccountAdderScreen'
 import ExploreScreen from '@mobile/modules/explore/screens/ExploreScreen'
@@ -31,6 +31,7 @@ import QrReaderScreen from '@mobile/modules/qr-reader/screens/QrReaderScreen'
 import ReceiveScreen from '@mobile/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@mobile/modules/router/components/NavMenu'
 import AboutSettingsScreen from '@mobile/modules/settings/screens/AboutSettingsScreen'
+import AccountSmartSettingsScreen from '@mobile/modules/settings/screens/AccountSmartSettingsScreen'
 import AccountsSettingsScreen from '@mobile/modules/settings/screens/AccountsSettingsScreen'
 import AddressBookSettingsScreen from '@mobile/modules/settings/screens/AddressBookSettingsScreen'
 import ChangeAppPasswordScreen from '@mobile/modules/settings/screens/ChangeAppPasswordScreen'
@@ -74,9 +75,9 @@ const MainRoutes = () => {
         <Route path={ROUTES.importPrivateKey} element={<PrivateKeyImportScreen />} />
         <Route path={ROUTES.importSeedPhrase} element={<SeedPhraseImportScreen />} />
         <Route path={ROUTES.importSmartAccountJson} element={<ImportSmartAccountJsonScreen />} />
-        <Route path={ROUTES.safeImport} element={<SafeImportMethodScreen />} />
         <Route path={ROUTES.safeImportAddress} element={<SafeImportScreen />} />
         <Route path={ROUTES.safeImportByOwner} element={<SafeImportByOwnerScreen />} />
+        <Route path={ROUTES.safeCreate} element={<SafeCreateScreen />} />
 
         <Route path={ROUTES.accountPicker} element={<AccountPickerScreen />} />
         <Route path={ROUTES.accountPersonalize} element={<AccountPersonalizeScreen />} />
@@ -94,6 +95,7 @@ const MainRoutes = () => {
           <Route path={ROUTES.menu} element={<NavMenu />} />
           <Route path={ROUTES.generalSettings} element={<GeneralSettingsScreen />} />
           <Route path={ROUTES.accountsSettings} element={<AccountsSettingsScreen />} />
+          <Route path={ROUTES.accountSmartSettings} element={<AccountSmartSettingsScreen />} />
           <Route path={ROUTES.addressBook} element={<AddressBookSettingsScreen />} />
           <Route path={ROUTES.devicePasswordChange} element={<ChangeAppPasswordScreen />} />
           <Route path={ROUTES.networksSettings} element={<NetworksSettingsScreen />} />

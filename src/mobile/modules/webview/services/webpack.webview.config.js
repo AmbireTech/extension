@@ -7,6 +7,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const fs = require('fs')
 const crypto = require('crypto')
 const { execSync } = require('child_process')
+const { validateRelayerCustomHeaders } = require('../../../../../scripts/validateEnv')
+
+// The worker bundle never gets the custom headers, but the build refuses them in CI anyway.
+validateRelayerCustomHeaders(process.env)
 
 // Since Webpack is executed from the project root via package.json scripts,
 // process.cwd() provides the absolute path to the project root directory

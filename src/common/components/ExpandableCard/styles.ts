@@ -15,7 +15,7 @@ const getStyles = (theme: ThemeProps) =>
       ...common.borderRadiusPrimary
     },
     hoverOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       ...common.borderRadiusPrimary
     }
   })

@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Image, ImageSourcePropType, LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
-import Carousel from 'react-native-reanimated-carousel'
+import { Carousel } from 'react-native-reanimated-carousel'
 
 import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
@@ -39,7 +39,7 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
-import type { ICarouselInstance } from 'react-native-reanimated-carousel'
+import type { CarouselRef } from 'react-native-reanimated-carousel'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 
@@ -79,7 +79,7 @@ const ImportFromExtensionScreen = () => {
   // On by default once the device turns out to have biometrics, the same as on the
   // keystore setup screen, until the user says otherwise
   const isBiometricsEnabled = isBiometricsToggled ?? canEnableBiometrics
-  const carouselRef = useRef<ICarouselInstance>(null)
+  const carouselRef = useRef<CarouselRef>(null)
   // The carousel needs an explicit width equal to its container's actual laid-out
   // width, so we measure it instead of guessing from the window
   const [carouselWidth, setCarouselWidth] = useState(0)
@@ -87,6 +87,8 @@ const ImportFromExtensionScreen = () => {
   const handleCarouselLayout = useCallback((e: LayoutChangeEvent) => {
     setCarouselWidth(e.nativeEvent.layout.width)
   }, [])
+
+  const carouselStyle = useMemo(() => ({ width: carouselWidth }), [carouselWidth])
 
   const steps: SyncImportStep[] = useMemo(
     () => [
@@ -358,7 +360,7 @@ const ImportFromExtensionScreen = () => {
             {carouselWidth > 0 && (
               <Carousel
                 ref={carouselRef}
-                width={carouselWidth}
+                style={carouselStyle}
                 data={steps}
                 loop={false}
                 // Leaving the scanner remounts the carousel, which must come back on the

@@ -66,14 +66,24 @@ export const isAndroid = Platform.OS === 'android'
 export const isWeb = Platform.OS === 'web'
 
 /**
+ * Where Privacy Pools can work at all. Extension only: mobile cannot prove (Hermes has no
+ * WebAssembly) and has no Privacy Pools screens. Not on Firefox either, as it has no offscreen
+ * document and no proof finishes there.
+ */
+export const isPrivacyPoolsSupported = isWeb && process.env.WEB_ENGINE !== 'gecko'
+
+/**
  * Privacy Pools reach dev and Ambire Next builds first, for internal testing before production.
- * Extension only: mobile cannot prove (Hermes has no WebAssembly) and has no Privacy Pools screens.
- * Not on Firefox either, as it has no offscreen document and no proof finishes there.
  * Gates only the way into the feature (adding a Privacy Pools account); everything else shows up
  * only once such an account exists. Keep in sync with `isPrivacyPoolsBundled` in webpack/env.js.
  */
-export const isPrivacyPoolsEnabled =
-  isWeb && process.env.WEB_ENGINE !== 'gecko' && (isDev || isAmbireNext)
+export const isPrivacyPoolsEnabled = isPrivacyPoolsSupported && (isDev || isAmbireNext)
+
+/**
+ * Where Privacy Pools are supported but not released yet, e.g. production. The ways into the
+ * feature are shown disabled with a "Coming soon" hint, to tease it before launch.
+ */
+export const isPrivacyPoolsComingSoon = isPrivacyPoolsSupported && !isPrivacyPoolsEnabled
 
 enum APP_ENV {
   PROD = 'production',

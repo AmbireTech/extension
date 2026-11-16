@@ -1,14 +1,15 @@
-import { Signature, Transaction, TransactionLike } from 'ethers'
+import { Signature, Transaction } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import {
-  ExternalKey,
   ExternalSignerController,
+  HdExternalKey,
   KeystoreSignerInterface
 } from '@ambire-common/interfaces/keystore'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { normalizeSignatureHex } from '@ambire-common/utils/normalizeSignatureHex'
 import QrHardwareController from '@common/modules/hardware-wallets/controllers/QrHardwareController'
+import { getUnsignedTransaction } from '@common/modules/hardware-wallets/utils/getUnsignedTransaction'
 
 /**
  * The QrHardwareSigner is responsible for signing data with QR-based hardware wallets.
@@ -26,11 +27,11 @@ import QrHardwareController from '@common/modules/hardware-wallets/controllers/Q
  * request → scan → response signing flow.
  */
 class QrHardwareSigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: QrHardwareController | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: HdExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 
@@ -128,8 +129,8 @@ class QrHardwareSigner implements KeystoreSignerInterface {
       const path = this.#getDerivationPath()
       const masterFingerprint = this.#getMasterFingerprint()
 
-      const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
-      const unsignedTxn: TransactionLike = { ...txnRequest, type }
+      const unsignedTxn = getUnsignedTransaction(txnRequest)
+      const { type } = unsignedTxn
       const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
 
       const res = await this.controller!.signTransactionQR({

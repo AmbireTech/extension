@@ -60,6 +60,7 @@ const Account = ({
   withKeyType = true,
   renderLeftChildren,
   renderRightChildren,
+  renderExtraBadges,
   inverseInteractionColors = false,
   options = {
     withOptionsButton: false
@@ -72,6 +73,7 @@ const Account = ({
   withSafeSignerBadges = false,
   isOnSecondaryBackground = false,
   withBadges = true,
+  withAccountStatus = true,
   onExtraHeightChange
 }: {
   account: AccountInterface
@@ -84,11 +86,13 @@ const Account = ({
   /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
   renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
+  /** Rendered after the other badges, e.g. the networks a key is a Safe owner on */
+  renderExtraBadges?: () => React.ReactNode
   options?: {
     withOptionsButton?: boolean
     markSelected?: boolean
     setAccountToImportOrExport?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
-    setAccountSettingsAccount?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
+    setAccountSettingsAccount?: (account: AccountInterface) => void
     setAccountToRemove?: React.Dispatch<React.SetStateAction<AccountInterface | null>>
   }
   containerStyle?: ViewStyle
@@ -106,6 +110,11 @@ const Account = ({
   isOnSecondaryBackground?: boolean
   /** Set to false to show only the avatar, the label and the address, without the badges row */
   withBadges?: boolean
+  /**
+   * Set to false where the row stands for a key of another account, e.g. an owner of a Safe, so
+   * it leaves out this account's own pending requests and the chains its Safe is deployed on
+   */
+  withAccountStatus?: boolean
   /**
    * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is, mostly because
    * its badges wrapped, so a list that lays its rows out by height can make room for it. Such a
@@ -284,7 +293,7 @@ const Account = ({
     ]
     const settingsOption = account.safeCreation
       ? [{ label: t('Activation settings'), value: 'deploySettings' }]
-      : add7702Option && isWeb
+      : add7702Option
         ? [{ label: t('Smart settings'), value: 'toSmarter' }]
         : []
 
@@ -317,12 +326,16 @@ const Account = ({
     </View>
   )
 
+  // With no label, e.g. a key that is not an account of the wallet, the address is the title
+  const hasLabel = !!preferences.label
+
   const address = (
     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
       <AccountAddress
         {...reverseLookup}
         containerStyle={spacings.pb0}
         address={addr}
+        fontSize={hasLabel ? undefined : 14}
         plainAddressMaxLength={maxAccountAddrLength}
         // On web the copy button fits next to the address, unlike on mobile, where it
         // sits next to the account to keep the touch targets apart
@@ -351,9 +364,11 @@ const Account = ({
         ) : (
           balance !== null && <BalanceBadge balance={balance} />
         ))}
-      {!!pendingRequestsCount && <PendingRequestsBadge count={pendingRequestsCount} />}
+      {withAccountStatus && !!pendingRequestsCount && (
+        <PendingRequestsBadge count={pendingRequestsCount} />
+      )}
       {!!withKeyType &&
-        (safeDeployedChainIds.length ? (
+        (withAccountStatus && safeDeployedChainIds.length ? (
           // The Safe key badge, telling also which chains the Safe is deployed on
           <Badge
             type="secondaryAccent"
@@ -404,6 +419,7 @@ const Account = ({
         withViewOnly={!withKeyType}
       />
       {withSafeSignerBadges && <SafeSignerBadges account={account} />}
+      {renderExtraBadges && renderExtraBadges()}
     </View>
   )
 
@@ -489,7 +505,7 @@ const Account = ({
               showTooltip
             />
             <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-              {label}
+              {hasLabel && label}
               {address}
             </View>
             {actions}

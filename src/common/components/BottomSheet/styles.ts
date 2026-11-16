@@ -52,7 +52,7 @@ const getStyles = (theme: ThemeProps) =>
       zIndex: BOTTOM_SHEET_Z_INDEX - 1
     },
     portalHost: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       // @ts-ignore prop is supported by react-native-web, but missing in types
       pointerEvents: 'none',
       // Lower number than the toasts' zIndex

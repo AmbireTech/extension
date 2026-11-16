@@ -45,6 +45,8 @@ const AddOrUpdateNetworkScreen = () => {
     networkDetails,
     handleDenyButtonPress,
     handleCloseOnAlreadyAdded,
+    closeButtonText,
+    isCloseButtonPressed,
     handleUpdateNetwork,
     handlePrimaryButtonPress,
     handleRetryWithDifferentRpcUrl,
@@ -116,10 +118,12 @@ const AddOrUpdateNetworkScreen = () => {
           <ActionFooter
             onReject={undefined}
             onResolve={handleCloseOnAlreadyAdded}
-            resolveButtonText={t('Close')}
+            resolveButtonText={closeButtonText}
             rejectButtonText={undefined}
             resolveDisabled={
-              statuses.addNetwork === 'LOADING' || statuses.updateNetwork === 'LOADING'
+              isCloseButtonPressed ||
+              statuses.addNetwork === 'LOADING' ||
+              statuses.updateNetwork === 'LOADING'
             }
           />
         )}

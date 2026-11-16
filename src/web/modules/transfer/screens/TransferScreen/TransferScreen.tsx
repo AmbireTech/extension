@@ -7,8 +7,6 @@ import { useModalize } from 'react-native-modalize'
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
 import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
-import { Key } from '@ambire-common/interfaces/keystore'
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { CallsUserRequest, RequestExecutionType } from '@ambire-common/interfaces/userRequest'
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import { findAccountOpOrReplacement } from '@ambire-common/libs/activity/replacements'
@@ -43,6 +41,7 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
+import usePrivacyPoolsDepositFee from '@common/modules/transfer/hooks/usePrivacyPoolsDepositFee'
 import getTransferBuildRequest from '@common/modules/transfer/utils/getTransferBuildRequest'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -66,6 +65,7 @@ const selectAccountsOps = (state: AllControllersMappingType['ActivityController'
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
+  const privacyPoolsDepositFee = usePrivacyPoolsDepositFee()
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { verifiedDomainsStatus, domains } = useController('DomainsController').state
   const {
@@ -263,31 +263,6 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     })
     openEstimationModal()
   }, [openEstimationModal, transferDispatch])
-
-  const handleUpdateStatus = useCallback(
-    (status: SigningStatus) => {
-      transferDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['update', [status]]
-        }
-      })
-    },
-    [transferDispatch]
-  )
-  const updateController = useCallback(
-    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      transferDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['update', [params]]
-        }
-      })
-    },
-    [transferDispatch]
-  )
 
   // Used to resolve ENS and keep the controller in sync with the resolved field value
   const setAddressState = useCallback(
@@ -766,11 +741,10 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           updateType="Transfer&TopUp"
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalAndDispatch}
-          updateController={updateController}
-          handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           Modals={Modals}
+          serviceFee={privacyPoolsDepositFee}
         />
       </Suspense>
     </Wrapper>

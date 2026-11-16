@@ -12,6 +12,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
+import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -23,7 +24,6 @@ import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
-import AccountDeploySettingsBottomSheet from '@common/modules/settings/components/AccountDeploySettingsBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -34,7 +34,7 @@ import {
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 import ExportToExtensionSheet from '@mobile/modules/app-data-sync/components/ExportToExtensionSheet'
-import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
+import { SMART_SETTINGS_ACCOUNT_PARAM } from '@mobile/modules/settings/screens/AccountSmartSettingsScreen'
 
 const DRAG_ICON_WIDTH = 10
 // Its horizontal padding plus the icon
@@ -73,11 +73,6 @@ const AccountsSettingsScreen = () => {
     close: closeSyncBottomSheet
   } = useModalize()
   const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
-  const {
-    ref: sheetRefAccountSmartSettings,
-    open: openAccountSmartSettings,
-    close: closeAccountSmartSettings
-  } = useModalize()
   const {
     ref: sheetRefAccountDeploySettings,
     open: openAccountDeploySettings,
@@ -126,15 +121,21 @@ const AccountsSettingsScreen = () => {
   }, [openRemoveAccount, accountToRemove])
 
   useEffect(() => {
-    if (!accountSettingsAccount) return
+    if (accountSettingsAccount?.safeCreation) openAccountDeploySettings()
+  }, [accountSettingsAccount, openAccountDeploySettings])
 
-    if (accountSettingsAccount.safeCreation) {
-      openAccountDeploySettings()
-      return
-    }
+  // Smart settings is a screen of its own, while activation settings is a sheet
+  const openAccountSettings = useCallback(
+    (account: AccountInterface) => {
+      if (account.safeCreation) {
+        setAccountSettingsAccount(account)
+        return
+      }
 
-    openAccountSmartSettings()
-  }, [accountSettingsAccount, openAccountDeploySettings, openAccountSmartSettings])
+      navigate(`${ROUTES.accountSmartSettings}?${SMART_SETTINGS_ACCOUNT_PARAM}=${account.addr}`)
+    },
+    [navigate]
+  )
 
   const shortenAccountAddr = useCallback(() => {
     if (maxElementWidthSize(800)) return undefined
@@ -148,10 +149,10 @@ const AccountsSettingsScreen = () => {
     () => ({
       withOptionsButton: true,
       setAccountToImportOrExport: setExportImportAccount,
-      setAccountSettingsAccount,
+      setAccountSettingsAccount: openAccountSettings,
       setAccountToRemove
     }),
-    [setExportImportAccount, setAccountSettingsAccount, setAccountToRemove]
+    [setExportImportAccount, openAccountSettings, setAccountToRemove]
   )
 
   const removeAccount = useCallback(() => {
@@ -301,17 +302,11 @@ const AccountsSettingsScreen = () => {
           />
         </View>
 
-        <AccountDeploySettingsBottomSheet
+        <SafeActivationBottomSheet
           sheetRef={sheetRefAccountDeploySettings}
           closeBottomSheet={closeAccountDeploySettings}
           onClosed={clearAccountSettingsAccount}
           account={accountSettingsAccount?.safeCreation ? accountSettingsAccount : null}
-        />
-        <AccountSmartSettingsBottomSheet
-          sheetRef={sheetRefAccountSmartSettings}
-          closeBottomSheet={closeAccountSmartSettings}
-          onClosed={clearAccountSettingsAccount}
-          account={accountSettingsAccount?.safeCreation ? null : accountSettingsAccount}
         />
         <AccountKeysBottomSheet
           sheetRef={sheetRefExportImportKey}

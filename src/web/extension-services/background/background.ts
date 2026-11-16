@@ -52,8 +52,14 @@ import handleProviderRequests from '@common/modules/provider/handleProviderReque
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
-import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
+import {
+  attachBalanceHint,
+  getAppInstanceId,
+  isAmbireAnalyticsEnabled,
+  isAmbireApiUrl
+} from '@common/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
@@ -97,9 +103,11 @@ import {
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
 import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
+import PQ1Controller from '@web/modules/hardware-wallet/controllers/PQ1Controller'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import OneKeySigner from '@web/modules/hardware-wallet/libs/OneKeySigner'
+import PQ1Signer from '@web/modules/hardware-wallet/libs/PQ1Signer'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
@@ -315,7 +323,10 @@ const init = async () => {
 
   pm = new PortMessenger()
   ledgerCtrl = new LedgerController(
-    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports')
+    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports'),
+    (addr, deviceModel) => {
+      void mainCtrl?.keystore.updateUnknownKeyDeviceModel({ addr, type: 'ledger', deviceModel })
+    }
   )
   trezorCtrl = new TrezorController(windowManager as UiManager['window'])
   oneKeyCtrl = new OneKeyController()
@@ -323,11 +334,12 @@ const init = async () => {
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
   // (only internal Ambire APIs need the x-app-* headers and tracking params)
+  // and for users who opted out of Ambire analytics
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
-    if (!isAmbireApiUrl(url.toString())) {
+    if (!isAmbireApiUrl(url.toString()) || !isAmbireAnalyticsEnabled(mainCtrl?.featureFlags)) {
       // @ts-ignore
-      return fetch(url, init)
+      return fetchWithRelayerCustomHeaders(url, init)
     }
 
     // As of v4.26.0, custom internal headers. The mobile app sends the same ones from
@@ -380,7 +392,7 @@ const init = async () => {
     // browser extensions are designed to run within the web environment,
     // which already provides a native and well-optimized fetch API.
     // @ts-ignore
-    return fetch(url, initWithCustomHeaders)
+    return fetchWithRelayerCustomHeaders(url, initWithCustomHeaders)
   }
 
   eventEmitterRegistry = new EventEmitterRegistryController(() => {
@@ -436,8 +448,7 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            // mainCtrl may not exist yet - WalletStateController is created and loads before it
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl?.name }
+            params: { errors: ctrl.emittedErrors, controller: ctrl.name }
           })
           reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
@@ -446,6 +457,13 @@ const init = async () => {
   })
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+  // Created before mainCtrl, which takes it as an external signer controller. The callbacks
+  // only run once the user imports PQ1 accounts from a view, long after mainCtrl exists.
+  const pq1Ctrl = new PQ1Controller(eventEmitterRegistry, {
+    getImportedAccounts: () => mainCtrl.accounts.accounts,
+    onPrepareAccounts: (prepared) => mainCtrl.accountPicker.prepareAccounts(prepared),
+    sendUiMessage: (params) => mainCtrl.ui.message.sendUiMessage(params)
+  })
 
   // Created before mainCtrl, whose UI manager reads the side panel mode. It doesn't need mainCtrl
   // itself - the log level callback only runs on a log level change, long after both exist.
@@ -536,14 +554,16 @@ const init = async () => {
       trezor: TrezorSigner,
       onekey: OneKeySigner,
       lattice: LatticeSigner,
-      qr: QrHardwareSigner
+      qr: QrHardwareSigner,
+      pq1: PQ1Signer
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
       onekey: oneKeyCtrl,
       lattice: latticeCtrl,
-      qr: qrCtrl
+      qr: qrCtrl,
+      pq1: pq1Ctrl
     } as any,
     uiManager: {
       window: {
@@ -603,8 +623,8 @@ const init = async () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
 
-  // Turning side panel mode off leaves nothing to show a pending app request (Chrome closes its
-  // panel, Firefox's sidebar shows the "mode off" notice), so it's moved to a request window
+  // Turning side panel mode off leaves nothing to show a pending app request (an open panel shows
+  // the "mode off" notice), so it's moved to a request window
   let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
   walletStateCtrl.onUpdate(() => {
     const isSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled

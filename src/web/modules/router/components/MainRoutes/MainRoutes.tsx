@@ -2,6 +2,7 @@ import React, { Suspense, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Route, Routes, useLocation } from 'react-router-dom'
 
+import { isPrivacyPoolsEnabled } from '@common/config/env'
 import TrendingTokensScreen from '@common/modules/explore/screens/TrendingTokensScreen'
 import NoConnectionScreen from '@common/modules/no-connection/screens/NoConnectionScreen'
 import AuthenticatedRoute from '@common/modules/router/components/AuthenticatedRoute'
@@ -17,6 +18,7 @@ import ExploreScreen from '@web/modules/explore/screens/ExploreScreen'
 import ExploreSectionScreen from '@web/modules/explore/screens/ExploreSectionScreen'
 import NetworksScreen from '@web/modules/networks/screens'
 import PrivacyPoolsSendScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsSendScreen'
+import PrivacyPoolsTokenDetailsScreen from '@web/modules/privacy-pools/screens/PrivacyPoolsTokenDetailsScreen'
 import ReceiveScreen from '@web/modules/receive/screens/ReceiveScreen'
 import NavMenu from '@web/modules/router/components/NavMenu'
 import TabOnlyRoute from '@web/modules/router/components/TabOnlyRoute'
@@ -60,14 +62,6 @@ const MainRoutes = () => {
             element={<SettingsGroupScreen pick={(m) => m.InternalLogsScreen} />}
           />
           <Route
-            path={WEB_ROUTES.networksConfiguration}
-            element={<SettingsGroupScreen pick={(m) => m.NetworksConfiguration} />}
-          />
-          <Route
-            path={WEB_ROUTES.privacyOptOutsConfiguration}
-            element={<SettingsGroupScreen pick={(m) => m.PrivacyOptOutsConfiguration} />}
-          />
-          <Route
             path={WEB_ROUTES.keyStoreSetup}
             element={<AuthGroupScreen pick={(m) => m.KeyStoreSetupScreen} />}
           />
@@ -81,6 +75,15 @@ const MainRoutes = () => {
           />
 
           <Route element={<KeystoreUnlockedRoute />}>
+            {/* Open during the first setup, but once set up, a locked wallet's settings stay locked */}
+            <Route
+              path={WEB_ROUTES.networksConfiguration}
+              element={<SettingsGroupScreen pick={(m) => m.NetworksConfiguration} />}
+            />
+            <Route
+              path={WEB_ROUTES.privacyOptOutsConfiguration}
+              element={<SettingsGroupScreen pick={(m) => m.PrivacyOptOutsConfiguration} />}
+            />
             <Route
               path={WEB_ROUTES.getStarted}
               element={<AuthGroupScreen pick={(m) => m.GetStartedScreen} />}
@@ -115,10 +118,6 @@ const MainRoutes = () => {
               element={<AuthGroupScreen pick={(m) => m.OneKeyConnectScreen} />}
             />
             <Route
-              path={WEB_ROUTES.safeImport}
-              element={<AuthGroupScreen pick={(m) => m.SafeImportMethodScreen} />}
-            />
-            <Route
               path={WEB_ROUTES.safeImportAddress}
               element={<AuthGroupScreen pick={(m) => m.SafeImportScreen} />}
             />
@@ -127,8 +126,16 @@ const MainRoutes = () => {
               element={<AuthGroupScreen pick={(m) => m.SafeImportByOwnerScreen} />}
             />
             <Route
+              path={WEB_ROUTES.safeCreate}
+              element={<AuthGroupScreen pick={(m) => m.SafeCreateScreen} />}
+            />
+            <Route
               path={WEB_ROUTES.qrConnect}
               element={<AuthGroupScreen pick={(m) => m.QrConnectScreen} />}
+            />
+            <Route
+              path={WEB_ROUTES.pq1Connect}
+              element={<AuthGroupScreen pick={(m) => m.PQ1ConnectScreen} />}
             />
             <Route
               path={WEB_ROUTES.importPrivateKey}
@@ -254,7 +261,16 @@ const MainRoutes = () => {
             </Route>
             <Route path={WEB_ROUTES.receive} element={<ReceiveScreen />} />
             <Route path={WEB_ROUTES.networks} element={<NetworksScreen />} />
-            <Route path={WEB_ROUTES.privacyPoolsSend} element={<PrivacyPoolsSendScreen />} />
+            {/* Unreachable where Privacy Pools are not released yet, even by a typed-in URL */}
+            {isPrivacyPoolsEnabled && (
+              <>
+                <Route path={WEB_ROUTES.privacyPoolsSend} element={<PrivacyPoolsSendScreen />} />
+                <Route
+                  path={WEB_ROUTES.privacyPoolsTokenDetails}
+                  element={<PrivacyPoolsTokenDetailsScreen />}
+                />
+              </>
+            )}
             <Route
               path={WEB_ROUTES.signAccountOp}
               element={<RequestWindowGroupScreen pick={(m) => m.SignAccountOpScreen} />}

@@ -14,7 +14,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isPrivacyPoolsEnabled } from '@common/config/env'
+import { isPrivacyPoolsEnabled, isPrivacyPoolsSupported } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -115,7 +115,7 @@ const AccountSelectScreen = () => {
   const {
     accounts,
     control,
-    search,
+    debouncedSearch,
     keyExtractor,
     getItemLayout,
     onAccountExtraHeightChange,
@@ -147,8 +147,16 @@ const AccountSelectScreen = () => {
   )
 
   const filteredPrivacyPoolsAccounts = useMemo(
-    () => filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, search, t('Privacy Pools')),
-    [privacyPoolsAccounts, search, t]
+    () => filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, debouncedSearch, t),
+    [privacyPoolsAccounts, debouncedSearch, t]
+  )
+
+  // The list's bottom inset ends exactly at a floating footer, so the last row keeps its margin
+  // to stay off it. A footer under the list (narrow view) has its own padding, so there it doesn't
+  const getRowContainerStyle = useCallback(
+    (index: number, rowsCount: number) =>
+      isNarrowWebLayout && index === rowsCount - 1 ? spacings.mb0 : undefined,
+    [isNarrowWebLayout]
   )
 
   const renderItem = useCallback(
@@ -162,11 +170,11 @@ const AccountSelectScreen = () => {
           maxAccountAddrLength={32}
           onExtraHeightChange={onAccountExtraHeightChange}
           withReceive
-          containerStyle={index === accounts.length - 1 ? spacings.mb0 : undefined}
+          containerStyle={getRowContainerStyle(index, accounts.length)}
         />
       )
     },
-    [onAccountSelect, onAccountExtraHeightChange, accounts.length]
+    [onAccountSelect, onAccountExtraHeightChange, getRowContainerStyle, accounts.length]
   )
 
   useEffect(() => {
@@ -189,14 +197,15 @@ const AccountSelectScreen = () => {
   }, [navigate, pendingToBeSetSelectedPrivacyPoolsAccount, privacyPoolsAccountId])
 
   const renderPrivacyPoolsAccount = useCallback(
-    ({ item: privacyPoolsAccount }: { item: PrivacyPoolsAccountDisplay }) => (
+    ({ item: privacyPoolsAccount, index }: { item: PrivacyPoolsAccountDisplay; index: number }) => (
       <PrivacyPoolsAccountRow
         account={privacyPoolsAccount}
         isSelected={privacyPoolsAccount.seedId === privacyPoolsAccountId}
         onSelect={setPendingToBeSetSelectedPrivacyPoolsAccount}
+        containerStyle={getRowContainerStyle(index, filteredPrivacyPoolsAccounts.length)}
       />
     ),
-    [privacyPoolsAccountId]
+    [privacyPoolsAccountId, getRowContainerStyle, filteredPrivacyPoolsAccounts.length]
   )
 
   const listContentContainerStyle = useMemo(
@@ -205,7 +214,7 @@ const AccountSelectScreen = () => {
   )
   const noAccountsFound = <Text>{t('No accounts found')}</Text>
   const isPrivateTabOpen = isPrivacyPoolsEnabled && activeTab === 'private'
-  const listStyle = isPrivacyPoolsEnabled ? styles.containerBelowTabs : styles.container
+  const listStyle = isPrivacyPoolsSupported ? styles.containerBelowTabs : styles.container
 
   const addAccountButton = (
     <Button
@@ -246,7 +255,9 @@ const AccountSelectScreen = () => {
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
-        {isPrivacyPoolsEnabled && <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />}
+        {isPrivacyPoolsSupported && (
+          <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        )}
         <View style={flexbox.flex1}>
           {/* Each tab gets its own list. A shared one keeps the render window of the other tab,
           and with `initialScrollIndex` set it isn't recomputed until scrolled, so coming back

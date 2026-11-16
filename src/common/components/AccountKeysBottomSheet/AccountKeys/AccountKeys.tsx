@@ -12,10 +12,12 @@ import BottomSheet from '@common/components/BottomSheet'
 import ExportKey from '@common/components/ExportKey'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 interface Props {
@@ -27,9 +29,24 @@ interface Props {
   chainId?: bigint
 }
 
+const { isPopup } = getUiType()
+
+// A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
+// The popup is barely wider than the width cap, so the modal there takes the popup's full width
+// instead of leaving a thin gap on each side
+const WIDE_LAYOUT_SHEET_STYLE = {
+  minHeight: 432,
+  ...spacings.pvLg,
+  ...(isPopup ? {} : { maxWidth: 432 })
+}
+
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) =>
   state.networks || []
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys || []
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts || []
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) =>
+  state.contacts || []
 
 const AccountKeys: FC<Props> = ({
   account,
@@ -40,6 +57,7 @@ const AccountKeys: FC<Props> = ({
   chainId
 }) => {
   const { t } = useTranslation()
+  const { isCompactLayout } = useCompactLayout()
   const selectAccountState = useCallback(
     (state: AllControllersMappingType['AccountsController']) =>
       state.accountStates?.[account.addr] || null,
@@ -51,6 +69,8 @@ const AccountKeys: FC<Props> = ({
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: contacts } = useController('AddressBookController', selectContacts)
   const accountStateRefreshRef = useRef<{ accountAddr: string | null; chainIds: Set<string> }>({
     accountAddr: null,
     chainIds: new Set()
@@ -173,6 +193,16 @@ const AccountKeys: FC<Props> = ({
     ]
   }, [associatedKeys, keys])
 
+  // Looked up once for the whole list, so that the rows do not subscribe to the accounts and contacts
+  const accountsByAddr = useMemo(
+    () => new Map(accounts.map((acc) => [acc.addr.toLowerCase(), acc])),
+    [accounts]
+  )
+  const contactNamesByAddr = useMemo(
+    () => new Map(contacts.map((contact) => [contact.address.toLowerCase(), contact.name])),
+    [contacts]
+  )
+
   const withAlert = useMemo(
     () => associatedKeys.length > 1 && isAmbireV1LinkedAccount(account.creation?.factoryAddr),
     [account.creation?.factoryAddr, associatedKeys.length]
@@ -205,9 +235,13 @@ const AccountKeys: FC<Props> = ({
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={isWeb}
       >
-        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA }, index) => {
+        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA, label }, index) => {
           const isLast = index === accountKeys.length - 1
           const accountKeyProps = { addr, type, isLast, isImported }
+          const ownerAccount = accountsByAddr.get(addr.toLowerCase())
+          // The key label ("Key 2") tells the least, so it is shown only when there is no other name
+          const name =
+            contactNamesByAddr.get(addr.toLowerCase()) || ownerAccount?.preferences.label || label
 
           return (
             <AccountKey
@@ -222,6 +256,9 @@ const AccountKeys: FC<Props> = ({
               showExportImport={showExportImport}
               onExportKeyPress={handleExportKeyPress}
               onChains={safeOwnersByNetwork[addr]}
+              withNameAndAddress
+              name={name}
+              ownerAccount={ownerAccount}
             />
           )
         })}
@@ -244,7 +281,7 @@ const AccountKeys: FC<Props> = ({
         closeBottomSheet={closeExportKey}
         scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
+        style={isCompactLayout ? undefined : WIDE_LAYOUT_SHEET_STYLE}
         onClosed={handleExportKeyClosed}
       >
         {!!selectedExportKey && (

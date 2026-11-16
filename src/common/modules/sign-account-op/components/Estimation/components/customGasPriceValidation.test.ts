@@ -1,4 +1,10 @@
-import { validateCustomGasPrice } from './customGasPriceValidation'
+import { FeeSpeed, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
+
+import {
+  getCustomGasPriceWarnings,
+  OVERPAY_WARNING_MULTIPLIER,
+  validateCustomGasPrice
+} from './customGasPriceValidation'
 
 const validInput = {
   maxFeePerGas: '0.1',
@@ -187,5 +193,86 @@ describe('validateCustomGasPrice', () => {
     test('does not apply any minimum when not speeding up', () => {
       expect(validateCustomGasPrice({ ...validInput, maxFeePerGas: '0.05' }).errors).toEqual({})
     })
+  })
+})
+
+const ESTIMATED_GAS = 21000n
+
+const toSpeed = (
+  type: FeeSpeed,
+  gasPrice: bigint,
+  maxPriorityFeePerGas: bigint | undefined
+): SpeedCalc => ({
+  type,
+  gasPrice,
+  maxPriorityFeePerGas,
+  simulatedGasLimit: ESTIMATED_GAS,
+  amount: 0n,
+  amountFormatted: '0',
+  amountUsd: '0',
+  disabled: false
+})
+
+const networkSpeeds = [
+  toSpeed(FeeSpeed.Slow, 100n, 10n),
+  toSpeed(FeeSpeed.Medium, 200n, 20n),
+  toSpeed(FeeSpeed.Fast, 300n, 30n),
+  toSpeed(FeeSpeed.Ape, 400n, 40n)
+]
+
+describe('getCustomGasPriceWarnings', () => {
+  test('warns about nothing at exactly the slow fees and the estimated gas', () => {
+    const values = { maxFeePerGas: 100n, maxPriorityFeePerGas: 10n, gas: ESTIMATED_GAS }
+
+    expect(getCustomGasPriceWarnings({ values, networkSpeeds, is1559: true })).toEqual({})
+  })
+
+  test('warns about each field that is below the slow speed or the estimated gas', () => {
+    const values = { maxFeePerGas: 99n, maxPriorityFeePerGas: 9n, gas: ESTIMATED_GAS - 1n }
+
+    expect(getCustomGasPriceWarnings({ values, networkSpeeds, is1559: true })).toEqual({
+      maxFeePerGas: 'belowSlowest',
+      maxPriorityFeePerGas: 'belowSlowest',
+      gas: 'belowEstimatedGas'
+    })
+  })
+
+  test('warns about overpaying only for what is paid in full', () => {
+    const overpaidFee = 400n * OVERPAY_WARNING_MULTIPLIER + 1n
+    const values = { maxFeePerGas: overpaidFee, maxPriorityFeePerGas: 10n }
+
+    // With EIP-1559 the unused part of the max fee is not paid
+    expect(getCustomGasPriceWarnings({ values, networkSpeeds, is1559: true })).toEqual({})
+    expect(getCustomGasPriceWarnings({ values, networkSpeeds, is1559: false })).toEqual({
+      maxFeePerGas: 'farAboveFastest'
+    })
+    expect(
+      getCustomGasPriceWarnings({
+        values: {
+          maxFeePerGas: overpaidFee,
+          maxPriorityFeePerGas: 40n * OVERPAY_WARNING_MULTIPLIER + 1n
+        },
+        networkSpeeds,
+        is1559: true
+      })
+    ).toEqual({ maxPriorityFeePerGas: 'farAboveFastest' })
+  })
+
+  test('ignores the priority fee when the network asks for none', () => {
+    const speedsWithoutPriorityFee = networkSpeeds.map((speed) => ({
+      ...speed,
+      maxPriorityFeePerGas: undefined
+    }))
+    const values = { maxFeePerGas: 100n, maxPriorityFeePerGas: 1000n }
+
+    expect(
+      getCustomGasPriceWarnings({ values, networkSpeeds: speedsWithoutPriorityFee, is1559: true })
+    ).toEqual({})
+  })
+
+  test('warns about nothing without the network speeds to compare with', () => {
+    const values = { maxFeePerGas: 1n, maxPriorityFeePerGas: 1n, gas: 1n }
+
+    expect(getCustomGasPriceWarnings({ values, networkSpeeds: [], is1559: true })).toEqual({})
   })
 })
