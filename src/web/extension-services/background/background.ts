@@ -20,7 +20,11 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
-import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
+import {
+  IdbOpenReport,
+  isIdbOpenTimeoutError,
+  openAmbireIdb
+} from '@ambire-common/services/storage/idbDatabase'
 import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import wait from '@ambire-common/utils/wait'
 import {
@@ -106,6 +110,7 @@ import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
 import {
   captureBackgroundException,
+  captureBackgroundMessage,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
   setBackgroundCrashReportId,
   setBackgroundTagContext
@@ -165,10 +170,43 @@ function stateDebug(
 
 /**
  * How many times the background tries to open IndexedDB before settling for the key-value
- * fallback. Two, not more: a second attempt covers a slow open, and every further one only
- * adds its own deadline to the boot for a failure that is not going to clear.
+ * fallback. Two, not more: the second attempt covers an open that fails at once, e.g. on a
+ * database file locked for a moment, and a failure that repeats is not going to clear.
  */
 const IDB_OPEN_ATTEMPTS = 2
+
+/** Opens slower than this are reported, so Sentry shows how long the slow ones take. */
+const SLOW_IDB_OPEN_MS = 1000
+
+const BYTES_IN_MB = 1024 * 1024
+
+/**
+ * Reports an open of IndexedDB that took longer than SLOW_IDB_OPEN_MS, with the data that can
+ * point at the cause: the size of the stored data, and whether an upgrade ran or was blocked.
+ */
+const reportSlowIdbOpen = async (report: IdbOpenReport) => {
+  if (report.durationMs <= SLOW_IDB_OPEN_MS) return
+
+  let storageUsageMb: number | undefined
+  let storageEstimateErrorName: string | undefined
+  try {
+    const { usage } = await navigator.storage.estimate()
+    if (usage !== undefined) storageUsageMb = Math.round(usage / BYTES_IN_MB)
+  } catch (error: any) {
+    // Reported with the slow open instead, which still carries everything else
+    storageEstimateErrorName = error?.name ?? 'UnknownError'
+  }
+
+  captureBackgroundMessage('[background] Opening IDB was slow', {
+    level: 'warning',
+    extra: {
+      ...report,
+      expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion,
+      storageUsageMb,
+      storageEstimateErrorName
+    }
+  })
+}
 
 const syncCrashReportAccountTags = createCrashReportAccountTagsSync(setBackgroundTagContext)
 
@@ -464,10 +502,10 @@ const init = async () => {
 
   const getIsSidePanelModeEnabled = () => walletStateCtrl.isSidePanelModeEnabled
 
-  // Retried once, because openAmbireIdb() gives up after a second so a blocked upgrade cannot
-  // hang the boot — and this is the only call, so a merely slow open (cold browser start, busy
-  // disk) would otherwise put the whole service-worker lifetime on key-value, where history
-  // renders from the blob frozen at migration time.
+  // openAmbireIdb() gives up at its deadline so a blocked upgrade cannot hang the boot — and
+  // this is the only call, so a merely slow open (cold browser start, busy disk) puts the whole
+  // service-worker lifetime on key-value, where history renders from the blob frozen at
+  // migration time. Slow opens are reported with their real duration to find the cause.
   //
   // Reported after the last attempt, not the first: this is the only signal that a user has
   // landed on the key-value fallback. The wallet stays usable — history renders from the
@@ -475,20 +513,25 @@ const init = async () => {
   // fallback is invisible in aggregate and we could not tell whether it affects one user or
   // many. Reporting a failure the retry went on to recover from would make it useless.
   const openIdbWithRetry = async () => {
+    const openStartedAt = Date.now()
     let lastError: any
     let attempts = 0
 
     while (attempts < IDB_OPEN_ATTEMPTS) {
       attempts += 1
       try {
-        return await openAmbireIdb()
+        return await openAmbireIdb((report) => {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          reportSlowIdbOpen(report)
+        })
       } catch (error: any) {
         lastError = error
 
-        // VersionError means a database newer than this build's dbVersion, i.e. a downgrade.
-        // That is not transient — a retry fails identically and only delays the boot. Any
-        // other name points at the open itself failing, which a retry can still win.
-        if (error?.name === 'VersionError') break
+        // A timeout is not retried: the browser queues every open of one database, so a second
+        // open only waits behind the first. VersionError means a database newer than this
+        // build's dbVersion, i.e. a downgrade, which fails identically. Any other name points
+        // at the open failing at once, e.g. on a locked file, which a retry can still win.
+        if (isIdbOpenTimeoutError(error) || error?.name === 'VersionError') break
       }
     }
 
@@ -497,8 +540,10 @@ const init = async () => {
       extra: {
         errorName: lastError?.name,
         expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion,
-        // Fewer than IDB_OPEN_ATTEMPTS means the loop broke early on a downgrade.
-        attempts
+        // Fewer than IDB_OPEN_ATTEMPTS means the loop broke early on a timeout or a downgrade.
+        attempts,
+        // The real time of a timed-out open comes later, with the slow open report.
+        elapsedMs: Date.now() - openStartedAt
       }
     })
 
