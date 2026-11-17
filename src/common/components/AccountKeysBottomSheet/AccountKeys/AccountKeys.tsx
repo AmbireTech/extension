@@ -6,12 +6,16 @@ import { useModalize } from 'react-native-modalize'
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
 import { Account } from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
-import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
+import AccountKey, {
+  ACCOUNT_KEY_ITEM_HEIGHT,
+  AccountKeyType
+} from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import ExportKey from '@common/components/ExportKey'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -189,6 +193,13 @@ const AccountKeys: FC<Props> = ({
     ]
   }, [associatedKeys, keys])
 
+  // The keys saved with the account stand in for the on-chain ones while those load, one
+  // placeholder row each (an EOA has its own address)
+  const placeholderKeyAddrs = useMemo(
+    () => (account.associatedKeys.length ? account.associatedKeys : [account.addr]),
+    [account.associatedKeys, account.addr]
+  )
+
   const withAlert = useMemo(
     () => associatedKeys.length > 1 && isAmbireV1LinkedAccount(account.creation?.factoryAddr),
     [account.creation?.factoryAddr, associatedKeys.length]
@@ -229,6 +240,15 @@ const AccountKeys: FC<Props> = ({
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={isWeb}
       >
+        {!accountState &&
+          placeholderKeyAddrs.map((addr, index) => (
+            <SkeletonLoader
+              key={addr}
+              width="100%"
+              height={ACCOUNT_KEY_ITEM_HEIGHT}
+              style={index === placeholderKeyAddrs.length - 1 ? spacings.mb0 : spacings.mbTy}
+            />
+          ))}
         {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA }, index) => {
           const isLast = index === accountKeys.length - 1
           const accountKeyProps = { addr, type, isLast, isImported }

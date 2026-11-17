@@ -57,6 +57,9 @@ type Props = AccountKeyType & {
 
 const { isPopup } = getUiType()
 
+/** The height of a key row, unless the caller sets `itemHeight` */
+export const ACCOUNT_KEY_ITEM_HEIGHT = 48
+
 // A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
 // The popup is barely wider than the width cap, so the modal there takes the popup's full width
 // instead of leaving a thin gap on each side
@@ -83,7 +86,7 @@ const AccountKey: React.FC<Props> = ({
   showExportImport = false,
   onChains,
   tooltipContent,
-  itemHeight = 48,
+  itemHeight = ACCOUNT_KEY_ITEM_HEIGHT,
   onExportKeyPress,
   singleLineLabel = false
 }) => {
