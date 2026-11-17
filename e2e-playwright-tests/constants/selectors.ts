@@ -28,6 +28,7 @@ const selectors = {
     addOneMorePrivateKey: 'add-one-more-private-key',
     advancedPassPhraseSwitch: 'enable-passphrase-toggle',
     recoveryPhrasePassphraseField: 'input-passphrase',
+    savePassphraseSwitch: 'save-passphrase-toggle',
     warningCheckbox: 'backup-warning-checkbox',
     addressEnsField: 'address-ens-field',
     showMoreBtn: 'show-more-btn',

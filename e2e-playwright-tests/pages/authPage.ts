@@ -105,6 +105,8 @@ export class AuthPage extends BasePage {
     if (passphrase) {
       await this.click(selectors.getStarted.advancedPassPhraseSwitch)
       await this.entertext(selectors.getStarted.recoveryPhrasePassphraseField, passphrase)
+      // Off by default, so the passphrase can be checked after the import
+      await this.click(selectors.getStarted.savePassphraseSwitch)
     }
     // import
     await this.click(selectors.getStarted.importBtn)
