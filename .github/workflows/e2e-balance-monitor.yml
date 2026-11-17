@@ -1,0 +1,174 @@
+name: E2E Tests - Funding accounts balance monitor
+
+# Checks the balances of the accounts the E2E tests spend from, independently of the E2E runs,
+# so that we get notified to top them up before the balance check starts failing those runs.
+#  - a token below its early-warning level -> an issue is opened (or the open one is updated)
+#  - a token below its hard minimum -> same, but the issue is marked as urgent
+#  - everything topped up again -> the issue is closed
+on:
+  schedule:
+    # 06:00 and 13:00 UTC, Monday to Friday
+    - cron: '0 6,13 * * 1-5'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-balance-monitor
+  cancel-in-progress: false
+
+jobs:
+  check-balances:
+    runs-on: ubuntu-latest
+    environment: testing
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      # Only the public addresses are needed, none of the keys and seeds of the test accounts
+      BA_SELECTED_ACCOUNT: ${{ vars.BA_SELECTED_ACCOUNT }}
+      SA_SELECTED_ACCOUNT: ${{ vars.SA_SELECTED_ACCOUNT }}
+      LEDGER_SA_SELECTED_ACCOUNT: ${{ vars.LEDGER_SA_SELECTED_ACCOUNT }}
+      E2E_BALANCE_ALERT_FILE: ${{ github.workspace }}/e2e-balance-alert.md
+      PLAYWRIGHT_SKIP_GIT_METADATA: '1'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+          cache-dependency-path: e2e-playwright-tests/yarn.lock
+
+      - name: Install e2e test dependencies
+        working-directory: ./e2e-playwright-tests
+        run: yarn install --frozen-lockfile && yarn postinstall
+
+      # The spec file is passed directly (instead of `yarn balance:test`), so that Playwright
+      # doesn't load the other specs, which require the secrets of the test accounts.
+      # No browser is needed, the spec only calls the relayer.
+      - name: Check balances
+        id: balance
+        continue-on-error: true
+        working-directory: ./e2e-playwright-tests
+        run: npx playwright test tests/balance/balance.spec.ts --reporter=list
+
+      - name: Open, update or close the low balance issue
+        id: issue
+        uses: actions/github-script@v7
+        env:
+          BALANCE_CHECK_OUTCOME: ${{ steps.balance.outcome }}
+        with:
+          script: |
+            const fs = require('fs')
+
+            const LABEL = 'e2e-low-balance'
+            const TITLE_LOW = '⚠️ E2E test accounts are running low on funds'
+            const TITLE_URGENT = '🚨 E2E test accounts are out of funds, E2E runs are failing'
+            // Must match INSUFFICIENT_BALANCE_ALERT_MARKER in e2e-playwright-tests/utils/e2eBalance.ts
+            const INSUFFICIENT_MARKER = '<!-- e2e-balance:insufficient -->'
+
+            const alertFilePath = process.env.E2E_BALANCE_ALERT_FILE
+            const alert = fs.existsSync(alertFilePath) ? fs.readFileSync(alertFilePath, 'utf8') : ''
+            const isUrgent = alert.includes(INSUFFICIENT_MARKER)
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+
+            core.setOutput('urgent', String(isUrgent))
+            core.setOutput('notify', 'false')
+
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              ...context.repo,
+              state: 'open',
+              labels: LABEL
+            })
+            const openIssue = openIssues.find((issue) => !issue.pull_request)
+
+            if (!alert) {
+              // A failed check without an alert means the relayer couldn't be reached,
+              // which tells nothing about the balances, so the issue is left as it is.
+              const areBalancesConfirmedHealthy = process.env.BALANCE_CHECK_OUTCOME === 'success'
+              if (!openIssue || !areBalancesConfirmedHealthy) return
+
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: openIssue.number,
+                body: `All E2E test accounts are back above their early-warning levels ([run](${runUrl})). Closing.`
+              })
+              await github.rest.issues.update({
+                ...context.repo,
+                issue_number: openIssue.number,
+                state: 'closed'
+              })
+              return
+            }
+
+            const title = isUrgent ? TITLE_URGENT : TITLE_LOW
+            const intro = isUrgent
+              ? 'At least one token is **below its hard minimum**. The balance check that gates the E2E runs fails until it is topped up.'
+              : 'Some tokens are getting close to their minimum. Nothing is failing yet, please top them up before the E2E runs start to fail.'
+            const body = [
+              intro,
+              '',
+              '"Top up" is the amount needed to get the token back above its early-warning level.',
+              '',
+              alert,
+              `_Last checked: ${new Date().toISOString()} ([run](${runUrl})). This issue is updated by the "${context.workflow}" workflow and is closed automatically once all balances are topped up._`
+            ].join('\n')
+
+            if (openIssue) {
+              await github.rest.issues.update({
+                ...context.repo,
+                issue_number: openIssue.number,
+                title,
+                body
+              })
+              // Notify again only when a low balance has turned into an insufficient one
+              const hasEscalated = isUrgent && openIssue.title !== TITLE_URGENT
+              core.setOutput('notify', String(hasEscalated))
+              core.setOutput('title', title)
+              core.setOutput('url', openIssue.html_url)
+              return
+            }
+
+            try {
+              await github.rest.issues.createLabel({
+                ...context.repo,
+                name: LABEL,
+                color: 'D93F0B',
+                description: 'The accounts used by the E2E tests need a top-up'
+              })
+            } catch (error) {
+              // 422 - the label already exists
+              if (error.status !== 422) throw error
+            }
+
+            const { data: createdIssue } = await github.rest.issues.create({
+              ...context.repo,
+              title,
+              body,
+              labels: [LABEL]
+            })
+            core.setOutput('notify', 'true')
+            core.setOutput('title', title)
+            core.setOutput('url', createdIssue.html_url)
+
+      # Optional - runs only when the E2E_BALANCE_SLACK_WEBHOOK_URL secret is set
+      - name: Notify on Slack
+        if: steps.issue.outputs.notify == 'true' && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.E2E_BALANCE_SLACK_WEBHOOK_URL }}
+          ISSUE_TITLE: ${{ steps.issue.outputs.title }}
+          ISSUE_URL: ${{ steps.issue.outputs.url }}
+        run: |
+          jq -n --arg text "$ISSUE_TITLE - $ISSUE_URL" '{text: $text}' \
+            | curl --fail --silent --show-error -X POST -H 'Content-Type: application/json' --data @- "$SLACK_WEBHOOK_URL"
+
+      - name: Fail when the balances could not be checked
+        if: steps.balance.outcome == 'failure' && steps.issue.outputs.urgent != 'true'
+        run: |
+          echo "::error::The balance check failed, but not because of insufficient funds. Most likely the relayer could not be reached, see the 'Check balances' step."
+          exit 1
