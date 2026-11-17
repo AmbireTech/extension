@@ -245,7 +245,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   // off (`insetAdjustment` "never") and the footer, or the content without one, pads by it.
   // A `customRenderer` controls its own layout, so it gets no content padding.
   const bottomInset = bottom || SPACING_SM
-  const contentBottomPadding = isModal || FooterComponent ? 0 : bottomInset
+  const safeAreaContentBottomPadding = FooterComponent ? 0 : bottomInset
+  // A centered card pads its content's end like its sides, instead of ending the scroll view
+  // short of its bottom edge, so the content still scrolls all the way down to it
+  const contentBottomPadding = isModal ? SPACING_LG : safeAreaContentBottomPadding
   // A centered card's footer keeps the spacing of its sides from the bottom edge
   const footerBottomPadding = isModal ? SPACING_LG : bottomInset
 
@@ -376,10 +379,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       bounces: false,
       keyboardShouldPersistTaps: 'handled' as const,
       showsVerticalScrollIndicator: showsScrollIndicator,
-      contentContainerStyle: { paddingBottom: contentBottomPadding },
-      style: { marginBottom: isModal ? SPACING_LG : 0 }
+      contentContainerStyle: { paddingBottom: contentBottomPadding }
     }),
-    [contentBottomPadding, isModal, showsScrollIndicator]
+    [contentBottomPadding, showsScrollIndicator]
   )
 
   // Memoized with the sheet's other props, so TrueSheet (a PureComponent) skips re-renders
@@ -443,7 +445,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               onScrollBeginDrag={handleListScrollBeginDrag}
               removeClippedSubviews={isiOS ? false : listProps.removeClippedSubviews}
               style={[
-                listProps.style ?? sharedScrollProps.style,
+                listProps.style,
                 isSectionHeaderGlass && { marginHorizontal: -horizontalPadding }
               ]}
               contentContainerStyle={[
