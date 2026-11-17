@@ -156,7 +156,6 @@ jobs:
             core.setOutput('title', title)
             core.setOutput('url', createdIssue.html_url)
 
-      # Optional - runs only when the E2E_BALANCE_SLACK_WEBHOOK_URL secret is set
       - name: Notify on Slack
         if: steps.issue.outputs.notify == 'true' && env.SLACK_WEBHOOK_URL != ''
         env:
