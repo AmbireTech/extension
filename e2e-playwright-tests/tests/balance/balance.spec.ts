@@ -1,5 +1,6 @@
-import { baParams, ledgerSaParams, saParams } from 'constants/env'
+import FUNDING_ACCOUNTS from 'constants/fundingAccounts'
 import {
+  appendBalanceAlert,
   buildTokenBalanceReport,
   fetchE2eBalances,
   formatTokenBalanceReport,
@@ -15,11 +16,6 @@ import { expect, test } from '@playwright/test'
 // verify the e2e funding accounts without booting up the extension. A token below
 // its minimum fails the run, a token that is only getting close to it is reported
 // as a warning, so that it can be topped up before it starts failing runs.
-const ACCOUNTS: { name: string; address: string }[] = [
-  { name: 'Basic Account', address: baParams.envSelectedAccount },
-  { name: 'Smart Account', address: saParams.envSelectedAccount },
-  { name: 'Ledger SA e2e tests', address: ledgerSaParams.envSelectedAccount }
-]
 
 const RELAYER_RETRY_INTERVALS_MS = [2 * 1000, 5 * 1000, 10 * 1000]
 const RELAYER_RETRY_TIMEOUT_MS = 60 * 1000
@@ -47,7 +43,7 @@ test.describe('Tokens balance check', { tag: '@balanceCheck' }, () => {
   // Only the relayer request is worth retrying and that is done inside the test.
   test.describe.configure({ retries: 0 })
 
-  for (const { name, address } of ACCOUNTS) {
+  for (const { name, address } of FUNDING_ACCOUNTS) {
     test(`${name} - check balance of test tokens`, async () => {
       const accountTitle = `${name} (${address})`
 
@@ -63,6 +59,7 @@ test.describe('Tokens balance check', { tag: '@balanceCheck' }, () => {
       const insufficientTokens = reports.filter(({ status }) => status === 'insufficient')
 
       publishBalanceReportsToGitHub(accountTitle, reports)
+      appendBalanceAlert(accountTitle, reports)
 
       if (lowTokens.length) {
         const warning = `${accountTitle} is running low on funds, top up soon:\n${formatReportList(
