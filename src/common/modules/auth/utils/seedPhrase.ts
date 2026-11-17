@@ -196,7 +196,10 @@ export const getSeedPhraseValidation = (
   if (Mnemonic.isValidMnemonic(words.join(' '))) return { status: 'valid', error: null }
 
   const activeWord = tokens.find((token) => token.isActive)
-  const isActiveWordStillBeingTyped = !!activeWord && canBecomeLongerBip39Word(activeWord.value)
+  // Fragments are checked as the full word they stand for, because typing more letters
+  // of a fragment (e.g. "aban" -> "abandon") doesn't change the word.
+  const isActiveWordStillBeingTyped =
+    !!activeWord && canBecomeLongerBip39Word(expandBip39WordPrefix(activeWord.value))
 
   return isActiveWordStillBeingTyped ? incomplete : invalid('invalid-phrase')
 }
