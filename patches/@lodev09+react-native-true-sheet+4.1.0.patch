@@ -1,3 +1,28 @@
+diff --git a/node_modules/@lodev09/react-native-true-sheet/ios/TrueSheetViewController.mm b/node_modules/@lodev09/react-native-true-sheet/ios/TrueSheetViewController.mm
+index 5041ef8..c39a38d 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/ios/TrueSheetViewController.mm
++++ b/node_modules/@lodev09/react-native-true-sheet/ios/TrueSheetViewController.mm
+@@ -1044,6 +1044,20 @@ - (void)viewWillDisappear:(BOOL)animated {
+   // A swipe can still be cancelled, so emit once it commits on release. Any
+   // other dismiss (programmatic, outside tap, navigation) is already committed.
+   id<UIViewControllerTransitionCoordinator> coordinator = self.transitionCoordinator;
++
++  // iOS 26 floats a sheet as a scaled-down full-width view, and a non-swipe dismiss ends it
++  // offset by that inset again, so it slid sideways. Keep the x it was shown at
++  if (self.isBeingDismissed) {
++    UIView *presentedView = self.sheet.presentedView;
++    CGFloat shownCenterX = presentedView.center.x;
++    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> _Nonnull context) {
++      if (fabs(presentedView.center.x - shownCenterX) < 0.5) {
++        return;
++      }
++      presentedView.center = CGPointMake(shownCenterX, presentedView.center.y);
++    }
++                                 completion:nil];
++  }
+   if (coordinator.isInteractive) {
+     __weak __typeof(self) weakSelf = self;
+     [coordinator
 diff --git a/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js b/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js
 index 8eb7036..96014bb 100644
 --- a/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js

@@ -5,13 +5,17 @@ import { ScrollView, View } from 'react-native'
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
 import { Account } from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
-import AccountKey, { AccountKeyType } from '@common/components/AccountKey/AccountKey'
+import AccountKey, {
+  ACCOUNT_KEY_ITEM_HEIGHT,
+  AccountKeyType
+} from '@common/components/AccountKey/AccountKey'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ExportKey from '@common/components/ExportKey'
 import { PanelTitle } from '@common/components/Panel/Panel'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -44,6 +48,10 @@ const WIDE_LAYOUT_SHEET_STYLE = {
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) =>
   state.networks || []
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys || []
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts || []
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) =>
+  state.contacts || []
 
 const AccountKeys: FC<Props> = ({
   account,
@@ -65,6 +73,8 @@ const AccountKeys: FC<Props> = ({
   )
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: contacts } = useController('AddressBookController', selectContacts)
   const accountStateRefreshRef = useRef<{ accountAddr: string | null; chainIds: Set<string> }>({
     accountAddr: null,
     chainIds: new Set()
@@ -187,6 +197,23 @@ const AccountKeys: FC<Props> = ({
     ]
   }, [associatedKeys, keys])
 
+  // The keys saved with the account stand in for the on-chain ones while those load, one
+  // placeholder row each (an EOA has its own address)
+  const placeholderKeyAddrs = useMemo(
+    () => (account.associatedKeys.length ? account.associatedKeys : [account.addr]),
+    [account.associatedKeys, account.addr]
+  )
+
+  // Looked up once for the whole list, so that the rows do not subscribe to the accounts and contacts
+  const accountsByAddr = useMemo(
+    () => new Map(accounts.map((acc) => [acc.addr.toLowerCase(), acc])),
+    [accounts]
+  )
+  const contactNamesByAddr = useMemo(
+    () => new Map(contacts.map((contact) => [contact.address.toLowerCase(), contact.name])),
+    [contacts]
+  )
+
   const withAlert = useMemo(
     () => associatedKeys.length > 1 && isAmbireV1LinkedAccount(account.creation?.factoryAddr),
     [account.creation?.factoryAddr, associatedKeys.length]
@@ -220,9 +247,22 @@ const AccountKeys: FC<Props> = ({
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={isWeb}
       >
-        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA }, index) => {
+        {!accountState &&
+          placeholderKeyAddrs.map((addr, index) => (
+            <SkeletonLoader
+              key={addr}
+              width="100%"
+              height={ACCOUNT_KEY_ITEM_HEIGHT}
+              style={index === placeholderKeyAddrs.length - 1 ? spacings.mb0 : spacings.mbTy}
+            />
+          ))}
+        {accountKeys.map(({ type, addr, isImported, meta, dedicatedToOneSA, label }, index) => {
           const isLast = index === accountKeys.length - 1
           const accountKeyProps = { addr, type, isLast, isImported }
+          const ownerAccount = accountsByAddr.get(addr.toLowerCase())
+          // The key label ("Key 2") tells the least, so it is shown only when there is no other name
+          const name =
+            contactNamesByAddr.get(addr.toLowerCase()) || ownerAccount?.preferences.label || label
 
           return (
             <AccountKey
@@ -237,6 +277,9 @@ const AccountKeys: FC<Props> = ({
               showExportImport={showExportImport}
               onExportKeyPress={handleExportKeyPress}
               onChains={safeOwnersByNetwork[addr]}
+              withNameAndAddress
+              name={name}
+              ownerAccount={ownerAccount}
             />
           )
         })}

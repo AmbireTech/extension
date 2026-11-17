@@ -55,6 +55,17 @@ const EMPTY_STYLE = {}
 // the sheet then ends at its bottom edge, instead of below it out of reach of the scroll
 const FLEX_GROW_STYLE = { flexGrow: 1, flexShrink: 1 }
 const FLEX_SHRINK_STYLE = { flexShrink: 1 }
+/**
+ * iOS 26 floats a sheet up to 100pt tall well inside the screen's edges and widens a taller one,
+ * so a short sheet changed width as its content loaded. Sheets sized to fit start above that
+ * (`TrueSheetFloatingDetentMaxHeight` in TrueSheet)
+ */
+const IOS_FLOATING_SHEET_MAX_HEIGHT = 100
+// On the content's child, from iOS 26 (as the floating header): TrueSheet measures the fit height
+// with the content view's own min and max height replaced by its constraints
+const FIT_CONTENT_ROOT_STYLE = IS_SHEET_HEADER_FLOATING
+  ? { ...FLEX_GROW_STYLE, minHeight: IOS_FLOATING_SHEET_MAX_HEIGHT + 1 }
+  : FLEX_GROW_STYLE
 
 const noop = () => {}
 
@@ -81,6 +92,16 @@ const SheetPresentTrigger = ({
   }, [requestId])
 
   return null
+}
+
+/**
+ * The value from before `isFrozen` turned on, for as long as it stays on, then the current one again.
+ */
+const useFrozenWhile = <T,>(value: T, isFrozen: boolean): T => {
+  const [frozenValue, setFrozenValue] = useState(value)
+  if (!isFrozen && frozenValue !== value) setFrozenValue(value)
+
+  return isFrozen ? frozenValue : value
 }
 
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
@@ -170,6 +191,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const hasCalledPresentRef = useRef(false)
   // Set once the caller unmounts the sheet, whose dismissal then reports to no one
   const isUnmountedRef = useRef(false)
+  // Callers often clear what the sheet shows as they close it. Emptied mid-dismissal, an auto
+  // height sheet resizes while it slides away, so it keeps what it showed until it's gone
+  const [isDismissing, setIsDismissing] = useState(false)
 
   const trueSheetRef = useCallback(
     (sheet: TrueSheet | null) => {
@@ -193,6 +217,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             return
           }
           isClosingProgrammaticallyRef.current = true
+          // In the same batch as the caller's own updates, so they render frozen already
+          setIsDismissing(true)
           sheet.dismiss().catch(reportSheetError)
         }
       }
@@ -307,6 +333,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     // Lazy again by the time it's dismissed, so TrueSheet unmounts the content
     setIsMountRequested(false)
     setHasPresented(false)
+    setIsDismissing(true)
     setIsOpen(false)
     // TrueSheet doesn't say whether a swipe or a tap outside closed it, so both run
     // what the Modalize backdrop tap ran
@@ -317,6 +344,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const handleDidDismiss = useCallback(() => {
     hasCalledPresentRef.current = false
+    setIsDismissing(false)
     if (isUnmountedRef.current) return
     setSheetKey((key) => key + 1)
     onClosed()
@@ -536,12 +564,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const sheetChildren = useMemo(
     () => (
       // Gesture handler touchables don't respond inside the sheet on Android without it
-      <GestureHandlerRootView style={isFixedHeight ? FLEX_STYLE : FLEX_GROW_STYLE}>
+      <GestureHandlerRootView style={isFixedHeight ? FLEX_STYLE : FIT_CONTENT_ROOT_STYLE}>
         {sheetContent}
       </GestureHandlerRootView>
     ),
     [isFixedHeight, sheetContent]
   )
+
+  const visibleHeader = useFrozenWhile(header, isDismissing)
+  const visibleFooter = useFrozenWhile(footer, isDismissing)
+  const visibleSheetChildren = useFrozenWhile(sheetChildren, isDismissing)
 
   return (
     // At the app root, as with Modalize: in place, the ScrollView of the screen that declares
@@ -565,10 +597,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           grabber={hasGrabber}
           {...platformSheetProps}
           dismissible={shouldBeClosableOnDrag}
-          header={header}
+          header={visibleHeader}
           headerStyle={headerStyle}
           headerOptions={isHeaderOverContent ? ABSOLUTE_HEADER_OPTIONS : undefined}
-          footer={footer}
+          footer={visibleFooter}
           footerStyle={footerStyle}
           footerOptions={footerOptions}
           insetAdjustment="never"
@@ -580,7 +612,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           onDidDismiss={handleDidDismiss}
           onBackPress={handleBackPress}
         >
-          {sheetChildren}
+          {visibleSheetChildren}
         </TrueSheet>
         <SheetPresentTrigger requestId={presentRequestId} onRequest={presentSheet} />
         {/* Blurs the page behind the sheet on web (backdrop-style.css), until it starts closing */}

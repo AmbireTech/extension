@@ -1,5 +1,6 @@
 import { Storage, StorageProps } from '@ambire-common/interfaces/storage'
 import { parseStorageValue, stringifyStorageValue } from '@ambire-common/libs/storage/serialization'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { browser, isExtension } from '@web/constants/browserapi'
 
 import { SerializedStorageSnapshot } from './types'
@@ -37,12 +38,24 @@ const commonAsyncStorage: Storage = {
   }
 }
 
+/**
+ * First characters of a serialized object or array. `set` stores strings raw, so a parse failure
+ * is expected for a string, but text that starts with one of these is broken serialized data.
+ */
+const SERIALIZED_CONTAINER_START_CHARS = ['{', '[']
+
 const formatValue = (key: string, value: any, defaultValue?: any) => {
   try {
     return typeof value === 'string' ? parseStorageValue(key, value) : value
   } catch (error: any) {
-    // Only the key and the error type: the parse error message can quote the stored value
-    console.error(`Failed to parse the stored value of "${key}" (${error?.name})`)
+    const isBrokenSerializedValue =
+      typeof value === 'string' && SERIALIZED_CONTAINER_START_CHARS.includes(value.charAt(0))
+    if (isBrokenSerializedValue) {
+      // Only the key and the error type: the parse error message can quote the stored value
+      captureException(new Error(`Failed to parse the stored value of "${key}"`), {
+        extra: { key, errorName: error?.name }
+      })
+    }
     return typeof value === 'string' ? value : defaultValue
   }
 }
