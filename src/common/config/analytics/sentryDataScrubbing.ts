@@ -1,4 +1,4 @@
-import { wordlists } from 'ethers'
+import { Wordlist, wordlists } from 'ethers'
 
 type RedactionRule = {
   pattern: RegExp
@@ -19,12 +19,12 @@ const BIP39_PREFIX_LENGTH = 4
 
 let englishWordsByPrefix: Map<string, string> | undefined
 
-const getEnglishWordsByPrefix = (): Map<string, string> => {
+const getEnglishWordsByPrefix = (wordlist: Wordlist): Map<string, string> => {
   if (englishWordsByPrefix) return englishWordsByPrefix
 
   englishWordsByPrefix = new Map()
   for (let index = 0; index < BIP39_WORDLIST_SIZE; index += 1) {
-    const word = englishWordlist.getWord(index)
+    const word = wordlist.getWord(index)
     englishWordsByPrefix.set(word.slice(0, BIP39_PREFIX_LENGTH), word)
   }
 
@@ -35,11 +35,11 @@ const getEnglishWordsByPrefix = (): Map<string, string> => {
  * Whether the word is a BIP-39 word or a fragment of at least 4 letters that
  * stands for one (e.g. "aban", "abando"), the same way the recovery phrase import reads it.
  */
-const isBip39WordOrFragment = (word: string): boolean => {
-  if (englishWordlist.getWordIndex(word) !== -1) return true
+const isBip39WordOrFragment = (wordlist: Wordlist, word: string): boolean => {
+  if (wordlist.getWordIndex(word) !== -1) return true
   if (word.length < BIP39_PREFIX_LENGTH) return false
 
-  const fullWord = getEnglishWordsByPrefix().get(word.slice(0, BIP39_PREFIX_LENGTH))
+  const fullWord = getEnglishWordsByPrefix(wordlist).get(word.slice(0, BIP39_PREFIX_LENGTH))
   return !!fullWord?.startsWith(word)
 }
 
@@ -48,7 +48,7 @@ const isBip39WordOrFragment = (word: string): boolean => {
 // word is lowercased before the wordlist lookup.
 const areAllValidBip39Words = (words: string[]): boolean => {
   if (!englishWordlist) return false
-  return words.every((word) => isBip39WordOrFragment(word.toLowerCase()))
+  return words.every((word) => isBip39WordOrFragment(englishWordlist, word.toLowerCase()))
 }
 
 // Finds a contiguous 12-24 word BIP-39-valid subsequence anywhere within a run
