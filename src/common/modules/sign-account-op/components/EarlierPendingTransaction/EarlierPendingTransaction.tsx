@@ -454,8 +454,15 @@ const EarlierPendingTransaction = ({
           title={t('Pending transaction')}
           handleClose={handleClose}
           style={spacings.mbSm}
-        >
-          {explorerTxnUrl ? (
+        />
+        <Text appearance="secondaryText" fontSize={14} style={isMobile ? text.center : undefined}>
+          {t(
+            'Sent earlier and not confirmed yet. The transaction you are signing now can only go through after it.'
+          )}
+        </Text>
+        {/* Below the text, not next to the title, which it would squeeze on narrow screens */}
+        {!!explorerTxnUrl && (
+          <View style={[spacings.mtTy, isMobile ? flexbox.alignCenter : flexbox.alignStart]}>
             <FooterActionLink
               label={t('View in explorer')}
               onPress={handleOpenExplorer}
@@ -463,13 +470,8 @@ const EarlierPendingTransaction = ({
               iconSize={14}
               Icon={OpenIcon}
             />
-          ) : null}
-        </ModalHeader>
-        <Text appearance="secondaryText" fontSize={14} style={isMobile ? text.center : undefined}>
-          {t(
-            'Sent earlier and not confirmed yet. The transaction you are signing now can only go through after it.'
-          )}
-        </Text>
+          </View>
+        )}
       </View>
     ),
     [explorerTxnUrl, handleClose, handleOpenExplorer, t]

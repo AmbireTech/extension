@@ -1,6 +1,6 @@
 import { Portal } from '@gorhom/portal'
-import React, { FC, useCallback, useLayoutEffect, useMemo, useState } from 'react'
-import { LayoutChangeEvent, StyleProp, View, ViewStyle } from 'react-native'
+import React, { FC, useLayoutEffect, useMemo, useState } from 'react'
+import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { useBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import { bottomSheetCloseEventStream } from '@common/components/BottomSheet/bottomSheetEventStream'
@@ -41,12 +41,6 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
     isHeaderFloating,
     setIsHeaderRowTitleless
   } = useBottomSheet()
-  // The left side is as wide as the right one, so the title stays centered
-  const [rightSideWidth, setRightSideWidth] = useState(SHEET_HEADER_BUTTON_SIZE)
-  const handleRightSideLayout = useCallback(
-    (e: LayoutChangeEvent) => setRightSideWidth(e.nativeEvent.layout.width),
-    []
-  )
   const hasTitle = !!children
   const handleBack = onBack || (isNested ? close : undefined)
   // A title that wraps while centered moves left over the space the centering kept free,
@@ -96,8 +90,10 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
         isHeaderFloating && spacings.mb0
       ]}
     >
+      {/* As wide as the X, which centers the title. Not as wide as the X with `rightContent`, */}
+      {/* as mirroring a wide action would leave the title no room on a narrow sheet */}
       {hasSides && !isTitleOnLeft && (
-        <View pointerEvents="box-none" style={[SIDE_SLOT_STYLE, { minWidth: rightSideWidth }]}>
+        <View pointerEvents="box-none" style={SIDE_SLOT_STYLE}>
           {!!handleBack && <SheetHeaderButton type="back" onPress={handleBack} />}
         </View>
       )}
@@ -125,7 +121,6 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
             flexbox.alignCenter,
             { columnGap: SPACING_TY }
           ]}
-          onLayout={handleRightSideLayout}
         >
           {rightContent}
           {!!handleClose && <SheetHeaderButton type="close" onPress={handleClose} />}

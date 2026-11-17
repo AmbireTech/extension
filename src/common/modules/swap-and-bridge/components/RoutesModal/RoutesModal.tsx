@@ -358,18 +358,22 @@ const RoutesModal = ({
       adjustToContentHeight={isWeb}
       onClosed={handleRoutesModalClosed}
       HeaderComponent={
-        <ModalHeader
-          title={t('Select route')}
-          handleClose={closeBottomSheet}
-          titlePosition={isMobile ? 'left' : 'center'}
-        >
-          <RetryButton
-            onPress={updateQuote}
-            label={t('Request new quote')}
-            disabled={isQuoteLoading}
-            isLarge
+        <>
+          <ModalHeader
+            title={t('Select route')}
+            handleClose={closeBottomSheet}
+            style={spacings.mbTy}
           />
-        </ModalHeader>
+          {/* Under the title, not next to it, which it would squeeze on narrow screens */}
+          <View style={[flexbox.alignCenter, spacings.mb]}>
+            <RetryButton
+              onPress={updateQuote}
+              label={t('Request new quote')}
+              disabled={isQuoteLoading}
+              isLarge
+            />
+          </View>
+        </>
       }
       flatListProps={{
         data: isQuoteLoading || !quote ? ([{ isSkeleton: true }] as any) : quote?.routes,
