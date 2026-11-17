@@ -24,6 +24,8 @@ jest.mock(
 const EXTENSION_ID = 'own-extension-id'
 const DOCUMENT_URL = `chrome-extension://${EXTENSION_ID}/privacy-pools-prover.html`
 const IDLE_CLOSE_MS = 2 * 60 * 1000
+const TREES_IDLE_CLOSE_MS = 5 * 1000
+const ONEKEY_DOCUMENT_URL = `chrome-extension://${EXTENSION_ID}/onekey-offscreen.html`
 const PROOF_TIMEOUT_MS = 3 * 60 * 1000
 const STARTUP_TIMEOUT_MS = 30 * 1000
 const TREE_TIMEOUT_MS = 60 * 1000
@@ -98,6 +100,8 @@ class FakePort {
 
 let onConnect: ReturnType<typeof makeEvent<[FakePort]>>
 let isDocumentOpen: boolean
+/** Another part of the extension's offscreen document, such as OneKey's, open instead of ours. */
+let otherDocumentUrl: string | null
 let createDocument: jest.Mock
 let closeDocument: jest.Mock
 /** What the fake document does once created - by default, connect and report ready. */
@@ -164,6 +168,7 @@ beforeEach(() => {
   jest.mocked(PoseidonT3LeanIMT.fromLevels).mockClear()
   onConnect = makeEvent<[FakePort]>()
   isDocumentOpen = false
+  otherDocumentUrl = null
   documentPort = null
   onDocumentCreated = () => {
     const port = connectDocument()
@@ -171,6 +176,9 @@ beforeEach(() => {
     port.onMessage.dispatch({ type: 'ready' })
   }
   createDocument = jest.fn(async () => {
+    // As Chrome, which allows only one offscreen document at a time
+    if (otherDocumentUrl) throw new Error('Only a single offscreen document may be created.')
+
     isDocumentOpen = true
     onDocumentCreated()
   })
@@ -183,7 +191,11 @@ beforeEach(() => {
       id: EXTENSION_ID,
       getURL: (path: string) => `chrome-extension://${EXTENSION_ID}/${path}`,
       onConnect,
-      getContexts: jest.fn(async () => (isDocumentOpen ? [{}] : []))
+      getContexts: jest.fn(async ({ documentUrls }: { documentUrls?: string[] }) =>
+        [...(isDocumentOpen ? [DOCUMENT_URL] : []), ...(otherDocumentUrl ? [otherDocumentUrl] : [])]
+          .filter((documentUrl) => !documentUrls || documentUrls.includes(documentUrl))
+          .map((documentUrl) => ({ documentUrl }))
+      )
     },
     offscreen: { createDocument, closeDocument }
   }
@@ -684,7 +696,7 @@ describe('createOffscreenPrivacyPools', () => {
       )
       expect(closeDocument).not.toHaveBeenCalled()
       // Closed only once idle
-      await jest.advanceTimersByTimeAsync(IDLE_CLOSE_MS)
+      await jest.advanceTimersByTimeAsync(TREES_IDLE_CLOSE_MS)
       expect(closeDocument).toHaveBeenCalledTimes(1)
     })
 
@@ -707,13 +719,77 @@ describe('createOffscreenPrivacyPools', () => {
       expect(onError).not.toHaveBeenCalled()
     })
 
-    it('closes the document once no tree has been asked for a while', async () => {
+    it('closes a document that only built trees soon, to leave it to others such as OneKey', async () => {
       const { merkleTreeBuilder } = prepare()
 
       await merkleTreeBuilder(LEAVES)
-      await jest.advanceTimersByTimeAsync(IDLE_CLOSE_MS)
+      await jest.advanceTimersByTimeAsync(TREES_IDLE_CLOSE_MS - 1)
+      expect(closeDocument).not.toHaveBeenCalled()
 
+      await jest.advanceTimersByTimeAsync(1)
       expect(closeDocument).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps a document that also proved open as long as one that only proved, its prover loaded', async () => {
+      const { proverFactory, merkleTreeBuilder } = prepare()
+
+      await (await proverFactory()).prove('withdraw', SIGNALS as any)
+      await merkleTreeBuilder(LEAVES)
+      await jest.advanceTimersByTimeAsync(IDLE_CLOSE_MS - 1)
+      expect(closeDocument).not.toHaveBeenCalled()
+
+      await jest.advanceTimersByTimeAsync(1)
+      expect(closeDocument).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe("another offscreen document, such as OneKey's, being open", () => {
+    let consoleWarn: jest.SpyInstance
+
+    beforeEach(() => {
+      consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      consoleWarn.mockRestore()
+    })
+
+    it('proves and builds in the background meanwhile, leaving it open, then uses the document', async () => {
+      otherDocumentUrl = ONEKEY_DOCUMENT_URL
+      const { proverFactory, merkleTreeBuilder, fallbackProve, onError } = prepare()
+      const prover = await proverFactory()
+
+      await prover.prove('withdraw', SIGNALS as any)
+      await merkleTreeBuilder(LEAVES)
+
+      expect(fallbackProve).toHaveBeenCalledTimes(1)
+      expect(buildMerkleTree).toHaveBeenCalledTimes(1)
+      expect(createDocument).not.toHaveBeenCalled()
+      expect(closeDocument).not.toHaveBeenCalled()
+      expect(onError).not.toHaveBeenCalled()
+
+      otherDocumentUrl = null
+      await prover.prove('withdraw', SIGNALS as any)
+
+      expect(fallbackProve).toHaveBeenCalledTimes(1)
+      expect(documentPort!.sent.map(({ type }) => type)).toEqual(['prove'])
+    })
+
+    it('takes a failed opening as only for now when another document opened meanwhile', async () => {
+      createDocument.mockImplementationOnce(async () => {
+        otherDocumentUrl = ONEKEY_DOCUMENT_URL
+        throw new Error('Only a single offscreen document may be created.')
+      })
+      const { merkleTreeBuilder, onError } = prepare()
+
+      await expect(merkleTreeBuilder(LEAVES)).resolves.toEqual({
+        builtIn: 'background',
+        leaves: LEAVES
+      })
+      expect(onError).not.toHaveBeenCalled()
+
+      otherDocumentUrl = null
+      await expect(merkleTreeBuilder(LEAVES)).resolves.toMatchObject({ builtIn: 'document' })
     })
   })
 

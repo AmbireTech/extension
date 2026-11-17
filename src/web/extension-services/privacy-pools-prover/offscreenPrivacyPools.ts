@@ -47,15 +47,38 @@ const TREE_TIMEOUT_MS = 60 * 1000
  */
 const OFFSCREEN_TREE_MIN_LEAVES = 2048
 
-/** Idle time before closing the document. Covers the gaps between the proofs of one withdrawal. */
-const IDLE_CLOSE_MS = 2 * 60 * 1000
+/**
+ * Idle time before closing a document that proved. Covers the gaps between the proofs of one
+ * withdrawal, and keeps its prover loaded for them.
+ */
+const PROVER_IDLE_CLOSE_MS = 2 * 60 * 1000
+
+/**
+ * Idle time before closing a document that only built trees. Covers the gaps between the trees of
+ * one sync, while leaving the browser's only offscreen document to others, such as OneKey's, soon.
+ */
+const TREES_IDLE_CLOSE_MS = 5 * 1000
 
 const DOCUMENT_STOPPED_MESSAGE = 'privacyPools: the proof generator stopped before finishing'
 
 // Not in this version of `@types/chrome`
 const WORKERS_REASON = 'WORKERS' as chrome.offscreen.Reason
 type ChromeRuntimeWithContexts = typeof chrome.runtime & {
-  getContexts?: (filter: { contextTypes: string[]; documentUrls: string[] }) => Promise<unknown[]>
+  getContexts?: (filter: {
+    contextTypes: string[]
+    documentUrls?: string[]
+  }) => Promise<{ documentUrl?: string }[]>
+}
+
+/**
+ * Another part of the extension, such as OneKey, has the browser's only offscreen document open.
+ * Only for now, so the work is done in the background this time and the document tried again next.
+ */
+class OtherDocumentOpenError extends Error {
+  constructor() {
+    super('privacyPools: another offscreen document is open')
+    this.name = 'OtherDocumentOpenError'
+  }
 }
 
 type PendingRequest = {
@@ -93,8 +116,10 @@ const toError = (error: unknown) => (error instanceof Error ? error : new Error(
  * service worker's single thread. The document opens on the first proof or large tree and closes
  * when idle. If it fails to open or start, all later work stays in the background and `onError` is
  * called once: proofs use `fallback` (the in-process prover), trees the SDK's own builder. If only
- * the prover fails to start in it, only proofs stay in the background. A proof whose signal aborts
- * fails at once and closes the document, stopping its threads.
+ * the prover fails to start in it, only proofs stay in the background. While another offscreen
+ * document is open, such as OneKey's, only that request stays in the background, as the browser
+ * allows one at a time. A proof whose signal aborts fails at once and closes the document, stopping
+ * its threads.
  *
  * Proving inputs are sent only to a port the document opened (`isFromProverDocument`); any other
  * port connecting under its name is disconnected.
@@ -122,6 +147,8 @@ export const createOffscreenPrivacyPools = ({
   let isProverUnavailable = false
   /** Whether this background created a document and has not closed it. */
   let isDocumentOpen = false
+  /** Whether the open document was asked for a proof, so it stays open longer - see the idle times. */
+  let hasProved = false
   /** Set only while a document is starting, to receive the port it opens. */
   let acceptPort: ((port: chrome.runtime.Port) => void) | null = null
 
@@ -154,6 +181,15 @@ export const createOffscreenPrivacyPools = ({
     return contexts.length > 0
   }
 
+  /** Whether another part of the extension has an offscreen document open. Unknown before Chrome 116. */
+  const hasOtherDocument = async () => {
+    const runtime: ChromeRuntimeWithContexts = chrome.runtime
+    if (!runtime.getContexts) return false
+
+    const contexts = await runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'] })
+    return contexts.some((context) => context.documentUrl !== documentUrl)
+  }
+
   const closeDocument = () => {
     connection = null
     activePort = null
@@ -175,10 +211,13 @@ export const createOffscreenPrivacyPools = ({
     if (pendingRequests.size) return
 
     clearIdleTimeout()
-    idleTimeout = setTimeout(() => {
-      idleTimeout = null
-      closeDocument().catch((error) => console.error(error))
-    }, IDLE_CLOSE_MS)
+    idleTimeout = setTimeout(
+      () => {
+        idleTimeout = null
+        closeDocument().catch((error) => console.error(error))
+      },
+      hasProved ? PROVER_IDLE_CLOSE_MS : TREES_IDLE_CLOSE_MS
+    )
   }
 
   const rejectPendingRequests = (port: chrome.runtime.Port, error: Error) => {
@@ -272,7 +311,10 @@ export const createOffscreenPrivacyPools = ({
     // A document left over from before the service worker restarted has lost its port, and Chrome
     // allows only one offscreen document at a time
     if (await hasDocument()) await chrome.offscreen.closeDocument()
+    // Left open rather than closed, as it may be in use, such as OneKey's while signing
+    if (await hasOtherDocument()) throw new OtherDocumentOpenError()
 
+    hasProved = false
     const readyDocument = waitForReadyDocument()
     try {
       await chrome.offscreen.createDocument({
@@ -283,7 +325,12 @@ export const createOffscreenPrivacyPools = ({
       })
       isDocumentOpen = true
     } catch (error: any) {
-      readyDocument.cancel(toError(error))
+      // Opened by another part of the extension since the check above
+      const isOtherDocumentOpen = await hasOtherDocument().catch((checkError) => {
+        console.error('privacyPools: could not check for other offscreen documents', checkError)
+        return false
+      })
+      readyDocument.cancel(isOtherDocumentOpen ? new OtherDocumentOpenError() : toError(error))
     }
 
     const port = await readyDocument.promise
@@ -304,12 +351,20 @@ export const createOffscreenPrivacyPools = ({
     return connection
   }
 
-  /** Opens the document if needed; marks it unavailable for good if it cannot. */
+  /**
+   * Opens the document if needed. Marks it unavailable for good if it cannot, unless only because
+   * another offscreen document is open.
+   */
   const connect = async (): Promise<chrome.runtime.Port | null> => {
     clearIdleTimeout()
     try {
       return await getConnection()
     } catch (error: any) {
+      if (error instanceof OtherDocumentOpenError) {
+        console.warn('privacyPools: working in this context this time', error)
+        return null
+      }
+
       isUnavailable = true
       console.error('privacyPools: proving and building trees in this context instead', error)
       onError(toError(error))
@@ -382,6 +437,7 @@ export const createOffscreenPrivacyPools = ({
     const port = await connect()
     if (!port) return proveWithFallback(circuit, signals)
 
+    hasProved = true
     nextRequestId += 1
     const reply = await sendRequest(
       port,
