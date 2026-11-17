@@ -54,7 +54,8 @@ test.describe('security: private key leak prevention', { tag: '@security' }, () 
     })
 
     await test.step('import account via seed phrase', async () => {
-      await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
+      // The seed is also used as the passphrase, so the check below catches a passphrase leak too
+      await pages.auth.importExistingAccountByRecoveryPhrase(SEED, SEED)
     })
 
     await test.step('wait for post-import network activity to settle', async () => {
