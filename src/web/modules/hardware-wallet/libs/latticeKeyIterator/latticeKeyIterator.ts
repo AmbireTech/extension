@@ -71,7 +71,11 @@ class LatticeKeyIterator implements KeyIteratorInterface {
     fromToArr: { from: number; to: number }[],
     hdPathTemplate?: HD_PATH_TEMPLATE_TYPE
   ) {
-    if (!this.controller.walletSDK && this.controller.unlock) {
+    // Unlock even if the SDK session already exists, because `unlock` reconnects
+    // and refreshes the cached active wallet. The Lattice1 can switch between its
+    // own wallet and a SafeCard wallet, and requesting addresses with a stale
+    // wallet makes the device throw "Active wallet does not match request".
+    if (this.controller.unlock) {
       await this.controller.unlock(hdPathTemplate || BIP44_STANDARD_DERIVATION_TEMPLATE)
     }
 
