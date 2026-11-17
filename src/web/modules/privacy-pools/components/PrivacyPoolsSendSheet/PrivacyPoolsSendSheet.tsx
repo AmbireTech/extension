@@ -107,7 +107,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
         onPress={closeBottomSheet}
         hasBottomSpacing={false}
         disabled={isBroadcasting}
-        style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : { width: 98, ...spacings.mrLg }}
+        style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : { width: 98, ...spacings.mrLg }}
         size="smaller"
       />
     ),
@@ -187,7 +187,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   buttonType={holdButtonType}
                   onHoldComplete={onSend}
                   size="smaller"
-                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
                 />
               ) : (
                 <ButtonWithLoader
@@ -197,7 +197,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   disabled={isBroadcasting}
                   onPress={onSend}
                   size="smaller"
-                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
                 />
               )}
               {/* Back after Send on narrow layouts, like the regular fee sheet */}
