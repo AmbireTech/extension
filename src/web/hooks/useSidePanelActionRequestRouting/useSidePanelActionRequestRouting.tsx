@@ -13,6 +13,8 @@ import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import { getUiType } from '@common/utils/uiType'
 import { getDappTabTargetsFromUserRequest } from '@web/utils/dispatchDappTabFocus'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const { isSidePanel } = getUiType()
 
 const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).replace(/^\//, '')
@@ -30,6 +32,9 @@ const getRoutePathname = (route: string) => (route.split('?')[0] ?? route).repla
  * "Start a batch" — without being pulled back to the sign screen while the request stays
  * queued.
  */
+const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
+  state.currentUserRequest
+
 const useSidePanelActionRequestRouting = () => {
   const { navigate } = useNavigation()
   const { path } = useRoute()
@@ -37,7 +42,10 @@ const useSidePanelActionRequestRouting = () => {
   const { dispatch } = useContext(ControllersMiddlewareContext)
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
   const keystoreState = useController('KeystoreController').state
-  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
+  const { state: currentUserRequest } = useController(
+    'RequestsController',
+    selectCurrentUserRequest
+  )
   const transferState = useController('TransferController').state
   // Gated on every controller, because `getRouteForUserRequest` reads the transfer state,
   // which isn't part of any route's critical subset (`canRenderRoute`).

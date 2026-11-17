@@ -20,6 +20,6 @@
   },
   "host_permissions": ["http://*/*", "https://*/*", "file://*/*", "wss://*/*"],
   "externally_connectable": {
-    "ids": ["*"]
+    "ids": []
   }
 }

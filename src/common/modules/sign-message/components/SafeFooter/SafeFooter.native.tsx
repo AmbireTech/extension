@@ -1,13 +1,14 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { GestureResponderEvent, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
-import Button from '@common/components/Button'
+import Button, { Props as ButtonProps } from '@common/components/Button'
 import Spinner from '@common/components/Spinner'
+import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
-import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const SafeFooter = ({
@@ -19,8 +20,7 @@ const SafeFooter = ({
   signed = [],
   importedKeys,
   threshold,
-  onReject,
-  onSignLater
+  onReject
 }: {
   account: Account
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
@@ -30,10 +30,7 @@ const SafeFooter = ({
   signed: string[]
   importedKeys: Key[]
   threshold: number
-  onReject: (event: GestureResponderEvent) => void
-  // closes the signing UI while keeping the request pending with the collected
-  // signatures already pushed to Safe Global (dismisses the sheet)
-  onSignLater: () => void
+  onReject: () => void
 }) => {
   const { t } = useTranslation()
   const [showSafeSigners, setShowSafeSigners] = useState(false)
@@ -48,6 +45,17 @@ const SafeFooter = ({
     if (!signer) return
     onSign(signer.addr, signer.type)
   }, [isSingle, onSign, importedKeys])
+
+  const rejectButton = (props?: { size?: ButtonProps['size']; style?: ButtonProps['style'] }) => (
+    <RejectRequestButton
+      text={t('Reject')}
+      hasBottomSpacing={false}
+      onReject={onReject}
+      optionsTitle={t('Reject request')}
+      rejectOptionText={t('Reject this request')}
+      {...props}
+    />
+  )
 
   return (
     <View style={[spacings.ptSm, spacings.phSm]}>
@@ -66,28 +74,12 @@ const SafeFooter = ({
       )}
       {threshold === 0 && (
         <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
-          <View style={flexbox.flex1}>
-            <Button
-              text={t('Reject')}
-              type="danger"
-              hasBottomSpacing={false}
-              size="large"
-              onPress={onReject}
-            />
-          </View>
+          <View style={flexbox.flex1}>{rejectButton({ size: 'large' })}</View>
         </View>
       )}
       {threshold > 0 && isSingle && (
         <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
-          <View style={flexbox.flex1}>
-            <Button
-              text={t('Reject')}
-              type="danger"
-              hasBottomSpacing={false}
-              size="large"
-              onPress={onReject}
-            />
-          </View>
+          <View style={flexbox.flex1}>{rejectButton({ size: 'large' })}</View>
           <View style={flexbox.flex1}>
             <Button
               size="large"
@@ -102,8 +94,9 @@ const SafeFooter = ({
       {threshold > 0 &&
         !isSingle &&
         (threshold > signed.length ? (
-          <>
-            <View style={spacings.mbSm}>
+          <View style={[flexbox.directionRow, { columnGap: SPACING_TY }]}>
+            <View style={flexbox.flex1}>{rejectButton({ size: 'large' })}</View>
+            <View style={flexbox.flex1}>
               <Button
                 key={showSafeSigners ? 'close-signing' : 'begin-signing'}
                 size="large"
@@ -113,28 +106,7 @@ const SafeFooter = ({
                 text={!showSafeSigners ? 'Begin signing' : 'Close signing'}
               />
             </View>
-            <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
-              <View style={flexbox.flex1}>
-                <Button
-                  text={t('Reject')}
-                  type="danger"
-                  hasBottomSpacing={false}
-                  onPress={onReject}
-                  style={{ height: 50 }}
-                />
-              </View>
-              <View style={flexbox.flex1}>
-                <Button
-                  type="secondary"
-                  hasBottomSpacing={false}
-                  onPress={onSignLater}
-                  text={t('Sign later')}
-                  disabled={signed.length === 0}
-                  style={{ height: 50 }}
-                />
-              </View>
-            </View>
-          </>
+          </View>
         ) : (
           <View style={flexbox.center}>
             <Spinner

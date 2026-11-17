@@ -1,47 +1,59 @@
+import { WALLET_STAKING_ADDR, WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { Dapp } from '@ambire-common/interfaces/dapp'
-import { AccountOp, isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { getCancelledNonce, isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
+import { submittedAccountOpToAccountOp } from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
-import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
-import {
-  flattenHumanizerVisualizations,
-  hasErc7730Humanization
-} from '@ambire-common/libs/humanizer/utils'
+import { SAFE_APPROVE_HASH_ACTION } from '@ambire-common/libs/humanizer/modules/Safe'
+import { flattenHumanizerVisualizations } from '@ambire-common/libs/humanizer/utils'
 
 import { DappInteraction, SubmittedAccountOpLike } from './types'
 
-export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
-  const clearSigningHum = submittedAccountOp.meta?.clearSigningHumanization
-  const clearSign = hasErc7730Humanization(clearSigningHum) ? clearSigningHum : null
-  if (clearSign) {
-    return clearSign.map((call, index) => ({
-      ...call,
-      id: call.id || String(index)
-    }))
+import type { HumanizerVisualization, IrCall } from '@ambire-common/libs/humanizer/interfaces'
+const WALLET_STAKING_ACTIVITY_MATCHES = [
+  {
+    action: 'Wrap',
+    tokenAddress: WALLET_STAKING_ADDR,
+    interaction: {
+      id: 'fallback:migrateXWallet',
+      name: 'Migrate xWALLET',
+      iconType: 'walletStaking'
+    }
+  },
+  {
+    action: 'Stake and wrap',
+    tokenAddress: WALLET_TOKEN,
+    interaction: {
+      id: 'fallback:stakeWallet',
+      name: 'Stake WALLET',
+      iconType: 'walletStaking'
+    }
+  }
+] as const
+
+const getWalletStakingInteraction = (humanizedCalls: IrCall[]): DappInteraction | null => {
+  for (const match of WALLET_STAKING_ACTIVITY_MATCHES) {
+    const hasMatch = humanizedCalls.some((call) => {
+      const visualizations = flattenHumanizerVisualizations(call.fullVisualization)
+      const hasAction = visualizations.some(
+        ({ type, content }) => type === 'action' && content === match.action
+      )
+      const hasToken = visualizations.some(
+        ({ type, address }) =>
+          type === 'token' && address.toLowerCase() === match.tokenAddress.toLowerCase()
+      )
+
+      return hasAction && hasToken
+    })
+
+    if (hasMatch) return match.interaction
   }
 
-  const accountOp: AccountOp = {
-    id: submittedAccountOp.id,
-    accountAddr: submittedAccountOp.accountAddr,
-    chainId: submittedAccountOp.chainId,
-    signingKeyAddr: submittedAccountOp.signingKeyAddr ?? null,
-    signingKeyType: submittedAccountOp.signingKeyType ?? null,
-    nonce: submittedAccountOp.nonce ?? null,
-    eoaNonce: submittedAccountOp.eoaNonce,
-    calls: submittedAccountOp.calls,
-    feeCall: submittedAccountOp.feeCall,
-    activatorCall: submittedAccountOp.activatorCall,
-    gasLimit: submittedAccountOp.gasLimit ?? null,
-    signature: submittedAccountOp.signature ?? null,
-    gasFeePayment: submittedAccountOp.gasFeePayment,
-    txnId: submittedAccountOp.txnId,
-    status: submittedAccountOp.status,
-    asUserOperation: submittedAccountOp.asUserOperation,
-    signers: submittedAccountOp.signers,
-    signed: submittedAccountOp.signed,
-    safeTx: submittedAccountOp.safeTx,
-    meta: submittedAccountOp.meta,
-    flags: submittedAccountOp.flags
-  }
+  return null
+}
+
+export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): IrCall[] => {
+  const accountOp = submittedAccountOpToAccountOp(submittedAccountOp)
 
   return humanizeAccountOp(accountOp).map((call, index) => ({
     ...call,
@@ -49,9 +61,62 @@ export const getHumanizedCalls = (submittedAccountOp: SubmittedAccountOpLike): I
   }))
 }
 
-export const getDappInteractions = (
-  submittedAccountOp: SubmittedAccountOpLike
+// The verbs a call's intent uses for a plain outgoing transfer. Both are matched because an
+// ERC-7730 descriptor may word it either way, and an interpolated intent leads with the template's
+// own verb rather than with the descriptor's plain `intent`.
+const SEND_INTENT_WORDS = ['send', 'transfer']
+
+const isSendVisualization = (visualization?: HumanizerVisualization): boolean => {
+  if (!visualization) return false
+
+  const intentText =
+    visualization.type === 'erc7730' ? visualization.intent[0]?.content : visualization.content
+
+  return !!intentText && SEND_INTENT_WORDS.includes(intentText.trim().toLowerCase())
+}
+
+export const getDappInteractionsFromHumanizedCalls = (
+  submittedAccountOp: SubmittedAccountOpLike,
+  humanizedCalls: IrCall[]
 ): DappInteraction[] => {
+  // Must come before the Safe cancellation check: a delegation change is also an empty,
+  // 0-value call and would otherwise be mistaken for a cancellation
+  if (submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta) {
+    return [
+      submittedAccountOp.meta.setDelegation === false
+        ? { id: 'fallback:revoke', name: 'Revoke delegation', iconType: 'ambire' }
+        : { id: 'fallback:delegation', name: 'Enable smart settings', iconType: 'ambire' }
+    ]
+  }
+
+  if (submittedAccountOp.meta?.isSafeDeploy) {
+    return [
+      {
+        id: 'fallback:safeDeploy',
+        name: 'Activate Safe account',
+        iconType: 'safe'
+      }
+    ]
+  }
+
+  // A cancel of a pending transaction, by any account. Must come before the Safe check, as its
+  // empty call also looks like a Safe rejection, but the nonce it cancels may not be the
+  // account's own nonce (e.g. a 7702 EOA cancels by its transaction count)
+  if (isCancelAccountOp(submittedAccountOp)) {
+    const cancelledNonce = getCancelledNonce(submittedAccountOp)
+    // Only a Safe collects the signatures of its owners
+    const isSafeCancel = !!submittedAccountOp.signed?.length
+
+    return [
+      {
+        id: 'fallback:cancel',
+        name: 'Cancel',
+        iconType: isSafeCancel ? 'safe' : 'ambire',
+        ...(cancelledNonce !== null && { nonce: cancelledNonce })
+      }
+    ]
+  }
+
   if (isSafeRejectionCall(submittedAccountOp.calls, submittedAccountOp.accountAddr)) {
     const safeNonce = submittedAccountOp.safeTx?.nonce ?? submittedAccountOp.nonce
 
@@ -60,23 +125,20 @@ export const getDappInteractions = (
         id: 'fallback:cancel',
         name: 'Cancel',
         iconType: 'safe',
-        ...(safeNonce !== null && safeNonce !== undefined && { safeNonce: BigInt(safeNonce) })
+        ...(safeNonce !== null && safeNonce !== undefined && { nonce: BigInt(safeNonce) })
       }
     ]
   }
 
   const interactions: DappInteraction[] = []
   const seen = new Set<string>()
-  const humanizedCalls = getHumanizedCalls(submittedAccountOp)
+  const walletStakingInteraction = getWalletStakingInteraction(humanizedCalls)
+  if (walletStakingInteraction) return [walletStakingInteraction]
+
   const sendAddresses = Array.from(
     new Set(
       humanizedCalls.flatMap((call) => {
-        const firstVisualization = call.fullVisualization?.[0]
-        const isSend =
-          firstVisualization?.type === 'erc7730'
-            ? firstVisualization.title === 'Send'
-            : firstVisualization?.content === 'Send'
-        if (!isSend) return []
+        if (!isSendVisualization(call.fullVisualization?.[0])) return []
 
         return flattenHumanizerVisualizations(call.fullVisualization).flatMap((item) =>
           item.type === 'address' && item.address ? [item.address] : []
@@ -102,7 +164,11 @@ export const getDappInteractions = (
     })
   })
 
-  const isSwap = !!submittedAccountOp.meta?.swapTxn
+  // Only swap/bridge calls have an `activeRouteId`. Checked as well as `meta.swapTxn`, as a
+  // swap repeated from the activity has only the calls - it's not linked to a swap route
+  const isSwap =
+    !!submittedAccountOp.meta?.swapTxn ||
+    submittedAccountOp.calls.some((call) => !!call.activeRouteId)
   if (isSwap) {
     addInteraction({
       id: 'fallback:swap',
@@ -127,20 +193,20 @@ export const getDappInteractions = (
     })
   }
 
-  if (submittedAccountOp.meta && 'setDelegation' in submittedAccountOp.meta) {
-    if (submittedAccountOp.meta.setDelegation === false) {
-      addInteraction({
-        id: 'fallback:revoke',
-        name: 'Revoke delegation',
-        iconType: 'ambire'
-      })
-    } else {
-      addInteraction({
-        id: 'fallback:delegation',
-        name: 'Enable smart settings',
-        iconType: 'ambire'
-      })
-    }
+  // e.g. a smart account owner of a Safe approving its transaction, as it can't sign it
+  const isSafeApproval = humanizedCalls.some((call) => {
+    const firstVisualization = call.fullVisualization?.[0]
+    return (
+      firstVisualization?.type === 'action' &&
+      firstVisualization.content === SAFE_APPROVE_HASH_ACTION
+    )
+  })
+  if (isSafeApproval) {
+    addInteraction({
+      id: 'fallback:safeApproval',
+      name: 'Approve Safe transaction',
+      iconType: 'safe'
+    })
   }
 
   if (!interactions.length) {

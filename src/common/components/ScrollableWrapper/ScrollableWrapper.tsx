@@ -47,7 +47,12 @@ export type WrapperProps<T = any> = BaseProps &
   SectionListCompatibleProps<T> & {
     children?: React.ReactNode
     onDragEnd?: (fromIndex: number, toIndex: number) => void
-    renderItem?: (
+    /**
+     * Renders a row of `WRAPPER_TYPES.DRAGGABLE_FLAT_LIST`. Kept apart from `renderItem`, whose
+     * `{ item, index }` signature the other list types expect, as no function can satisfy both.
+     * Spread `listeners` and `attributes` on the element that should start the drag.
+     */
+    renderDraggableItem?: (
       item: T,
       index: number,
       isDragging: boolean,
@@ -56,8 +61,8 @@ export type WrapperProps<T = any> = BaseProps &
     ) => React.ReactElement | null
     keyExtractor?: (item: T, index: number) => string
     data?: T[]
-    // Forwarded to the draggable list for fixed-height row positioning
-    itemHeight?: number
+    // Forwarded to the draggable list for known-height row positioning, see its own prop
+    itemHeight?: number | ((item: T, index: number) => number)
   }
 
 const ScrollableWrapper = ({
@@ -71,6 +76,7 @@ const ScrollableWrapper = ({
   wrapperRef,
   onDragEnd,
   renderItem,
+  renderDraggableItem,
   keyExtractor,
   data,
   showsVerticalScrollIndicator = isWeb,
@@ -80,6 +86,8 @@ const ScrollableWrapper = ({
   const insets = useSafeAreaInsets()
   const internalRef = useRef<any>(null)
   const [isAtScreenBottom, setIsAtScreenBottom] = useState<boolean>(isMobile)
+  const [wrapperHeight, setWrapperHeight] = useState(0)
+  const [contentHeight, setContentHeight] = useState(0)
 
   const setRefs = useCallback(
     (node: any) => {
@@ -91,7 +99,8 @@ const ScrollableWrapper = ({
   )
 
   const handleLayout = useCallback(
-    (_event: LayoutChangeEvent) => {
+    (event: LayoutChangeEvent) => {
+      if (isWeb) setWrapperHeight(event.nativeEvent.layout.height)
       if (!isMobile) return
       const node = internalRef.current
       const measurable =
@@ -114,20 +123,35 @@ const ScrollableWrapper = ({
     [insets.bottom]
   )
 
+  // The 1px tolerance ignores sub-pixel differences when the content only fills the wrapper
+  const hasVerticalScrollbar =
+    isWeb &&
+    !!showsVerticalScrollIndicator &&
+    !(rest as ScrollViewProps).horizontal &&
+    contentHeight - wrapperHeight > 1
   const shouldApplyBottomInset = isMobile && isAtScreenBottom
   const bottomInsetValue = insets.bottom === 0 ? SPACING_SM : insets.bottom
   const scrollableWrapperStyles = [styles.wrapper, ...(Array.isArray(style) ? style : [style])]
   const scrollableWrapperContentContainerStyles: StyleProp<ViewStyle> = [
     { paddingBottom: shouldApplyBottomInset ? bottomInsetValue : 0 },
     styles.contentContainerStyle,
+    hasVerticalScrollbar && styles.contentContainerWithScrollbar,
     ...(Array.isArray(contentContainerStyle) ? contentContainerStyle : [contentContainerStyle]),
     isWeb ? ({ overflowY: 'auto' } as any) : null
   ]
 
-  const { onLayout: consumerOnLayout, ...restWithoutOnLayout } = rest as any
+  const {
+    onLayout: consumerOnLayout,
+    onContentSizeChange: consumerOnContentSizeChange,
+    ...restWithoutOnLayout
+  } = rest as any
   const composedOnLayout = (event: LayoutChangeEvent) => {
     handleLayout(event)
     if (consumerOnLayout) consumerOnLayout(event)
+  }
+  const composedOnContentSizeChange = (width: number, height: number) => {
+    if (isWeb) setContentHeight(height)
+    if (consumerOnContentSizeChange) consumerOnContentSizeChange(width, height)
   }
 
   if (type === WRAPPER_TYPES.DRAGGABLE_FLAT_LIST) {
@@ -140,13 +164,14 @@ const ScrollableWrapper = ({
           keyExtractor ? (item: any) => keyExtractor(item, 0) : (item: any) => item.key ?? ''
         }
         onDragEnd={onDragEnd ?? (() => {})}
-        renderItem={renderItem ?? (() => null)}
+        renderItem={renderDraggableItem ?? (() => null)}
         style={scrollableWrapperStyles}
         contentContainerStyle={scrollableWrapperContentContainerStyles}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         onLayout={composedOnLayout}
+        onContentSizeChange={composedOnContentSizeChange}
         {...restWithoutOnLayout}
       />
     )
@@ -167,6 +192,7 @@ const ScrollableWrapper = ({
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
         onLayout={composedOnLayout}
+        onContentSizeChange={composedOnContentSizeChange}
         {...restWithoutOnLayout}
       />
     )
@@ -187,6 +213,7 @@ const ScrollableWrapper = ({
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
         onLayout={composedOnLayout}
+        onContentSizeChange={composedOnContentSizeChange}
         {...restWithoutOnLayout}
       />
     )
@@ -207,6 +234,7 @@ const ScrollableWrapper = ({
       keyboardDismissMode={keyboardDismissMode || 'none'}
       alwaysBounceVertical={false}
       onLayout={composedOnLayout}
+      onContentSizeChange={composedOnContentSizeChange}
       {...restWithoutOnLayout}
     >
       {children}

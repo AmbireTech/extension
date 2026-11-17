@@ -1,67 +1,137 @@
+import { Buffer } from 'buffer'
+
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { URDecoder } from '@ngraveio/bc-ur'
 
-/**
- * The data can be all in while the decoder still needs a fragment it can take apart, so the
- * progress below is kept just short of the end until the payload really is complete.
- */
-const MAX_PROGRESS = 0.99
+/** A part the decoder holds or has resolved: the XOR of the fragments it covers */
+type DecoderPart = { indexes: number[]; fragment: Buffer }
 
 /**
- * How much of the progress leans on the fragments that are decoded rather than on the ones
- * the held parts pin down. The two agree for most of a scan, but the data can be all in a
- * moment before the decoder has a part it can take apart, and this keeps the bar creeping
- * through that moment instead of parking at the very end waiting for it.
+ * The parts of bc-ur's fountain decoder this class reads and feeds. It keeps them private,
+ * so they are typed here instead.
  */
-const DECODED_WEIGHT = 0.15
+type FountainDecoderInternals = {
+  mixedParts: { value: DecoderPart }[]
+  simpleParts: { value: DecoderPart }[]
+  processSimplePart: (part: DecoderPart & { isSimple: () => boolean }) => void
+  isSuccess: () => boolean
+  isFailure: () => boolean
+  resultMessage: () => Buffer
+}
 
-/** A part the decoder is holding on to, which stands for the XOR of the fragments it covers */
-type HeldPart = { value?: { indexes?: number[] } }
+/** A held part reduced to the fragments it still has unknown, keyed by the lowest of them */
+type Pivot = { indexes: Set<number>; fragment: Buffer }
+
+const xorInto = (target: Buffer, source: Buffer) => {
+  for (let i = 0; i < target.length; i++) target[i]! ^= source[i]!
+}
 
 /**
- * How many fragments a set of held parts pins down between them. Two parts covering the same
- * fragments say the same thing twice, so what counts is how many of their fragment sets are
- * independent of one another - which is what is left after eliminating them against each
- * other, the same way the fragments themselves are recovered.
+ * Eliminates the held parts against each other, the same way the fragments themselves are
+ * recovered, so that two parts saying the same thing count once. Each pivot that is left
+ * pins down one more fragment, so once there is one for every missing fragment the payload
+ * is fully known.
  */
-const countIndependentParts = (held: HeldPart[], resolved: Set<number>) => {
-  const pivots = new Map<number, Set<number>>()
-  let independent = 0
+const reduceHeldParts = (held: DecoderPart[], resolved: Map<number, Buffer>) => {
+  const pivots = new Map<number, Pivot>()
 
-  held.forEach(({ value }) => {
-    let indexes = new Set((value?.indexes || []).filter((index) => !resolved.has(index)))
+  held.forEach(({ indexes: partIndexes, fragment: partFragment }) => {
+    const fragment = Buffer.from(partFragment)
+    let indexes = new Set<number>()
+    partIndexes.forEach((index) => {
+      const resolvedFragment = resolved.get(index)
+      if (resolvedFragment) xorInto(fragment, resolvedFragment)
+      else indexes.add(index)
+    })
 
     while (indexes.size) {
-      const pivot = Math.min(...indexes)
-      const pivotIndexes = pivots.get(pivot)
+      const pivotIndex = Math.min(...indexes)
+      const pivot = pivots.get(pivotIndex)
 
-      if (!pivotIndexes) {
-        pivots.set(pivot, indexes)
-        independent += 1
-        break
+      if (!pivot) {
+        pivots.set(pivotIndex, { indexes, fragment })
+        return
       }
 
       // Both cover the pivot, so all this part adds is whatever the two of them differ by
       const reduced = new Set(indexes)
-      pivotIndexes.forEach((index) =>
+      pivot.indexes.forEach((index) =>
         reduced.has(index) ? reduced.delete(index) : reduced.add(index)
       )
       indexes = reduced
+      xorInto(fragment, pivot.fragment)
     }
   })
 
-  return independent
+  return pivots
 }
 
 export class UrFragmentDecoder {
   private decoder = new URDecoder()
 
+  /**
+   * The decoder keeps no public account of the parts it is holding, so they are read from
+   * its own state, which a later version of it may no longer have.
+   */
+  private get fountainDecoder(): FountainDecoderInternals | undefined {
+    const fountainDecoder = (this.decoder as any).fountainDecoder
+    if (!Array.isArray(fountainDecoder?.mixedParts) || !Array.isArray(fountainDecoder.simpleParts))
+      return undefined
+
+    return fountainDecoder
+  }
+
+  private getResolvedFragments(fountainDecoder: FountainDecoderInternals) {
+    return new Map(
+      fountainDecoder.simpleParts.map(({ value }) => [value.indexes[0]!, value.fragment])
+    )
+  }
+
+  /**
+   * bc-ur only takes a held part apart once all but one of its fragments are known, so the
+   * end of a scan used to wait for a lucky code even though the parts in hand already pin
+   * every fragment down. In that case the missing fragments are worked out here and handed
+   * to it, which then reassembles the payload and verifies its checksum as usual.
+   */
+  private solveIfPinnedDown() {
+    const fountainDecoder = this.fountainDecoder
+    const expectedParts = this.expectedPartCount()
+    if (!fountainDecoder || !expectedParts) return
+
+    const resolved = this.getResolvedFragments(fountainDecoder)
+    const held = fountainDecoder.mixedParts.map(({ value }) => value)
+    // Every missing fragment needs a part of its own, so there is nothing to solve yet
+    if (resolved.size + held.length < expectedParts) return
+
+    const pivots = reduceHeldParts(held, resolved)
+    if (resolved.size + pivots.size < expectedParts) return
+
+    // Each pivot only covers fragments past its own, so working down from the last one
+    // finds every other fragment of it already solved
+    const solved = new Map<number, Buffer>()
+    Array.from(pivots.keys())
+      .sort((a, b) => b - a)
+      .forEach((pivotIndex) => {
+        const { indexes, fragment } = pivots.get(pivotIndex)!
+        indexes.forEach((index) => index !== pivotIndex && xorInto(fragment, solved.get(index)!))
+        solved.set(pivotIndex, fragment)
+      })
+
+    solved.forEach((fragment, index) =>
+      fountainDecoder.processSimplePart({ indexes: [index], fragment, isSimple: () => true })
+    )
+
+    if (fountainDecoder.isFailure()) throw new ExternalSignerError('Failed to decode UR payload.')
+  }
+
   add(fragment: string) {
     this.decoder.receivePart(fragment)
+
+    if (!this.isComplete()) this.solveIfPinnedDown()
   }
 
   isComplete() {
-    return this.decoder.isComplete()
+    return !!this.decoder.isComplete() || !!this.fountainDecoder?.isSuccess()
   }
 
   /**
@@ -76,39 +146,36 @@ export class UrFragmentDecoder {
    * How much of the payload is in, from 0 to 1.
    *
    * Past the first pass every animated code carries an XOR of several fragments, which the
-   * decoder holds on to until the missing pieces let it take them apart - so the tail of a
-   * scan comes apart all at once. Counting only the fragments it resolved therefore sits at
-   * a fraction of the truth for most of the scan, while counting the parts it holds runs
-   * ahead of it (many carry nothing the others don't). This measures what those parts pin
-   * down between them, which tracks the scan itself.
+   * decoder holds on to until the missing pieces let it take them apart. This counts what
+   * those parts pin down between them, and the payload is solved as soon as they pin down
+   * all of it, so the progress only gets to the end when the scan does.
    */
   progress() {
     const expectedParts = this.expectedPartCount()
-
     if (!expectedParts) return 0
 
-    const resolved = new Set(this.decoder.receivedPartIndexes())
-    // The decoder keeps no public account of the parts it is holding, so this reads its own
-    // state, falling back to the resolved fragments alone should a later version drop it
-    const held: HeldPart[] = (this.decoder as any).fountainDecoder?.mixedParts || []
+    const fountainDecoder = this.fountainDecoder
+    // Falls back to the resolved fragments alone should a later version of bc-ur drop them
+    if (!fountainDecoder) return this.decoder.receivedPartIndexes().length / expectedParts
 
-    const decodedShare = resolved.size / expectedParts
-    const pinnedDownShare = (resolved.size + countIndependentParts(held, resolved)) / expectedParts
-
-    return Math.min(
-      pinnedDownShare * (1 - DECODED_WEIGHT) + decodedShare * DECODED_WEIGHT,
-      MAX_PROGRESS
+    const resolved = this.getResolvedFragments(fountainDecoder)
+    const pivots = reduceHeldParts(
+      fountainDecoder.mixedParts.map(({ value }) => value),
+      resolved
     )
+
+    return Math.min((resolved.size + pivots.size) / expectedParts, 1)
   }
 
   result(): Uint8Array {
     const ur = this.decoder.resultUR()
+    if (ur?.cbor?.length) return ur.cbor
 
-    if (!ur?.cbor) {
-      throw new ExternalSignerError('Failed to decode UR payload.')
-    }
+    // Solved here rather than by bc-ur, so the UR around the payload was never built
+    const fountainDecoder = this.fountainDecoder
+    if (fountainDecoder?.isSuccess()) return fountainDecoder.resultMessage()
 
-    return ur.cbor
+    throw new ExternalSignerError('Failed to decode UR payload.')
   }
 
   reset() {

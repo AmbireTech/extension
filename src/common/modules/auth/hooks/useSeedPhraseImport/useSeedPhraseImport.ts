@@ -1,27 +1,27 @@
-import { wordlists } from 'bip39'
-import { Mnemonic } from 'ethers'
-import { useCallback, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 
 import { BIP44_STANDARD_DERIVATION_TEMPLATE } from '@ambire-common/consts/derivation'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import normalizeSeedPhrase from './normalizeSeedPhrase'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
+import {
+  getSeedPhraseValidation,
+  normalizeSeedPhrase,
+  SeedPhraseError
+} from '@common/modules/auth/utils/seedPhrase'
 
 export default function useSeedPhraseImport() {
   const { goToNextRoute } = useOnboardingNavigation()
   const { t } = useTranslation()
 
-  const { initParams, subType } = useController('AccountPickerController').state
   const { dispatch: keystoreDispatch } = useController('KeystoreController')
-  const { dispatch: mainDispatch } = useController('MainController')
+  const { dispatchAndWait: mainDispatchAndWait } = useController('MainController')
   const {
-    watch,
     control,
     handleSubmit,
     setValue,
-    getValues,
     formState: { isValid },
     unregister
   } = useForm({
@@ -31,37 +31,35 @@ export default function useSeedPhraseImport() {
   const [importButtonPressed, setImportButtonPressed] = useState(false)
 
   const [enablePassphrase, setEnablePassphrase] = useState(false)
-  const [seedPhraseStatus, setSeedPhraseStatus] = useState<'incomplete' | 'valid' | 'invalid'>(
-    'incomplete'
+  // Off by default, so a passphrase is only kept on the device when the user asks for it
+  const [shouldSavePassphrase, setShouldSavePassphrase] = useState(false)
+  const toggleEnablePassphrase = useCallback(() => setEnablePassphrase((prev) => !prev), [])
+  const toggleShouldSavePassphrase = useCallback(() => setShouldSavePassphrase((prev) => !prev), [])
+  const seedValue = useWatch({ control, name: 'seed' })
+  // `null` while the seed input is not focused
+  const [seedCaretPosition, setSeedCaretPosition] = useState<number | null>(null)
+  const { status: seedPhraseStatus, error } = useMemo(
+    () => getSeedPhraseValidation(seedValue, seedCaretPosition),
+    [seedValue, seedCaretPosition]
   )
 
-  useEffect(() => {
-    const { unsubscribe } = watch((value) => {
-      if (!value.seed) {
-        setSeedPhraseStatus('incomplete')
-        return
-      }
+  const seedPhraseError = useMemo(() => {
+    if (!error) return undefined
 
-      const formattedSeed = normalizeSeedPhrase(value.seed)
+    const errorMessages: { [key in SeedPhraseError]: string } = {
+      'unknown-words': t('Some words are not valid recovery phrase words.'),
+      'wrong-word-count': t('A recovery phrase has 12, 15, 18, 21 or 24 words.'),
+      'invalid-phrase': t(
+        'Invalid recovery phrase. Check that the words are spelled correctly and in the right order.'
+      )
+    }
 
-      if (!Mnemonic.isValidMnemonic(formattedSeed)) {
-        setSeedPhraseStatus('invalid')
-        return
-      }
-
-      setSeedPhraseStatus('valid')
-    })
-    return () => unsubscribe()
-  }, [watch])
+    return errorMessages[error]
+  }, [error, t])
 
   const handleFormSubmit = useCallback(async () => {
-    await handleSubmit(({ seed, passphrase }) => {
+    await handleSubmit(async ({ seed, passphrase }) => {
       const formattedSeed = normalizeSeedPhrase(seed)
-      if (!Mnemonic.isValidMnemonic(formattedSeed)) {
-        setSeedPhraseStatus('invalid')
-        return
-      }
-
       setImportButtonPressed(true)
       keystoreDispatch({
         type: 'method',
@@ -71,28 +69,30 @@ export default function useSeedPhraseImport() {
             {
               seed: formattedSeed,
               seedPassphrase: passphrase || null,
+              shouldSavePassphrase: !!passphrase && shouldSavePassphrase,
               hdPathTemplate: BIP44_STANDARD_DERIVATION_TEMPLATE
             }
           ]
         }
       })
-      mainDispatch({
-        type: 'method',
-        params: {
-          method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
-          args: [{ privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }]
-        }
-      })
+      try {
+        // Sets the picker up with the phrase - personalize prepares its first account
+        await mainDispatchAndWait({
+          type: 'method',
+          params: {
+            method: 'accountPickerSetInitParamsFromPrivateKeyOrSeedPhrase',
+            args: [{ privKeyOrSeed: formattedSeed, seedPassphrase: passphrase || null }]
+          }
+        })
+        goToNextRoute(WEB_ROUTES.accountPersonalize)
+      } catch (error) {
+        // The controller reports its own failures, here the button only becomes usable again
+        console.error('Failed to prepare the recovery phrase accounts', error)
+      } finally {
+        setImportButtonPressed(false)
+      }
     })()
-  }, [mainDispatch, keystoreDispatch, handleSubmit])
-
-  useEffect(() => {
-    if (!getValues('seed')) return
-    if (!!importButtonPressed && initParams && subType === 'seed') {
-      setImportButtonPressed(false)
-      goToNextRoute()
-    }
-  }, [goToNextRoute, getValues, initParams, subType, importButtonPressed])
+  }, [mainDispatchAndWait, keystoreDispatch, handleSubmit, goToNextRoute, shouldSavePassphrase])
 
   useEffect(() => {
     if (!enablePassphrase) {
@@ -101,31 +101,24 @@ export default function useSeedPhraseImport() {
     }
   }, [enablePassphrase, setValue, unregister])
 
-  const validateSeedPhraseWord = useCallback(
-    (value: string) => {
-      const formattedSeed = normalizeSeedPhrase(value)
-
-      const couldValueBeAPastedSeed = formattedSeed.includes(' ')
-
-      // If the value contains multiple words, it could be a pasted seed phrase
-      // Don't display errors in this case, otherwise an error flashes when pasting
-      if (!formattedSeed || couldValueBeAPastedSeed) return undefined
-      if (!wordlists.english?.includes(formattedSeed)) return t('invalid-bip39-word')
-      return undefined
-    },
-    [t]
+  const validateSeedPhrase = useCallback(
+    (value: string) => getSeedPhraseValidation(value).status === 'valid',
+    []
   )
 
   return {
     control,
     isValid,
     enablePassphrase,
-    setEnablePassphrase,
+    toggleEnablePassphrase,
+    shouldSavePassphrase,
+    toggleShouldSavePassphrase,
     seedPhraseStatus,
-    setSeedPhraseStatus,
+    seedPhraseError,
+    seedCaretPosition,
+    setSeedCaretPosition,
     importButtonPressed,
-    setImportButtonPressed,
     handleFormSubmit,
-    validateSeedPhraseWord
+    validateSeedPhrase
   }
 }

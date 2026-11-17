@@ -2,8 +2,9 @@ import { useCallback, useContext, useEffect, useMemo, useSyncExternalStore } fro
 
 import { isDev } from '@common/config/env'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
-import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import { ControllerHelpersMapping } from '@common/contexts/controllerStoreContext/controllerHelpersStore'
+import { subscribeToScreenCatchUp } from '@common/contexts/controllerStoreContext/screenCatchUp'
+import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type MethodKeys<T> = {
@@ -59,7 +60,7 @@ interface BaseControllerReturn<K extends keyof AllControllersMappingType, S> {
    */
   state: S
   helpers: ControllerHelpersMapping[K]
-  updateHelpers: (data: Partial<ControllerHelpersMapping[K]>, forceEmit?: boolean) => void
+  updateHelpers: (data: Partial<ControllerHelpersMapping[K]>) => void
 }
 
 type UseControllerReturn<K extends keyof AllControllersMappingType, S> = BaseControllerReturn<
@@ -72,14 +73,52 @@ type DefaultState<K extends keyof AllControllersMappingType> = K extends 'SignAc
   ? AllControllersMappingType[K] | null
   : AllControllersMappingType[K]
 
+/**
+ * Whether the component that owns the hook reads the controller's state at all, which
+ * is what makes it worth subscribing to. Kept here rather than in state so that the
+ * first read costs no render of its own: the subscription is established after the
+ * commit either way, and `decide` is what reads this then.
+ */
+export type SubscriptionIntent = {
+  /**
+   * Reports that the state was read. Returns whether the subscription has to be asked
+   * for again, which is the case only for a first read past the point where it was
+   * already decided against.
+   */
+  reportStateRead: () => boolean
+  /** Whether there is anything to subscribe for. Called as the subscription is set up. */
+  decide: () => boolean
+}
+
+export const createSubscriptionIntent = (): SubscriptionIntent => {
+  let readsState = false
+  let wasDecided = false
+
+  return {
+    reportStateRead: () => {
+      const isFirstRead = !readsState
+      readsState = true
+
+      return isFirstRead && wasDecided
+    },
+    decide: () => {
+      wasDecided = true
+
+      return readsState
+    }
+  }
+}
+
 export default function useControllerState<K extends keyof AllControllersMappingType>({
   id,
   selector,
-  subscriptionEnabled
+  subscriptionIntent,
+  resubscribeSignal
 }: {
   id: K
   selector?: undefined
-  subscriptionEnabled?: boolean
+  subscriptionIntent?: SubscriptionIntent
+  resubscribeSignal?: number
 }): UseControllerReturn<K, DefaultState<K>>
 
 export default function useControllerState<
@@ -88,21 +127,25 @@ export default function useControllerState<
 >({
   id,
   selector,
-  subscriptionEnabled
+  subscriptionIntent,
+  resubscribeSignal
 }: {
   id: K
   selector: S
-  subscriptionEnabled?: boolean
+  subscriptionIntent?: SubscriptionIntent
+  resubscribeSignal?: number
 }): UseControllerReturn<K, AllControllersMappingType[K][S]>
 
 export default function useControllerState<K extends keyof AllControllersMappingType, S>({
   id,
   selector,
-  subscriptionEnabled
+  subscriptionIntent,
+  resubscribeSignal
 }: {
   id: K
   selector?: (state: AllControllersMappingType[K]) => S
-  subscriptionEnabled?: boolean
+  subscriptionIntent?: SubscriptionIntent
+  resubscribeSignal?: number
 }): UseControllerReturn<K, S>
 
 export default function useControllerState<
@@ -111,11 +154,13 @@ export default function useControllerState<
 >({
   id,
   selector,
-  subscriptionEnabled = true
+  subscriptionIntent,
+  resubscribeSignal
 }: {
   id: K
   selector?: ((state: AllControllersMappingType[K]) => S) | keyof AllControllersMappingType[K]
-  subscriptionEnabled?: boolean
+  subscriptionIntent?: SubscriptionIntent
+  resubscribeSignal?: number
 }): UseControllerReturn<K, S> {
   const {
     controllerStore,
@@ -160,12 +205,35 @@ export default function useControllerState<
         onChange()
       })
 
+      const unsubscribeFromCatchUp = subscribeToScreenCatchUp(() => {
+        // A subscribed hook has just been notified by the store itself, and there are
+        // hundreds of those on the screen the user is on - re-reading them all is work
+        // for nothing in the window the switch is waiting on.
+        if (unsubscribeFromStore) return
+
+        onChange()
+      })
+
       return () => {
         unsubscribeFromStore?.()
         unsubscribeFromFocus()
+        unsubscribeFromCatchUp()
       }
     },
     [screenFocus]
+  )
+
+  /**
+   * Answered when the subscription is established rather than while rendering, so a
+   * component that reads the state does not have to render a second time to say so.
+   * `resubscribeSignal` is what a caller changes to have this asked again.
+   */
+  const shouldSubscribe = useCallback(
+    () => !subscriptionIntent || subscriptionIntent.decide(),
+    // `resubscribeSignal` is not read here, only changed by the caller to have the
+    // question asked again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [subscriptionIntent, resubscribeSignal]
   )
 
   const derivedSelector = useMemo(() => {
@@ -177,7 +245,7 @@ export default function useControllerState<
   const state = useSyncExternalStore(
     useCallback(
       (cb) => {
-        if (!subscriptionEnabled) return () => {}
+        if (!shouldSubscribe()) return () => {}
         return subscribeWhileFocused(
           (notify) =>
             stateSubscriptionManager.subscribe(id, notify, controllerStore, derivedSelector),
@@ -190,7 +258,7 @@ export default function useControllerState<
         derivedSelector,
         stateSubscriptionManager,
         subscribeWhileFocused,
-        subscriptionEnabled
+        shouldSubscribe
       ]
     ),
     useCallback(() => {
@@ -201,7 +269,7 @@ export default function useControllerState<
   const helpers = useSyncExternalStore(
     useCallback(
       (cb) => {
-        if (!subscriptionEnabled) return () => {}
+        if (!shouldSubscribe()) return () => {}
         return subscribeWhileFocused(
           (notify) => helpersSubscriptionManager.subscribe(id, notify, controllerHelpersStore),
           cb
@@ -212,7 +280,7 @@ export default function useControllerState<
         controllerHelpersStore,
         helpersSubscriptionManager,
         subscribeWhileFocused,
-        subscriptionEnabled
+        shouldSubscribe
       ]
     ),
     useCallback(() => {
@@ -221,22 +289,29 @@ export default function useControllerState<
   )
 
   const updateHelpers = useCallback(
-    (data: Partial<ControllerHelpersMapping[K]>, forceEmit?: boolean) => {
-      controllerHelpersStore.update(id, data, forceEmit)
+    (data: Partial<ControllerHelpersMapping[K]>) => {
+      controllerHelpersStore.update(id, data)
     },
     [controllerHelpersStore, id]
   )
 
-  // Create the error object here to capture the stack trace of the call site (the component using this hook)
-  const missingControllerError = useMemo(() => {
-    return new Error(`A controller with name ${id} does not exist in the controllerStore.`)
-  }, [id])
+  // Created here rather than in the effect below to capture the stack trace of the call
+  // site (the component using this hook). Only in development, because that capture is
+  // the expensive part of building an error and a screen mounts hundreds of these hooks,
+  // none of which ever shows the warning.
+  const missingControllerError = useMemo(
+    () =>
+      isDev
+        ? new Error(`A controller with name ${id} does not exist in the controllerStore.`)
+        : null,
+    [id]
+  )
 
   useEffect(() => {
     if (id === 'SignAccountOpController') return
 
     if (isStoreReady && !Object.keys(controllerStore.getSnapshot(id)).length) {
-      if (isDev) console.warn(missingControllerError)
+      if (missingControllerError) console.warn(missingControllerError)
     }
   }, [controllerStore, id, isStoreReady, missingControllerError])
 

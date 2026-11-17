@@ -50,6 +50,31 @@ jobs:
           RELAYER_URL: ${{ vars.RELAYER_URL }}
         run: yarn build:web:benzin
 
+      # Guard against deploying a build that crashes on load
+      - name: Install e2e test dependencies
+        working-directory: ./e2e-playwright-tests
+        run: yarn install --frozen-lockfile && yarn postinstall
+
+      - name: Get Playwright version
+        working-directory: ./e2e-playwright-tests
+        run: echo "PLAYWRIGHT_VERSION=$(node -p 'require(\"./node_modules/@playwright/test/package.json\").version')" >> $GITHUB_ENV
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: ./e2e-playwright-tests
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run benzin e2e test 🧪
+        working-directory: ./e2e-playwright-tests
+        run: yarn benzin
+
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.1
         with:

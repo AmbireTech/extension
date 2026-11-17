@@ -1,0 +1,74 @@
+name: Issues - Close on release merge
+
+# GitHub closes issues from "Closes #123" only when the PR is merged into the default branch (v2).
+# PRs into release/* don't link or close them, so this closes them on merge instead.
+on:
+  pull_request:
+    types: [closed]
+    branches: ['release/**']
+
+jobs:
+  close:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const CLOSING_KEYWORDS = ['close', 'closes', 'closed', 'fix', 'fixes', 'fixed', 'resolve', 'resolves', 'resolved']
+            const TRAILING_PUNCTUATION = '.,;:)'
+            const issueUrlPrefix = `https://github.com/${context.repo.owner}/${context.repo.repo}/issues/`
+            const pr = context.payload.pull_request
+
+            const trimTrailingPunctuation = (word) => {
+              let end = word.length
+              while (end > 0 && TRAILING_PUNCTUATION.includes(word[end - 1])) end--
+              return word.slice(0, end)
+            }
+
+            // Accepts "#123" or a link to an issue in this repo
+            const parseIssueNumber = (reference) => {
+              const ref = trimTrailingPunctuation(reference)
+              let numberText = null
+              if (ref.startsWith('#')) numberText = ref.slice(1)
+              if (ref.startsWith(issueUrlPrefix)) numberText = ref.slice(issueUrlPrefix.length)
+              const issueNumber = Number(numberText)
+              return numberText && Number.isInteger(issueNumber) && issueNumber > 0 ? issueNumber : null
+            }
+
+            const words = (pr.body || '').split(/\s+/)
+            const issueNumbers = new Set()
+            words.forEach((word, index) => {
+              const isClosingKeyword = CLOSING_KEYWORDS.includes(trimTrailingPunctuation(word.toLowerCase()))
+              if (!isClosingKeyword || index + 1 >= words.length) return
+              const issueNumber = parseIssueNumber(words[index + 1])
+              if (issueNumber) issueNumbers.add(issueNumber)
+            })
+
+            const failedIssueNumbers = []
+            for (const issueNumber of issueNumbers) {
+              try {
+                const { data: issue } = await github.rest.issues.get({ ...context.repo, issue_number: issueNumber })
+                if (issue.pull_request || issue.state === 'closed') continue
+
+                await github.rest.issues.createComment({
+                  ...context.repo,
+                  issue_number: issueNumber,
+                  body: `Closed by #${pr.number} (merged into \`${pr.base.ref}\`).`
+                })
+                await github.rest.issues.update({
+                  ...context.repo,
+                  issue_number: issueNumber,
+                  state: 'closed',
+                  state_reason: 'completed'
+                })
+                core.info(`Closed #${issueNumber}`)
+              } catch (error) {
+                core.error(`Could not close #${issueNumber}: ${error.message}`)
+                failedIssueNumbers.push(issueNumber)
+              }
+            }
+
+            if (failedIssueNumbers.length) core.setFailed(`Could not close: #${failedIssueNumbers.join(', #')}`)

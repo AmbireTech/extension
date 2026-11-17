@@ -1,6 +1,7 @@
 import { Observable, Subscription } from 'rxjs'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { Hex } from '@ambire-common/interfaces/hex'
 import { ExternalSignerController } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
@@ -8,7 +9,7 @@ import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/util
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { isLedgerEmulator, isProd, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
 import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
-import { ContextModuleBuilder } from '@ledgerhq/context-module'
+import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
   DeviceManagementKitBuilder,
   DeviceModelId as LedgerDeviceModels,
@@ -25,6 +26,12 @@ export { LedgerDeviceModels }
 export type LedgerSignature = Signature
 
 const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
+
+/**
+ * The reason the Ledger DMK WebHID transport gives (as `originalError`) when
+ * the browser's device prompt resolves without a selected device.
+ */
+const NO_SELECTED_DEVICE_ERROR = 'No selected device'
 
 class LedgerController implements ExternalSignerController, LedgerControllerInterface {
   unlockedPath: string = ''
@@ -45,7 +52,17 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
   #rejectSigningSubscription: (() => void) | null = null
 
-  constructor() {
+  #isSigningReportAllowed: () => boolean
+
+  // Lets the keystore fill in the model of a key saved without one
+  #onKeyConfirmed?: (keyAddr: string, deviceModel: string) => void
+
+  constructor(
+    isSigningReportAllowed: () => boolean,
+    onKeyConfirmed?: (keyAddr: string, deviceModel: string) => void
+  ) {
+    this.#isSigningReportAllowed = isSigningReportAllowed
+    this.#onKeyConfirmed = onKeyConfirmed
     // When the `cleanUpListener` method gets passed to the navigator.hid listeners
     // the `this` context gets lost, so we need to bind it here. The `this` context
     // in the `cleanUp` method should be the `LedgerController` instance.
@@ -105,6 +122,12 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     // In emulator mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
     if (isLedgerEmulator) return
 
+    // `getDevices()` lists only connected devices this extension already has
+    // access to, so prompting again is not needed. It's also required on
+    // Vivaldi, where the prompt resolves with no device in this case.
+    const grantedDevices = await navigator.hid.getDevices()
+    if (grantedDevices.some((device) => device.vendorId === LedgerController.vendorId)) return
+
     const dmk = new DeviceManagementKitBuilder()
       // .addLogger(new ConsoleLogger()) // for debugging only
       .addTransport(webHidTransportFactory)
@@ -120,9 +143,27 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
           dmk.close()
           resolve(device)
         },
-        error: (error) => {
+        error: async (error) => {
           subscription?.unsubscribe()
-          reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
+          dmk.close()
+
+          // DMK errors have no `message`, the reason is in `originalError`.
+          // The device prompt resolves with no device when the user closes it
+          // without picking one, or when the browser doesn't show it at all.
+          const isNoDeviceSelected = error?.originalError?.message === NO_SELECTED_DEVICE_ERROR
+          if (!isNoDeviceSelected) {
+            reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
+            return
+          }
+
+          // TODO: Remove the Vivaldi message once VB-133598 is fixed in a Vivaldi release.
+          // Vivaldi doesn't show the device prompt on extension pages (it does on
+          // regular websites), so a new device can't be allowed there. Reported as
+          // VB-133598, see https://forum.vivaldi.net/post/930284
+          const message = (await isVivaldi())
+            ? "A known Vivaldi issue blocks connecting a new Ledger to browser extensions. We've reported it to Vivaldi. Ledgers you've already connected still work. [Learn more](https://help.ambire.com/en/articles/18457958-why-can-t-i-connect-my-ledger-in-vivaldi)"
+            : 'No Ledger device was selected. Please try again and pick your Ledger device from the list.'
+          reject(new ExternalSignerError(message))
         }
       })
     })
@@ -229,10 +270,10 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       this.deviceModel = connectedDevice.modelId
       this.deviceId = connectedDevice.id
 
-      const contextModule = new ContextModuleBuilder({
-        originToken: 'ambire',
-        loggerFactory: this.#createContextLogger
-      }).build()
+      const contextModule = buildLedgerContextModule({
+        loggerFactory: this.#createContextLogger,
+        isSigningReportAllowed: this.#isSigningReportAllowed
+      })
       this.signerEth = new SignerEthBuilder({ dmk: this.walletSDK, sessionId })
         .withContextModule(contextModule)
         .build()
@@ -318,13 +359,15 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       subscription = observable.subscribe({
         next: (response: any) => {
           if (isCancelled) return
-          // TODO: If we communicate this to the user in the UI better, we can
-          // wait for the user to do all required interactions instead of rejecting.
+          // Only a locked device blocks us here. When the device needs to open
+          // the target app (ConfirmOpenApp), let the DMK device action open it
+          // and wait for the user to confirm on-device — this covers both the
+          // official Ethereum app and the sideloaded "Ambire Signer" app used for
+          // the 7702 authorization, instead of erroring that no app is open.
           const missingRequiredUserInteraction =
             response.status === 'pending' &&
-            [UserInteractionRequired.UnlockDevice, UserInteractionRequired.ConfirmOpenApp].includes(
-              response.intermediateValue.requiredUserInteraction
-            )
+            response.intermediateValue.requiredUserInteraction ===
+              UserInteractionRequired.UnlockDevice
 
           if (missingRequiredUserInteraction) {
             subscription?.unsubscribe()
@@ -398,6 +441,9 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     // Save unlocked state
     this.unlockedPath = path
     this.unlockedPathKeyAddr = address
+
+    if (expectedKeyOnThisPath && address.toLowerCase() === expectedKeyOnThisPath.toLowerCase())
+      this.#onKeyConfirmed?.(expectedKeyOnThisPath, this.deviceModel)
 
     return 'JUST_UNLOCKED' as const
   }
@@ -509,6 +555,30 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       {
         onCompleted: (output) => output,
         errorMessage: 'Failed to sign typed data with Ledger device',
+        isSign: true
+      }
+    )
+  }
+
+  async sign7702(derivationPath: string, chainId: bigint, delegationAddr: Hex, nonce: bigint) {
+    // Init the session WITHOUT unlocking via getAddress: unlock would open the
+    // official Ethereum app, but the 7702 delegation must be signed by the
+    // sideloaded "Ambire Signer" app. signDelegationAuthorization (patched to
+    // target "Ambire Signer") opens the right app itself.
+    await this.#initSDKSessionIfNeeded()
+
+    if (!this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage())
+
+    return this.#handleLedgerSubscription<LedgerSignature>(
+      this.signerEth.signDelegationAuthorization(
+        getHdPathWithoutRoot(derivationPath),
+        Number(chainId),
+        delegationAddr,
+        Number(nonce)
+      ).observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign message with Ledger device',
         isSign: true
       }
     )

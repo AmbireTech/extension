@@ -11,6 +11,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useRoute from '@common/hooks/useRoute'
@@ -24,12 +25,18 @@ import TokenDetailsTitle from '@common/modules/token-details/components/Title'
 import TokenBalanceCard from '@common/modules/token-details/components/TokenBalanceCard'
 import TokenData from '@common/modules/token-details/components/TokenData'
 import TokenPriceDisplay from '@common/modules/token-details/components/TokenPriceDisplay'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import useTokenActions from '@common/modules/token-details/hooks/useTokenActions'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: NetworksController) => state.networks
 
 /**
  * Builds a portfolio-shaped TokenResult from a trending token so the same token-details components
@@ -58,14 +65,17 @@ const buildTokenResult = (token: TrendingToken, chainId: bigint, address: string
   flags: { onGasTank: false, rewardsType: null, canTopUpGasTank: false, isFeeToken: false }
 })
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const TrendingTokenDetailsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state } = useRoute()
   const { state: dappsState } = useController('DappsController')
-  const { state: networks } = useController('NetworksController', (s) => s.networks)
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const token: TrendingToken | undefined = useMemo(
     () =>
@@ -145,7 +155,11 @@ const TrendingTokenDetailsScreen = () => {
       ) : (
         <ScrollableWrapper
           // The bottom padding is because of the footer, to make sure the content is not hidden behind it.
-          contentContainerStyle={[spacings.phSm, isWeb && { paddingBottom: 124 }]}
+          // In a narrow view the footer sits under the content, so no space has to be reserved for it
+          contentContainerStyle={[
+            spacings.phSm,
+            isWeb && !isNarrowWebLayout && { paddingBottom: 124 }
+          ]}
         >
           <HideTokenModal
             modalRef={hideTokenModalRef}
@@ -181,7 +195,7 @@ const TrendingTokenDetailsScreen = () => {
               flexbox.alignCenter,
               spacings.phSm,
               spacings.mbTy,
-              { height: 56, borderRadius: BORDER_RADIUS_PRIMARY },
+              { height: BUTTON_HEIGHT, borderRadius: BORDER_RADIUS_PRIMARY },
               coingeckoAnimStyle
             ]}
           >
@@ -245,11 +259,12 @@ const TrendingTokenDetailsScreen = () => {
                 spacings.phSm
               ]}
             >
-              {actions.map((action) => (
+              {actions.map((action, index) => (
                 <TokenDetailsButton
                   key={action.id}
                   {...action}
                   isDisabled={!!action.isDisabled}
+                  isLast={index === actions.length - 1}
                   token={displayToken}
                   iconWidth={action.iconWidth}
                 />
@@ -259,23 +274,21 @@ const TrendingTokenDetailsScreen = () => {
         ) : (
           <FooterGlassView
             size="sm"
-            style={isCompactSidePanelLayout ? spacings.phSm : undefined}
-            glassViewProps={
-              isCompactSidePanelLayout
-                ? { cssStyle: { width: '100%', alignSelf: 'stretch' } }
-                : undefined
-            }
+            // In a narrow view the footer is a flat panel under the content like on mobile,
+            // instead of a glass pill floating over it
+            absolute={!isNarrowWebLayout}
+            fullWidth={isNarrowWebLayout}
+            style={isNarrowWebLayout ? { backgroundColor: theme.primaryBackground } : undefined}
             innerContainerStyle={
-              isCompactSidePanelLayout
-                ? { gap: SPACING_MI, width: '100%', alignItems: 'stretch' }
-                : undefined
+              isNarrowWebLayout ? { flexDirection: 'row', gap: SPACING_MI } : undefined
             }
           >
-            {actions.map((action) => (
+            {actions.map((action, index) => (
               <TokenDetailsButton
                 key={action.id}
                 {...action}
                 isDisabled={!!action.isDisabled}
+                isLast={index === actions.length - 1}
                 token={displayToken}
                 iconWidth={action.iconWidth}
               />

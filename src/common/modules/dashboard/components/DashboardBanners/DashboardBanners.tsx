@@ -5,16 +5,24 @@ import { BannerType } from '@ambire-common/interfaces/banner'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner/DashboardBanner'
 import MarketingBanner from '@common/modules/dashboard/components/DashboardBanners/MarketingBanner/MarketingBanner'
 import RecoveryPhraseBackupBanner from '@common/modules/dashboard/components/DashboardBanners/RecoveryPhraseBackupBanner'
+import SafeActivationBanner from '@common/modules/dashboard/components/DashboardBanners/SafeActivationBanner'
+import WebsiteAccessBanner from '@common/modules/dashboard/components/DashboardBanners/WebsiteAccessBanner'
 import useBanners from '@common/modules/dashboard/hooks/useBanners'
+import spacings from '@common/styles/spacings'
 
 const DashboardBanners = () => {
   const [controllerBanners, marketingBanners] = useBanners()
 
   return (
-    <View>
+    // The gap above the tabs row. The banners collapse away above it, so the gap has to be
+    // part of them to collapse with them.
+    <View style={controllerBanners.length ? spacings.pbTy : undefined}>
       {/* Stays on top of everything else - there is nothing more urgent than not
       being able to recover an account that holds funds */}
       <RecoveryPhraseBackupBanner />
+      {/* A Safe that isn't active anywhere can't be used at all, so it comes right after */}
+      <SafeActivationBanner />
+      <WebsiteAccessBanner />
       {marketingBanners.map((banner) => (
         <MarketingBanner key={banner.id} banner={banner} />
       ))}

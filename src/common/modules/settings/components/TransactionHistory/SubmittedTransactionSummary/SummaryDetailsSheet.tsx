@@ -75,7 +75,6 @@ const SummaryDetailsSheet = ({
         txnId={submittedAccountOp.txnId}
         identifiedBy={submittedAccountOp.identifiedBy}
         accountAddr={submittedAccountOp.accountAddr}
-        gasFeePayment={submittedAccountOp.gasFeePayment}
         status={getPresentationalStatus(submittedAccountOp)}
       />
     ),

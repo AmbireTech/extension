@@ -2,6 +2,10 @@ import React, { FC } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 
 import { EIP7702Auth } from '@ambire-common/consts/7702'
+import type {
+  BalanceChange,
+  NftBalanceChange
+} from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import { StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
@@ -10,19 +14,24 @@ import StarsIcon from '@common/assets/svg/StarsIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
+import TokenOrNft from '@common/components/TokenOrNft'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 import DelegationHumanization from '@web/components/DelegationHumanization'
 
 import Step from './components/Step'
-import { getFee, getFinalizedRows, getTimestamp, shouldShowTxnProgress } from './utils/rows'
-
-const { isSidePanel } = getUiType()
+import {
+  getFee,
+  getFinalizedRows,
+  getTimestamp,
+  hasBalanceChangesSettled,
+  shouldShowTxnProgress
+} from './utils/rows'
 
 interface Props {
   activeStep: ActiveStepType
@@ -33,22 +42,30 @@ interface Props {
   delegation?: EIP7702Auth
 }
 
+type DisplayBalanceChange = BalanceChange | NftBalanceChange
+
+const isNftBalanceChange = (change: DisplayBalanceChange): change is NftBalanceChange =>
+  'tokenId' in change
+
 const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, delegation }) => {
+  const { isNarrowWebLayout } = useCompactLayout()
   const { width: windowWidth } = useWindowDimensions()
   const { theme } = useTheme()
-  const { blockData, finalizedStatus, feePaidWith, from, originatedFrom } = stepsState
+  const { blockData, finalizedStatus, feePaidWith, tokenPricesEnabled, from, originatedFrom } =
+    stepsState
   const finalStepRows: any = getFinalizedRows(blockData, finalizedStatus)
-  const balanceChanges =
-    stepsState.submittedAccountOp?.balanceChanges || stepsState.balanceChanges || []
-  const hasBalanceChangesLoaded =
-    typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined' ||
-    typeof stepsState.balanceChanges !== 'undefined'
+  const balanceChanges: DisplayBalanceChange[] = [
+    ...(stepsState.submittedAccountOp?.balanceChanges ?? stepsState.balanceChanges ?? []),
+    ...(stepsState.submittedAccountOp?.nftBalanceChanges ?? stepsState.nftBalanceChanges ?? [])
+  ]
+  const { hasBalanceChangesFailed } = stepsState
+  const hasBalanceChangesLoaded = hasBalanceChangesSettled(stepsState) && !hasBalanceChangesFailed
   const assetsOut = balanceChanges.filter((change) => change.balanceChange < 0n)
   const assetsIn = balanceChanges.filter((change) => change.balanceChange > 0n)
   const shouldShowBalanceChanges = shouldShowTxnProgress(finalizedStatus)
   const shouldRenderBalanceChangesInColumns = windowWidth > 700
   const displayActiveStep =
-    activeStep === 'finalized' && shouldShowBalanceChanges && !hasBalanceChangesLoaded
+    activeStep === 'finalized' && shouldShowBalanceChanges && !hasBalanceChangesSettled(stepsState)
       ? 'balance-changes'
       : activeStep
 
@@ -94,7 +111,8 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                   withNetworkIcon={false}
                 />
                 <Text style={spacings.mlMi} appearance="primary" weight="medium" fontSize={12}>
-                  {feePaidWith.symbol} ({feePaidWith.usdValue})
+                  {feePaidWith.symbol}
+                  {tokenPricesEnabled ? ` (${feePaidWith.usdValue})` : null}
                 </Text>
               </>
             )}
@@ -102,7 +120,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
         ) : null,
       value:
         !feePaidWith?.isErc20 && !feePaidWith?.isSponsored
-          ? getFee(feePaidWith, finalizedStatus)
+          ? getFee(feePaidWith, finalizedStatus, tokenPricesEnabled)
           : null
     }
   ]
@@ -141,7 +159,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
 
   const isFinalized = displayActiveStep === 'finalized'
 
-  const renderBalanceChangesCard = (title: string, changes: typeof balanceChanges) => (
+  const renderBalanceChangesCard = (title: string, changes: DisplayBalanceChange[]) => (
     <View
       style={[
         flexbox.flex1,
@@ -176,17 +194,40 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           }
         ]}
       >
-        {changes.map((change, index) => (
-          <PendingTokenSummary
-            key={change.address}
-            token={{
-              ...change,
-              simulationAmount: change.balanceChange
-            }}
-            chainId={change.chainId}
-            hasBottomSpacing={index < changes.length - 1}
-          />
-        ))}
+        {changes.map((change, index) => {
+          if (isNftBalanceChange(change)) {
+            return (
+              <View
+                key={`${change.address}-${change.tokenId.toString()}`}
+                style={[
+                  flexbox.directionRow,
+                  flexbox.alignCenter,
+                  flexbox.justifySpaceBetween,
+                  index < changes.length - 1 ? spacings.mbSm : undefined
+                ]}
+              >
+                <TokenOrNft
+                  value={change.tokenId}
+                  address={change.address}
+                  chainId={change.chainId}
+                  tokenMarginRight={0}
+                />
+              </View>
+            )
+          }
+
+          return (
+            <PendingTokenSummary
+              key={change.address}
+              token={{
+                ...change,
+                simulationAmount: change.balanceChange
+              }}
+              chainId={change.chainId}
+              hasBottomSpacing={index < changes.length - 1}
+            />
+          )
+        })}
       </View>
     </View>
   )
@@ -194,7 +235,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   return (
     <View
       style={
-        isMobile || isSidePanel
+        isMobile || isNarrowWebLayout
           ? undefined
           : IS_MOBILE_UP_BENZIN_BREAKPOINT
             ? spacings.mb2Xl
@@ -250,7 +291,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
           testID="balance-changes-step"
         >
           <View style={flexbox.flex1}>
-            {!hasBalanceChangesLoaded && (
+            {!hasBalanceChangesLoaded && !hasBalanceChangesFailed && (
               <View
                 style={[
                   flexbox.directionRow,
@@ -268,6 +309,25 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                 <Spinner style={{ width: 18, height: 18 }} />
                 <Text style={spacings.mlSm} fontSize={14} appearance="secondaryText">
                   Loading balance changes
+                </Text>
+              </View>
+            )}
+            {hasBalanceChangesFailed && (
+              <View
+                style={[
+                  spacings.phSm,
+                  spacings.pvSm,
+                  {
+                    backgroundColor: theme.secondaryBackground,
+                    borderWidth: 1,
+                    borderColor: theme.secondaryBorder,
+                    ...common.borderRadiusPrimary
+                  }
+                ]}
+              >
+                <Text fontSize={14} appearance="secondaryText">
+                  Failed to load balance changes. The transaction itself went through - open it in
+                  the explorer to see the details.
                 </Text>
               </View>
             )}

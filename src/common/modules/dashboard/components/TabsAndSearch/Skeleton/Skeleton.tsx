@@ -12,7 +12,6 @@ const Skeleton = () => {
   return (
     <View style={[styles.container, { marginHorizontal: 0 }]}>
       <SkeletonLoader width={isWeb ? 300 : '100%'} height={32} borderRadius={14} />
-      {isWeb && <SkeletonLoader width={200} height={32} />}
     </View>
   )
 }

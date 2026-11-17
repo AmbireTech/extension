@@ -12,7 +12,7 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { ROUTES } from '@common/modules/router/constants/common'
+import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 
 const getDuplicateAccountIndexes = (accounts: AddressState[]) => {
   const accountAddresses = accounts.map((addressState) => {
@@ -39,7 +39,8 @@ const DEFAULT_ADDRESS_FIELD_VALUE = {
 }
 
 export default function useViewOnlyAccountAdder() {
-  const { state: accountsState, dispatch: accountsDispatch } = useController('AccountsController')
+  const { state: accountsState } = useController('AccountsController')
+  const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { navigate } = useNavigation()
@@ -121,14 +122,14 @@ export default function useViewOnlyAccountAdder() {
 
     try {
       setIsLoading(true)
-      accountsDispatch({
+      // Prepared for the personalize step, which adds them once the user proceeds
+      await accountPickerDispatchAndWait({
         type: 'method',
-        params: {
-          method: 'addAccounts',
-          args: [accountsToAdd]
-        }
+        params: { method: 'prepareAccounts', args: [{ accounts: accountsToAdd }] }
       })
-      goToNextRoute()
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
+      // Going back from the personalize step adds nothing, so the form is usable again
+      setIsLoading(false)
     } catch (e: any) {
       setIsLoading(false)
       addToast(
@@ -147,7 +148,7 @@ export default function useViewOnlyAccountAdder() {
     accounts,
     navigate,
     accountsState.accounts,
-    accountsDispatch,
+    accountPickerDispatchAndWait,
     goToNextRoute,
     addToast,
     t

@@ -17,6 +17,8 @@ import { Portal } from '@gorhom/portal'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   type: 'signing' | 'broadcasting'
   selectedAccountKeyStoreKeys: Key[]
@@ -26,6 +28,8 @@ type Props = {
   handleClose: () => void
   account: Account
 }
+
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
 
 const SigningKeySelect = ({
   type,
@@ -38,7 +42,7 @@ const SigningKeySelect = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme, styles } = useTheme(getStyles)
-  const { state: keys } = useController('KeystoreController', 'keys')
+  const { state: keys } = useController('KeystoreController', selectKeys)
 
   // On mobile the sign flow lives in a BottomSheet portalled into the same
   // "global" host, so sit one step above the topmost sheet that was open when

@@ -1,6 +1,6 @@
 import { Block } from 'ethers'
 
-import { FeePaidWith } from '@benzin/screens/BenzinScreen/hooks/useSteps'
+import { FeePaidWith, StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { FinalizedStatusType } from '@benzin/screens/BenzinScreen/interfaces/steps'
 import formatDateTime from '@common/utils/formatDateTime'
 
@@ -13,6 +13,16 @@ const shouldShowTxnProgress = (finalizedStatus: FinalizedStatusType) => {
 
   return doNotShow.indexOf(finalizedStatus.status) === -1
 }
+
+/**
+ * Whether the balance changes are settled, either because they arrived or because
+ * reading them failed. False only while they are still on their way, which is what
+ * keeps the spinner up.
+ */
+const hasBalanceChangesSettled = (stepsState: StepsData) =>
+  typeof stepsState.submittedAccountOp?.balanceChanges !== 'undefined' ||
+  typeof stepsState.balanceChanges !== 'undefined' ||
+  stepsState.hasBalanceChangesFailed
 
 const getTimestamp = (blockData: null | Block, finalizedStatus: FinalizedStatusType) => {
   if (blockData) {
@@ -57,12 +67,23 @@ const getFinalizedRows = (blockData: null | Block, finalizedStatus: FinalizedSta
   return rows
 }
 
-const getFee = (cost: FeePaidWith | null, finalizedStatus: FinalizedStatusType) => {
+const getFee = (
+  cost: FeePaidWith | null,
+  finalizedStatus: FinalizedStatusType,
+  tokenPricesEnabled: boolean
+) => {
   if (cost) {
-    return `${cost.amount} ${cost.symbol} (${cost.usdValue})`
+    return `${cost.amount} ${cost.symbol}${tokenPricesEnabled ? ` (${cost.usdValue})` : ''}`
   }
 
   return finalizedStatus && doNotShow.indexOf(finalizedStatus.status) !== -1 ? '-' : 'loading'
 }
 
-export { getBlockNumber, getFee, getFinalizedRows, getTimestamp, shouldShowTxnProgress }
+export {
+  getBlockNumber,
+  getFee,
+  getFinalizedRows,
+  getTimestamp,
+  hasBalanceChangesSettled,
+  shouldShowTxnProgress
+}

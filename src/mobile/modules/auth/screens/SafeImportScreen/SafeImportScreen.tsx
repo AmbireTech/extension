@@ -12,6 +12,7 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useTheme from '@common/hooks/useTheme'
 import useSafeImport from '@common/modules/auth/hooks/useSafeImport'
 import spacings from '@common/styles/spacings'
@@ -69,6 +70,7 @@ const SafeImportScreen = () => {
 
                 return (
                   <Input
+                    {...NO_AUTOFILL_PROPS}
                     testID="add-safe-address-field"
                     onBlur={onBlur}
                     autoFocus
@@ -80,6 +82,7 @@ const SafeImportScreen = () => {
                     backgroundColor={theme.secondaryBackground}
                     error={value.length ? errors?.safeAddress?.message : ''}
                     autoCorrect={false}
+                    keyboardType="url"
                     onSubmitEditing={handleFormSubmit}
                     button={!isAddressValid ? <AddressScanButton onScanned={onChange} /> : null}
                   />
@@ -99,7 +102,7 @@ const SafeImportScreen = () => {
                         width={20 * SAFE_ICON_INLINE_SCALE}
                         height={20 * SAFE_ICON_INLINE_SCALE}
                       />
-                      <Text style={spacings.mlTy}>{t('Deployed on:')}</Text>
+                      <Text style={spacings.mlTy}>{t('Active on:')}</Text>
                     </View>
                     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
                       {safeInfo.deployedOn.map((c, i) => (

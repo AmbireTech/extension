@@ -10,22 +10,41 @@ import { nanoid } from 'nanoid'
 
 import EmittableError from '@ambire-common/classes/EmittableError'
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { ProviderError } from '@ambire-common/classes/ProviderError'
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
 import { MainController } from '@ambire-common/controllers/main/main'
-import { ErrorRef } from '@ambire-common/interfaces/eventEmitter'
-import { Fetch } from '@ambire-common/interfaces/fetch'
+import { Fetch, RequestInitWithCustomHeaders } from '@ambire-common/interfaces/fetch'
 import { IKeystoreController } from '@ambire-common/interfaces/keystore'
-import { ISelectedAccountController } from '@ambire-common/interfaces/selectedAccount'
 import { NavigateOptions, UiManager, View } from '@ambire-common/interfaces/ui'
 import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
+import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
+import {
+  IdbOpenReport,
+  isIdbOpenTimeoutError,
+  openAmbireIdb
+} from '@ambire-common/services/storage/idbDatabase'
+import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import wait from '@ambire-common/utils/wait'
-import { scrubSentryEventSecrets } from '@common/config/analytics/sentryDataScrubbing'
+import {
+  createCrashReportAccountTagsSync,
+  excludeIntegrationsByName,
+  getCrashReportAccountTags,
+  getReportableAction,
+  logSentryDeliveryWhenTesting,
+  reportControllerError
+} from '@common/config/analytics/crashReportHelpers'
+import {
+  processCrashReportEvent,
+  stripPrivacyPoolsCrashReportEvent
+} from '@common/config/analytics/processCrashReportEvent'
 import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config/env'
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
+import {
+  CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS,
+  CULTURE_CONTEXT_INTEGRATION_NAME
+} from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
 import LedgerSigner from '@common/modules/hardware-wallet/libs/LedgerSigner'
@@ -37,21 +56,30 @@ import handleProviderRequests from '@common/modules/provider/handleProviderReque
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import {
+  attachBalanceHint,
+  getAppInstanceId,
+  isAmbireAnalyticsEnabled,
+  isAmbireApiUrl
+} from '@common/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
 import {
   BROWSER_EXTENSION_LOG_UPDATED_CONTROLLER_STATE_ONLY,
   BROWSER_EXTENSION_MEMORY_INTENSIVE_LOGS,
   BUNGEE_API_KEY,
+  COWSWAP_API_KEY,
   LI_FI_API_KEY,
   RELAYER_URL,
   UNISWAP_API_KEY,
   VELCRO_URL
 } from '@env'
 import * as Sentry from '@sentry/browser'
-import { browser, platform } from '@web/constants/browserapi'
+import { browser, engine, platform } from '@web/constants/browserapi'
 import { BadgesController } from '@web/extension-services/background/controllers/badges'
 import ExtensionUpdateController from '@web/extension-services/background/controllers/extension-update'
+import { getRequestToMoveOutOfPanel } from '@web/extension-services/background/handlers/getRequestToMoveOutOfPanel'
 import { handleActions } from '@web/extension-services/background/handlers/handleActions'
 import { handleCleanUpOnPortDisconnect } from '@web/extension-services/background/handlers/handleCleanUpOnPortDisconnect'
 import { handleKeepAlive } from '@web/extension-services/background/handlers/handleKeepAlive'
@@ -62,7 +90,8 @@ import {
 import { notificationManager } from '@web/extension-services/background/webapi/notification'
 import {
   getDappTabFocusDispatcher,
-  getPanelManager
+  getPanelManager,
+  handleFirefoxActionClicked
 } from '@web/extension-services/background/webapi/panel'
 import windowManager from '@web/extension-services/background/webapi/window'
 import {
@@ -71,23 +100,29 @@ import {
   Port,
   PortMessenger
 } from '@web/extension-services/messengers'
+import {
+  canUseOffscreenProver,
+  createOffscreenProverFactory
+} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
+import PQ1Controller from '@web/modules/hardware-wallet/controllers/PQ1Controller'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
+import OneKeySigner from '@web/modules/hardware-wallet/libs/OneKeySigner'
+import PQ1Signer from '@web/modules/hardware-wallet/libs/PQ1Signer'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
-import { getExtensionInstanceId } from '@web/utils/analytics'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
-import { buildScrubFailureFallbackEvent } from './buildScrubFailureFallbackEvent'
 import {
   captureBackgroundException,
+  captureBackgroundMessage,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
-  setBackgroundExtraContext,
-  setBackgroundUserContext
+  setBackgroundCrashReportId,
+  setBackgroundTagContext
 } from './CrashAnalytics'
 import { sendCriticalControllerStates } from './criticalControllerStates'
-import { getReportableAction } from './getReportableAction'
 
 const debugLogs: {
   key: string
@@ -140,147 +175,95 @@ function stateDebug(
   logInfoWithPrefix(key, debugLogs)
 }
 
-function captureBackgroundExceptionFromControllerError(error: ErrorRef, controllerName: string) {
-  if (
-    (typeof error.sendCrashReport === 'boolean' && !error.sendCrashReport) ||
-    error.level === 'expected'
-  ) {
-    return
+/**
+ * How many times the background tries to open IndexedDB before settling for the key-value
+ * fallback. Two, not more: the second attempt covers an open that fails at once, e.g. on a
+ * database file locked for a moment, and a failure that repeats is not going to clear.
+ */
+const IDB_OPEN_ATTEMPTS = 2
+
+/** Opens slower than this are reported, so Sentry shows how long the slow ones take. */
+const SLOW_IDB_OPEN_MS = 1000
+
+const BYTES_IN_MB = 1024 * 1024
+
+/**
+ * Reports an open of IndexedDB that took longer than SLOW_IDB_OPEN_MS, with the data that can
+ * point at the cause: the size of the stored data, and whether an upgrade ran or was blocked.
+ */
+const reportSlowIdbOpen = async (report: IdbOpenReport) => {
+  if (report.durationMs <= SLOW_IDB_OPEN_MS) return
+
+  let storageUsageMb: number | undefined
+  let storageEstimateErrorName: string | undefined
+  try {
+    const { usage } = await navigator.storage.estimate()
+    if (usage !== undefined) storageUsageMb = Math.round(usage / BYTES_IN_MB)
+  } catch (error: any) {
+    // Reported with the slow open instead, which still carries everything else
+    storageEstimateErrorName = error?.name ?? 'UnknownError'
   }
 
-  captureBackgroundException(error.error, {
+  captureBackgroundMessage('[background] Opening IDB was slow', {
+    level: 'warning',
     extra: {
-      controllerName
+      ...report,
+      expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion,
+      storageUsageMb,
+      storageEstimateErrorName
     }
   })
 }
 
-// THESE MUST BE LOWERCASE
-const IGNORED_SHORT_MESSAGE_SUBSTRINGS = ['missing revert data']
-const IGNORED_ERROR_SUBSTRINGS = ['failed to fetch', 'network error']
-
-const checkSubstrings = (text: string, substrings: string[]) =>
-  substrings.some((substring) => text.toLowerCase().includes(substring))
-
-const isIgnoredError = (error?: any) => {
-  const { message, shortMessage } = error || {}
-
-  return (
-    (!!message && checkSubstrings(message, IGNORED_ERROR_SUBSTRINGS)) ||
-    (!!shortMessage && checkSubstrings(shortMessage, IGNORED_SHORT_MESSAGE_SUBSTRINGS))
-  )
-}
-
-const getErrorType = (error: any) => {
-  const { statusCode, message, isProviderInvictus } = error
-
-  if (typeof statusCode === 'number') {
-    if (statusCode >= 200 && statusCode < 300) {
-      return '2xx'
-    }
-
-    if (typeof isProviderInvictus === 'boolean' && !isProviderInvictus) {
-      // No need to report custom RPC non-2xx errors
-      return 'ignored-error'
-    }
-
-    return 'non-2xx'
-  }
-
-  if (message.includes('rpc-timeout')) return 'rpc-timeout'
-
-  // Ethers doesn't return a status code for 2XX responses, so we treat undefined as 2XX
-  // and have handling just in case statusCode is explicitly set to 200-299
-  return isIgnoredError(error) ? 'ignored-error' : '2xx'
-}
+const syncCrashReportAccountTags = createCrashReportAccountTagsSync(setBackgroundTagContext)
 
 let isInitialized = false
 const bridgeMessenger = initializeMessenger({ connect: 'inpage' })
 let mainCtrl: MainController
 let walletStateCtrl: WalletStateController
 let autoLockCtrl: AutoLockController
+// Hoisted so the `onConnect` listener below (which must be registered synchronously at the
+// top level of the script - see the comment above it) can close over them once `init()` has
+// assigned them, instead of the listener itself living inside `init()`'s local scope.
+let pm: PortMessenger
+let ledgerCtrl: LedgerController
+let trezorCtrl: TrezorController
+let oneKeyCtrl: OneKeyController
+let qrCtrl: QrHardwareController
+let eventEmitterRegistry: EventEmitterRegistryController
 
 // Initialize Sentry early to set up global error handlers during initial script evaluation
 if (CONFIG.SENTRY_DSN_BROWSER_EXTENSION) {
   Sentry.init({
     ...CRASH_ANALYTICS_BACKGROUND_CONFIG,
-    integrations: [Sentry.extraErrorDataIntegration()],
+    integrations: (defaultIntegrations) => [
+      ...excludeIntegrationsByName(defaultIntegrations, [CULTURE_CONTEXT_INTEGRATION_NAME]),
+      Sentry.extraErrorDataIntegration()
+    ],
     beforeSend(event, hint) {
-      const error = hint.originalException
+      const processedEvent = processCrashReportEvent(event, hint.originalException)
+      if (!processedEvent) return null
 
-      // Custom handling for ProviderError to adjust event data and fingerprinting
-      // Docs: https://docs.sentry.io/platforms/javascript/enriching-events/fingerprinting/#group-errors-with-greater-granularity
-      if (error instanceof ProviderError) {
-        const errorType = getErrorType(error)
-
-        if (errorType === 'ignored-error') {
-          // Drop ignored errors
-          return null
-        }
-
-        // Always delete breadcrumbs to reduce event size.
-        delete event.breadcrumbs
-
-        if (errorType !== '2xx') {
-          // We don't care about any data for non-2XX errors
-          // We only want to know how many of them happened and group them accordingly
-
-          delete event.user
-          delete event.extra
-          delete event.contexts
-        }
-
-        event.extra = {
-          ...(event.extra || {}),
-          providerUrl: error.providerUrl
-        }
-
-        event.fingerprint = [
-          '{{ default }}',
-          error.isProviderInvictus ? error.providerUrl || 'invictus' : 'custom-rpc',
-          errorType
-        ]
-
-        if (error.isProviderInvictus) {
-          event.tags = {
-            ...(event.tags || {}),
-            // Allows us to filter issues by provider in Sentry's UI
-            providerUrl: error.providerUrl || 'should-never-be-undefined',
-            providerType: 'invictus'
-          }
-        } else {
-          event.tags = {
-            ...(event.tags || {}),
-            providerType: 'custom-rpc'
-          }
-        }
-      }
-
-      // No explicit type annotation here: `event`'s type is inferred contextually
-      // as the narrower ErrorEvent (from Sentry.init's expected beforeSend
-      // signature), and both scrubSentryEventSecrets and
-      // buildScrubFailureFallbackEvent are generic in that same type, so
-      // scrubbedEvent stays ErrorEvent instead of widening to Sentry.Event.
-      let scrubbedEvent
-      try {
-        scrubbedEvent = scrubSentryEventSecrets(event)
-      } catch (scrubError) {
-        scrubbedEvent = buildScrubFailureFallbackEvent(event, scrubError)
-      }
+      stripPrivacyPoolsCrashReportEvent(
+        processedEvent,
+        mainCtrl?.selectedAccount.selectedType === 'privacyPools'
+      )
 
       // We don't want to miss errors that occur before the controllers are initialized.
-      // Scrubbing above still applies -- only the crashAnalyticsEnabled gate below,
+      // processCrashReportEvent has already scrubbed it -- only the crashAnalyticsEnabled gate below,
       // which depends on walletStateCtrl, can't run yet.
-      if (!walletStateCtrl) return scrubbedEvent
+      if (!walletStateCtrl) return processedEvent
 
       if (isDev) {
-        console.log(`Sentry event captured in background: ${event.event_id}`, scrubbedEvent)
+        console.log(`Sentry event captured in background: ${event.event_id}`, processedEvent)
       }
 
       // If the Sentry is disabled, we don't send any events
-      return walletStateCtrl?.crashAnalyticsEnabled ? scrubbedEvent : null
+      return walletStateCtrl?.crashAnalyticsEnabled ? processedEvent : null
     }
   })
+
+  logSentryDeliveryWhenTesting(Sentry.getClient())
 }
 
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -291,6 +274,10 @@ handleKeepAlive()
 providerRequestTransport.reply(async ({ method, id, providerId, params }, meta) => {
   // wait for mainCtrl to be initialized before handling dapp requests
   while (!mainCtrl || !walletStateCtrl) await wait(200)
+  // ...and for the stored settings, as the side panel mode decides whether a request is shown in an
+  // open side panel - until it loads it reads as off (e.g. right after a browser restart)
+  // (Never rejects - settings that fail to load keep their defaults)
+  await walletStateCtrl.initialLoadPromise
 
   const senderTab = meta.sender?.tab
   const tabId = senderTab?.id
@@ -372,43 +359,39 @@ const init = async () => {
     userBalances: {}
   }
 
-  const pm = new PortMessenger()
-  const ledgerCtrl = new LedgerController()
-  const trezorCtrl = new TrezorController(windowManager as UiManager['window'])
+  pm = new PortMessenger()
+  ledgerCtrl = new LedgerController(
+    () => !!mainCtrl?.featureFlags.isFeatureEnabled('ledgerSigningReports'),
+    (addr, deviceModel) => {
+      void mainCtrl?.keystore.updateUnknownKeyDeviceModel({ addr, type: 'ledger', deviceModel })
+    }
+  )
+  trezorCtrl = new TrezorController(windowManager as UiManager['window'])
+  oneKeyCtrl = new OneKeyController()
   const latticeCtrl = new LatticeController()
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
   // (only internal Ambire APIs need the x-app-* headers and tracking params)
+  // and for users who opted out of Ambire analytics
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
-    const urlString = url.toString()
-    try {
-      const urlObj = new URL(urlString)
-      if (!urlObj.hostname.endsWith('.ambire.com') && urlObj.hostname !== 'ambire.com') {
-        // @ts-ignore
-        return fetch(url, init)
-      }
-    } catch (error) {
-      console.error(error)
-      // If URL parsing fails, skip analytics for safety
+    if (!isAmbireApiUrl(url.toString()) || !isAmbireAnalyticsEnabled(mainCtrl?.featureFlags)) {
       // @ts-ignore
-      return fetch(url, init)
+      return fetchWithRelayerCustomHeaders(url, init)
     }
 
-    // As of v4.26.0, custom extension-specific headers. TBD for the other apps.
-    const initWithCustomHeaders = init || {
-      headers: {
-        'x-app-source': '',
-        'x-app-version': '',
-        'x-app-env': isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
-      }
-    }
+    // As of v4.26.0, custom internal headers. The mobile app sends the same ones from
+    // its worker (see decorateAmbireApiRequest there).
+    const initWithCustomHeaders: RequestInitWithCustomHeaders = init || { headers: {} }
     initWithCustomHeaders.headers = initWithCustomHeaders.headers || {}
+    // Set here rather than as a default for a missing init, so that it is sent no matter
+    // whether the caller passed an init of its own (most of them do)
+    initWithCustomHeaders.headers['x-app-env'] = isAmbireNext ? 'next' : isDev ? 'dev' : 'prod'
 
     // if the fetch method is called while the keystore is constructing the keyStoreUid won't be defined yet
     // in that case we can still fetch but without our custom header
     if (mainCtrl?.keystore?.keyStoreUid) {
-      const instanceId = getExtensionInstanceId(
+      const instanceId = getAppInstanceId(
         mainCtrl.keystore.keyStoreUid,
         mainCtrl.invite?.verifiedCode || ''
       )
@@ -418,13 +401,9 @@ const init = async () => {
       initWithCustomHeaders.headers['x-app-version'] = versionHeader
     }
 
-    // we want to calculate the TVL of our users
-    // we can achieve this by making a relayer (server-side trusted environment) script that gets the balances of all our users
-    // but doing this with all our users would be 'expensive'.
-    // we already calculate the user balance in the extension, but is not 100% trusted as any user can modify it
-    // that why we will use the user balance from the extension as a 'hint' so we can determine
-    // on which accounts we should execute the 'expensive' script on the backend
-    // those addresses should be 1) loaded with key in the extension 2) have more than $0 balance
+    // The balance hint (see attachBalanceHint) is worth attaching only if the user has
+    // keys for the account. The highest balance seen is kept, because a request firing
+    // while the portfolio is still loading would otherwise under-report it.
     const currentAccount = mainCtrl.selectedAccount.account
     const hasCurrentAccountKeys =
       currentAccount &&
@@ -433,9 +412,6 @@ const init = async () => {
         keys: mainCtrl.keystore.keys,
         accounts: mainCtrl.accounts.accounts
       })
-    // we use any cena request, because if we narrow it down to one route we might not have the full balance loaded
-    // on the relayer side we will simply use middleware that captures all routes and looks for the specific params with balance
-    // we want to attach the data only if the user has keys for the account
     const currentBalance = mainCtrl.selectedAccount.portfolio.totalBalance
     if (
       currentAccount &&
@@ -443,25 +419,21 @@ const init = async () => {
     )
       backgroundState.userBalances[currentAccount?.addr] = currentBalance
 
-    const shouldAttachBalance =
-      url.toString().startsWith('https://cena.ambire.com/') && hasCurrentAccountKeys
-    if (shouldAttachBalance) {
-      const urlObj = new URL(url.toString())
-      const balance = backgroundState.userBalances[currentAccount?.addr] || 0
-
-      urlObj.searchParams.append('panVal', JSON.stringify({ a: currentAccount.addr, b: balance }))
-
-      url = decodeURIComponent(urlObj.toString())
-    }
+    if (currentAccount && hasCurrentAccountKeys)
+      url = attachBalanceHint(
+        url.toString(),
+        currentAccount.addr,
+        backgroundState.userBalances[currentAccount.addr] || 0
+      )
 
     // Use the native fetch (instead of node-fetch or whatever else) since
     // browser extensions are designed to run within the web environment,
     // which already provides a native and well-optimized fetch API.
     // @ts-ignore
-    return fetch(url, initWithCustomHeaders)
+    return fetchWithRelayerCustomHeaders(url, initWithCustomHeaders)
   }
 
-  const eventEmitterRegistry = new EventEmitterRegistryController(() => {
+  eventEmitterRegistry = new EventEmitterRegistryController(() => {
     eventEmitterRegistry.values().forEach((ctrl) => {
       const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('background')
       if (!hasOnUpdateInitialized) {
@@ -472,27 +444,29 @@ const init = async () => {
           if (ctrl.name === 'KeystoreController') {
             const keystoreCtrl = ctrl as IKeystoreController
             if (keystoreCtrl.isReadyToStoreKeys) {
-              setBackgroundUserContext({
-                id: getExtensionInstanceId(keystoreCtrl.keyStoreUid, mainCtrl.invite.verifiedCode)
-              })
               if (backgroundState.isUnlocked && !keystoreCtrl.isUnlocked) {
                 await mainCtrl.dapps.broadcastDappSessionEvent('lock')
               } else if (!backgroundState.isUnlocked && keystoreCtrl.isUnlocked) {
                 autoLockCtrl.setLastActiveTime()
-                await mainCtrl.dapps.broadcastDappSessionEvent('unlock', [
-                  mainCtrl.selectedAccount.account?.addr
-                ])
+                await mainCtrl.dapps.broadcastUnlock()
               }
               backgroundState.isUnlocked = keystoreCtrl.isUnlocked
             }
           }
 
-          if (ctrl.name === 'SelectedAccountController') {
-            const selectedAccountCtrl = ctrl as ISelectedAccountController
+          if (ctrl.name === 'WalletStateController') {
+            setBackgroundCrashReportId((ctrl as WalletStateController).crashReportId)
+          }
 
-            if (selectedAccountCtrl?.account?.addr) {
-              setBackgroundExtraContext('account', selectedAccountCtrl.account.addr)
-            }
+          if (CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS.includes(ctrl.name)) {
+            syncCrashReportAccountTags(
+              getCrashReportAccountTags({
+                selectedAccount: mainCtrl.selectedAccount.account,
+                accountStates: mainCtrl.accounts.accountStates,
+                keys: mainCtrl.keystore.keys,
+                accounts: mainCtrl.accounts.accounts
+              })
+            )
           }
         }, 'background')
       }
@@ -512,15 +486,89 @@ const init = async () => {
           stateDebug(walletStateCtrl.logLevel, ctrl, ctrl.name, 'error')
           pm.send('> ui-error', {
             method: ctrl.name,
-            params: { errors: ctrl.emittedErrors, controller: mainCtrl.name }
+            params: { errors: ctrl.emittedErrors, controller: ctrl.name }
           })
-          captureBackgroundExceptionFromControllerError(error, ctrl.name)
+          reportControllerError(error, ctrl.name, captureBackgroundException)
         }, 'background')
       }
     })
   })
 
-  const qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+  qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+  // Created before mainCtrl, which takes it as an external signer controller. The callbacks
+  // only run once the user imports PQ1 accounts from a view, long after mainCtrl exists.
+  const pq1Ctrl = new PQ1Controller(eventEmitterRegistry, {
+    getImportedAccounts: () => mainCtrl.accounts.accounts,
+    onPrepareAccounts: (prepared) => mainCtrl.accountPicker.prepareAccounts(prepared),
+    sendUiMessage: (params) => mainCtrl.ui.message.sendUiMessage(params)
+  })
+
+  // Created before mainCtrl, whose UI manager reads the side panel mode. It doesn't need mainCtrl
+  // itself - the log level callback only runs on a log level change, long after both exist.
+  walletStateCtrl = new WalletStateController({
+    eventEmitterRegistry,
+    onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
+      // A log level change comes from a view, which can only talk to the controllers once init()
+      // has created mainCtrl - guarded anyway, as no app can be connected before that
+      await mainCtrl?.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
+    },
+    storage
+  })
+
+  const getIsSidePanelModeEnabled = () => walletStateCtrl.isSidePanelModeEnabled
+
+  // openAmbireIdb() gives up at its deadline so a blocked upgrade cannot hang the boot — and
+  // this is the only call, so a merely slow open (cold browser start, busy disk) puts the whole
+  // service-worker lifetime on key-value, where history renders from the blob frozen at
+  // migration time. Slow opens are reported with their real duration to find the cause.
+  //
+  // Reported after the last attempt, not the first: this is the only signal that a user has
+  // landed on the key-value fallback. The wallet stays usable — history renders from the
+  // retained legacy blob — so nothing surfaces in the UI, which means without this the
+  // fallback is invisible in aggregate and we could not tell whether it affects one user or
+  // many. Reporting a failure the retry went on to recover from would make it useless.
+  const openIdbWithRetry = async () => {
+    const openStartedAt = Date.now()
+    let lastError: any
+    let attempts = 0
+
+    while (attempts < IDB_OPEN_ATTEMPTS) {
+      attempts += 1
+      try {
+        return await openAmbireIdb((report) => {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          reportSlowIdbOpen(report)
+        })
+      } catch (error: any) {
+        lastError = error
+
+        // A timeout is not retried: the browser queues every open of one database, so a second
+        // open only waits behind the first. VersionError means a database newer than this
+        // build's dbVersion, i.e. a downgrade, which fails identically. Any other name points
+        // at the open failing at once, e.g. on a locked file, which a retry can still win.
+        if (isIdbOpenTimeoutError(error) || error?.name === 'VersionError') break
+      }
+    }
+
+    console.error('[background] Failed to open IDB, activity will fall back to storage', lastError)
+    captureBackgroundException(lastError, {
+      extra: {
+        errorName: lastError?.name,
+        expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion,
+        // Fewer than IDB_OPEN_ATTEMPTS means the loop broke early on a timeout or a downgrade.
+        attempts,
+        // The real time of a timed-out open comes later, with the slow open report.
+        elapsedMs: Date.now() - openStartedAt
+      }
+    })
+
+    return undefined
+  }
+
+  const idb = await openIdbWithRetry()
+
+  // Copied at build time and served same-origin - see webpack/extension.js
+  const privacyPoolsCircuitsBaseUrl = browser.runtime.getURL('privacy-pools-circuits/')
 
   mainCtrl = new MainController({
     eventEmitterRegistry,
@@ -528,25 +576,39 @@ const init = async () => {
     platform,
     storageAPI: storage,
     fetch: fetchWithAnalytics,
+    privacyPoolsCircuitsBaseUrl,
+    // On Chrome, in an offscreen document using every core; elsewhere or if it fails, right here
+    privacyPoolsProverFactory: canUseOffscreenProver()
+      ? createOffscreenProverFactory({
+          fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
+          onError: (error) => captureBackgroundException(error)
+        })
+      : undefined,
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
+    cowSwapApiKey: COWSWAP_API_KEY,
     bungeeApiKey: BUNGEE_API_KEY,
     uniswapApiKey: UNISWAP_API_KEY,
     featureFlags: {},
+    idb,
     keystoreSigners: {
       internal: KeystoreSigner,
       // TODO: there is a mismatch in hw signer types, it's not a big deal
       ledger: LedgerSigner,
       trezor: TrezorSigner,
+      onekey: OneKeySigner,
       lattice: LatticeSigner,
-      qr: QrHardwareSigner
+      qr: QrHardwareSigner,
+      pq1: PQ1Signer
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
+      onekey: oneKeyCtrl,
       lattice: latticeCtrl,
-      qr: qrCtrl
+      qr: qrCtrl,
+      pq1: pq1Ctrl
     } as any,
     uiManager: {
       window: {
@@ -576,8 +638,8 @@ const init = async () => {
           await windowManager.remove(winId, pm)
         }
       },
-      panel: getPanelManager(pm),
-      dispatchDappTabFocus: getDappTabFocusDispatcher(pm),
+      panel: getPanelManager(pm, getIsSidePanelModeEnabled),
+      dispatchDappTabFocus: getDappTabFocusDispatcher(pm, getIsSidePanelModeEnabled),
       notification: notificationManager,
       message: {
         sendToastMessage: (text, options) => {
@@ -603,15 +665,31 @@ const init = async () => {
   void mainCtrl.phishing.init()
   void mainCtrl.dapps.init()
 
-  walletStateCtrl = new WalletStateController({
-    eventEmitterRegistry,
-    onLogLevelUpdateCallback: async (nextLogLevel: LOG_LEVELS) => {
-      await mainCtrl.dapps.broadcastDappSessionEvent('logLevelUpdate', nextLogLevel)
-    },
-    storage
-  })
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
+
+  // Turning side panel mode off leaves nothing to show a pending app request (an open panel shows
+  // the "mode off" notice), so it's moved to a request window
+  let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
+  walletStateCtrl.onUpdate(() => {
+    const isSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
+    const hasSidePanelModeBeenTurnedOff = wasSidePanelModeEnabled && !isSidePanelModeEnabled
+    wasSidePanelModeEnabled = isSidePanelModeEnabled
+
+    if (!hasSidePanelModeBeenTurnedOff || mainCtrl.requests.requestWindow.windowProps) return
+
+    const requestToMove = getRequestToMoveOutOfPanel(mainCtrl.requests.visibleUserRequests)
+    if (!requestToMove) return
+
+    mainCtrl.requests
+      .setCurrentUserRequestById(requestToMove.request.id, {
+        baseWindowId: requestToMove.baseWindowId
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to move a request out of the side panel', error)
+        captureBackgroundException(error)
+      })
+  })
   autoLockCtrl = new AutoLockController(
     eventEmitterRegistry,
     () => {
@@ -699,105 +777,6 @@ const init = async () => {
 
     return 'EMITTED'
   }
-
-  // listen for messages from UI
-  browser.runtime.onConnect.addListener(async (port: Port) => {
-    const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
-    if (['popup', 'tab', 'request-window', 'side-panel'].includes(name)) {
-      // These port names grant access to every controller method (exporting keys and
-      // the seed phrase included), so only our own extension pages may claim them.
-      const senderUrl = port.sender?.url
-      const isFromOurExtension = port.sender?.id === browser.runtime.id
-      const isFromExtensionPage = !senderUrl || senderUrl.startsWith(browser.runtime.getURL(''))
-
-      if (!isFromOurExtension || !isFromExtensionPage) {
-        port.disconnect()
-        return
-      }
-
-      port.id = id || nanoid()
-
-      port.name = name
-      pm.addOrUpdatePort(port, () => {
-        mainCtrl.ui.addView({ id: port.id, type: port.name })
-
-        // Registering the view is what sends it to a screen, so give it the states that screen
-        // needs at the same time instead of making it ask.
-        sendCriticalControllerStates({ pm, port, eventEmitterRegistry }).catch(
-          captureBackgroundException
-        )
-        if (isExtensionOverlayPort(port.name)) {
-          mainCtrl.onPopupOpen(port.id).catch((error) => {
-            console.error('Failed to initialize overlay view', error)
-          })
-        }
-
-        pm.addConnectListener(
-          port.id,
-          // @ts-ignore
-          async (messageType, action: MethodAction | Action, meta: MessageMeta = {}) => {
-            const { type } = action
-            const { windowId } = meta
-
-            try {
-              if (messageType === '> background' && type) {
-                await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl, meta })
-              }
-            } catch (err: any) {
-              console.error(`${type} action failed:`, err)
-              captureBackgroundException(err, {
-                extra: {
-                  action: stringify(getReportableAction(action)),
-                  portId: port.id,
-                  windowId
-                }
-              })
-              const shortenedError =
-                err.message.length > 150 ? `${err.message.slice(0, 150)}...` : err.message
-
-              let message = `Something went wrong! Please contact support. Error: ${shortenedError}`
-              // Emit the raw error only if it's a custom error
-              if (err instanceof EmittableError || err instanceof ExternalSignerError) {
-                message = err.message
-              }
-
-              pm.send('> ui-error', {
-                method: type,
-                params: {
-                  errors: [
-                    {
-                      message,
-                      level: 'major',
-                      error: err
-                    }
-                  ]
-                }
-              })
-            }
-          }
-        )
-
-        pm.addDisconnectListener(port.id, (disconnectedPort) => {
-          mainCtrl.ui.removeView(port.id)
-          handleCleanUpOnPortDisconnect({ port, mainCtrl })
-
-          // The selectedAccount portfolio is reset onLoad of the popup
-          // (from the background) while the portfolio update is triggered
-          // by a useEffect. If that useEffect doesn't trigger, the portfolio
-          // state will remain reset until an automatic update is triggered.
-          // Example: the user has the dashboard opened in tab, opens the popup
-          // and closes it immediately.
-          if (isExtensionOverlayPort(disconnectedPort.name)) mainCtrl.portfolio.forceEmitUpdate()
-          if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            ledgerCtrl.cleanUp()
-            trezorCtrl.cleanUp()
-            qrCtrl.signingCleanup()
-          }
-        })
-      })
-    }
-  })
 }
 
 const setupStorageForTesting = async () => {
@@ -820,10 +799,155 @@ const setupStorageForTesting = async () => {
 
 // Ensures controllers are initialized as soon as the service worker starts,
 // so UI ports (popup, side panel, tab) can connect without waiting for a ping.
-init().catch((err) => {
-  captureBackgroundException(err)
-  console.error(err)
+// Kept as a promise (instead of fire-and-forget) so the `onConnect` listener below can await
+// it - see the comment there for why.
+// Resolves to whether `init()` succeeded - it never rejects.
+const initPromise = init()
+  .then(() => true)
+  .catch((err) => {
+    captureBackgroundException(err)
+    console.error(err)
+    return false
+  })
+
+// Registered synchronously here, at the top level of the script, rather than inside `init()`.
+// Chrome requires MV3 event listeners to be added synchronously during the service worker's
+// first, uninterrupted script evaluation to reliably catch events fired right as the worker
+// wakes from suspension - `init()` yields at its first `await` before it would otherwise reach
+// this listener, which is exactly the situation a UI view's reconnect after a background
+// restart/suspend races against. The sender/origin check stays synchronous and unconditional
+// (it's a security check and must not depend on `init()` finishing); only the rest, which needs
+// `pm`/`mainCtrl`/etc., waits on `initPromise`.
+// listen for messages from UI
+browser.runtime.onConnect.addListener(async (port: Port) => {
+  const [name, id] = port.name.split(':') as [Port['name'], Port['id']]
+  if (!['popup', 'tab', 'request-window', 'side-panel'].includes(name)) return
+
+  // These port names grant access to every controller method (exporting keys and
+  // the seed phrase included), so only our own extension pages may claim them.
+  const senderUrl = port.sender?.url
+  const isFromOurExtension = port.sender?.id === browser.runtime.id
+  const isFromExtensionPage = !senderUrl || senderUrl.startsWith(browser.runtime.getURL(''))
+
+  if (!isFromOurExtension || !isFromExtensionPage) {
+    port.disconnect()
+    return
+  }
+
+  // The view can close while `init()` is still running. Its onDisconnect would then fire before
+  // the PortMessenger listener below exists, leaving a dead port registered for good.
+  let disconnectedWhileWaitingForInit = false
+  const onDisconnectWhileWaitingForInit = () => {
+    disconnectedWhileWaitingForInit = true
+  }
+  port.onDisconnect.addListener(onDisconnectWhileWaitingForInit)
+  const isInitSuccessful = await initPromise
+  port.onDisconnect.removeListener(onDisconnectWhileWaitingForInit)
+  if (disconnectedWhileWaitingForInit) return
+
+  // A failed `init()` can leave `pm`/`mainCtrl` etc. unassigned or only partially assigned.
+  if (!isInitSuccessful) {
+    port.disconnect()
+    return
+  }
+
+  port.id = id || nanoid()
+
+  port.name = name
+  pm.addOrUpdatePort(port, () => {
+    mainCtrl.ui.addView({ id: port.id, type: port.name })
+
+    // Registering the view is what sends it to a screen, so give it the states that screen
+    // needs at the same time instead of making it ask.
+    sendCriticalControllerStates({ pm, port, eventEmitterRegistry }).catch(
+      captureBackgroundException
+    )
+    if (isExtensionOverlayPort(port.name)) {
+      mainCtrl.onPopupOpen(port.id).catch((error) => {
+        console.error('Failed to initialize overlay view', error)
+      })
+    }
+
+    pm.addConnectListener(
+      port.id,
+      // @ts-ignore
+      async (messageType, action: MethodAction | Action, meta: MessageMeta = {}) => {
+        const { type } = action
+        const { windowId } = meta
+
+        try {
+          if (messageType === '> background' && type) {
+            await handleActions(action, { pm, port, eventEmitterRegistry, mainCtrl, meta })
+          }
+        } catch (err: any) {
+          console.error(`${type} action failed:`, err)
+          captureBackgroundException(err, {
+            extra: {
+              action: stringify(getReportableAction(action)),
+              portId: port.id,
+              windowId
+            }
+          })
+          const shortenedError =
+            err.message.length > 150 ? `${err.message.slice(0, 150)}...` : err.message
+
+          let message = `Something went wrong! Please contact support. Error: ${shortenedError}`
+          // Emit the raw error only if it's a custom error
+          if (err instanceof EmittableError || err instanceof ExternalSignerError) {
+            message = err.message
+          }
+
+          pm.send('> ui-error', {
+            method: type,
+            params: {
+              errors: [
+                {
+                  message,
+                  level: 'major',
+                  error: err
+                }
+              ]
+            }
+          })
+        }
+      }
+    )
+
+    pm.addDisconnectListener(port.id, (disconnectedPort) => {
+      mainCtrl.ui.removeView(port.id)
+      // Not awaited - nothing below depends on the cleanup finishing
+      handleCleanUpOnPortDisconnect({
+        port,
+        mainCtrl,
+        isSidePanelModeEnabled: walletStateCtrl.isSidePanelModeEnabled
+      }).catch((error: unknown) => {
+        console.error('Failed to clean up after a disconnected view', error)
+        captureBackgroundException(error)
+      })
+
+      // The selectedAccount portfolio is reset onLoad of the popup
+      // (from the background) while the portfolio update is triggered
+      // by a useEffect. If that useEffect doesn't trigger, the portfolio
+      // state will remain reset until an automatic update is triggered.
+      // Example: the user has the dashboard opened in tab, opens the popup
+      // and closes it immediately.
+      if (isExtensionOverlayPort(disconnectedPort.name)) mainCtrl.portfolio.forceEmitUpdate()
+      if (disconnectedPort.name === 'tab' || disconnectedPort.name === 'request-window') {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        ledgerCtrl.cleanUp()
+        trezorCtrl.cleanUp()
+        qrCtrl.signingCleanup()
+      }
+    })
+  })
 })
+
+// Firefox's toolbar click (see handleFirefoxActionClicked). Registered here because no UI page
+// bundles background.ts - registering it from a UI page too (panel.ts is also imported by UI code)
+// breaks Firefox's extension messaging: every later `browser.*` call hangs.
+if (engine === 'gecko') {
+  browser.action?.onClicked?.addListener(handleFirefoxActionClicked)
+}
 
 // Ensures controllers are initialized when the browser starts.
 browser.runtime.onStartup.addListener(() => {
@@ -868,6 +992,16 @@ browser.runtime.onMessage.addListener(async (message: any) => {
   // the service worker and keeps it alive as long as a view (popup, window, or tab) remains open.
   if (message === 'ambire-extension-ping') return 'ambire-extension-pong'
 
+  // Every controller reports through `captureBackgroundException`, so the crash-analytics e2e
+  // spec needs a way to exercise that path. Unreachable outside a testing build.
+  if (
+    process.env.IS_TESTING === 'true' &&
+    message?.type === 'ambire-extension-test-capture-exception-background'
+  ) {
+    captureBackgroundException(new Error(message.errorMessage))
+    return null
+  }
+
   return null
 })
 
@@ -897,7 +1031,7 @@ if ('hid' in navigator) navigator.hid.addEventListener('disconnect', () => {})
 try {
   browser.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
     if (newState !== 'active') return
-    if (!mainCtrl || !mainCtrl.selectedAccount.account) {
+    if (!mainCtrl || !mainCtrl.selectedAccount.selectedType) {
       console.error(
         'Idle state changed to active but mainCtrl or selected account is not initialized',
         mainCtrl

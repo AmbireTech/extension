@@ -4,13 +4,12 @@ description: >
   Generates public GitHub release changelogs from merge commits. Compares the release branch/tag
   against main by default, extracts merged PRs, links every entry to its GitHub PR, pulls PR details
   when merge metadata is unclear, marks marketing-worthy changes with 📣, and always appends a Full
-  Changelog compare link.
+  Changelog compare link. Use when the user asks to create, update, or review a changelog for a release.
 ---
 
 # Changelogger
 
 Generate a public GitHub Release changelog from git history.
-Use this skill when the user asks to create, update, or review a changelog for a release.
 
 Default assumption:
 
@@ -40,7 +39,7 @@ git log --merges --oneline main..release/v6.8.0
 or, when generating the final GitHub compare link:
 
 ```
-https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>
+[<previous-tag>...<new-tag>](https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>)
 ```
 
 Workflow
@@ -57,9 +56,10 @@ Workflow
 10. Apply the exclusion rules (see "Excluded product areas" below) to drop Rewards/Legends PRs. Every other PR is included.
 11. Convert each remaining PR into a changelog entry.
 12. Categorize each remaining PR as Added, Changed, or Fixed.
-13. Determine each entry's platform tag from its changed files, refined by any explicit platform note in the PR (see "Platform tags" below). Leave cross-platform entries untagged.
-14. Order entries within each category oldest-merge first (chronological). Note that `git log` lists newest merges first, so reverse that order.
-15. Always append a Full Changelog GitHub compare link.
+13. Fold fixes for bugs that were introduced within this same range into their parent entry (see "Fold in-release fixes" below). Fixes for bugs that existed in the base release stay as separate entries.
+14. Determine each entry's platform tag from its changed files, refined by any explicit platform note in the PR (see "Platform tags" below). Leave cross-platform entries untagged.
+15. Order entries within each category oldest-merge first (chronological). Note that `git log` lists newest merges first, so reverse that order.
+16. Always append a Full Changelog GitHub compare link.
 
 ## ambire-common submodule bump (root repo changelogs only)
 
@@ -166,7 +166,7 @@ Alternatively use a loop:
 
 ```bash
 for n in 1234 1235 1236; do
-  gh pr view $n --json number,title,body,labels,url &
+  gh pr view $n --json number,title,body,labels,url,files > "$TMPDIR/pr-$n.json" &
 done
 wait
 ```
@@ -175,10 +175,10 @@ Once all metadata is fetched, cross-check the set of PR numbers against the merg
 
 ## GitHub PR lookup
 
-Always link to the merge PR:
+Always link to the merge PR, using markdown link syntax with `#<pr-number>` as the link text, placed at the end of the entry title:
 
 ```
-https://github.com/<owner>/<repo>/pull/<pr-number>
+[#<pr-number>](https://github.com/<owner>/<repo>/pull/<pr-number>)
 ```
 
 If GitHub CLI is not available, use the GitHub web/API access available in the environment.
@@ -199,7 +199,7 @@ Changelog:
 * Changed: ...
 * Fixed: ...
 
-**Full Changelog**: https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>
+**Full Changelog**: [<previous-tag>...<new-tag>](https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>)
 ```
 ````
 
@@ -231,7 +231,7 @@ Examples of marketing-worthy changes:
 Example:
 
 ```markdown
-* 📣 Added: Address poisoning detection for the recipient on the Send screen https://github.com/AmbireTech/ambire-app/pull/7029
+* 📣 Added: Address poisoning detection for the recipient on the Send screen [#7029](https://github.com/AmbireTech/ambire-app/pull/7029)
   * Highlights suspicious recipient addresses when they closely resemble a previously used trusted address.
   * Requires Hold to Proceed when a possible poisoning attempt is detected.
 ```
@@ -247,14 +247,14 @@ Ask: would someone who has never seen the codebase understand what improved for 
 Good:
 
 ```markdown
-* 📣 Changed: Ambire now better protects your privacy when resolving ENS names https://github.com/AmbireTech/ambire-app/pull/7364
+* 📣 Changed: Ambire now better protects your privacy when resolving ENS names [#7364](https://github.com/AmbireTech/ambire-app/pull/7364)
   * The wallet no longer refreshes ENS profiles for all accounts by default, reducing address exposure to ENS resolvers.
 ```
 
 Bad:
 
 ```markdown
-* 📣 Changed: Reduce ENS reverse lookups for better privacy https://github.com/AmbireTech/ambire-app/pull/7364
+* 📣 Changed: Reduce ENS reverse lookups for better privacy [#7364](https://github.com/AmbireTech/ambire-app/pull/7364)
   * "Reduce ENS reverse lookups" describes the internal mechanism, not the benefit, so it means nothing to most readers. The privacy win is real and worth announcing, it is just worded in an alien language.
 ```
 
@@ -284,9 +284,9 @@ When a change is platform-specific, add a short tag in parentheses at the **star
 The tag is orthogonal to 📣 and goes right after it:
 
 ```markdown
-* 📣 Added: (iOS) Face ID unlock https://github.com/AmbireTech/ambire-app/pull/1234
-* Fixed: (Android) Keyboard covers the amount input on the Send screen https://github.com/AmbireTech/ambire-app/pull/1235
-* Changed: (Extension) Firefox background script reconnect logic https://github.com/AmbireTech/ambire-app/pull/1236
+* 📣 Added: (iOS) Face ID unlock [#1234](https://github.com/AmbireTech/ambire-app/pull/1234)
+* Fixed: (Android) Keyboard covers the amount input on the Send screen [#1235](https://github.com/AmbireTech/ambire-app/pull/1235)
+* Changed: (Extension) Firefox background script reconnect logic [#1236](https://github.com/AmbireTech/ambire-app/pull/1236)
 ```
 
 ### Deciding the platform
@@ -304,7 +304,7 @@ If the PR body claims a platform (e.g. "iOS only") but the files are clearly cro
 Each top-level bullet must:
 
 * include a clear human-readable title
-* include the GitHub PR link
+* include the GitHub PR link as a markdown link at the end of the title: `[#1234](https://github.com/<owner>/<repo>/pull/1234)`
 * describe user impact when possible
 * avoid raw commit-message noise
 * avoid overly technical implementation details unless relevant to developers or release reviewers
@@ -315,11 +315,11 @@ For internal/technical entries (CI fixes, QA test updates, config, docs, TS erro
 Good:
 
 ```markdown
-* 📣 Added: dApp verification banners to signing screens https://github.com/AmbireTech/ambire-app/pull/7052
+* 📣 Added: dApp verification banners to signing screens [#7052](https://github.com/AmbireTech/ambire-app/pull/7052)
   * Shows verification status on SignMessage and SignAccountOp screens.
   * Requires Hold to Proceed when risk-related banners are present.
-* Changed: QA workflow — separate HTML reports per test group https://github.com/AmbireTech/ambire-app/pull/7119
-* Fixed: TypeScript errors from dApp interface changes https://github.com/AmbireTech/ambire-app/pull/7163
+* Changed: QA workflow: separate HTML reports per test group [#7119](https://github.com/AmbireTech/ambire-app/pull/7119)
+* Fixed: TypeScript errors from dApp interface changes [#7163](https://github.com/AmbireTech/ambire-app/pull/7163)
 ```
 
 Bad:
@@ -335,6 +335,36 @@ Category rules:
 * `Fixed` - bug fixes, regressions, broken flows, crashes, incorrect behavior, TypeScript/build errors, test failures, and reliability fixes.
 
 If unclear, use `Changed`.
+
+## Fold in-release fixes
+
+The changelog describes what changes for someone moving from the base (previous release tag, or `main`) to the new release. If a feature was added in this range and then a follow-up PR in the same range fixed a bug in it, that bug never reached anyone on the base release. Listing it as a separate `Fixed` entry is noise and makes it harder for one to see what actually changed.
+
+Rules:
+
+* If a `Fixed` PR only fixes something that was **added or changed by another included PR in this same range**, do not give it its own entry. Fold it into the parent entry: append its PR link after the parent's link, and update the parent's sub-bullets if the fix changed the final behavior (describe the final behavior, never the intermediate bug).
+* If the bug **existed in the base release**, keep it as its own `Fixed` entry, even if it is small. These are what users, support, and QA look for to confirm a reported issue is fixed.
+* When unsure, keep the entry separate. A redundant `Fixed` line is cheaper than hiding a fix someone is waiting for.
+
+Example:
+
+```markdown
+<!-- Before -->
+* Added: Portfolio history chart [#100](https://github.com/AmbireTech/ambire-app/pull/100)
+* Fixed: Portfolio history chart shows wrong totals [#105](https://github.com/AmbireTech/ambire-app/pull/105)
+* Fixed: Portfolio history chart crashes on empty accounts [#110](https://github.com/AmbireTech/ambire-app/pull/110)
+* Fixed: Send screen rejects valid ENS names [#112](https://github.com/AmbireTech/ambire-app/pull/112)
+
+<!-- After (#105 and #110 fixed bugs introduced by #100; #112 fixed a bug from the base release) -->
+* Added: Portfolio history chart [#100](https://github.com/AmbireTech/ambire-app/pull/100), [#105](https://github.com/AmbireTech/ambire-app/pull/105), [#110](https://github.com/AmbireTech/ambire-app/pull/110)
+* Fixed: Send screen rejects valid ENS names [#112](https://github.com/AmbireTech/ambire-app/pull/112)
+```
+
+Deciding whether the bug was introduced in this range (any one strong signal is enough):
+
+1. The fix PR's title, body, or linked issue points to a PR from this range ("follow-up to #100", "regression from #100"), or the issue was reported against a pre-release/RC build of this release.
+2. The files the fix changes did not exist in the base: `git diff --diff-filter=A --name-only <base>...<release>`.
+3. The lines the fix changes were last touched only by commits in this range. Run `git blame <fix-merge-sha>^1 -- <file>` on those lines and check each blamed commit with `git merge-base --is-ancestor <commit> <base>`; if any is an ancestor of the base, the bug predates the range, so keep the entry separate.
 
 ## Sub-bullets
 
@@ -368,7 +398,7 @@ Never claim a security improvement unless the PR clearly supports it.
 Always end with:
 
 ```markdown
-**Full Changelog**: https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>
+**Full Changelog**: [<previous-tag>...<new-tag>](https://github.com/<owner>/<repo>/compare/<previous-tag>...<new-tag>)
 ```
 
 ## Skipped PRs
@@ -379,6 +409,7 @@ After the fenced changelog block, always append a plain-text section listing eve
 ---
 **Excluded (Rewards/Legends):** #7193, #7173, #7171, #7168, #7162, #7158, #7150, #7144
 **Excluded (branch-sync commits):** Merge branch 'main' of ..., Merge branch 'release/v6.8' of ...
+**Folded into parent entry (bug introduced and fixed in this release):** #105, #110 → #100
 ```
 
 This makes the exclusion decisions transparent and reviewable.
@@ -388,12 +419,13 @@ This makes the exclusion decisions transparent and reviewable.
 Before returning the changelog, verify:
 
 * only merge commits were used
-* every top-level entry links to a GitHub PR
+* every top-level entry links to a GitHub PR using markdown link syntax (`[#1234](...)`), never a bare URL
 * marketing-worthy entries have 📣
 * platform-specific entries carry a platform tag ((Mobile)/(iOS)/(Android)/(Extension)/(Chrome)/(Firefox)); cross-platform entries are untagged
 * public wording is clear (📣 titles state the user benefit in plain language, not internal jargon)
 * no em dashes or en dashes in any entry
-* Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes)
+* Rewards/Legends PRs are excluded; all other PRs are present (including CI, QA, config, docs, TS fixes), either as their own entry or as a link folded into a parent entry
+* fixes for bugs introduced within this range are folded into their parent entry; fixes for bugs that existed in the base release remain separate `Fixed` entries
 * skipped PRs and branch-sync commits are listed after the changelog block
 * security/signing claims are accurate
 * Full Changelog compare link is present

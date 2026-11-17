@@ -16,18 +16,20 @@ import PrivacyIcon from '@common/assets/svg/PrivacyIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SignedMessageIcon from '@common/assets/svg/SignedMessageIcon'
+import StarFilledIcon from '@common/assets/svg/StarFilledIcon'
 import TransactionHistoryIcon from '@common/assets/svg/TransactionHistoryIcon'
 import GlassView from '@common/components/GlassView'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
+import { EXTENSION_STORE_REVIEWS_URL } from '@common/constants/stores'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import SettingsLink from '@common/modules/settings/components/SettingsLink'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -105,7 +107,7 @@ export const SETTINGS_LINKS = [
   {
     key: 'manage-tokens',
     Icon: CustomTokensIcon,
-    label: 'Custom tokens',
+    label: 'Custom assets',
     path: ROUTES.manageTokens
   }
 ]
@@ -116,6 +118,14 @@ const OTHER_LINKS = [
     Icon: AmbireLogoSquare,
     label: 'About Ambire',
     path: ROUTES.settingsAbout
+  },
+  {
+    key: 'rate-us',
+    Icon: StarFilledIcon,
+    iconSize: 18,
+    label: 'Rate us',
+    path: EXTENSION_STORE_REVIEWS_URL,
+    isExternal: true
   },
   {
     key: 'help-center',
@@ -136,7 +146,7 @@ const OTHER_LINKS = [
 const Sidebar = ({ activeLink }: { activeLink?: string }) => {
   const { theme, styles } = useTheme(getStyles)
   const keystoreState = useController('KeystoreController').state
-  const { isReady: evIsReady, emailVaultStates } = useController('EmailVaultController').state
+  const { isReady: evIsReady, hasKeystoreRecovery } = useController('EmailVaultController').state
   const { state } = useRoute()
   const { navigate } = useNavigation()
   const [validBackRoute, setValidBackRoute] = useState<'dashboard' | 'transfer' | null>(null)
@@ -184,7 +194,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
           </View>
           {!!validBackRoute && (
             <Pressable
-              style={{ width: 56, height: 56, ...flexbox.center }}
+              style={{ width: BUTTON_HEIGHT, height: BUTTON_HEIGHT, ...flexbox.center }}
               onPress={() => {
                 navigate(WEB_ROUTES.dashboard)
               }}
@@ -197,10 +207,7 @@ const Sidebar = ({ activeLink }: { activeLink?: string }) => {
         </View>
         <ScrollableWrapper>
           {SETTINGS_LINKS.map((_link, i) => {
-            if (
-              (!evIsReady || !Object.keys(emailVaultStates?.email || {}).length) &&
-              _link.key === 'device-password-recovery'
-            )
+            if ((!evIsReady || !hasKeystoreRecovery) && _link.key === 'device-password-recovery')
               return null
             // If the KeyStore device password is not configured yet, redirect to DevicePassword->Set route under the hood,
             // instead of loading DevicePassword->Change route.

@@ -2,12 +2,18 @@ import { useMemo } from 'react'
 
 import useController from '@common/hooks/useController'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   chainId?: bigint | number | null
 }
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const useSimulationError = ({ chainId }: Props) => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const network = useMemo(() => {
     if (!chainId) return

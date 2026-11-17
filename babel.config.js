@@ -1,6 +1,44 @@
+/**
+ * Removes a TypeScript `this` parameter before the presets run.
+ *
+ * A `this` parameter is type-only and TypeScript's own transform drops it, but with
+ * Hermes as the target Babel's parameter transform still counts it while rewriting
+ * defaulted parameters into `arguments[N]` lookups. Every parameter after the first
+ * then reads one argument too far - silently, and in the mobile build only, because the
+ * webpack builds do not pass `engine: 'hermes'`. `relayerCall` is the one function in
+ * the codebase that declares a `this` parameter, and it was reading its `body` as its
+ * `method`, which broke every POST to the relayer.
+ *
+ * Babel runs plugins ahead of presets, so stripping the parameter here leaves the
+ * presets with the same parameter list the emitted indices are computed from.
+ */
+const stripTypeScriptThisParam = () => ({
+  name: 'strip-typescript-this-param',
+  visitor: {
+    Function(path) {
+      const [firstParam] = path.node.params
+
+      if (firstParam && firstParam.type === 'Identifier' && firstParam.name === 'this') {
+        path.node.params.shift()
+      }
+    }
+  }
+})
+
 module.exports = function (api) {
   const isLegends = process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
-  api.cache(true)
+  // Keyed on the env the config below branches on, rather than cached outright, so a
+  // build for one target cannot reuse the config computed for another.
+  api.cache.using(() => `${process.env.WEB_ENGINE}|${process.env.WEBPACK_BUILD_OUTPUT_PATH}`)
+
+  // Metro transforms in jest-worker processes, which set JEST_WORKER_ID. Both env-inlining plugins
+  // below would bake it in, making react-native-mmkv's isTest() true: an empty in-memory storage
+  if (api.caller((caller) => caller?.name === 'metro')) delete process.env.JEST_WORKER_ID
+
+  const isMobile =
+    !process.env.WEB_ENGINE &&
+    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('benzin') &&
+    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
 
   const pathAliases = {
     '@': './src/ambire-common/src',
@@ -68,6 +106,8 @@ module.exports = function (api) {
   const mobileConfig = {
     ...config,
     plugins: [
+      // First, so the `this` parameter is gone before any preset reads the parameter list.
+      stripTypeScriptThisParam,
       ...config.plugins,
       [
         'module-resolver',
@@ -94,7 +134,8 @@ module.exports = function (api) {
             // Use react-native-quick-crypto for high-performance native crypto operations instead of slow JS polyfills
             crypto: 'react-native-quick-crypto',
             // Polyfill Node.js built-ins for compatibility with libraries using Node.js features (e.g. ethers.js, stream-based libs)
-            stream: 'readable-stream',
+            // Must match the `stream` entry in metro.config.js - see there why it isn't `readable-stream`
+            stream: 'stream-browserify',
             // Provide Buffer global for cryptographic and binary data processing
             buffer: 'buffer',
             // Redirect http/https to browser-compatible versions for networking libraries
@@ -110,11 +151,6 @@ module.exports = function (api) {
       ]
     ]
   }
-
-  const isMobile =
-    !process.env.WEB_ENGINE &&
-    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('benzin') &&
-    !process.env.WEBPACK_BUILD_OUTPUT_PATH?.includes('legends')
 
   return isMobile ? mobileConfig : webConfig
 }

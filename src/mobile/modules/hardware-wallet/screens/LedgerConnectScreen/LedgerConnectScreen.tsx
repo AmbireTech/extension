@@ -10,11 +10,12 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { isAndroid } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -31,19 +32,15 @@ const LedgerConnectScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { theme } = useTheme()
-  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { dispatch } = useControllersMiddleware()
+  const { goToPrevRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
+  const screenFocus = useScreenFocusStore()
   const mainCtrlState = useController('MainController').state
-  const { initParams, type } = useController('AccountPickerController').state
 
   // USB (OTG) is Android-only; iOS is Bluetooth-only for Ledger, so there's no tab.
   const [tab, setTab] = useState<LedgerTransportType>('ble')
   const [isConnecting, setIsConnecting] = useState(false)
-  // Set once we've connected and asked the worker to init the account picker; the
-  // navigation effect below waits for the picker to actually be ready.
-  const [importStarted, setImportStarted] = useState(false)
-  // Guards against navigating twice if the picker-ready effect re-fires before
-  // this screen unmounts.
+  // Set once the flow moved on to the account picker, which opens on top of this screen
   const hasNavigatedRef = useRef(false)
 
   const onDiscoveryError = useCallback(
@@ -73,24 +70,37 @@ const LedgerConnectScreen = () => {
         // wrong-app errors here instead of later inside the worker init), then
         // asks the worker to derive accounts via the bridge (mirrors web).
         await ledgerTransportService.connectAndProbe(device)
-        dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })
-        setImportStarted(true)
       } catch (e: any) {
         addToast(normalizeLedgerMessage(e?.message), { type: 'error' })
         // Back to discovery so the user can retry after unlocking / opening the app.
         setIsConnecting(false)
+        return
+      }
+
+      try {
+        await initAccountPicker({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LEDGER' })
+        hasNavigatedRef.current = true
+      } catch (error) {
+        // The controller reports its own failures, here the device list only comes back
+        console.error('Failed to set the account picker up for Ledger', error)
+        setIsConnecting(false)
       }
     },
-    [dispatch, addToast]
+    [addToast, initAccountPicker]
   )
 
-  // Once the account picker is initialized for Ledger, advance to account selection.
-  useEffect(() => {
-    if (importStarted && initParams && type === 'ledger' && !hasNavigatedRef.current) {
-      hasNavigatedRef.current = true
-      goToNextRoute()
-    }
-  }, [importStarted, initParams, type, goToNextRoute])
+  // The stack keeps this screen mounted under the account picker, so a back to it
+  // starts over from the device list instead of the finished connect.
+  useEffect(
+    () =>
+      screenFocus.subscribe(() => {
+        if (!screenFocus.isFocused.current || !hasNavigatedRef.current) return
+
+        hasNavigatedRef.current = false
+        setIsConnecting(false)
+      }),
+    [screenFocus]
+  )
 
   const isInitLoading = mainCtrlState.statuses.handleAccountPickerInitLedger === 'LOADING'
   const isUsbTab = tab === 'usb'

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Keyboard, Pressable, View, ViewStyle } from 'react-native'
 
-import { getAccountOpNonce, isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
+import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
 import Text from '@common/components/Text'
@@ -13,7 +13,9 @@ import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { isValidSafeNonce } from './helpers'
+import { getQueuedSafeNonces, isValidSafeNonce } from './helpers'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const getNonce = (safeTxNonce: string | undefined, accountOpNonce: bigint | null) =>
   safeTxNonce === undefined ? (accountOpNonce ?? 0n) : BigInt(safeTxNonce)
@@ -22,13 +24,19 @@ interface Props {
   withNetwork?: boolean
 }
 
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.userRequests
+
 const SafeNonce = ({ withNetwork = false }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { state: signAccountOpState, dispatch } = useController('SignAccountOpController')
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { state: userRequests } = useController('RequestsController', 'userRequests')
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: userRequests } = useController('RequestsController', selectUserRequests)
   const fromRequestId = signAccountOpState?.fromRequestId
 
   // Nonces already used by every OTHER queued Safe request for this account/chain. Computed
@@ -39,20 +47,12 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
 
     const { accountOp } = signAccountOpState
 
-    return userRequests.reduce<bigint[]>((nonces, request) => {
-      if (
-        request.kind !== 'calls' ||
-        request.id === fromRequestId ||
-        !request.signAccountOp.account.safeCreation ||
-        request.signAccountOp.accountOp.accountAddr !== accountOp.accountAddr ||
-        request.signAccountOp.accountOp.chainId !== accountOp.chainId
-      )
-        return nonces
-
-      const requestNonce = getAccountOpNonce(request.signAccountOp.accountOp)
-      if (requestNonce !== null) nonces.push(requestNonce)
-      return nonces
-    }, [])
+    return getQueuedSafeNonces(
+      userRequests,
+      fromRequestId,
+      accountOp.accountAddr,
+      accountOp.chainId
+    )
   }, [fromRequestId, signAccountOpState, userRequests])
 
   const nonce = useMemo(
@@ -75,6 +75,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     [networks, signAccountOpState?.accountOp.chainId]
   )
   const nonceString = nonce.toString()
+  // What the user typed, shown while the nonce is still `sourceNonce`. A typed nonce that gets
+  // set is keyed to itself, so any later change of the nonce (e.g. by Replace pending, back to
+  // the nonce it was typed over) shows the new nonce instead of the typed one
   const [draftNonceState, setDraftNonceState] = useState({
     fromRequestId,
     sourceNonce: nonceString,
@@ -112,8 +115,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
 
   const handleNonceChange = useCallback(
     (value: string) => {
-      setDraftNonceState({ fromRequestId, sourceNonce: nonceString, value })
-      if (!isValidSafeNonce(value, latestNonce)) return
+      const isValid = isValidSafeNonce(value, latestNonce)
+      setDraftNonceState({ fromRequestId, sourceNonce: isValid ? value : nonceString, value })
+      if (!isValid) return
 
       dispatch({
         type: 'method',
@@ -189,7 +193,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     if (isMobile) Keyboard.dismiss()
     setDraftNonceState({
       fromRequestId,
-      sourceNonce: nonceString,
+      sourceNonce: nonceConflict.nextNonce.toString(),
       value: nonceConflict.nextNonce.toString()
     })
     dispatch({
@@ -199,7 +203,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
         args: [nonceConflict.nextNonce]
       }
     })
-  }, [dispatch, fromRequestId, nonceConflict, nonceString])
+  }, [dispatch, fromRequestId, nonceConflict])
 
   // Small floating card styled like the app's real Tooltip (Tooltip.web.tsx), so the
   // conflict reads as an Ambire tooltip popup rather than a one-off alert card. The
@@ -234,10 +238,7 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
               spacings.phSm,
               spacings.pvTy,
               {
-                // A little wider than the text strictly needs, so the wrap point between
-                // the plain and underlined nested Text fragments lands with slack instead
-                // of right at the card's edge - too tight and the last glyph gets clipped.
-                width: 300,
+                width: nonceConflict.kind === 'taken' ? 280 : 270,
                 borderRadius: BORDER_RADIUS_PRIMARY,
                 borderWidth: 1,
                 borderColor: theme.secondaryBorder,
@@ -252,8 +253,8 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
           >
             <Text fontSize={14} appearance="secondaryText">
               {nonceConflict.kind === 'taken'
-                ? t('A pending transaction already uses this nonce. ')
-                : t('Latest free pending nonce is lower. ')}
+                ? t('A pending transaction already uses this nonce.')
+                : t('Latest free pending nonce is lower.')}{' '}
               <Text fontSize={14} appearance="linkText" underline>
                 {t('You can use nonce {{nextNonce}}', {
                   nextNonce: nonceConflict.nextNonce.toString()
@@ -308,7 +309,11 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
     ]
   )
 
-  if (!signAccountOpState?.account.safeCreation) return null
+  if (
+    !signAccountOpState?.account.safeCreation ||
+    !!signAccountOpState?.accountOp.meta?.isSafeDeploy
+  )
+    return null
 
   return !hasNetworkLayout ? (
     <View ref={containerRef} style={{ width: 165, height: 40 }}>
@@ -416,7 +421,9 @@ const SafeNonce = ({ withNetwork = false }: Props) => {
         {!!nonceConflictBubble && (
           <View
             style={[
-              { position: 'absolute', right: -40, zIndex: 10 },
+              // Aligned with this container's right edge (rather than overhanging it) so the
+              // bubble stays within the screen bounds instead of running off the right side.
+              { position: 'absolute', right: 0, zIndex: 10 },
               // On mobile the bubble renders below the input instead of above it, because
               // this component sits at the top of the screen's ScrollView, leaving no
               // scroll room above it for an upward-opening bubble to be visible in.

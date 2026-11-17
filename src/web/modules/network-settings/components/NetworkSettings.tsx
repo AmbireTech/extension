@@ -27,12 +27,17 @@ import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRo
 
 import BatchingControlOption from './BatchingControlOption'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectAllNetworks = (state: AllControllersMappingType['NetworksController']) =>
+  state.allNetworks
+
 const NetworksSettings = () => {
   const { t } = useTranslation()
   const { search: searchParams, pathname } = useRoute()
   const { control, watch } = useForm({ defaultValues: { search: '' } })
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
-  const { state: allNetworks } = useController('NetworksController', 'allNetworks')
+  const { state: allNetworks } = useController('NetworksController', selectAllNetworks)
   const {
     state: { providers }
   } = useController('ProvidersController')

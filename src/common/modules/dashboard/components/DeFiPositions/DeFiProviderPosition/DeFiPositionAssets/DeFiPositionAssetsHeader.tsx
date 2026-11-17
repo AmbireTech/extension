@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import getStyles from '@common/modules/dashboard/components/DeFiPositions/DeFiProviderPosition/styles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -19,7 +19,7 @@ type Props = {
 const DeFiPositionAssetsHeader: FC<Props> = ({ columns }) => {
   const { t } = useTranslation()
   const { theme } = useTheme(getStyles)
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const headerFontSize = isCompactLayout ? 10 : 12
 
   return (

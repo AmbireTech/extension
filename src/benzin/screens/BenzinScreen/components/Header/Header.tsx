@@ -40,7 +40,6 @@ const Header: FC<Props> = ({ activeStep, network, topContent }) => {
             height={isWeb ? 32 : undefined}
           />
         </View>
-        {topContent}
         <Text
           fontSize={IS_MOBILE_UP_BENZIN_BREAKPOINT ? 20 : 18}
           weight="medium"
@@ -49,6 +48,7 @@ const Header: FC<Props> = ({ activeStep, network, topContent }) => {
           Transaction Progress
         </Text>
       </View>
+      {topContent}
 
       <View style={styles.network}>
         {activeStep === 'in-progress' ? (

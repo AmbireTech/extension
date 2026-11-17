@@ -1,5 +1,5 @@
 import { isWeb } from '@common/config/env'
-import { isExtension } from '@web/constants/browserapi'
+import { engine, isExtension } from '@web/constants/browserapi'
 
 import { UI_TYPE, UiType, UiTypeCheck } from './types'
 
@@ -25,6 +25,7 @@ export const getUiType = (): UiTypeCheck => {
       isRequestWindow: false,
       isPopup: false,
       isSidePanel: false,
+      isFirefoxSidebar: false,
       isTab: false,
       isMobileApp: false
     }
@@ -35,6 +36,7 @@ export const getUiType = (): UiTypeCheck => {
       isRequestWindow: false,
       isPopup: false,
       isSidePanel: false,
+      isFirefoxSidebar: false,
       isTab: true,
       isMobileApp: false
     }
@@ -53,6 +55,7 @@ export const getUiType = (): UiTypeCheck => {
 
   return {
     ...uiTypeValues,
+    isFirefoxSidebar: engine === 'gecko' && uiTypeValues.isSidePanel,
     uiType: pathToUiType(pathname),
     isMobileApp: false
   }

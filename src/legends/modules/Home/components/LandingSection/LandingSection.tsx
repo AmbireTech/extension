@@ -1,5 +1,6 @@
 import React, { FC } from 'react'
 
+import { CHROME_WEB_STORE_URL } from '@common/constants/stores'
 import useProviderContext from '@legends/hooks/useProviderContext'
 
 import ambireBlurredLogo from './ambire-blurred-logo.png'
@@ -18,10 +19,7 @@ const LandingSection: FC<Props> = ({ nonV2acc = false }) => {
     if (hasAnyAmbireExtensionInstalled) {
       await connectProvider()
     } else {
-      window.open(
-        'https://chromewebstore.google.com/detail/ambire-wallet/ehgjhhccekdedpbkifaojjaefeohnoea',
-        '_blank'
-      )
+      window.open(CHROME_WEB_STORE_URL, '_blank')
     }
   }
 

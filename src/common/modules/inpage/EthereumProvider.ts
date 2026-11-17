@@ -1,11 +1,9 @@
 import { ethErrors, serializeError } from 'eth-rpc-errors'
 import { EventEmitter } from 'events'
 
-import { ETH_RPC_METHODS_AMBIRE_MUST_HANDLE } from '@common/modules/inpage/methods'
 import DedupePromise from '@common/modules/inpage/services/dedupePromise'
 import PushEventHandlers from '@common/modules/inpage/services/pushEventsHandlers'
 import ReadyPromise from '@common/modules/inpage/services/readyPromise'
-import { delayPromise } from '@common/utils/promises'
 
 export interface StateProvider {
   accounts: string[] | null
@@ -19,7 +17,6 @@ export interface ExternalHandlers {
   sendRequest: (params: any) => Promise<any>
   onBackgroundMessage: (callback: (msg: any) => Promise<void>) => void
   logInfo?: (prefix: string, ...args: any[]) => void
-  logWarn?: (prefix: string, ...args: any[]) => void
 }
 
 // Ordered ranks for `loglevel`'s descriptors
@@ -152,11 +149,6 @@ async function getDappName() {
   return rawName
 }
 
-export interface ExternalHandlers {
-  sendRequest: (params: any) => Promise<any>
-  onBackgroundMessage: (callback: (msg: any) => Promise<void>) => void
-}
-
 export class EthereumProvider extends EventEmitter {
   #pushEventHandlers?: PushEventHandlers
 
@@ -166,17 +158,9 @@ export class EthereumProvider extends EventEmitter {
 
   #dedupePromise = new DedupePromise([])
 
-  #forwardRpcRequests?: (url: string, method: any, params: any) => Promise<any> | null
-
-  #getFoundRpcUrls?: () => string[]
-
   chainId: string | null = null
 
   selectedAddress: string | null = null
-
-  #dappProviderUrls: { [key: string]: string } = {}
-
-  #configuredDappRpcUrls: string[] = []
 
   /**
    * The network ID of the currently connected Ethereum chain.
@@ -214,6 +198,10 @@ export class EthereumProvider extends EventEmitter {
 
   #providerId: number
 
+  #isDisguisedAsMetaMask = false
+
+  #onDisguiseAsMetaMask?: () => void
+
   get providerId() {
     return this.#providerId
   }
@@ -234,23 +222,10 @@ export class EthereumProvider extends EventEmitter {
     this.#externalHandlers.logInfo?.(prefix, ...args)
   }
 
-  logWarn = (prefix: string, ...args: any[]) => {
-    if (this.#logLevelRank > LOG_LEVEL_RANKS.warn) return
-    this.#externalHandlers.logWarn?.(prefix, ...args)
-  }
-
-  constructor(
-    externalHandlers: ExternalHandlers,
-    forwardRpcRequests?: (url: string, method: any, params: any) => Promise<any>,
-    getFoundRpcUrls?: () => string[],
-    options?: { deferInitialization?: boolean }
-  ) {
+  constructor(externalHandlers: ExternalHandlers, options?: { deferInitialization?: boolean }) {
     super()
 
     this.#externalHandlers = externalHandlers
-
-    this.#forwardRpcRequests = forwardRpcRequests
-    this.#getFoundRpcUrls = getFoundRpcUrls
 
     this.setMaxListeners(100)
     this.shimLegacy()
@@ -308,10 +283,17 @@ export class EthereumProvider extends EventEmitter {
     })
 
     try {
-      const { chainId, accounts, networkVersion, isUnlocked, logLevel }: any =
-        await this.requestInternalMethods({ method: 'getProviderState' })
+      const {
+        chainId,
+        accounts,
+        networkVersion,
+        isUnlocked,
+        logLevel,
+        isDisguisedAsMetaMask
+      }: any = await this.requestInternalMethods({ method: 'getProviderState' })
 
       this.setLogLevel(logLevel)
+      this.#applyDisguiseAsMetaMask(isDisguisedAsMetaMask)
       if (isUnlocked) {
         this._isUnlocked = true
         this._state.isUnlocked = true
@@ -420,59 +402,7 @@ export class EthereumProvider extends EventEmitter {
       return this.chainId
     }
 
-    // store in the EthereumProvider state the valid RPC URLs of the connected dapp to use them for forwarding
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ;(async () => {
-      if (!this.#forwardRpcRequests || !this.#getFoundRpcUrls) return
-
-      for (const url of this.#getFoundRpcUrls().filter((u) => !u.startsWith('wss'))) {
-        if (
-          !Object.values(this.#dappProviderUrls).find((u) => u === url) &&
-          !this.#configuredDappRpcUrls.includes(url)
-        ) {
-          try {
-            // Here we validate whether the provided URL is a valid RPC by getting the chainId of the provider
-
-            const chainId = await this.#forwardRpcRequests(url, 'eth_chainId', [])
-            if (chainId) this.#dappProviderUrls[Number(chainId).toString()] = url
-          } catch (error) {
-            console.error(error)
-          }
-          this.#configuredDappRpcUrls.push(url)
-        }
-      }
-    })()
-
     return this.#requestPromise.call(async () => {
-      if (
-        data.method.startsWith('eth_') &&
-        !ETH_RPC_METHODS_AMBIRE_MUST_HANDLE.includes(data.method)
-      ) {
-        const providerUrl = this.#dappProviderUrls[Number(this.chainId).toString()]
-        if (providerUrl && this.#forwardRpcRequests) {
-          if (data.method !== 'eth_call') {
-            this.logInfo('[⏩ forwarded request]', data)
-          }
-          try {
-            const result = await Promise.race([
-              this.#forwardRpcRequests(providerUrl, data.method, data.params),
-              // Timeouts after 3 secs because sometimes the provider call hangs with no response
-              delayPromise(3000)
-            ])
-
-            if (data.method !== 'eth_call')
-              this.logInfo('[⏩ forwarded request: success]', data.method, result)
-
-            // Otherwise, if no result comes, do not return, fallback to our provider.
-            if (result) return result
-          } catch (err) {
-            // We disregard any errors here since we'll handle the request with our provider regardless of the error
-            if (data.method !== 'eth_call')
-              this.logWarn('[⏩ forwarded request: error]', data.method, err)
-          }
-        }
-      }
-
       if (data.method !== 'eth_call') {
         this.logInfo('[request]', data)
       }
@@ -599,5 +529,22 @@ export class EthereumProvider extends EventEmitter {
     if (rank !== undefined) this.#logLevelRank = rank
 
     this.logInfo('[setLogLevel]', nextLogLevel)
+  }
+
+  /**
+   * Registers what to run once the wallet learns this app has the MetaMask disguise turned on.
+   * Set it right after construction - the answer arrives with the first provider state, and it may
+   * already have arrived by the time this is called.
+   */
+  setOnDisguiseAsMetaMask = (callback: () => void) => {
+    this.#onDisguiseAsMetaMask = callback
+    if (this.#isDisguisedAsMetaMask) callback()
+  }
+
+  #applyDisguiseAsMetaMask = (isDisguised?: boolean) => {
+    if (!isDisguised || this.#isDisguisedAsMetaMask) return
+
+    this.#isDisguisedAsMetaMask = true
+    this.#onDisguiseAsMetaMask?.()
   }
 }

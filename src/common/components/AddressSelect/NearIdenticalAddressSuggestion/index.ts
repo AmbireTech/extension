@@ -1,0 +1,3 @@
+import NearIdenticalAddressSuggestion from './NearIdenticalAddressSuggestion'
+
+export default NearIdenticalAddressSuggestion

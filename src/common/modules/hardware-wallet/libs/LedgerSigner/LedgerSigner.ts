@@ -1,7 +1,8 @@
-import { Signature, Transaction, TransactionLike } from 'ethers'
+import { Signature, toBeHex, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
+import { Hex } from '@ambire-common/interfaces/hex'
+import { HdExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
@@ -11,13 +12,14 @@ import {
   LedgerControllerInterface,
   LedgerSignature
 } from '@common/modules/hardware-wallet/interfaces/ledgerController'
+import { getUnsignedTransaction } from '@common/modules/hardware-wallets/utils/getUnsignedTransaction'
 
 class LedgerSigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: LedgerControllerInterface | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: HdExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 
@@ -76,12 +78,8 @@ class LedgerSigner implements KeystoreSignerInterface {
   signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {
     await this.#prepareForSigning()
 
-    // In case `maxFeePerGas` is provided, treat as an EIP-1559 transaction,
-    // since there's no other better way to distinguish between the two in here.
-    const type = typeof txnRequest.maxFeePerGas === 'bigint' ? 2 : 0
-
     try {
-      const unsignedTxn: TransactionLike = { ...txnRequest, type }
+      const unsignedTxn = getUnsignedTransaction(txnRequest)
       const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
       const strippedTxn = stripHexPrefix(unsignedSerializedTxn)
       const transactionBytes = hexStringToUint8Array(strippedTxn)
@@ -163,17 +161,97 @@ class LedgerSigner implements KeystoreSignerInterface {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  sign7702: KeystoreSignerInterface['sign7702'] = ({ chainId, contract, nonce }) => {
-    throw new Error('not support', { cause: contract })
+  sign7702: KeystoreSignerInterface['sign7702'] = async ({ chainId, contract, nonce }) => {
+    // Intentionally skip #prepareForSigning() here: it unlocks via getAddress,
+    // which opens the official Ethereum app. The 7702 delegation must instead be
+    // signed by the sideloaded "Ambire Signer" app (a fork of the Ethereum app
+    // that whitelists the Ambire delegator). controller.sign7702 inits the
+    // session and opens Ambire Signer itself.
+    if (!this.controller) {
+      throw new ExternalSignerError(
+        'Something went wrong when preparing Ledger to sign. Please try again or contact support if the problem persists.',
+        { sendCrashReport: true }
+      )
+    }
+
+    try {
+      const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+      const signature = await this.controller.sign7702(path, chainId, contract, nonce)
+      const v = Signature.getNormalizedV(signature.v)
+
+      const yParity = v === 27 ? '0x00' : '0x01'
+      return { r: signature.r as Hex, s: signature.s as Hex, yParity }
+    } catch (e: any) {
+      throw new ExternalSignerError(
+        e?.message || 'ledgerSigner: singing failed for unknown reason',
+        {
+          // We don't want to send crash reports of expected errors. If the errors is
+          // TypeError, RuntimeError, etc. - we want to send it.
+          sendCrashReport: e instanceof ExternalSignerError ? e.sendCrashReport : true
+        }
+      )
+    }
   }
 
-  signTransactionTypeFour: KeystoreSignerInterface['signTransactionTypeFour'] = ({
+  signTransactionTypeFour: KeystoreSignerInterface['signTransactionTypeFour'] = async ({
     txnRequest,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     eip7702Auth
   }) => {
-    throw new Error('not supported', { cause: txnRequest })
+    await this.#prepareForSigning()
+
+    try {
+      const maxPriorityFeePerGas = txnRequest.maxPriorityFeePerGas ?? txnRequest.gasPrice
+      const maxFeePerGas = txnRequest.maxFeePerGas ?? txnRequest.gasPrice
+      const authorizationSignature = Signature.from({
+        r: eip7702Auth.r,
+        s: eip7702Auth.s,
+        v: BigInt(eip7702Auth.v)
+      })
+
+      const finalTxnRequest = {
+        ...txnRequest,
+        maxPriorityFeePerGas: maxPriorityFeePerGas ? toBeHex(maxPriorityFeePerGas) : '0x',
+        maxFeePerGas: maxFeePerGas ? toBeHex(maxFeePerGas) : '0x',
+        authorizationList: [
+          {
+            address: eip7702Auth.address,
+            nonce: BigInt(eip7702Auth.nonce),
+            chainId: BigInt(eip7702Auth.chainId),
+            signature: authorizationSignature
+          }
+        ]
+      }
+
+      // Serialize the transaction using ethers
+      const unsignedTxn: TransactionLike = { ...finalTxnRequest, type: 4 }
+      const unsignedSerializedTxn = Transaction.from(unsignedTxn).unsignedSerialized
+      const strippedTxn = stripHexPrefix(unsignedSerializedTxn)
+      const transactionBytes = hexStringToUint8Array(strippedTxn)
+
+      const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
+      const res = await this.controller!.signTransaction(path, transactionBytes)
+
+      const signature = Signature.from({
+        r: res.r,
+        s: res.s,
+        v: Signature.getNormalizedV(res.v)
+      })
+      const signedSerializedTxn = Transaction.from({
+        ...unsignedTxn,
+        signature
+      }).serialized
+
+      return signedSerializedTxn as Hex
+    } catch (e: any) {
+      throw new ExternalSignerError(
+        e?.message || 'ledgerSigner: singing failed for unknown reason',
+        {
+          // We don't want to send crash reports of expected errors. If the errors is
+          // TypeError, RuntimeError, etc. - we want to send it.
+          sendCrashReport: e instanceof ExternalSignerError ? e.sendCrashReport : true
+        }
+      )
+    }
   }
 
   async signingCleanup() {

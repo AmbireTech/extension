@@ -1,15 +1,9 @@
-import {
-  getBytes,
-  hashMessage,
-  Signature,
-  Transaction,
-  TransactionLike,
-  TypedDataEncoder
-} from 'ethers'
+import { getBytes, hashMessage, Signature, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
-import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
+import { HdExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { TypedMessageUserRequest } from '@ambire-common/interfaces/userRequest'
+import { getEIP712Hash } from '@ambire-common/libs/signMessage/signMessage'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import { stripHexPrefix } from '@ambire-common/utils/stripHexPrefix'
@@ -24,11 +18,11 @@ import { NfcSignature } from '@common/modules/hardware-wallets/nfc/types'
  * and delegates only the elliptic curve part to the card, through the controller.
  */
 class NfcHardwareSigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: NfcControllerInterface | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: HdExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 
@@ -106,12 +100,11 @@ class NfcHardwareSigner implements KeystoreSignerInterface {
   }
 
   static getTypedDataHash(typedData: TypedMessageUserRequest['meta']['params']): string {
-    // ethers derives the primary type on its own and rejects the EIP712Domain entry
-    const typesWithoutDomain = Object.fromEntries(
-      Object.entries(typedData.types).filter(([typeName]) => typeName !== 'EIP712Domain')
-    )
-
-    return TypedDataEncoder.hash(typedData.domain, typesWithoutDomain, typedData.message)
+    // Use the same hash every other signer (and the request/display checks) use, keyed on
+    // the request's declared `primaryType` - not a type ethers derives on its own from the
+    // shape of `types`. The card has no screen, so this hash is the only thing standing
+    // between what the user is shown and what actually gets signed.
+    return getEIP712Hash(typedData)
   }
 
   signRawTransaction: KeystoreSignerInterface['signRawTransaction'] = async (txnRequest) => {

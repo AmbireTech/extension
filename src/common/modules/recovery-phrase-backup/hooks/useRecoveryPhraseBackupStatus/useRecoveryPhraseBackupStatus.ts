@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 
+import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import useController from '@common/hooks/useController'
 
 /**
@@ -8,12 +9,13 @@ import useController from '@common/hooks/useController'
  * The settings screen lists every phrase that was never backed up, so the user always has
  * a way in. The dashboard banner is stricter and only appears once the account holds funds -
  * there is nothing to lose before that, and nagging users with empty accounts defeats the
- * point of the simplified onboarding.
+ * point of the simplified onboarding. A Privacy Pools account is asked from the start, as the
+ * phrase is all there is to it.
  */
 export default function useRecoveryPhraseBackupStatus() {
   const { seeds, keys } = useController('KeystoreController').state
   const {
-    state: { account: selectedAccount, portfolio }
+    state: { account: selectedAccount, portfolio, privacyPoolsAccountId }
   } = useController('SelectedAccountController')
 
   const notBackedUpSeedIds = useMemo(
@@ -29,17 +31,22 @@ export default function useRecoveryPhraseBackupStatus() {
   )
 
   const seedIdOfSelectedAccountNeedingBackup = useMemo(() => {
+    // A Privacy Pools account's id is its recovery phrase id
+    if (privacyPoolsAccountId)
+      return notBackedUpSeedIds.includes(privacyPoolsAccountId) ? privacyPoolsAccountId : null
+
     if (!selectedAccount || portfolio.totalBalance <= 0) return null
 
     const selectedAccountKeyAddrs = selectedAccount.associatedKeys
-    const seedIdOfSelectedAccount = keys.find(
-      ({ addr, meta }) => !!meta.fromSeedId && selectedAccountKeyAddrs.includes(addr)
-    )?.meta.fromSeedId
+    const seedIdOfSelectedAccount = keys
+      .filter(({ addr }) => selectedAccountKeyAddrs.includes(addr))
+      .map(getKeySeedId)
+      .find(Boolean)
 
     if (!seedIdOfSelectedAccount) return null
 
     return notBackedUpSeedIds.includes(seedIdOfSelectedAccount) ? seedIdOfSelectedAccount : null
-  }, [keys, notBackedUpSeedIds, portfolio.totalBalance, selectedAccount])
+  }, [keys, notBackedUpSeedIds, portfolio.totalBalance, privacyPoolsAccountId, selectedAccount])
 
   return { notBackedUpSeedIds, seedsSortedByBackupStatus, seedIdOfSelectedAccountNeedingBackup }
 }

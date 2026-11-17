@@ -56,8 +56,10 @@ const DappItem = (dapp: DappItemProps) => {
     description,
     isConnected,
     isFeatured,
+    isCustom,
     favorite,
     blacklisted,
+    isTrustedByUser,
     tvl,
     twitter,
     onPressOverride,
@@ -68,9 +70,12 @@ const DappItem = (dapp: DappItemProps) => {
   const { t } = useTranslation()
   const navigation = useNavigation()
 
+  // The user vouched for this app, so its hosting is no longer flagged here either.
+  const isSuspiciousHosting = blacklisted === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
+
   const getCardBackground = (hovered: boolean) => {
     if (blacklisted === 'BLACKLISTED') return theme.errorBackground
-    if (blacklisted === 'SUSPICIOUS_HOSTING') return theme.warningBackground
+    if (isSuspiciousHosting) return theme.warningBackground
     return hovered ? theme.tertiaryBackground : theme.secondaryBackground
   }
 
@@ -144,7 +149,8 @@ const DappItem = (dapp: DappItemProps) => {
         >
           <View style={[flexbox.directionRow, !!description && spacings.mbSm]}>
             <View style={spacings.mrTy}>
-              {blacklisted === 'VERIFIED' && (
+              {/* Only default catalog apps are verified - passing the security checks alone isn't enough */}
+              {blacklisted === 'VERIFIED' && !isCustom && (
                 <View
                   style={{
                     position: 'absolute',
@@ -153,7 +159,11 @@ const DappItem = (dapp: DappItemProps) => {
                     zIndex: 1
                   }}
                   dataSet={createGlobalTooltipDataSet({
-                    id,
+                    // The "Manage app" bottom sheet renders another `DappItem` for the same dapp,
+                    // which stays mounted (off-screen) even while closed. Suffixing the id keeps
+                    // the two badges from matching the same GlobalTooltip anchor selector, which
+                    // caused the tooltip to bind to the wrong (list) badge's position.
+                    id: isInSettings ? `${id}-manage-app` : id,
                     content: t('Verified app'),
                     delayShow: 250,
                     border: `1px solid ${theme.successDecorative as string}`,
@@ -249,19 +259,6 @@ const DappItem = (dapp: DappItemProps) => {
                       <TwitterIcon width={20} height={20} />
                     </AnimatedPressable>
                   )}
-                  {blacklisted === 'BLACKLISTED' && (
-                    <Badge text={t('Blacklisted')} type="error" style={spacings.mrTy} />
-                  )}
-                  {blacklisted === 'SUSPICIOUS_HOSTING' && (
-                    <Badge
-                      text={t('Suspicious hosting')}
-                      type="warning"
-                      tooltipText={t(
-                        'This app is hosted on a shared platform commonly used for phishing. Be careful when interacting with it unless you are certain you trust it.'
-                      )}
-                      style={spacings.mrTy}
-                    />
-                  )}
                   {!isInSettings && (
                     <View testID="manage-dapp-dropdown" style={{ zIndex: 999 }}>
                       <ManageApp
@@ -279,6 +276,29 @@ const DappItem = (dapp: DappItemProps) => {
                     </View>
                   )}
                 </View>
+                {blacklisted === 'BLACKLISTED' && (
+                  <Badge text={t('Blacklisted')} type="error" style={spacings.mlTy} />
+                )}
+                {isSuspiciousHosting && (
+                  <Badge
+                    text={t('Suspicious hosting')}
+                    type="warning"
+                    tooltipText={t(
+                      'This app is hosted on a shared platform commonly used for phishing. Be careful when interacting with it unless you are certain you trust it.'
+                    )}
+                    style={spacings.mlTy}
+                  />
+                )}
+                {!!isTrustedByUser && (
+                  <Badge
+                    text={t('Trusted by you')}
+                    type="warning"
+                    tooltipText={t(
+                      'Hosted on a shared platform commonly used for phishing, but you marked it as trusted, so we no longer warn you.'
+                    )}
+                    style={spacings.mlTy}
+                  />
+                )}
                 {isFeatured && !isInSettings && (
                   <Badge
                     text={t('Featured')}

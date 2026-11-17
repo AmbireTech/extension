@@ -12,7 +12,11 @@ export interface BiometricsContextReturnType {
   isEnrolled: boolean
   authenticate: () => Promise<boolean>
   saveBiometricsSecret: () => Promise<string | null>
-  getBiometricsSecret: () => Promise<string | null>
+  /**
+   * `promptMessage` is what the operating system's biometric prompt says. It is honoured on
+   * native only - on the web the browser writes that dialog and WebAuthn has no field for it.
+   */
+  getBiometricsSecret: (promptMessage?: string) => Promise<string | null>
   removeBiometricsSecret: () => Promise<void>
 }
 

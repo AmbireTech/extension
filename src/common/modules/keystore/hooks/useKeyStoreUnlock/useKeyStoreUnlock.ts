@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 
-import { isDev, isTesting } from '@common/config/env'
+import { DEV_PREFILLED_PASSWORD } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDisableNavigatingBack from '@common/hooks/useDisableNavigatingBack'
 import useNavigation from '@common/hooks/useNavigation'
-import { DEFAULT_KEYSTORE_PASSWORD_DEV } from '@env'
 
 const useKeyStoreUnlock = () => {
   const { t } = useTranslation()
@@ -26,7 +25,7 @@ const useKeyStoreUnlock = () => {
   } = useForm({
     mode: 'all',
     defaultValues: {
-      password: isDev && !isTesting ? (DEFAULT_KEYSTORE_PASSWORD_DEV ?? '') : ''
+      password: DEV_PREFILLED_PASSWORD
     }
   })
 

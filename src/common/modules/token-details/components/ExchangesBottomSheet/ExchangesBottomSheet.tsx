@@ -12,6 +12,7 @@ import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableW
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -39,7 +40,7 @@ const ExchangeItem = ({ name, image, url }: { name: string; image: string; url: 
       style={[
         animStyle,
         {
-          height: 56,
+          height: BUTTON_HEIGHT,
           ...flexbox.directionRow,
           ...flexbox.alignCenter,
           ...flexbox.justifySpaceBetween,

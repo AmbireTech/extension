@@ -9,7 +9,7 @@ import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddle
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
-import { MethodAction } from '@common/types/actions'
+import { Action, MethodAction } from '@common/types/actions'
 import { RewardsBaseControllersMappingType } from '@legends/constants/controllersMapping'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -84,7 +84,7 @@ export const ControllersMiddlewareProvider: React.FC<{
   )
 
   const dispatch = useCallback(
-    (action: MethodAction) => {
+    (action: MethodAction | Action) => {
       if (action.type === 'method') {
         const { ctrlName, method, args } = action.params
 

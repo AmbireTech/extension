@@ -2,10 +2,12 @@ import { getAddress, isAddress } from 'ethers'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
+import { getDefaultAccountPreferences } from '@ambire-common/libs/account/account'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
 // sometimes safe addresses come like eth:address
 // so we split it, if it has a :, and then we validate
@@ -19,7 +21,8 @@ const getSplitAddress = (value: string) => {
 
 const useSafeImport = () => {
   const { dispatch: safeDispatch, state } = useController('SafeController')
-  const { dispatch: accountsDispatch, state: accountsState } = useController('AccountsController')
+  const { state: accountsState } = useController('AccountsController')
+  const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
   const { statuses, importError, safeInfo } = state
   const { accounts } = accountsState
   const {
@@ -46,35 +49,36 @@ const useSafeImport = () => {
 
     try {
       setIsLoading(true)
-      accountsDispatch({
+      // Prepared for the personalize step, which adds it once the user proceeds
+      await accountPickerDispatchAndWait({
         type: 'method',
         params: {
-          method: 'addAccounts',
+          method: 'prepareAccounts',
           args: [
-            [
-              {
-                addr: safe,
-                associatedKeys: safeInfo.owners,
-                initialPrivileges: safeInfo.owners.map((o) => [o, '0x01']),
-                creation: null,
-                safeCreation: {
-                  factoryAddr: safeInfo.factoryAddr,
-                  singleton: safeInfo.singleton,
-                  setupData: safeInfo.setupData,
-                  saltNonce: safeInfo.saltNonce,
-                  version: safeInfo.version
-                },
-                preferences: {
-                  label: 'Safe',
-                  pfp: safe
+            {
+              accounts: [
+                {
+                  addr: safe,
+                  associatedKeys: safeInfo.owners,
+                  initialPrivileges: safeInfo.owners.map((o) => [o, '0x01']),
+                  creation: null,
+                  safeCreation: {
+                    factoryAddr: safeInfo.factoryAddr,
+                    singleton: safeInfo.singleton,
+                    setupData: safeInfo.setupData,
+                    saltNonce: safeInfo.saltNonce
+                  },
+                  preferences: getDefaultAccountPreferences(safe, accounts)
                 }
-              }
-            ]
+              ]
+            }
           ]
         }
       })
       reset()
-      goToNextRoute()
+      goToNextRoute(WEB_ROUTES.accountPersonalize)
+      // Going back from the personalize step adds nothing, so the form is usable again
+      setIsLoading(false)
     } catch (e: any) {
       setIsLoading(false)
       addToast(
@@ -88,7 +92,17 @@ const useSafeImport = () => {
 
       throw e
     }
-  }, [goToNextRoute, addToast, accountsDispatch, t, safe, safeInfo, reset, isLoading])
+  }, [
+    goToNextRoute,
+    addToast,
+    accountPickerDispatchAndWait,
+    t,
+    safe,
+    safeInfo,
+    reset,
+    isLoading,
+    accounts
+  ])
 
   const handleFormSubmit = useCallback(() => {
     void handleSubmit(submitSafe)()
@@ -114,9 +128,14 @@ const useSafeImport = () => {
       return
     }
 
-    if (safeAddr !== safe) setSafe(getAddress(safeAddr))
-    if (safeAddr !== safe && safeAddr !== safeInfo?.address) {
-      safeDispatch({ type: 'method', params: { method: 'findSafe', args: [safeAddr] } })
+    // checksum before both storing and searching so the controller's importError.address
+    // matches `safe` - otherwise a lowercase input hides the error while disabling the button
+    const checksummedSafeAddr = getAddress(safeAddr)
+    if (checksummedSafeAddr === safe) return
+
+    setSafe(checksummedSafeAddr)
+    if (checksummedSafeAddr !== safeInfo?.address) {
+      safeDispatch({ type: 'method', params: { method: 'findSafe', args: [checksummedSafeAddr] } })
     }
   }, [safeDispatch, safeAddressValue, safeInfo?.address, safe])
 

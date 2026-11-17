@@ -5,6 +5,7 @@ import { SvgProps } from 'react-native-svg'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
@@ -44,6 +45,7 @@ const DualChoiceModal: FC<Props> = ({
   primaryButtonDisabled
 }) => {
   const { styles, theme } = useTheme(getStyles)
+  const { isCompactLayout } = useCompactLayout()
 
   return (
     <View>
@@ -67,7 +69,13 @@ const DualChoiceModal: FC<Props> = ({
         )}
         <Text appearance="secondaryText">{description}</Text>
       </View>
-      <View style={[styles.modalButtonsContainer, buttonsContainerStyle]}>
+      <View
+        style={[
+          styles.modalButtonsContainer,
+          isCompactLayout && styles.modalButtonsContainerCompact,
+          buttonsContainerStyle
+        ]}
+      >
         {!!secondaryButtonText && !!onSecondaryButtonPress && (
           <Button
             text={secondaryButtonText}
@@ -75,7 +83,7 @@ const DualChoiceModal: FC<Props> = ({
             type="tertiary"
             hasBottomSpacing={false}
             size="large"
-            style={[styles.button, spacings.mr]}
+            style={[styles.button, isCompactLayout ? styles.buttonCompact : spacings.mr]}
             testID={secondaryButtonTestID}
           />
         )}
@@ -84,7 +92,7 @@ const DualChoiceModal: FC<Props> = ({
           onPress={onPrimaryButtonPress}
           hasBottomSpacing={false}
           size="large"
-          style={styles.button}
+          style={[styles.button, isCompactLayout && styles.buttonCompact]}
           testID={primaryButtonTestID}
           disabled={primaryButtonDisabled}
         />

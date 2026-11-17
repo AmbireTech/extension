@@ -8,9 +8,11 @@ import {
   BannerType as NonMarketingBannerType
 } from '@ambire-common/interfaces/banner'
 import BatchIcon from '@common/assets/svg/BatchIcon'
+import SparklesIcon from '@common/assets/svg/SparklesIcon'
 import Banner from '@common/components/Banner'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -22,8 +24,24 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import { getRouteForUserRequest } from '@common/modules/router/helpers'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { openInTab } from '@common/utils/links'
 
 import applyOtaUpdate from './applyOtaUpdate'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectVisibleUserRequests = (state: AllControllersMappingType['RequestsController']) =>
+  state.visibleUserRequests
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+// `Text` resets the line height whenever it gets a custom font size
+const UPDATE_AVAILABLE_SUBTITLE_STYLE = { ...spacings.mtMi, lineHeight: 18 }
+
+const getBannerStyle = (isSingleRow: boolean, isUpdateAvailable: boolean) => {
+  if (isUpdateAvailable) return { ...spacings.phSm, ...spacings.pvTy }
+
+  return isSingleRow ? spacings.pbTy : undefined
+}
 
 const DashboardBanner = ({
   banner
@@ -35,15 +53,15 @@ const DashboardBanner = ({
   const { addToast } = useToast()
   const { navigate } = useNavigation()
   const shouldRenderRequestInPanel = useShouldRenderRequestInPanel()
-  const {
-    state: { visibleUserRequests },
-    dispatch: requestsDispatch
-  } = useController('RequestsController')
+  const { state: visibleUserRequests, dispatch: requestsDispatch } = useController(
+    'RequestsController',
+    selectVisibleUserRequests
+  )
   const transferState = useController('TransferController').state
-  const {
-    state: { networks },
-    dispatch: networksDispatch
-  } = useController('NetworksController')
+  const { state: networks, dispatch: networksDispatch } = useController(
+    'NetworksController',
+    selectNetworks
+  )
   const { dispatch: selectedAccountDispatch } = useController('SelectedAccountController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { dispatch: emailVaultDispatch } = useController('EmailVaultController')
@@ -52,15 +70,32 @@ const DashboardBanner = ({
   const primaryAction = actions[0]
   const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
   const isPendingSignatureRequest = banner.id === 'safe-message-request-banner'
+  const isSwapAndBridgeStatus = category === 'bridge-in-progress'
+  const isUpdateAvailable = banner.id === 'update-available'
+  const isSingleRow =
+    isPendingAccountOp || isPendingSignatureRequest || isSwapAndBridgeStatus || isUpdateAvailable
 
   const Icon = useMemo(() => {
     if (category === 'pending-to-be-signed-acc-op') return BatchIcon
+    if (isUpdateAvailable) return SparklesIcon
 
     return null
-  }, [category])
+  }, [category, isUpdateAvailable])
 
   // the network goes on a second row so the banner stays short on every screen size
   const subtitle = useMemo(() => {
+    if (isUpdateAvailable && text) {
+      return (
+        <Text
+          fontSize={isMobile ? 12 : 14}
+          appearance="secondaryText"
+          style={UPDATE_AVAILABLE_SUBTITLE_STYLE}
+        >
+          {text}
+        </Text>
+      )
+    }
+
     if (!isPendingAccountOp || !meta?.chainId) return null
 
     const networkName = networks.find(({ chainId }) => chainId === meta.chainId)?.name
@@ -79,7 +114,30 @@ const DashboardBanner = ({
         )}
       </View>
     )
-  }, [isPendingAccountOp, meta, networks, t])
+  }, [isPendingAccountOp, isUpdateAvailable, meta, networks, t, text])
+
+  const openExternalUrl = useCallback(
+    async (url?: string, shouldOpenInAppBrowser?: boolean) => {
+      if (!url) {
+        addToast(t('Could not open the link.'), { type: 'error' })
+        return
+      }
+
+      // Dapp pages open in the mobile in-app browser, where the user can connect the wallet
+      if (isMobile && shouldOpenInAppBrowser) {
+        navigate(ROUTES.dappWebView, { state: { url, showBackButton: true } })
+        return
+      }
+
+      try {
+        await openInTab({ url })
+      } catch (error) {
+        captureException(error, { extra: { url } })
+        addToast(t('Could not open the link.'), { type: 'error' })
+      }
+    },
+    [addToast, navigate, t]
+  )
 
   const handleActionPress = useCallback(
     (action: Action) => {
@@ -144,13 +202,7 @@ const DashboardBanner = ({
           break
 
         case 'open-external-url': {
-          if (action.meta?.url) {
-            window.open(action.meta.url, '_blank')
-          } else {
-            addToast('Could not open block explorer.', {
-              type: 'error'
-            })
-          }
+          void openExternalUrl(action.meta?.url, action.meta?.shouldOpenInAppBrowser)
           break
         }
 
@@ -282,7 +334,7 @@ const DashboardBanner = ({
       emailVaultDispatch,
       mainDispatch,
       navigate,
-      addToast,
+      openExternalUrl,
       visibleUserRequests,
       shouldRenderRequestInPanel,
       transferState,
@@ -301,8 +353,9 @@ const DashboardBanner = ({
         subtitle={subtitle}
         type={type}
         text={text}
-        singleRow={isPendingAccountOp || isPendingSignatureRequest}
-        style={isPendingAccountOp ? spacings.pbTy : undefined}
+        singleRow={isSingleRow}
+        isAccent={isUpdateAvailable}
+        style={getBannerStyle(isSingleRow, isUpdateAvailable)}
         buttonText={primaryAction?.label}
         onCloseIconPress={
           dismissAction && !dismissAction.label ? () => handleActionPress(dismissAction) : undefined
@@ -315,6 +368,7 @@ const DashboardBanner = ({
       />
       <DashboardBannerBottomSheet
         id={String(banner.id)}
+        activeRouteId={isSwapAndBridgeStatus ? meta?.activeRouteId : undefined}
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
       />

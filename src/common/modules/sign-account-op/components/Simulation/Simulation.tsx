@@ -2,27 +2,32 @@ import { isHexString } from 'ethers'
 import React, { FC, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
+import { WARNINGS } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { Network } from '@ambire-common/interfaces/network'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import SuccessIcon from '@common/assets/svg/SuccessIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import Alert from '@common/components/Alert'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import Nft from '@common/components/TokenOrNft/components/Nft'
 import { isMobile } from '@common/config/env'
 import { Trans, useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import PendingTokenSummary from '@common/modules/sign-account-op/components/PendingTokenSummary'
 import TenderlySimulation from '@common/modules/sign-account-op/components/TenderlySimulation'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-import SimulationSkeleton from './SimulationSkeleton'
 import { getIsSimulationOutdated, isAccountOpSimulationCurrent } from './helpers'
+import SimulationSkeleton from './SimulationSkeleton'
 import getStyles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
   network?: Network
@@ -32,12 +37,14 @@ interface Props {
   isViewOnly: boolean
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   // Side by side, the two cards are too narrow for an amount, a symbol and a fiat value to fit on
   // one line, so a compact layout stacks them the way mobile does
-  const { isCompactLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
   const signAccountOpState = useController('SignAccountOpController').state
   const {
     state: {
@@ -46,7 +53,8 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   } = useController('SelectedAccountController')
   const [initialSimulationLoaded, setInitialSimulationLoaded] = useState(false)
   const [shouldRespectIsLoading, setShouldRespectIsLoading] = useState(true)
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const isSafeDeploy = !!signAccountOpState?.accountOp.meta?.isSafeDeploy
 
   const currentNetworkSimulatedAccountOp = network?.chainId
     ? networkSimulatedAccountOp[network.chainId.toString()]
@@ -177,20 +185,24 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     return false
   }, [initialSimulationLoaded, isEstimationComplete, network?.chainId])
 
-  const shouldShowLoader = useMemo(
-    () =>
+  const shouldShowLoader = useMemo(() => {
+    if (isSafeDeploy) return !isEstimationComplete || !signAccountOpState?.isInitialized
+
+    return (
       (!!portfolioNetworkState?.isLoading && shouldRespectIsLoading) ||
       isReloading ||
       isSimulationOutdated ||
-      !signAccountOpState?.isInitialized,
-    [
-      portfolioNetworkState?.isLoading,
-      shouldRespectIsLoading,
-      isReloading,
-      isSimulationOutdated,
-      signAccountOpState?.isInitialized
-    ]
-  )
+      !signAccountOpState?.isInitialized
+    )
+  }, [
+    isSafeDeploy,
+    isEstimationComplete,
+    portfolioNetworkState?.isLoading,
+    shouldRespectIsLoading,
+    isReloading,
+    isSimulationOutdated,
+    signAccountOpState?.isInitialized
+  ])
 
   const simulationView:
     | 'no-changes'
@@ -200,6 +212,8 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     | 'simulation-not-supported'
     | null = useMemo(() => {
     if (shouldShowLoader || !signAccountOpState?.isInitialized) return null
+
+    if (isSafeDeploy) return 'no-changes'
 
     // If the user is view only we are not displaying the error elsewhere
     // thus we have to show it in the Simulation
@@ -223,6 +237,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   }, [
     shouldShowLoader,
     signAccountOpState?.isInitialized,
+    isSafeDeploy,
     signAccountOpState?.status?.type,
     signAccountOpState?.account,
     isViewOnly,
@@ -233,6 +248,18 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
     network?.rpcNoStateOverride
   ])
 
+  const hasSignificantBalanceDecrease = useMemo(
+    () =>
+      !!signAccountOpState?.banners.some(
+        (banner) => banner.id === WARNINGS.significantBalanceDecrease.id
+      ),
+    [signAccountOpState?.banners]
+  )
+  // The warning is about the assets leaving the account, so it's shown only on the "Assets out"
+  // card - without a simulation that has assets out, there's nothing to attach it to
+  const isBalanceDecreaseShownOnAssetsOut =
+    hasSignificantBalanceDecrease && simulationView === 'changes' && hasAssetsOut
+
   useEffect(() => {
     if (simulationView && !initialSimulationLoaded) {
       setInitialSimulationLoaded(true)
@@ -240,7 +267,7 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
   }, [initialSimulationLoaded, simulationView])
 
   return (
-    <View style={styles.simulationSection}>
+    <View style={[styles.simulationSection, isCompactLayout && spacings.pbSm]}>
       {simulationView === 'changes' && (
         <View style={[!isCompactLayout && flexbox.directionRow, flexbox.flex1]}>
           {hasAssetsOut && (
@@ -248,13 +275,39 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
               style={[
                 styles.simulationContainer,
                 !isCompactLayout && styles.simulationContainerWide,
+                isBalanceDecreaseShownOnAssetsOut && styles.simulationContainerWarning,
                 hasAssetsIn && (isCompactLayout ? spacings.mbTy : spacings.mrTy)
               ]}
             >
-              <View style={styles.simulationContainerHeader}>
-                <Text fontSize={14} weight="semiBold" appearance="secondaryText" numberOfLines={1}>
-                  {t('Assets out')}
-                </Text>
+              <View
+                style={[
+                  styles.simulationContainerHeader,
+                  isBalanceDecreaseShownOnAssetsOut && styles.simulationContainerHeaderWarning
+                ]}
+              >
+                {isBalanceDecreaseShownOnAssetsOut ? (
+                  <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.flex1]}>
+                    <WarningIcon width={16} height={16} color={theme.warningDecorative} />
+                    <Text
+                      fontSize={14}
+                      weight="semiBold"
+                      color={theme.warningText}
+                      numberOfLines={1}
+                      style={[spacings.mlMi, flexbox.flex1]}
+                    >
+                      {t('Assets out · large decrease')}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text
+                    fontSize={14}
+                    weight="semiBold"
+                    appearance="secondaryText"
+                    numberOfLines={1}
+                  >
+                    {t('Assets out')}
+                  </Text>
+                )}
                 {!hasAssetsIn && <TenderlySimulation />}
               </View>
               <ScrollableWrapper
@@ -297,6 +350,20 @@ const Simulation: FC<Props> = ({ network, isEstimationComplete, isViewOnly }) =>
                   )
                   .flat()}
               </ScrollableWrapper>
+              {isBalanceDecreaseShownOnAssetsOut && (
+                <View style={styles.simulationWarningFooter}>
+                  <InfoIcon width={14} height={14} color={theme.warningText} />
+                  <Text
+                    fontSize={12}
+                    color={theme.warningText}
+                    style={[spacings.mlTy, flexbox.flex1]}
+                  >
+                    {t(
+                      'May be inaccurate when moving funds to another network or providing liquidity.'
+                    )}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
           {hasAssetsIn && (

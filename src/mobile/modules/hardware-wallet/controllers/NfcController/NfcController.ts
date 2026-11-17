@@ -5,12 +5,7 @@ import {
   NfcControllerSignHashParams,
   NfcSignature
 } from '@common/modules/hardware-wallets/nfc/types'
-
-const callNative = <T>(type: string, payload: Record<string, any> = {}): Promise<T> => {
-  // sendToRNAsync is installed on `window` by injectedLogic.ts. The controller
-  // only ever runs inside the worker, so it is always present here.
-  return (window as any).sendToRNAsync(type, payload)
-}
+import { beginNfcPinSessions, endNfcPinSessions, getNfcCardService } from '@mobile/services/nfc'
 
 /**
  * Worker-side counterpart of the native card services. It runs inside the WebView
@@ -55,7 +50,9 @@ class NfcController implements NfcControllerInterface {
     this.nfcWalletType = args.nfcWalletType
 
     try {
-      return await callNative<NfcSignature>('nfc.signHash', args)
+      const { nfcWalletType, ...signHashParams } = args
+
+      return await getNfcCardService(nfcWalletType).signHash(signHashParams)
     } catch (e: any) {
       throw new ExternalSignerError(e?.message || 'Signing with the card failed.')
     }
@@ -64,29 +61,29 @@ class NfcController implements NfcControllerInterface {
   // No `nfcWalletType`: these run before the first `signHash`, when the card is not
   // known yet, so the bridge tells every card service.
   async beginPinSession() {
-    await callNative('nfc.beginPinSession')
+    beginNfcPinSessions()
   }
 
   async endPinSession() {
-    await callNative('nfc.endPinSession')
+    endNfcPinSessions()
   }
 
   async signingCleanup() {
-    await this.#cancelCardSession()
+    this.#cancelCardSession()
   }
 
   cleanUp = async () => {
-    await this.#cancelCardSession()
+    this.#cancelCardSession()
   }
 
   /**
    * Nothing to cancel before a card has been used - there is no session to end and
    * no way to tell which card's service should be asked to end one.
    */
-  #cancelCardSession = async () => {
+  #cancelCardSession = () => {
     if (!this.nfcWalletType) return
 
-    await callNative('nfc.cancel', { nfcWalletType: this.nfcWalletType })
+    getNfcCardService(this.nfcWalletType).cancel()
   }
 }
 

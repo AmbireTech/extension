@@ -1,5 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
@@ -10,22 +9,35 @@ import HWIcon from '@common/assets/svg/HWIcon'
 import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
+import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
+import PQ1BadgeIcon from '@common/assets/svg/PQ1BadgeIcon'
+import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
-import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
+import SafeBadgeIcon, { SAFE_BRAND_GREEN } from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
-import { isMobile, isWeb } from '@common/config/env'
+import SoonBadge from '@common/components/SoonBadge'
+import {
+  isMobile,
+  isPrivacyPoolsComingSoon,
+  isPrivacyPoolsEnabled,
+  isPrivacyPoolsSupported,
+  isWeb
+} from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
 import SavedSeedPhrasesBottomSheet from '@common/modules/account-select/components/SavedSeedPhrasesBottomSheet'
 import useCreateNewSeedAccount from '@common/modules/auth/hooks/useCreateNewSeedAccount'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import { NfcWalletIcons } from '@common/modules/hardware-wallets/nfc/wallets/icons'
@@ -33,6 +45,12 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 
 import ExpandableOptionSection from './ExpandableOptionSection'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const SAFE_DROPDOWN_ICON_PROPS = { color: SAFE_BRAND_GREEN }
+
+const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
 
 const AddAccount = ({
   sheetRef,
@@ -44,14 +62,27 @@ const AddAccount = ({
   showImportOnly?: boolean
 }) => {
   const { t } = useTranslation()
-  const { dispatch } = useControllersMiddleware()
-  const { goToNextRoute, setTriggeredHwWalletFlow } = useOnboardingNavigation()
+  const { goToNextRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
+  // Trezor and GridPlus connect from here, as their own windows ask for the device
+  const connectHardwareWallet = useCallback(
+    (
+      type:
+        | 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR'
+        | 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE'
+    ) =>
+      initAccountPicker({ type }).catch((error) => {
+        // The controller reports its own failures
+        console.error('Failed to set the account picker up for the hardware wallet', error)
+      }),
+    [initAccountPicker]
+  )
   const { createNewSeedAccount, isCreating: isCreatingNewSeedAccount } = useCreateNewSeedAccount()
   const { scanCard } = useNfcAccountImport()
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
   const [expandedDropdown, setExpandedDropdown] = useState<
-    'import-acc' | 'connect-hw' | 'connect-nfc' | null
+    'import-acc' | 'connect-hw' | 'safe' | 'connect-nfc' | null
   >(null)
 
   const {
@@ -59,7 +90,18 @@ const AddAccount = ({
     open: openSeedPhraseBottomSheet,
     close: closeSeedPhraseBottomSheet
   } = useModalize()
-  const { state: seeds } = useController('KeystoreController', 'seeds')
+  const {
+    ref: privacyPoolsSheetRef,
+    open: openPrivacyPoolsBottomSheet,
+    close: closePrivacyPoolsBottomSheet
+  } = useModalize()
+  const { state: seeds } = useController('KeystoreController', selectSeeds)
+
+  // Both sheets close as the flow moves on to the personalize step
+  const handlePrivacyPoolsFlowStart = useCallback(() => {
+    closePrivacyPoolsBottomSheet()
+    closeBottomSheet()
+  }, [closeBottomSheet, closePrivacyPoolsBottomSheet])
 
   const optionsHW = useMemo(() => {
     if (isMobile)
@@ -99,8 +141,7 @@ const AddAccount = ({
         text: t('Trezor'),
         icon: TrezorBadgeIcon,
         onPress: () => {
-          setTriggeredHwWalletFlow('trezor')
-          dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR' })
+          void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_TREZOR')
         },
         testID: 'trezor-option'
       },
@@ -114,12 +155,20 @@ const AddAccount = ({
         testID: 'ledger-option'
       },
       {
+        key: 'onekey',
+        text: t('OneKey'),
+        icon: OneKeyIcon,
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.oneKeyConnect)
+        },
+        testID: 'onekey-option'
+      },
+      {
         key: 'lattice',
         text: t('GridPlus'),
         icon: GridPlusIcon,
         onPress: () => {
-          setTriggeredHwWalletFlow('lattice')
-          dispatch({ type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE' })
+          void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE')
         },
         testID: 'lattice-option'
       },
@@ -131,9 +180,18 @@ const AddAccount = ({
           goToNextRoute(WEB_ROUTES.qrConnect)
         },
         testID: 'qr-option'
+      },
+      {
+        key: 'pq1',
+        text: t('PQ1 (post-quantum)'),
+        icon: PQ1BadgeIcon,
+        onPress: () => {
+          goToNextRoute(WEB_ROUTES.pq1Connect)
+        },
+        testID: 'pq1-option'
       }
     ]
-  }, [dispatch, goToNextRoute, setTriggeredHwWalletFlow, t])
+  }, [connectHardwareWallet, goToNextRoute, t])
 
   const optionsNfc = useMemo(() => {
     if (!isMobile) return []
@@ -150,6 +208,37 @@ const AddAccount = ({
     }))
   }, [closeBottomSheet, scanCard, t])
 
+  const optionsSafe = useMemo(
+    () => [
+      ...(!showImportOnly
+        ? [
+            {
+              key: 'create-safe',
+              text: t('Create'),
+              icon: AddCircularIcon,
+              onPress: () => goToNextRoute(ROUTES.safeCreate),
+              testID: 'create-safe'
+            }
+          ]
+        : []),
+      {
+        key: 'import-safe-by-address',
+        text: t('Import by address'),
+        icon: ImportAccountIcon,
+        onPress: () => goToNextRoute(ROUTES.safeImportAddress),
+        testID: 'import-safe-by-address'
+      },
+      {
+        key: 'import-safe-by-owner',
+        text: t('Import by owner'),
+        icon: SingleKeyIcon,
+        onPress: () => goToNextRoute(ROUTES.safeImportByOwner),
+        testID: 'import-safe-by-owner'
+      }
+    ],
+    [goToNextRoute, showImportOnly, t]
+  )
+
   const optionsImportAccount = useMemo(() => {
     return [
       {
@@ -165,13 +254,6 @@ const AddAccount = ({
         icon: PrivateKeyIcon,
         onPress: () => goToNextRoute(ROUTES.importPrivateKey),
         testID: 'import-private-key'
-      },
-      {
-        key: 'import-safe',
-        text: t('Safe account'),
-        icon: SafeBadgeIcon,
-        onPress: () => goToNextRoute(ROUTES.safeImport),
-        testID: 'import-safe'
       },
       ...(!isMobile
         ? [
@@ -230,6 +312,23 @@ const AddAccount = ({
             disabled={isCreatingNewSeedAccount}
           />
         )}
+        {/* Extension only for now. Where not released yet, only a teaser that cannot be opened */}
+        {isPrivacyPoolsSupported && !showImportOnly && (
+          <Option
+            // The teaser doesn't say which privacy provider is coming
+            text={
+              isPrivacyPoolsComingSoon
+                ? t('Add a private account')
+                : t('Add a Privacy Pools account')
+            }
+            icon={PrivacyPoolsIcon}
+            onPress={openPrivacyPoolsBottomSheet as any}
+            testID="add-privacy-pools-account"
+            status="none"
+            disabled={isPrivacyPoolsComingSoon}
+            badge={isPrivacyPoolsComingSoon ? <SoonBadge /> : undefined}
+          />
+        )}
         <ExpandableOptionSection
           dropdownText={t('Import an account')}
           dropdownIcon={ImportAccountIcon}
@@ -250,6 +349,17 @@ const AddAccount = ({
             setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-hw' : null)}
           />
         )}
+        <ExpandableOptionSection
+          dropdownText={t('Safe accounts')}
+          dropdownIcon={SafeBadgeIcon}
+          // Keeps the Safe logo green instead of the generic icon and hover colors
+          dropdownIconProps={SAFE_DROPDOWN_ICON_PROPS}
+          dropdownTestID="safe-accounts"
+          options={optionsSafe}
+          scrollViewRef={scrollViewRef}
+          isExpanded={expandedDropdown === 'safe'}
+          setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'safe' : null)}
+        />
         {!!optionsNfc.length && (
           <ExpandableOptionSection
             dropdownText={t('Connect an NFC card')}
@@ -272,6 +382,13 @@ const AddAccount = ({
         )}
       </View>
 
+      {isPrivacyPoolsEnabled && !showImportOnly && (
+        <AddPrivacyPoolsAccountBottomSheet
+          sheetRef={privacyPoolsSheetRef}
+          closeBottomSheet={closePrivacyPoolsBottomSheet}
+          onFlowStart={handlePrivacyPoolsFlowStart}
+        />
+      )}
       <SavedSeedPhrasesBottomSheet
         sheetRef={seedPhraseSheetRef}
         open={openSeedPhraseBottomSheet}

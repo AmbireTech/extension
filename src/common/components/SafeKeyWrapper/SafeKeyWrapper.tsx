@@ -6,17 +6,13 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import CheckIcon from '@common/assets/svg/CheckIcon'
 import NoEntryIcon from '@common/assets/svg/NoEntryIcon/NoEntryIcon'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { default as flexbox } from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import ButtonWithLoader from '../ButtonWithLoader/ButtonWithLoader'
 import getStyles from './styles'
-
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
 
 const SAFE_GLOBAL_STALL_WARNING_DELAY_MS = 5000
 
@@ -51,6 +47,8 @@ interface Props {
   type: Key['type']
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
   shouldSignAndClose?: boolean
+  /** Replaces the Sign label, e.g. for owners that approve onchain instead of signing */
+  signButtonText?: string
 }
 
 const SafeKeyWrapper = ({
@@ -62,10 +60,12 @@ const SafeKeyWrapper = ({
   onSign,
   addr,
   type,
-  shouldSignAndClose
+  shouldSignAndClose,
+  signButtonText
 }: Props) => {
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
+  const { isCompactLayout: withMobileLayout } = useCompactLayout()
 
   return (
     <View style={style}>
@@ -78,7 +78,7 @@ const SafeKeyWrapper = ({
           <ButtonWithLoader
             type="primary"
             isLoading={isSignLoading}
-            text={t(shouldSignAndClose ? 'Sign & Close' : 'Sign')}
+            text={signButtonText || t(shouldSignAndClose ? 'Sign & Close' : 'Sign')}
             onPress={() => onSign(addr, type)}
             size="tiny"
             style={[styles.icon, { minWidth: 60 }, withMobileLayout && { height: 40 }]}
@@ -86,7 +86,8 @@ const SafeKeyWrapper = ({
         )}
         {isDisabled && !hasSigned && <NoEntryIcon width={18} height={18} style={styles.icon} />}
       </View>
-      {isSignLoading && <SafeGlobalLagWarning />}
+      {/* An onchain approval (signButtonText) is being prepared here, not sent to Safe Global */}
+      {isSignLoading && !signButtonText && <SafeGlobalLagWarning />}
     </View>
   )
 }

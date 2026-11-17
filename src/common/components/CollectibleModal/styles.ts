@@ -32,7 +32,9 @@ const getStyles = () =>
       alignSelf: 'center'
     },
     imageContainer: {
-      ...spacings.mbLg
+      ...spacings.mbLg,
+      width: COLLECTIBLE_IMAGE_SIZE,
+      maxWidth: '100%'
     },
     image: {
       borderRadius: BORDER_RADIUS_PRIMARY,

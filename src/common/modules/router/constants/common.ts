@@ -19,9 +19,9 @@ const COMMON_ROUTES = {
   accountPicker: 'account-picker',
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
-  safeImport: 'safe-import',
   safeImportAddress: 'safe-import-address',
   safeImportByOwner: 'safe-import-by-owner',
+  safeCreate: 'safe-create',
   qrConnect: 'qr-connect',
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
@@ -42,6 +42,7 @@ const COMMON_ROUTES = {
   settingsTerms: 'settings/terms',
   explore: 'explore',
   exploreSection: 'explore/section',
+  walletStaking: 'explore/wallet-staking',
   signMessage: 'sign-message',
   addChain: 'add-chain',
   watchAsset: 'watch-asset',
@@ -55,12 +56,14 @@ const MOBILE_ROUTES = {
   dappWebView: 'explore/webview',
   qrReader: 'qr-reader',
   migrationOnboarding: 'migration-onboarding',
-  importAccountsFromExtension: 'import-accounts-from-extension'
+  importFromExtension: 'import-from-extension',
+  accountSmartSettings: 'settings/accounts/smart-settings'
 }
 
 const WEB_ROUTES = {
   ...COMMON_ROUTES,
-  rewards: 'rewards',
+  privacyPoolsSend: 'privacy-pools-send',
+  privacyPoolsTokenDetails: 'privacy-pools-token-details',
   earn: 'earn',
   transactions: 'transactions',
   signedMessages: 'signed-messages',
@@ -79,12 +82,13 @@ const WEB_ROUTES = {
   addressBook: 'settings/address-book',
   manageTokens: 'settings/manage-tokens',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
-  safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',
   survey: 'survey',
   qrPermission: 'qr-permission',
-  exportAccountsToMobile: 'export-accounts-to-mobile',
-  importAccountsFromMobile: 'import-accounts-from-mobile',
+  exportToMobile: 'export-to-mobile',
+  importFromMobile: 'import-from-mobile',
+  pq1Connect: 'pq1-connect',
+  oneKeyConnect: 'onekey-connect',
   // INTERNAL ROUTES
   internalLogs: 'internal/logs'
 }
@@ -143,16 +147,18 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.viewOnlyAccountAdder,
   COMMON_ROUTES.ledgerConnect,
   COMMON_ROUTES.trezorConnect,
+  WEB_ROUTES.oneKeyConnect,
   COMMON_ROUTES.keyStoreSetup,
   COMMON_ROUTES.accountPersonalize,
   COMMON_ROUTES.accountPicker,
   COMMON_ROUTES.onboardingCompleted,
-  COMMON_ROUTES.safeImport,
   COMMON_ROUTES.safeImportAddress,
   COMMON_ROUTES.safeImportByOwner,
+  COMMON_ROUTES.safeCreate,
   COMMON_ROUTES.qrConnect,
-  WEB_ROUTES.importAccountsFromMobile,
-  MOBILE_ROUTES.importAccountsFromExtension
+  WEB_ROUTES.pq1Connect,
+  WEB_ROUTES.importFromMobile,
+  MOBILE_ROUTES.importFromExtension
 ] as const
 
 export {

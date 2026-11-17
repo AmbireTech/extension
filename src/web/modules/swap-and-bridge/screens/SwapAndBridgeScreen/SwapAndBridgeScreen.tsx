@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import Alert from '@common/components/Alert'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -14,6 +13,7 @@ import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import BatchAdded from '@common/modules/sign-account-op/components/OneClick/BatchModal/BatchAdded'
 import Buttons from '@common/modules/sign-account-op/components/OneClick/Buttons'
 import Estimation from '@common/modules/sign-account-op/components/OneClick/Estimation'
+import CowSwapAnnouncement from '@common/modules/swap-and-bridge/components/CowSwapAnnouncement'
 import TrackProgress from '@common/modules/swap-and-bridge/components/Estimation/TrackProgress'
 import FromToken from '@common/modules/swap-and-bridge/components/FromToken'
 import PriceImpactWarningModal from '@common/modules/swap-and-bridge/components/PriceImpactWarningModal'
@@ -31,7 +31,6 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 import Modals from '@web/modules/sign-account-op/components/Modals'
 
-import type { Key } from '@ambire-common/interfaces/keystore'
 const { isRequestWindow } = getUiType()
 
 const SwapAndBridgeScreen = () => {
@@ -168,31 +167,6 @@ const SwapAndBridgeScreen = () => {
     }
   }, [requestsCtrlDispatch, account, navigate, sessionId, swapAndBridgeDispatch])
 
-  const handleUpdateStatus = useCallback(
-    (status: SigningStatus) => {
-      swapAndBridgeDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['updateStatus', [status]]
-        }
-      })
-    },
-    [swapAndBridgeDispatch]
-  )
-  const updateController = useCallback(
-    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => {
-      swapAndBridgeDispatch({
-        type: 'method',
-        params: {
-          method: 'callSignAccountOpMethod',
-          args: ['update', [params]]
-        }
-      })
-    },
-    [swapAndBridgeDispatch]
-  )
-
   const buttons = useMemo(() => {
     return (
       <Buttons
@@ -255,12 +229,13 @@ const SwapAndBridgeScreen = () => {
           />
         )}
         <View>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
             <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
             <PanelTitle title={t('Swap & Bridge')} />
             <ProviderSettingsButton onPress={openProviderSettingsModal} />
           </View>
-          <View style={spacings.mbTy}>
+          <View>
+            <CowSwapAnnouncement openProviderSettingsModal={openProviderSettingsModal} />
             <FromToken
               fromTokenOptions={fromTokenOptions}
               fromTokenValue={fromTokenValue}
@@ -272,8 +247,12 @@ const SwapAndBridgeScreen = () => {
               simulationFailed={!!fromChainSimulationError}
               isLoading={!sessionIds.includes(sessionId) || !portfolio.isReadyToVisualize}
             />
+            <ToToken
+              simulationFailed={!!toChainSimulationError}
+              disabled={areAllProvidersDisabled}
+              openProviderSettingsModal={openProviderSettingsModal}
+            />
           </View>
-          <ToToken simulationFailed={!!toChainSimulationError} disabled={areAllProvidersDisabled} />
         </View>
         <RouteInfo
           isEstimatingRoute={isEstimatingRoute}
@@ -297,8 +276,6 @@ const SwapAndBridgeScreen = () => {
           updateType="Swap&Bridge"
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalWrapped}
-          updateController={updateController}
-          handleUpdateStatus={handleUpdateStatus}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           serviceFee={quote?.selectedRoute?.serviceFee}

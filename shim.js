@@ -9,6 +9,16 @@ import './src/mobile/services/bootProfiler/bootProfiler'
 import { getRandomValues, install } from 'react-native-quick-crypto'
 install()
 
+// install() doesn't set global.CryptoKey
+if (typeof global.CryptoKey === 'undefined') {
+  const { CryptoKey } = require('react-native-quick-crypto')
+  if (!CryptoKey) {
+    throw new Error(
+      'shim: react-native-quick-crypto did not export CryptoKey; keystore instanceof guards will fail'
+    )
+  }
+  global.CryptoKey = CryptoKey
+}
 // Every secret the wallet generates - the keystore main key, seed phrases, scrypt salts, AES IVs -
 // traces back to this one function, and two of the polyfills below compete for it: whichever runs last
 // owns `global.crypto.getRandomValues`. react-native-get-random-values only claims the slot if it is
@@ -94,37 +104,8 @@ const documentShim = {
 
 global.document = documentShim
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Window Proxy — hides `document` from `window.X` access
-//
-// WHY: @walletconnect/window-getters reads `window.document` via
-// getFromWindow('document'). If it's truthy, getDocumentOrThrow() returns it,
-// and getWindowMetadata() proceeds to call doc.getElementsByTagName('link')
-// which crashes because our shim doesn't implement full DOM.
-//
-// By making `window.document` return `undefined`, getDocumentOrThrow() throws,
-// getWindowMetadata() catches and returns null, and populateAppMetadata falls
-// back to user-provided metadata (which WalletKit.init({ metadata }) supplies).
-//
-// Bare `document` (no `window.` prefix) still resolves to global.document
-// (the shim above) because JS identifier resolution goes through the scope
-// chain / globalThis, NOT through this Proxy.
-//
-// navigator, location, localStorage, addEventListener, etc. pass through
-// unchanged so RN-specific and benign reads keep working.
-// ─────────────────────────────────────────────────────────────────────────────
-global.window = new Proxy(global, {
-  get(target, prop, receiver) {
-    if (prop === 'document') return undefined
-    return Reflect.get(target, prop, receiver)
-  },
-  has(target, prop) {
-    if (prop === 'document') return false
-    return Reflect.has(target, prop)
-  }
-  // default set/defineProperty/deleteProperty pass through so WC SDK can do
-  // window.X = ... assignments without breaking.
-})
+// `window.document` is hidden from WalletConnect by the window Proxy in windowPolyfill.js,
+// installed as a Metro polyfill because RN 0.88 makes `window` read-only once it sets it up.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Additional global shims

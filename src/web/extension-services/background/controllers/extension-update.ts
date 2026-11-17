@@ -1,6 +1,6 @@
 import EventEmitter from '@ambire-common/controllers/eventEmitter/eventEmitter'
 import { Banner } from '@ambire-common/interfaces/banner'
-import { ErrorRef, IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
+import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { logInfoWithPrefix } from '@common/utils/logger'
 import { browser, isSafari } from '@web/constants/browserapi'
 
@@ -80,12 +80,12 @@ export class ExtensionUpdateController extends EventEmitter {
         {
           id: 'update-available',
           type: 'info',
-          title: 'Update Available',
-          text: 'A new version is ready! It will be applied automatically on next reload. Reload now to update immediately.',
+          title: 'New version available',
+          text: 'Update Ambire to the newest version.',
           actions: [
             {
               actionName: 'update-extension-version',
-              label: 'Reload'
+              label: 'Update'
             }
           ]
         }
@@ -94,7 +94,7 @@ export class ExtensionUpdateController extends EventEmitter {
     return []
   }
 
-  toJSON(): this & { emittedErrors: ErrorRef[] } {
+  toJSON(): this {
     return {
       ...this,
       ...super.toJSON(),

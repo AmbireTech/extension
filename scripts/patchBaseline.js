@@ -3,7 +3,7 @@
 /**
  * patchBaseline.js
  *
- * Runs `yarn extension:type:check-new` twice — once with
+ * Runs `yarn type:check-new` twice — once with
  * src/ambire-common/node_modules present and once without — then upserts
  * all third-party errors found in either run into .tsc-baseline.json.
  *
@@ -74,7 +74,7 @@ function runCheck(label) {
   console.log(`\nRunning type check (${label}) …`)
   let output = ''
   try {
-    output = execSync('yarn extension:type:check-new', {
+    output = execSync('yarn type:check-new', {
       encoding: 'utf8',
       stdio: ['inherit', 'pipe', 'pipe']
     })

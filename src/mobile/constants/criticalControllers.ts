@@ -10,6 +10,9 @@ export const MOBILE_CRITICAL_CONTROLLERS: (keyof AllControllersMappingType)[] = 
   'AccountsController',
   'SelectedAccountController',
   'WalletStateController',
+  // The invite gate redirect must be decided before the first paint, otherwise the user gets a
+  // flash of the get-started screen before being sent to the invite screen.
+  'InviteController',
   // GetStarted crashes without main. Consider removing it and unifying the critical controller
   // logic with web so it's route-driven. (useGetStarted causes the crash)
   'MainController'

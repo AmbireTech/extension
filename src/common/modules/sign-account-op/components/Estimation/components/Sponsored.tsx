@@ -11,9 +11,17 @@ import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsController']) =>
+  state.currentUserRequest
+
 const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: boolean }) => {
   const { t } = useTranslation()
-  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
+  const { state: currentUserRequest } = useController(
+    'RequestsController',
+    selectCurrentUserRequest
+  )
   const { theme } = useTheme()
 
   return (

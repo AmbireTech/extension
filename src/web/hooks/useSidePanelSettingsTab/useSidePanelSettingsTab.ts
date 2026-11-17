@@ -75,7 +75,10 @@ const refreshSettingsTab = async () => {
     const settingsTab = tabs.find((tab: chrome.tabs.Tab) => isAmbireSettingsTabUrl(tab.url))
     const nextSettingsTabId = settingsTab?.id
 
-    if (cachedState.windowId !== resolvedWindowId || cachedState.settingsTabId !== nextSettingsTabId) {
+    if (
+      cachedState.windowId !== resolvedWindowId ||
+      cachedState.settingsTabId !== nextSettingsTabId
+    ) {
       cachedState = { windowId: resolvedWindowId, settingsTabId: nextSettingsTabId }
       emitChange()
     }

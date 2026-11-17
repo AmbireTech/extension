@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
-import { browser, engine, isSafari } from '@web/constants/browserapi'
+import { browser, engine, isExtension, isSafari } from '@web/constants/browserapi'
 import { closeCurrentWindow } from '@web/extension-services/background/webapi/window'
 
 /**
@@ -69,6 +69,14 @@ const getCurrentTab = async (): Promise<chrome.tabs.Tab | undefined> => {
   }
 }
 
+/** Reloads the tab the user is looking at. No-op when there is no resolvable tab. */
+const reloadCurrentTab = async () => {
+  const tab = await getCurrentTab()
+  if (!tab?.id) return
+
+  await browser.tabs.reload(tab.id)
+}
+
 /**
  * Opens a URL in a new browser tab, optionally in a specific window.
  *
@@ -91,6 +99,12 @@ export const openInTab = async ({
   shouldCloseCurrentWindow?: boolean
 }): Promise<chrome.tabs.Tab> => {
   if (!url) return
+
+  // Standalone websites like benzin have no extension tabs API
+  if (!isExtension) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    return
+  }
 
   const tab = await createTab(url, windowId)
   if (shouldCloseCurrentWindow) {
@@ -146,4 +160,4 @@ const openInternalPageInTab = async ({
   })
 }
 
-export { createTab, getCurrentTab, openInternalPageInTab }
+export { createTab, getCurrentTab, openInternalPageInTab, reloadCurrentTab }

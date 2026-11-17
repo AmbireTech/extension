@@ -22,6 +22,7 @@ interface Props {
   totalAmount: number
   color: ColorValue
   isPrivacyModeEnabled: boolean
+  isTokenPricesEnabled: boolean
   // 'skeleton' shows the loading block, 'ready' the live value, 'cached' the last
   // known value with an opacity pulse (while the fresh portfolio loads).
   variant: Variant
@@ -37,6 +38,7 @@ const DashboardBalance: React.FC<Props> = ({
   totalAmount,
   color,
   isPrivacyModeEnabled,
+  isTokenPricesEnabled,
   variant,
   badge,
   onPress,
@@ -55,7 +57,8 @@ const DashboardBalance: React.FC<Props> = ({
     )
   }
 
-  const [integerPart, decimalPart] = formatDecimals(totalAmount, 'value').split('.')
+  const formattedAmount = isTokenPricesEnabled ? formatDecimals(totalAmount, 'value') : '$-'
+  const [integerPart, decimalPart] = formattedAmount.split('.')
 
   const amount = (
     <Pressable testID={testID} onPress={onPress} style={[flexbox.directionRow, flexbox.alignEnd]}>

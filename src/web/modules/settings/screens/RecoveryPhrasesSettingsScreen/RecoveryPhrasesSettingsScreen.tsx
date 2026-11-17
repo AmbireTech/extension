@@ -4,10 +4,12 @@ import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
+import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel/Panel'
+import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -21,11 +23,16 @@ import text from '@common/styles/utils/text'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectStatuses = (state: AllControllersMappingType['StorageController']) => state.statuses
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const RecoveryPhraseSettingsScreen = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: statuses } = useController('StorageController', 'statuses')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: statuses } = useController('StorageController', selectStatuses)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const { seeds, keys } = useController('KeystoreController').state
   const { notBackedUpSeedIds, seedsSortedByBackupStatus } = useRecoveryPhraseBackupStatus()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
@@ -42,7 +49,7 @@ const RecoveryPhraseSettingsScreen = () => {
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
-      const keysFromSeed = keys.filter((k) => k.meta.fromSeedId === seedId)
+      const keysFromSeed = keys.filter((k) => getKeySeedId(k) === seedId)
       const keysFromSeedAddr = keysFromSeed.map(({ addr }) => addr)
       return accounts.filter((a) => a.associatedKeys.some((k) => keysFromSeedAddr.includes(k)))
     },
@@ -76,13 +83,18 @@ const RecoveryPhraseSettingsScreen = () => {
             !!associatedAccounts.length && spacings.mbMd
           ]}
         >
-          <Text weight="medium" numberOfLines={1} style={flexbox.flex1}>
-            {item.label}
-          </Text>
+          <View style={[flexbox.flex1, flexbox.alignStart, spacings.mrSm]}>
+            <Text weight="medium" numberOfLines={1}>
+              {item.label}
+            </Text>
+            {item.withPassphrase && (
+              <PassphraseBadge passphraseLabel={item.passphraseLabel} style={spacings.mtMi} />
+            )}
+          </View>
           <Button
             testID={`manage-recovery-phrase-${item.id}`}
             size="small"
-            type="ghost"
+            type="secondary"
             childrenPosition="left"
             text={t('Manage')}
             hasBottomSpacing={false}
@@ -98,10 +110,13 @@ const RecoveryPhraseSettingsScreen = () => {
               account={a}
               withSettings={false}
               isSelectable={false}
+              isOnSecondaryBackground
+              withBadges={false}
               containerStyle={{
                 marginBottom: accIdx < associatedAccounts.length - 1 ? SPACING_TY : 0
               }}
               withKeyType={false}
+              withCopy={false}
             />
           )
         })}

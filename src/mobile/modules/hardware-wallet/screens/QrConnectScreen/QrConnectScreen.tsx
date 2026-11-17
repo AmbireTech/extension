@@ -6,13 +6,13 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import Alert from '@common/components/Alert'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import useController from '@common/hooks/useController'
-import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
+import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
+import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import { QrWalletConfigs } from '@common/modules/hardware-wallets/qr/wallets'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 import spacings from '@common/styles/spacings'
@@ -29,10 +29,9 @@ const QrConnectScreen = () => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { dispatch } = useControllersMiddleware()
-  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const { initParams, type } = useController('AccountPickerController').state
-  const mainCtrlState = useController('MainController').state
+  const screenFocus = useScreenFocusStore()
+  const { goToPrevRoute } = useOnboardingNavigation()
+  const initAccountPicker = useAccountPickerHardwareInit()
   const { height } = useWindowSize()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -41,17 +40,24 @@ const QrConnectScreen = () => {
   const [scannerKey, setScannerKey] = useState(0)
 
   const onQrComplete = useCallback(
-    (payload: Uint8Array) => {
+    async (payload: Uint8Array) => {
       setIsSubmitting(true)
       setScanError(null)
-      // Hex-encode: the RN↔worker bridge's richJson codec does not preserve
-      // Uint8Array. QrKeyIterator/parseAccountPayload accept hex on both platforms.
-      dispatch({
-        type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET',
-        params: { payload: Buffer.from(payload).toString('hex') }
-      })
+      try {
+        // Hex-encode: the RN↔worker bridge's richJson codec does not preserve
+        // Uint8Array. QrKeyIterator/parseAccountPayload accept hex on both platforms.
+        await initAccountPicker({
+          type: 'MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_QR_WALLET',
+          params: { payload: Buffer.from(payload).toString('hex') }
+        })
+      } catch (error) {
+        console.error('Failed to set the account picker up for the QR wallet', error)
+        setScanError(t('Failed to import QR wallet. Please try scanning again.'))
+      } finally {
+        setIsSubmitting(false)
+      }
     },
-    [dispatch]
+    [initAccountPicker, t]
   )
 
   const resetScanner = useCallback(() => {
@@ -59,6 +65,23 @@ const QrConnectScreen = () => {
     setScanError(null)
     setScannerKey((prev) => prev + 1)
   }, [])
+
+  // The stack keeps this screen mounted under the account picker, and the scanner
+  // stops reading once it completes, so a back to it starts a fresh scan.
+  useEffect(() => {
+    let wasBlurred = false
+
+    return screenFocus.subscribe(() => {
+      if (!screenFocus.isFocused.current) {
+        wasBlurred = true
+        return
+      }
+      if (!wasBlurred) return
+
+      wasBlurred = false
+      resetScanner()
+    })
+  }, [screenFocus, resetScanner])
 
   const handleBackButtonPressed = useCallback(() => {
     resetScanner()
@@ -76,31 +99,6 @@ const QrConnectScreen = () => {
     },
     [addToast, t]
   )
-
-  useEffect(() => {
-    if (
-      isSubmitting &&
-      mainCtrlState.statuses.handleAccountPickerInitQr === 'SUCCESS' &&
-      initParams &&
-      type === 'qr'
-    ) {
-      setIsSubmitting(false)
-      goToNextRoute()
-    }
-  }, [
-    isSubmitting,
-    initParams,
-    type,
-    goToNextRoute,
-    mainCtrlState.statuses.handleAccountPickerInitQr
-  ])
-
-  useEffect(() => {
-    if (isSubmitting && mainCtrlState.statuses.handleAccountPickerInitQr === 'ERROR') {
-      setIsSubmitting(false)
-      setScanError(t('Failed to import QR wallet. Please try scanning again.'))
-    }
-  }, [isSubmitting, mainCtrlState.statuses.handleAccountPickerInitQr, t])
 
   return (
     <MobileLayoutContainer>

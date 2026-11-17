@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
 import { useSearchParams } from 'react-router-dom'
 
@@ -11,6 +11,7 @@ import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation/useNavigation.web'
 import useToast from '@common/hooks/useToast'
@@ -22,13 +23,20 @@ import NetworkBottomSheet, {
 } from '@common/modules/networks/components/NetworkBottomSheet'
 import Networks from '@common/modules/networks/components/Networks'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 const NetworksScreen = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
+  const { isNarrowWebLayout } = useCompactLayout()
+  // Reserves exactly as much scroll space as the floating footer occupies, so the last
+  // network in the list is never covered by it (the footer grows taller on narrow side panels).
+  const [footerHeight, setFooterHeight] = useState(0)
+  const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
+    setFooterHeight(event.nativeEvent.layout.height)
+  }, [])
 
   const { navigate } = useNavigation()
   const {
@@ -119,7 +127,8 @@ const NetworksScreen = () => {
   return (
     <LayoutWrapper>
       <HeaderWithTitle displayBackButtonIn="always" />
-      <View style={[flexbox.flex1, spacings.pv, spacings.phSm]}>
+      {/* In a narrow view the footer pads its own bottom edge */}
+      <View style={[flexbox.flex1, spacings.pv, spacings.phSm, isNarrowWebLayout && spacings.pb0]}>
         <Search control={control} autoFocus containerStyle={spacings.mbSm} />
         <NetworkBottomSheet
           chainId={settingsChainId}
@@ -131,7 +140,13 @@ const NetworksScreen = () => {
           sheetRef={addNetworkBottomSheetRef}
           closeBottomSheet={closeAddNetworkBottomSheet}
         />
-        <ScrollableWrapper style={{ paddingBottom: 72 }}>
+        <ScrollableWrapper
+          style={
+            isNarrowWebLayout
+              ? undefined
+              : { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 72 }
+          }
+        >
           <AllNetworksOption onPress={handleChangeNetwork} />
           <Networks
             search={search}
@@ -140,12 +155,19 @@ const NetworksScreen = () => {
             onPress={handleChangeNetwork}
           />
         </ScrollableWrapper>
-        <FooterGlassView size="sm">
+        <FooterGlassView
+          size="sm"
+          // In a narrow view the footer sits under the list like on mobile, instead of floating over it
+          absolute={!isNarrowWebLayout}
+          fullWidth={isNarrowWebLayout}
+          innerContainerStyle={isNarrowWebLayout ? spacings.ph0 : undefined}
+          onLayout={handleFooterLayout}
+        >
           <Button
             text={t('Add new network')}
-            size="smaller"
+            size={isNarrowWebLayout ? 'regular' : 'smaller'}
             hasBottomSpacing={false}
-            style={{ minWidth: 174 }}
+            style={isNarrowWebLayout ? { width: '100%' } : { minWidth: 174 }}
             childrenPosition="left"
             onPress={handleOpenAddNetworkBottomSheet}
           >

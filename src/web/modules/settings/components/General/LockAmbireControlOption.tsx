@@ -9,10 +9,15 @@ import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectHasPasswordSecret = (state: AllControllersMappingType['KeystoreController']) =>
+  state.hasPasswordSecret
+
 const LockAmbireControlOption = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { state: hasPasswordSecret } = useController('KeystoreController', 'hasPasswordSecret')
+  const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { dispatch: mainDispatch } = useController('MainController')
 
   const handleLockAmbire = useCallback(() => {

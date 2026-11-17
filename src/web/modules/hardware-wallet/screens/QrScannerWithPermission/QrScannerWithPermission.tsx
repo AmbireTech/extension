@@ -6,6 +6,7 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -67,8 +68,9 @@ const QrScannerWithPermission = ({
   onExternalRetry,
   onProgress
 }: Props) => {
-  const { isPopup, isSidePanel } = getUiType()
-  const needsFullScreenCameraFallback = isPopup || isSidePanel
+  const { isPopup } = getUiType()
+  const { isNarrowWebLayout } = useCompactLayout()
+  const needsFullScreenCameraFallback = isPopup || isNarrowWebLayout
   const { t } = useTranslation()
   const { theme } = useTheme()
 

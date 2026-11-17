@@ -1,4 +1,6 @@
-import { isValidSafeNonce } from './helpers'
+import { getQueuedSafeNonces, isValidSafeNonce } from './helpers'
+
+import type { UserRequest } from '@ambire-common/interfaces/userRequest'
 
 describe('isValidSafeNonce', () => {
   test('accepts a nonce equal to or greater than the latest chain nonce', () => {
@@ -20,5 +22,37 @@ describe('isValidSafeNonce', () => {
     expect(isValidSafeNonce('')).toBe(false)
     expect(isValidSafeNonce('1.5')).toBe(false)
     expect(isValidSafeNonce('nonce')).toBe(false)
+  })
+})
+
+describe('getQueuedSafeNonces', () => {
+  const accountAddr = '0x77777777789A8BBEE6C64381e5E89E501fb0e4c8'
+  const getSafeRequest = (id: string, nonce: bigint, isSafeDeploy = false): UserRequest =>
+    ({
+      id,
+      kind: 'calls',
+      meta: { accountAddr, chainId: 1n, isSafeDeploy },
+      signAccountOp: {
+        account: { safeCreation: {} },
+        accountOp: { accountAddr, chainId: 1n, nonce }
+      }
+    }) as unknown as UserRequest
+
+  test('does not treat a Safe deployment as using a Safe nonce', () => {
+    const currentRequest = getSafeRequest('action', 0n)
+    const deployRequest = getSafeRequest('deploy', 0n, true)
+
+    expect(
+      getQueuedSafeNonces([deployRequest, currentRequest], currentRequest.id, accountAddr, 1n)
+    ).toEqual([])
+  })
+
+  test('keeps tracking nonce usage by regular queued Safe requests', () => {
+    const currentRequest = getSafeRequest('action', 0n)
+    const pendingRequest = getSafeRequest('pending', 1n)
+
+    expect(
+      getQueuedSafeNonces([pendingRequest, currentRequest], currentRequest.id, accountAddr, 1n)
+    ).toEqual([1n])
   })
 })

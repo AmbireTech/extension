@@ -18,6 +18,7 @@ import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHand
 import { AuthProvider } from '@common/modules/auth/contexts/authContext'
 import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onboardingNavigationContext'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
+import SidePanelTooNarrowOverlay from '@web/components/SidePanelTooNarrowOverlay'
 import { isExtension } from '@web/constants/browserapi'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
 import { ControllersStateLoadedProvider } from '@web/contexts/controllersStateLoadedContext'
@@ -35,6 +36,9 @@ const AppInit = () => {
     <>
       <AppRouter />
       <PortalHost name="global" />
+      {/* Above everything, the splash included - the width is known right away, so a too-narrow
+      sidebar shows this from the first frame instead of the splash or the dashboard first */}
+      <SidePanelTooNarrowOverlay />
     </>
   )
 

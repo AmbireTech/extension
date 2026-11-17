@@ -2,11 +2,11 @@ import React, { FC, memo, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
+import { ExchangeInfoMap } from '@ambire-common/libs/portfolio/interfaces'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -25,20 +25,20 @@ const MAX_EXCHANGES_IN_TOOLTIP = 10
 type Props = {
   chainId: number
   address: string
+  /** Looked up once for the whole list, see `useExchangesInfo` */
+  exchangesInfo?: ExchangeInfoMap
+  /** The unverified token warning already covers the missing exchanges info of such a token */
+  isUnverified?: boolean
 }
 
-const TokenExchanges: FC<Props> = ({ chainId, address }) => {
+const TokenExchanges: FC<Props> = ({ chainId, address, exchangesInfo, isUnverified }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const marketData = useTokenExchanges(chainId, address)
-  const { state: exchangeData } = useController(
-    'PortfolioController',
-    (state) => state.exchangeState.exchanges
-  )
 
   const exchangesWithData = useMemo(
-    () => getExchangesWithData(marketData?.exchanges || [], exchangeData),
-    [marketData?.exchanges, exchangeData]
+    () => getExchangesWithData(marketData?.exchanges || [], exchangesInfo || null),
+    [marketData?.exchanges, exchangesInfo]
   )
 
   // Shown in place of a logo that failed to load, instead of leaving an empty circle
@@ -53,7 +53,9 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
   // Nothing to show while loading or for a failed fetch, the controller retries it shortly
   if (marketData.status === 'FAIL') return null
 
-  if (marketData.status === 'NOT_FOUND')
+  if (marketData.status === 'NOT_FOUND') {
+    if (isUnverified) return null
+
     return (
       <View
         dataSet={createGlobalTooltipDataSet({
@@ -65,6 +67,7 @@ const TokenExchanges: FC<Props> = ({ chainId, address }) => {
         <WarningIcon width={LOGO_SIZE} height={LOGO_SIZE} color={theme.secondaryText} />
       </View>
     )
+  }
 
   if (!exchangesWithData.length) return null
 

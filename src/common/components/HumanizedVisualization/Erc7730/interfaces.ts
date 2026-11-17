@@ -1,5 +1,7 @@
 import { HumanizerErc7730Visualization } from '@ambire-common/libs/humanizer/interfaces'
 
+import type { TextWeight } from '@common/components/Text'
+
 export type EditApprovalCallInfo = {
   setter: (arg: string, token: string, tokenChainId: bigint, closeModal: () => void) => void
   amount: bigint
@@ -31,6 +33,12 @@ export interface Erc7730StructuredVisualizationProps {
    */
   transactionSummarySection?: 'all' | 'title' | 'rows'
   showDescriptionTitle?: boolean
+  /** The size of the title of the detailed layout. Defaults to `textSize`. */
+  titleTextSize?: number
+  /** The size of the row labels of the detailed layout. Defaults to `textSize`. */
+  labelTextSize?: number
+  /** The weight of the row labels of the detailed layout. */
+  labelWeight?: TextWeight
   /**
    * How many levels of calls embedded in other calls are already rendered above this one.
    * Calls nested deeper than MAX_DISPLAYED_NESTED_CALLDATA_DEPTH are decoded by the
@@ -40,4 +48,4 @@ export interface Erc7730StructuredVisualizationProps {
   nestingDepth?: number
 }
 
-export type Erc7730Row = HumanizerErc7730Visualization['rows'][number]
+export type Erc7730Row = HumanizerErc7730Visualization['fields'][number]

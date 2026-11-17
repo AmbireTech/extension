@@ -1,44 +1,64 @@
 import { formatUnits, isAddress } from 'ethers'
 import React, { FC, memo, useCallback, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
-import { View } from 'react-native'
+import { SectionListData, View } from 'react-native'
 
+import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
-import Select from '@common/components/Select'
+import { SectionedSelect } from '@common/components/Select'
 import { SelectValue } from '@common/components/Select/types'
-import getStyles from '@common/components/SendToken/styles'
+import getStyles from '@common/components/TokenAndAmountSelector/styles'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import { isMobile } from '@common/config/env'
+import { isWeb } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useExchangesInfo from '@common/hooks/useExchangesInfo'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
 import useNetworks from '@common/hooks/useNetworks'
+import useSafeActivation from '@common/hooks/useSafeActivation'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import SwitchTokensButton from '@common/modules/swap-and-bridge/components/SwitchTokensButton'
 import ToTokenSelect from '@common/modules/swap-and-bridge/components/ToToken/ToTokenSelect'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
+import { sortNetworksByBalance } from '@common/utils/sorting'
 import { getTokenId } from '@common/utils/token'
 import { ItemPanel } from '@web/components/TransactionsScreen'
 
 import NotSupportedNetworkTooltip from '../NotSupportedNetworkTooltip'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 type Props = {
   simulationFailed?: boolean
   disabled?: boolean
+  openProviderSettingsModal: () => void
 }
 
-const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
-  const { theme, themeType } = useTheme(getStyles)
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+
+const AVAILABLE_NETWORKS_SECTION_KEY = 'available-networks'
+const SAFE_ACTIVATION_SECTION_KEY = 'safe-activation-networks'
+// Fixed, as the list positions its rows by height. It fits a description wrapped to two lines
+const SAFE_ACTIVATION_SECTION_HEADER_HEIGHT = 88
+
+/** Only the networks the Safe account must be activated on get a header, explaining why */
+const getToNetworksSectionHeaderHeight = (section: SectionListData<SelectValue>) =>
+  section.key === SAFE_ACTIVATION_SECTION_KEY && section.data.length > 0
+    ? SAFE_ACTIVATION_SECTION_HEADER_HEIGHT
+    : 0
+
+const ToToken: FC<Props> = ({ simulationFailed, disabled = false, openProviderSettingsModal }) => {
+  const { theme, themeType, styles } = useTheme(getStyles)
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
   const {
     statuses: swapAndBridgeCtrlStatuses,
     toSelectedToken,
@@ -53,18 +73,32 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
     updateToTokenListStatus,
     switchTokensStatus,
     supportedChainIds,
-    signAccountOpController
+    disabledSwapProviderIds,
+    signAccountOpController,
+    toTokenMarketData,
+    isToTokenSelectionPending
   } = useController('SwapAndBridgeController').state
   const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
 
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
+  const { state: balancePerNetwork } = useController(
+    'SelectedAccountController',
+    (state) => state.portfolio.balancePerNetwork
+  )
   const networks = useNetworks({
     acc: account,
+    allowUndeployedSafeOnChainId: fromSelectedToken?.chainId,
     additionalCheck: {
       chainIds: supportedChainIds,
-      reason: 'Network is not supported by our service provider.'
+      reason: t(
+        disabledSwapProviderIds.length
+          ? 'Network is not supported by the enabled service providers. Enable more providers for wider support'
+          : 'Network is not supported by our service provider.'
+      )
     }
   })
+  const { activateSafe, activatingChainIds } = useSafeActivation(account)
+  const isSafeAccount = !!account?.safeCreation
 
   const handleSwitchFromAndToTokens = useCallback(
     () =>
@@ -109,6 +143,14 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
       : toTokenShortList
   }, [toTokenSearchTerm, toTokenSearchResults, toSelectedToken, toTokenShortList])
 
+  // The market data only holds the tokens currently in the list, so this is one lookup
+  // per list or search rather than one per row
+  const visibleTokensExchangeIds = useMemo(
+    () => Object.values(toTokenMarketData).flatMap(({ exchanges }) => exchanges || []),
+    [toTokenMarketData]
+  )
+  const exchangesInfo = useExchangesInfo(visibleTokensExchangeIds)
+
   const {
     options: toTokenOptions,
     value: toTokenValue,
@@ -118,7 +160,9 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
     token: toSelectedToken ? getTokenId(toSelectedToken) : '',
     networks,
     isLoading: !toTokenShortList.length && updateToTokenListStatus !== 'INITIAL',
-    isToToken: true
+    isSelectionPending: isToTokenSelectionPending,
+    isToToken: true,
+    exchangesInfo
   })
 
   const shouldShowAmountOnEstimationFailure = useMemo(() => {
@@ -141,45 +185,72 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
 
   const toNetworksOptions: SelectValue[] = useMemo(
     () =>
-      networks
-        .sort((a, b) => {
-          const aIsSupported = !a.isNotSupported
-          const bIsSupported = !b.isNotSupported
-          if (aIsSupported && !bIsSupported) return -1
-          if (!aIsSupported && bIsSupported) return 1
-          return 0
-        })
-        .map((n) => {
-          const tooltipId = `network-${n.chainId}-not-supported-tooltip`
+      sortNetworksByBalance(networks, balancePerNetwork).map((n) => {
+        const tooltipId = `network-${n.chainId}-not-supported-tooltip`
+        // The service provider supports the network, so it's unavailable only because
+        // the Safe account isn't activated on it yet
+        const isSafeNotActivated =
+          isSafeAccount && !!n.isNotSupported && supportedChainIds.includes(n.chainId)
+        const canActivateSafe = isSafeNotActivated && SAFE_NETWORKS.includes(Number(n.chainId))
+        // Safe can't be activated at all on networks it doesn't support
+        const isSafeNotSupported = isSafeNotActivated && !canActivateSafe
+        const isActivatingSafe = activatingChainIds.includes(n.chainId.toString())
 
-          return {
-            value: String(n.chainId),
-            extraSearchProps: [n.name],
-            disabled: n.isNotSupported,
-            label: (
-              <>
-                <Text
-                  fontSize={isMobile ? 14 : 16}
-                  appearance="secondaryText"
-                  weight="medium"
-                  dataSet={{ tooltipId }}
-                  style={flexbox.flex1}
-                  numberOfLines={1}
-                >
-                  {n.name}
-                </Text>
-                {n.isNotSupported && (
-                  <NotSupportedNetworkTooltip
-                    tooltipId={tooltipId}
-                    message={n.notSupportedReason || t('Network unavailable')}
-                  />
-                )}
-              </>
-            ),
-            icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
-          }
-        }),
-    [networks, t]
+        return {
+          value: String(n.chainId),
+          extraSearchProps: { name: n.name },
+          disabled: n.isNotSupported,
+          // Listed in their own section, whose header explains why they can't be picked yet
+          isSafeActivationNeeded: canActivateSafe,
+          keepEnabledLook: canActivateSafe,
+          label: (
+            <>
+              <Text
+                fontSize={14}
+                appearance="secondaryText"
+                weight="medium"
+                dataSet={canActivateSafe ? undefined : { tooltipId }}
+                style={flexbox.flex1}
+                numberOfLines={1}
+              >
+                {n.name}
+              </Text>
+              {n.isNotSupported && !canActivateSafe && (
+                <NotSupportedNetworkTooltip
+                  tooltipId={tooltipId}
+                  message={
+                    isSafeNotSupported
+                      ? t('Safe account not supported on this network')
+                      : n.notSupportedReason || t('Network unavailable')
+                  }
+                />
+              )}
+              {canActivateSafe && (
+                <Button
+                  type="outline"
+                  size="tiny"
+                  hasBottomSpacing={false}
+                  style={[spacings.mlTy, { minWidth: 78, height: 28 }]}
+                  disabled={isActivatingSafe}
+                  onPress={() => activateSafe(n.chainId)}
+                  text={isActivatingSafe ? t('Preparing...') : t('Activate')}
+                  testID={`activate-safe-${n.chainId}`}
+                />
+              )}
+            </>
+          ),
+          icon: <NetworkIcon key={n.chainId.toString()} id={n.chainId.toString()} size={28} />
+        }
+      }),
+    [
+      networks,
+      balancePerNetwork,
+      isSafeAccount,
+      supportedChainIds,
+      activatingChainIds,
+      activateSafe,
+      t
+    ]
   )
 
   const getToNetworkSelectValue = useMemo(() => {
@@ -188,6 +259,53 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
 
     return toNetworksOptions.filter((opt) => opt.value === String(network.chainId))[0]
   }, [networks, toChainId, toNetworksOptions])
+
+  const toNetworksSections = useMemo(
+    () => [
+      {
+        key: AVAILABLE_NETWORKS_SECTION_KEY,
+        data: toNetworksOptions.filter((option) => !option.isSafeActivationNeeded)
+      },
+      {
+        key: SAFE_ACTIVATION_SECTION_KEY,
+        data: toNetworksOptions.filter((option) => option.isSafeActivationNeeded)
+      }
+    ],
+    [toNetworksOptions]
+  )
+
+  const renderToNetworksSectionHeader = useCallback(
+    ({ section }: { section: SectionListData<SelectValue> }) => {
+      if (getToNetworksSectionHeaderHeight(section) === 0) return null
+
+      return (
+        <View
+          style={[
+            spacings.mtTy,
+            spacings.ptSm,
+            spacings.pbTy,
+            spacings.phTy,
+            flexbox.justifyCenter,
+            {
+              height: SAFE_ACTIVATION_SECTION_HEADER_HEIGHT,
+              borderTopWidth: 1,
+              borderTopColor: theme.secondaryBorder
+            }
+          ]}
+        >
+          <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mbMi}>
+            {t('Not activated yet')}
+          </Text>
+          <Text fontSize={12} appearance="tertiaryText" numberOfLines={2}>
+            {t(
+              'Your Safe account needs a one-time activation on these networks before it can receive tokens there.'
+            )}
+          </Text>
+        </View>
+      )
+    },
+    [theme.secondaryBorder, t]
+  )
 
   const handleChangeToToken = useCallback(
     ({ address: toSelectedTokenAddr }: SelectValue) => {
@@ -255,13 +373,7 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
     'balanceFormatted' in toTokenValue
 
   return (
-    <ItemPanel
-      style={{
-        ...spacings.pv,
-        ...spacings.pl,
-        ...(isMobile ? {} : spacings.prMd)
-      }}
-    >
+    <ItemPanel style={spacings.pvSm}>
       <SwitchTokensButton
         onPress={handleSwitchFromAndToTokens}
         disabled={
@@ -272,103 +384,31 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
         }
       />
       <View
-        style={[
-          isCompactSidePanelLayout
-            ? [{ width: '100%' }, spacings.mbSm]
-            : [flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]
-        ]}
+        style={[flexbox.directionRow, flexbox.alignEnd, flexbox.justifySpaceBetween, spacings.mbMi]}
       >
-        <Text
-          appearance="secondaryText"
-          fontSize={14}
-          weight="medium"
-          style={isCompactSidePanelLayout ? spacings.mbTy : spacings.mbSm}
-        >
+        <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
           {t('You receive')}
         </Text>
-        <Select
-          setValue={handleSetToNetworkValue}
-          containerStyle={{
-            ...spacings.mb0,
-            width: isCompactSidePanelLayout ? '100%' : isMobile ? 150 : 168
-          }}
-          options={toNetworksOptions}
-          selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
-          size="sm"
-          value={getToNetworkSelectValue}
-          mode="bottomSheet"
-          bottomSheetTitle={t('Receive token network')}
-          testID="to-network-select"
-          disabled={disabled}
-        />
-      </View>
-      <View
-        style={[
-          isCompactSidePanelLayout
-            ? { width: '100%', gap: SPACING_SM }
-            : [
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                { columnGap: isMobile ? SPACING_SM : SPACING }
-              ]
-        ]}
-      >
-        <View style={isCompactSidePanelLayout ? { width: '100%' } : [flexbox.flex1]}>
-          <ToTokenSelect
-            toTokenOptions={toTokenOptions}
-            toTokenValue={toTokenValue}
-            handleChangeToToken={handleChangeToToken}
-            toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
-            addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
-            handleAddToTokenByAddress={handleAddToTokenByAddress}
+        <View style={isWeb ? styles.networkColumn : undefined}>
+          <SectionedSelect
+            setValue={handleSetToNetworkValue}
+            containerStyle={{ ...spacings.mb0, width: isWeb ? '100%' : 150 }}
+            sections={toNetworksSections}
+            renderSectionHeader={renderToNetworksSectionHeader}
+            headerHeight={0}
+            getSectionHeaderHeight={getToNetworksSectionHeaderHeight}
+            stickySectionHeadersEnabled={false}
+            selectStyle={{ ...spacings.phMi, ...spacings.prTy }}
+            size="sm"
+            value={getToNetworkSelectValue}
+            mode="bottomSheet"
+            bottomSheetTitle={t('Receive token network')}
+            testID="to-network-select"
+            disabled={disabled}
           />
         </View>
-        <View
-          style={
-            isCompactSidePanelLayout
-              ? { width: '100%', alignItems: 'flex-end' }
-              : [flexbox.flex1, isMobile ? { maxWidth: '40%' } : {}]
-          }
-        >
-          {isReadyToDisplayAmounts ? (
-            <Text
-              fontSize={20}
-              weight="medium"
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              appearance={
-                formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
-              }
-              dataSet={createGlobalTooltipDataSet({
-                id: 'to-amount',
-                content: toAmount,
-                hidden: formattedToAmount === '0'
-              })}
-              style={{ textAlign: 'right' }}
-            >
-              {formattedToAmount}
-            </Text>
-          ) : (
-            <SkeletonLoader
-              appearance="primaryBackground"
-              width={100}
-              height={32}
-              style={{ marginLeft: 'auto' }}
-            />
-          )}
-        </View>
       </View>
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.ptSm,
-          {
-            height: 32 // Prevents layout shifts
-          }
-        ]}
-      >
+      <View style={styles.balanceRow}>
         {hasSelectedToToken && (
           <View
             style={[flexbox.directionRow, flexbox.alignCenter]}
@@ -412,6 +452,51 @@ const ToToken: FC<Props> = ({ simulationFailed, disabled = false }) => {
             {formatDecimals(quote.selectedRoute.outputValueInUsd || 0, 'price')}
           </Text>
         )}
+      </View>
+      <View style={styles.tokenRow}>
+        <View style={flexbox.flex1}>
+          <ToTokenSelect
+            toTokenOptions={toTokenOptions}
+            toTokenValue={toTokenValue}
+            handleChangeToToken={handleChangeToToken}
+            toTokenAmountSelectDisabled={disabled || toTokenAmountSelectDisabled}
+            addToTokenByAddressStatus={swapAndBridgeCtrlStatuses.addToTokenByAddress}
+            handleAddToTokenByAddress={handleAddToTokenByAddress}
+            areAllProvidersDisabled={disabled}
+            openProviderSettingsModal={openProviderSettingsModal}
+          />
+        </View>
+        <View
+          style={isWeb ? styles.amountColumn : [flexbox.flex1, { maxWidth: '40%' }]}
+          pointerEvents="box-none"
+        >
+          {isReadyToDisplayAmounts ? (
+            <Text
+              fontSize={20}
+              weight="medium"
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              appearance={
+                formattedToAmount && formattedToAmount !== '0' ? 'primaryText' : 'secondaryText'
+              }
+              dataSet={createGlobalTooltipDataSet({
+                id: 'to-amount',
+                content: toAmount,
+                hidden: formattedToAmount === '0'
+              })}
+              style={{ textAlign: 'right' }}
+            >
+              {formattedToAmount}
+            </Text>
+          ) : (
+            <SkeletonLoader
+              appearance="primaryBackground"
+              width={100}
+              height={32}
+              style={{ marginLeft: 'auto' }}
+            />
+          )}
+        </View>
       </View>
     </ItemPanel>
   )

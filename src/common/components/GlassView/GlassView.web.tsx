@@ -65,6 +65,12 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     // Compute and apply backdropFilter directly — no setState, no re-render.
     // blurAmount is in the deps array so this re-runs whenever it changes.
     const applyBackdropFilter = (displacementUrl: string | null) => {
+      // Even a zero blur would still be a backdrop filter
+      if (!blurAmount) {
+        el.style.backdropFilter = 'none'
+        return
+      }
+
       let filter: string
       if (engine !== 'webkit' || isSimpleBlur || !displacementUrl) {
         filter = `blur(${blurAmount}px)`
@@ -108,7 +114,11 @@ const GlassView: React.FC<GlassViewProps & ViewProps> = ({
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (!entry) return
-      const { width, height } = entry.contentRect
+      // The specular overlay spans the whole element, so the map must be generated for the border
+      // box. contentRect excludes padding, which would stretch the map and warp the rounded corners.
+      const borderBox = entry.borderBoxSize?.[0]
+      const width = borderBox?.inlineSize ?? el.offsetWidth
+      const height = borderBox?.blockSize ?? el.offsetHeight
       if (width && height) {
         applySpecular(width, height)
         applyBackdropFilter(computeDisplacementUrl(width, height))

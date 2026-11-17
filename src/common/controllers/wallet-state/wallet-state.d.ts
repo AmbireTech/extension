@@ -23,6 +23,8 @@ export declare class WalletStateController extends EventEmitter {
 
   crashAnalyticsEnabled: boolean
 
+  crashReportId: string | null
+
   initialLoadPromise: Promise<void>
 
   extensionVersion: string

@@ -1,9 +1,17 @@
-import React from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { LayoutChangeEvent } from 'react-native'
+
+import { isWeb } from '@common/config/env'
+import { SPACING_MI } from '@common/styles/spacings'
 
 import EmptyListPlaceholder from './components/EmptyListPlaceholder'
 import SelectContainer from './components/SelectContainer'
+import { DEFAULT_SELECT_SIZE, SELECT_LIST_VIRTUALIZATION, SELECT_SIZE_TO_HEIGHT } from './styles'
 import { SectionedSelectProps } from './types'
 import useSelectInternal from './useSelectInternal'
+
+// Keeps the rows off the scrollbar on web, like ScrollableWrapper does
+const CONTENT_WITH_SCROLLBAR_STYLE = { paddingRight: SPACING_MI / 2 }
 
 const SectionedSelect = ({
   setValue,
@@ -19,6 +27,15 @@ const SectionedSelect = ({
   onSearch,
   testID,
   menuPosition,
+  onViewableItemsChanged,
+  viewabilityConfig,
+  onScrollBeginDrag,
+  getSectionHeaderHeight,
+  scrollToSelectedOnOpen,
+  isMenuOpen: controlledIsMenuOpen,
+  setIsMenuOpen,
+  withScrollbarPadding,
+  listRef: externalListRef,
   ...props
 }: SectionedSelectProps) => {
   const selectData = useSelectInternal({
@@ -30,17 +47,196 @@ const SectionedSelect = ({
     data: sections,
     attemptToFetchMoreOptions,
     onSearch,
-    menuPosition
+    menuPosition,
+    renderOption: props.renderOption,
+    closeMenuOnSelect: props.closeMenuOnSelect,
+    isMenuOpen: controlledIsMenuOpen,
+    setIsMenuOpen,
+    listRef: externalListRef
   })
   const {
     listRef,
     filteredData,
     renderItem,
     keyExtractor,
-    getItemLayout,
     handleScroll,
-    handleLayout
+    handleLayout,
+    isMenuOpen
   } = selectData
+  const isScrollbarPaddingEnabled = isWeb && !!withScrollbarPadding
+  // Refs, so a size change re-renders the list only when the scrollbar appears or disappears
+  const listHeightRef = useRef(0)
+  const contentHeightRef = useRef(0)
+  const [hasVerticalScrollbar, setHasVerticalScrollbar] = useState(false)
+
+  const updateHasVerticalScrollbar = useCallback(() => {
+    // The 1px tolerance ignores sub-pixel differences when the content only fills the list
+    setHasVerticalScrollbar(contentHeightRef.current - listHeightRef.current > 1)
+  }, [])
+
+  const handleListLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      handleLayout(event)
+      if (!isScrollbarPaddingEnabled) return
+
+      listHeightRef.current = event.nativeEvent.layout.height
+      updateHasVerticalScrollbar()
+    },
+    [handleLayout, isScrollbarPaddingEnabled, updateHasVerticalScrollbar]
+  )
+
+  const handleContentSizeChange = useCallback(
+    (_: number, height: number) => {
+      contentHeightRef.current = height
+      updateHasVerticalScrollbar()
+    },
+    [updateHasVerticalScrollbar]
+  )
+
+  const optionHeight = menuOptionHeight || SELECT_SIZE_TO_HEIGHT[props.size || DEFAULT_SELECT_SIZE]
+
+  // A SectionList counts each section's header and (empty) footer as items too, so the
+  // offsets must step over them - viewability and scrolling to an index rely on these
+  const getItemLayout = useCallback(
+    (_: unknown, flatIndex: number) => {
+      let offset = 0
+      let remaining = flatIndex
+
+      for (const section of filteredData) {
+        const sectionHeaderHeight = getSectionHeaderHeight?.(section) ?? headerHeight
+        if (remaining === 0) return { length: sectionHeaderHeight, offset, index: flatIndex }
+        offset += sectionHeaderHeight
+        remaining -= 1
+
+        if (remaining < section.data.length) {
+          return {
+            length: optionHeight,
+            offset: offset + remaining * optionHeight,
+            index: flatIndex
+          }
+        }
+        offset += section.data.length * optionHeight
+        remaining -= section.data.length
+
+        if (remaining === 0) return { length: 0, offset, index: flatIndex }
+        remaining -= 1
+      }
+
+      return { length: 0, offset, index: flatIndex }
+    },
+    [filteredData, headerHeight, getSectionHeaderHeight, optionHeight]
+  )
+
+  // A SectionList counts each section's header and footer as items, so they are stepped over
+  const selectedScrollIndex = useMemo(() => {
+    if (!scrollToSelectedOnOpen || !value) return undefined
+
+    let flatIndex = 0
+    for (const section of filteredData) {
+      const optionIndex = section.data.findIndex((option) => option.value === value.value)
+      if (optionIndex !== -1) {
+        let index = flatIndex + 1 + optionIndex
+        if (stickySectionHeadersEnabled) {
+          // Earlier by as many items as the sticky header is tall, so it doesn't cover the option
+          const stickyHeaderHeight = getSectionHeaderHeight?.(section) ?? headerHeight
+          const visibleFromOffset = getItemLayout(null, index).offset - stickyHeaderHeight
+          while (index > 0 && getItemLayout(null, index).offset > visibleFromOffset) index -= 1
+        }
+
+        return index > 0 ? index : undefined
+      }
+      flatIndex += section.data.length + 2
+    }
+
+    return undefined
+  }, [
+    scrollToSelectedOnOpen,
+    value,
+    filteredData,
+    stickySectionHeadersEnabled,
+    getSectionHeaderHeight,
+    headerHeight,
+    getItemLayout
+  ])
+
+  // Not an `initialScrollIndex`: a list holds its rows above that index unrendered until it
+  // scrolls, and Android sends no scroll event when all rows fit, leaving a gap above them
+  const hasScrolledToSelectedRef = useRef(false)
+
+  useEffect(() => {
+    // The list mounts each time the menu opens
+    if (!isMenuOpen) hasScrolledToSelectedRef.current = false
+  }, [isMenuOpen])
+
+  // On the content size rather than the list layout: Modalize replaces the list's `onLayout`
+  const handleContentSizeChangeAndScrollToSelected = useCallback(
+    (width: number, height: number) => {
+      if (isScrollbarPaddingEnabled) handleContentSizeChange(width, height)
+      // A closing sheet keeps the list mounted, and clearing the search on close resizes it
+      if (!isMenuOpen || hasScrolledToSelectedRef.current || height <= 0) return
+
+      hasScrolledToSelectedRef.current = true
+      if (selectedScrollIndex === undefined) return
+
+      listRef.current
+        ?.getScrollResponder()
+        ?.scrollTo({ y: getItemLayout(null, selectedScrollIndex).offset, animated: false })
+    },
+    [
+      isMenuOpen,
+      isScrollbarPaddingEnabled,
+      handleContentSizeChange,
+      selectedScrollIndex,
+      getItemLayout,
+      listRef
+    ]
+  )
+
+  // Memoized for the same reason `Select` memoizes its `flatListProps`: a new object
+  // here defeats `React.memo` on the BottomSheet, so every render of the parent
+  // re-renders every mounted row of the list.
+  const sectionListProps = useMemo(
+    () => ({
+      ref: listRef,
+      sections: filteredData as SectionedSelectProps['sections'],
+      renderItem: renderItem as any,
+      onLayout: handleListLayout,
+      onContentSizeChange: handleContentSizeChangeAndScrollToSelected,
+      // Left out unless needed, as an undefined one would wipe the bottom sheet's own padding
+      ...(hasVerticalScrollbar && { contentContainerStyle: CONTENT_WITH_SCROLLBAR_STYLE }),
+      renderSectionHeader,
+      keyExtractor,
+      ...SELECT_LIST_VIRTUALIZATION,
+      SectionSeparatorComponent,
+      removeClippedSubviews: true,
+      getItemLayout: getItemLayout as any,
+      ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
+      stickySectionHeadersEnabled,
+      onScroll: handleScroll,
+      scrollEventThrottle: 16,
+      onViewableItemsChanged,
+      viewabilityConfig,
+      onScrollBeginDrag
+    }),
+    [
+      listRef,
+      filteredData,
+      renderItem,
+      handleListLayout,
+      handleContentSizeChangeAndScrollToSelected,
+      hasVerticalScrollbar,
+      renderSectionHeader,
+      keyExtractor,
+      SectionSeparatorComponent,
+      getItemLayout,
+      emptyListPlaceholderText,
+      stickySectionHeadersEnabled,
+      handleScroll,
+      onViewableItemsChanged,
+      viewabilityConfig,
+      onScrollBeginDrag
+    ]
+  )
 
   return (
     <SelectContainer
@@ -52,24 +248,7 @@ const SectionedSelect = ({
       id={testID}
       testID={testID}
       listRef={listRef}
-      sectionListProps={{
-        ref: listRef,
-        sections: filteredData as SectionedSelectProps['sections'],
-        renderItem: renderItem as any,
-        onLayout: handleLayout,
-        renderSectionHeader: renderSectionHeader,
-        keyExtractor: keyExtractor,
-        initialNumToRender: 15,
-        windowSize: 10,
-        maxToRenderPerBatch: 20,
-        SectionSeparatorComponent: SectionSeparatorComponent,
-        removeClippedSubviews: true,
-        getItemLayout: getItemLayout as any,
-        ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,
-        stickySectionHeadersEnabled: stickySectionHeadersEnabled,
-        onScroll: handleScroll,
-        scrollEventThrottle: 16
-      }}
+      sectionListProps={sectionListProps}
     />
   )
 }

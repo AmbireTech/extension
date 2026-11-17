@@ -1,7 +1,7 @@
 import { KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
-import { computeAddress, HDNodeWallet } from 'ethers'
+import { computeAddress, HDNodeWallet, Wallet } from 'ethers'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
 
 import { expect } from '@playwright/test'
@@ -39,6 +39,11 @@ test.describe('auth', { tag: '@auth' }, () => {
 
   test('import basic account from private key', async ({ pages }) => {
     await pages.auth.importExistingAccount()
+  })
+
+  test('import several basic accounts from private keys at once', async ({ pages }) => {
+    const privateKeys = Array.from({ length: 3 }, () => Wallet.createRandom().privateKey)
+    await pages.auth.importExistingAccount(privateKeys)
   })
 
   // The zero-entropy BIP39 test vector is eleven "abandon" words followed by "about".
@@ -194,6 +199,10 @@ test.describe('trezor', { tag: '@trezorTests' }, () => {
       await page.getByTestId(`add-account-${mainConstants.addresses.trezorAccount2}`).click()
       await page.getByTestId(selectors.getStarted.importAccountButton).click()
       await page.getByTestId(selectors.getStarted.saveAndContinueBtn).click()
+      // Proceed adds the accounts - leaving before they are added would cut it short
+      await expect(page.getByTestId(selectors.getStarted.personalizeAccountsHeader)).toBeHidden({
+        timeout: 30000
+      })
     })
 
     await test.step('make sure accounts are imported', async () => {

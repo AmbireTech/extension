@@ -25,8 +25,12 @@ jobs:
   build-ios:
     name: Build iOS artifact and upload
     environment: extension-production
-    # NOTE: macos-15 runners are Apple Silicon (arm64)
-    runs-on: macos-15
+    # NOTE: macos-26 runners are Apple Silicon (arm64)
+    # TODO: Move to Xcode 27 once the `xcode-27` runner image leaves public preview
+    # (https://github.com/actions/runner-images/issues/14404) and its keychain unlock bug
+    # is fixed (https://github.com/actions/runner-images/issues/14837). Switch `runs-on` here,
+    # in e2e-mobilewright-ios.yml and in publish-ota-ios.yml, then bump .xcode-version.
+    runs-on: macos-26
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
 
@@ -157,10 +161,17 @@ jobs:
           NFT_CDN_URL: ${{ vars.NFT_CDN_URL }}
           LEGENDS_NFT_ADDRESS: ${{ vars.LEGENDS_NFT_ADDRESS }}
           LI_FI_API_KEY: ${{ vars.LI_FI_API_KEY }}
+          COWSWAP_API_KEY: ${{ vars.COWSWAP_API_KEY }}
           BUNGEE_API_KEY: ${{ vars.BUNGEE_API_KEY }}
           UNISWAP_API_KEY: ${{ vars.UNISWAP_API_KEY }}
           SAFE_API_KEY: ${{ vars.SAFE_API_KEY }}
           WALLETCONNECT_PROJECT_ID: ${{ vars.WALLETCONNECT_PROJECT_ID }}
+          SENTRY_DSN_MOBILE: ${{ vars.SENTRY_DSN_MOBILE }}
+          # Lets the release build upload its source map and dSYMs
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN_MOBILE }}
+          # Must match the release the app reports under, see getMobileCrashReportRelease. The dist
+          # is left to the Xcode default, the build number, which is what the app reports too.
+          SENTRY_RELEASE: mobile-ios@${{ steps.version.outputs.VERSION }}
         run: ${{ inputs.build_command }}
         shell: bash
 

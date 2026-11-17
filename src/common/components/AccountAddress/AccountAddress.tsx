@@ -11,6 +11,7 @@ import DomainBadge from '@common/components/Avatar/DomainBadge'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useReverseLookup from '@common/hooks/useReverseLookup'
@@ -18,9 +19,6 @@ import useTheme from '@common/hooks/useTheme'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
-
-const { isSidePanel } = getUiType()
 
 interface Props extends Omit<ReturnType<typeof useReverseLookup>, 'updatedAt' | 'isFetched'> {
   // Optional so callers that don't run a reverse lookup (e.g. receive screens) can omit them.
@@ -33,6 +31,7 @@ interface Props extends Omit<ReturnType<typeof useReverseLookup>, 'updatedAt' | 
     prefix: number
     suffix: number
     color: 'errorText'
+    differingFrom?: string
   }
   withCopy?: boolean
   fontSize?: number
@@ -83,6 +82,7 @@ const AccountAddress: FC<Props> = ({
   withWrap = false,
   withUpdateEnsInTooltip = false
 }) => {
+  const { isNarrowWebLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
   // If highlight is required, prioritize showing it over domain resolving/name UI so the highlight stays visible.
@@ -96,7 +96,7 @@ const AccountAddress: FC<Props> = ({
   const isEnsOlderThanOneDay = updatedAt ? Date.now() - updatedAt > 24 * 60 * 60 * 1000 : false
 
   const shouldShowFullAddressOnWeb =
-    !isSidePanel &&
+    !isNarrowWebLayout &&
     isWeb &&
     plainAddressMaxLength >= 42 &&
     !showResolvedName &&
@@ -110,11 +110,16 @@ const AccountAddress: FC<Props> = ({
     return `${name} (${t('Updated {{timeAgo}}', { timeAgo: getTimeAgo(new Date(updatedAt)) })})`
   }, [name, updatedAt, t])
 
-  // On mobile the address takes the whole row width, but when a resolved name is
-  // displayed next to it, keep it short so the name isn't truncated
+  // Shortened further next to a resolved name in a narrow view, so the name isn't the part
+  // that gets truncated. Shared by the address with and without a copy button
+  const webMaxLength = showResolvedName && isNarrowWebLayout ? 10 : 16
+
+  // On mobile, and in a narrow view, the address takes most of the row width,
+  // but when a resolved name is displayed next to it, keep it short so the name isn't
+  // truncated (shortened further in a narrow view, where space is tighter)
   const getWithCopyMaxLength = () => {
     if (addressHighlight || withWrap) return 42
-    if (!isMobile) return 16
+    if (!isMobile) return webMaxLength
 
     return showResolvedName ? 13 : 42
   }
@@ -189,12 +194,12 @@ const AccountAddress: FC<Props> = ({
           ) : (
             <>
               <PlainAddress
-                maxLength={isMobile ? 13 : 16}
+                maxLength={isMobile ? 13 : webMaxLength}
                 address={address}
                 // A shortened address already hides its middle, so letting it shrink would add a
-                // trailing ellipsis on top of that and hide the suffix. On the narrow side panel
+                // trailing ellipsis on top of that and hide the suffix. On a narrow view
                 // the resolved name next to it gives way instead.
-                style={{ ...spacings.mlMi, ...(isSidePanel ? { flexShrink: 0 } : {}) }}
+                style={{ ...spacings.mlMi, ...(isNarrowWebLayout ? { flexShrink: 0 } : {}) }}
                 fontSize={fontSize}
                 withWrap={withWrap}
                 highlight={addressHighlight}

@@ -1,11 +1,14 @@
 import React, { FC, memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { View } from 'react-native'
 
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import useController from '@common/hooks/useController'
+import { SWITCH_TOKENS_BUTTON_OVERHANG } from '@common/modules/swap-and-bridge/components/SwitchTokensButton/styles'
 import useSwapAndBridgeForm from '@common/modules/swap-and-bridge/hooks/useSwapAndBridgeForm'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { getTokenId } from '@common/utils/token'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
@@ -89,29 +92,44 @@ const FromToken: FC<Props> = ({
     })
   }, [fromAmountFieldMode, swapAndBridgeDispatch])
 
-  return !isLoading ? (
-    <SendToken
-      label={t('You send')}
-      fromTokenOptions={fromTokenOptions}
-      fromTokenValue={fromTokenValue}
-      fromAmountValue={fromAmountValue}
-      fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
-      handleChangeFromToken={handleChangeFromToken}
-      fromSelectedToken={fromSelectedToken}
-      fromAmount={fromAmount}
-      fromAmountInFiat={fromAmountInFiat}
-      fromAmountFieldMode={fromAmountFieldMode}
-      maxFromAmount={maxFromAmount}
-      validateFromAmount={validateFromAmount}
-      onFromAmountChange={onFromAmountChange}
-      handleSwitchFromAmountFieldMode={handleSwitchFromAmountFieldMode}
-      handleSetMaxFromAmount={handleSetMaxFromAmount}
-      inputTestId="from-amount-input-sab"
-      selectTestId="from-token-select"
-      simulationFailed={simulationFailed}
-    />
-  ) : (
-    <SkeletonLoader width="100%" height={161} />
+  return (
+    // The gap the switch tokens button centres itself on - see its own styles. While the amount
+    // shows a message, the gap grows for the button to clear it. Not a zIndex lift: reordering
+    // siblings on native remounts the amount input and drops its focus mid-typing
+    <View
+      style={
+        validateFromAmount?.message
+          ? { marginBottom: SPACING_TY + SWITCH_TOKENS_BUTTON_OVERHANG }
+          : spacings.mbTy
+      }
+    >
+      {!isLoading ? (
+        <SendToken
+          label={t('You send')}
+          fromTokenOptions={fromTokenOptions}
+          fromTokenValue={fromTokenValue}
+          fromAmountValue={fromAmountValue}
+          fromTokenAmountSelectDisabled={fromTokenAmountSelectDisabled}
+          handleChangeFromToken={handleChangeFromToken}
+          fromSelectedToken={fromSelectedToken}
+          fromAmount={fromAmount}
+          fromAmountInFiat={fromAmountInFiat}
+          fromAmountFieldMode={fromAmountFieldMode}
+          maxFromAmount={maxFromAmount}
+          validateFromAmount={validateFromAmount}
+          onFromAmountChange={onFromAmountChange}
+          handleSwitchFromAmountFieldMode={handleSwitchFromAmountFieldMode}
+          handleSetMaxFromAmount={handleSetMaxFromAmount}
+          inputTestId="from-amount-input-sab"
+          selectTestId="from-token-select"
+          simulationFailed={simulationFailed}
+          // The You receive panel follows right below, so the slider needs room before this one ends
+          sliderStyle={spacings.pbTy}
+        />
+      ) : (
+        <SkeletonLoader width="100%" height={185} />
+      )}
+    </View>
   )
 }
 

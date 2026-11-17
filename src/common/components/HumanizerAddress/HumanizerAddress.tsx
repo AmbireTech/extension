@@ -24,6 +24,8 @@ interface Props extends TextProps {
   chainId: bigint
   verification?: BlacklistedStatus
   isToken?: boolean
+  /** Shows only a name the wallet knows locally, or the plain address, with no name lookups. */
+  isLocalLabelOnly?: boolean
 }
 const HUMANIZER_META = humanizerInfo as HumanizerMeta
 

@@ -88,6 +88,11 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Connect Trezor')
     })
   },
+  [ROUTES.oneKeyConnect]: {
+    route: ROUTES.oneKeyConnect,
+    title: Platform.select({ default: i18n.t('Welcome to Ambire Wallet') }),
+    name: Platform.select({ default: i18n.t('Connect OneKey') })
+  },
   [ROUTES.authEmailAccount]: {
     route: ROUTES.authEmailAccount,
     title: Platform.select({
@@ -177,6 +182,22 @@ const routesConfig: RouteConfig = {
     }),
     name: Platform.select({ default: i18n.t('Transaction Builder') })
   },
+  [ROUTES.privacyPoolsTokenDetails]: {
+    route: ROUTES.privacyPoolsTokenDetails,
+    title: Platform.select({
+      default: i18n.t('Token information')
+    }),
+    name: Platform.select({ default: i18n.t('Token information') }),
+    withTitlePrefix: false
+  },
+  [ROUTES.privacyPoolsSend]: {
+    route: ROUTES.privacyPoolsSend,
+    title: Platform.select({
+      default: i18n.t('Send')
+    }),
+    name: Platform.select({ default: i18n.t('Send') }),
+    withTitlePrefix: false
+  },
   [ROUTES.transfer]: {
     route: ROUTES.transfer,
     title: Platform.select({
@@ -231,6 +252,14 @@ const routesConfig: RouteConfig = {
       web: i18n.t('Explore'),
       default: i18n.t('Explore')
     })
+  },
+  [ROUTES.walletStaking]: {
+    route: ROUTES.walletStaking,
+    title: Platform.select({
+      default: i18n.t('$WALLET Staking')
+    }),
+    name: Platform.select({ default: i18n.t('$WALLET Staking') }),
+    withTitlePrefix: false
   },
   [ROUTES.watchAsset]: {
     route: ROUTES.watchAsset,
@@ -418,11 +447,6 @@ const routesConfig: RouteConfig = {
     title: Platform.select({ default: i18n.t('Networks') }),
     name: Platform.select({ default: i18n.t('Networks') })
   },
-  [ROUTES.rewards]: {
-    route: ROUTES.rewards,
-    title: Platform.select({ default: i18n.t('Ambire Rewards') }),
-    name: Platform.select({ default: i18n.t('Ambire Rewards') })
-  },
   [ROUTES.receive]: {
     route: ROUTES.receive,
     title: Platform.select({ default: i18n.t('Receive assets') }),
@@ -433,23 +457,28 @@ const routesConfig: RouteConfig = {
     title: Platform.select({ default: i18n.t('Connect QR wallet') }),
     name: Platform.select({ default: i18n.t('Connect QR wallet') })
   },
+  [ROUTES.pq1Connect]: {
+    route: ROUTES.pq1Connect,
+    title: Platform.select({ default: i18n.t('Connect PQ1') }),
+    name: Platform.select({ default: i18n.t('Connect PQ1') })
+  },
   [ROUTES.qrPermission]: {
     route: ROUTES.qrPermission,
     title: Platform.select({ default: i18n.t('Camera permission') }),
     name: Platform.select({ default: i18n.t('Camera permission') })
   },
-  [ROUTES.exportAccountsToMobile]: {
-    route: ROUTES.exportAccountsToMobile,
-    title: Platform.select({ default: i18n.t('Export accounts to mobile') }),
-    name: Platform.select({ default: i18n.t('Export accounts to mobile') })
+  [ROUTES.exportToMobile]: {
+    route: ROUTES.exportToMobile,
+    title: Platform.select({ default: i18n.t('Export to mobile') }),
+    name: Platform.select({ default: i18n.t('Export to mobile') })
   },
-  [ROUTES.importAccountsFromMobile]: {
-    route: ROUTES.importAccountsFromMobile,
+  [ROUTES.importFromMobile]: {
+    route: ROUTES.importFromMobile,
     title: Platform.select({ default: i18n.t('Import from mobile') }),
     name: Platform.select({ default: i18n.t('Import from mobile') })
   },
-  [ROUTES.importAccountsFromExtension]: {
-    route: ROUTES.importAccountsFromExtension,
+  [ROUTES.importFromExtension]: {
+    route: ROUTES.importFromExtension,
     title: Platform.select({ default: i18n.t('Import from extension') }),
     name: Platform.select({ default: i18n.t('Import from extension') })
   }

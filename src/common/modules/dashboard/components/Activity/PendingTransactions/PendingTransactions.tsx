@@ -84,7 +84,7 @@ const PendingTransactions = () => {
           >
             <RefreshIcon width={16} height={16} color={theme.linkText} style={spacings.mrMi} />
             <Text fontSize={14} appearance="linkText">
-              {t('Check now')}
+              {t('Refresh')}
             </Text>
           </HoverablePressable>
         )}

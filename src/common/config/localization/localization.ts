@@ -23,6 +23,13 @@ i18n.use(initReactI18next).init({
   fallbackLng: Locale.EN,
   supportedLngs: Object.values(Locale),
   defaultNS: 'app',
+  // Our keys are whole English sentences, not dotted paths, so the nesting and
+  // namespace lookups have nothing to resolve. Declaring the separators off
+  // skips the check i18next otherwise runs per t() call, which builds a fresh
+  // RegExp every time, and stops a sentence containing a colon from being read
+  // as a namespace.
+  keySeparator: false,
+  nsSeparator: false,
   resources: { [Locale.EN]: { app: en }, [Locale.BG]: { app: bg } },
   interpolation: {
     escapeValue: false

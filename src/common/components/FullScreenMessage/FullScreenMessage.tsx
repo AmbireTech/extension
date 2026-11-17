@@ -17,9 +17,11 @@ interface Props {
   /** Rendered between the description and the actions. */
   children?: ReactNode
   actions?: ReactNode
+  /** Replaces the default Ambire Wallet logo. */
+  logo?: ReactNode
 }
 
-const FullScreenMessage = ({ title, description, children, actions }: Props) => {
+const FullScreenMessage = ({ title, description, children, actions, logo }: Props) => {
   const { theme } = useTheme()
 
   return (
@@ -37,7 +39,7 @@ const FullScreenMessage = ({ title, description, children, actions }: Props) => 
           }
         ]}
       >
-        <AmbireLogoHorizontal width={124} height={43} style={spacings.mbXl} />
+        {logo ?? <AmbireLogoHorizontal width={124} height={43} style={spacings.mbXl} />}
         <Text
           fontSize={20}
           weight="medium"

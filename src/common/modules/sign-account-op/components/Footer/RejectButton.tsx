@@ -1,9 +1,9 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
 
-import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { useTranslation } from '@common/config/localization'
+import RejectRequestButton from '@common/modules/action-requests/components/RejectRequestButton'
 
 import type { Props as ButtonProps } from '@common/components/Button'
 import type { ViewStyle } from 'react-native'
@@ -46,9 +46,8 @@ const RejectButton = ({
 
   return (
     <View style={containerStyle} dataSet={disabledTooltipDataSet}>
-      <Button
+      <RejectRequestButton
         testID="transaction-button-reject"
-        type="danger"
         text={
           shouldRejectOnchain
             ? isRejectOnchainLoading
@@ -56,7 +55,12 @@ const RejectButton = ({
               : t('Cancel')
             : t('Reject')
         }
-        onPress={handleReject}
+        onReject={handleReject}
+        // A Safe's onchain cancellation is a transaction of its own, not a refusal aimed at
+        // the app, so it must never turn into the "shut this app up" choice.
+        withOptions={!shouldRejectOnchain}
+        optionsTitle={t('Cancel transaction')}
+        rejectOptionText={t('Cancel this transaction')}
         hasBottomSpacing={false}
         size={size}
         disabled={isSignLoading || isRejectOnchainLoading || isRejectDisabled}

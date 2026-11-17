@@ -1,16 +1,24 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 
-import { networks } from '@ambire-common/consts/networks'
 import { ContractNamesController } from '@ambire-common/controllers/contractNames/contractNames'
 import { DomainsController } from '@ambire-common/controllers/domains/domains'
+import { Erc7730Controller } from '@ambire-common/controllers/erc7730/erc7730'
 import { EventEmitterRegistryController } from '@ambire-common/controllers/eventEmitterRegistry/eventEmitterRegistry'
+import { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
+import { TokenPricesController } from '@ambire-common/controllers/tokenPrices/tokenPrices'
+import { UiController } from '@ambire-common/controllers/ui/ui'
+import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
+import { buildTimeNetworks } from '@benzin/constants/networks'
+import { benzinUiManager } from '@benzin/contexts/controllersMiddlewareContext/uiManager'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
 import { ControllerStoreContext } from '@common/contexts/controllerStoreContext'
 import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
+import { RELAYER_URL } from '@env'
 
 import type { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 export const ControllersMiddlewareProvider: React.FC<{
@@ -62,25 +70,51 @@ export const ControllersMiddlewareProvider: React.FC<{
   const controllers = useRef<ExplorerBaseControllersMappingType>(
     (() => {
       const ctrls: ExplorerBaseControllersMappingType = {} as ExplorerBaseControllersMappingType
+      // Not registered in the controller mapping, because no benzin screen reads
+      // its state - it exists so the controllers that need a UI have one
+      const uiCtrl = new UiController({ uiManager: benzinUiManager })
       ctrls.StorageController = new StorageController(storage)
+      ctrls.FeatureFlagsController = new FeatureFlagsController({}, ctrls.StorageController)
+      // Not registered in the controller mapping either, because no benzin screen reads its
+      // state - it prices the tokens looked up through the ProvidersController (e.g. the fee)
+      const featureFlagsCtrl = ctrls.FeatureFlagsController
+      const tokenPricesCtrl = new TokenPricesController({
+        fetch: fetch as any,
+        isTokenPricesEnabled: () => featureFlagsCtrl.isFeatureEnabled('tokenPrices'),
+        // No Privacy Pools account exists here, so there's nothing for the assets to cover
+        addsPrivacyPoolsAssets: false
+      })
       ctrls.ProvidersController = new ProvidersController({
         eventEmitterRegistry: eventEmitterRegistry.current,
         storage: ctrls.StorageController,
-        getNetworks: () => networks,
+        getNetworks: () => buildTimeNetworks,
         sendUiMessage: (params) => {
           eventBus.emit('receiveOneTimeData', params)
-        }
+        },
+        tokenPrices: tokenPricesCtrl
       })
 
       ctrls.DomainsController = new DomainsController({
         eventEmitterRegistry: eventEmitterRegistry.current,
         providers: ctrls.ProvidersController.providers,
-        getNetwork: (chainId) => networks.find((n) => n.chainId === chainId)
+        getNetwork: (chainId) => buildTimeNetworks.find((n) => n.chainId === chainId)
+      })
+
+      ctrls.Erc7730Controller = new Erc7730Controller({
+        eventEmitterRegistry: eventEmitterRegistry.current,
+        storage: ctrls.StorageController,
+        featureFlags: ctrls.FeatureFlagsController,
+        providers: ctrls.ProvidersController,
+        callRelayer: relayerCall.bind({
+          url: RELAYER_URL,
+          fetch: fetchWithRelayerCustomHeaders as any
+        }),
+        ui: uiCtrl
       })
 
       ctrls.ContractNamesController = new ContractNamesController({
         eventEmitterRegistry: eventEmitterRegistry.current,
-        fetch: window.fetch.bind(window) as any
+        fetch: fetchWithRelayerCustomHeaders as any
       })
 
       return ctrls

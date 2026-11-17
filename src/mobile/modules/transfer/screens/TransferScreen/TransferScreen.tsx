@@ -16,9 +16,11 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
 import useTransfer from '@common/modules/transfer/hooks/useTransfer'
+import usePrivacyPoolsDepositFee from '@common/modules/transfer/hooks/usePrivacyPoolsDepositFee'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+import { getVisibleNftTokenId } from '@common/utils/nft'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -45,6 +47,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isRecipientAddressUnknown,
     signAccountOpController,
     latestBroadcastedToken,
+    latestBroadcastedNft,
     hasProceeded,
     batchNetworkUserRequestsCount,
     transferState,
@@ -58,11 +61,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     closeGasTankInfoBottomSheet,
     estimationModalRef,
     closeEstimationModalAndDispatch,
-    updateController,
-    handleUpdateStatus,
+    handleEstimationModalClosed,
     portfolio,
     account
   } = useTransfer(!!isTopUpScreen)
+  const privacyPoolsDepositFee = usePrivacyPoolsDepositFee()
 
   if (displayedView === 'loading') {
     return (
@@ -108,9 +111,14 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
                 ? t('Almost there!')
                 : isTopUp
                   ? t('You can now use your gas tank')
-                  : t('{{symbol}} delivered!', {
-                      symbol: latestBroadcastedToken?.symbol || 'Token'
-                    })
+                  : latestBroadcastedNft
+                    ? t('{{name}} #{{tokenId}} delivered!', {
+                        name: latestBroadcastedNft.collectionName || t('NFT'),
+                        tokenId: getVisibleNftTokenId(latestBroadcastedNft.tokenId.toString())
+                      })
+                    : t('{{symbol}} delivered!', {
+                        symbol: latestBroadcastedToken?.symbol || 'Token'
+                      })
             }
             explorerLink={explorerLink}
             openExplorerText="View Transfer"
@@ -168,6 +176,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               addressInputState={addressInputState}
               canUseGasTank={canUseGasTank}
               amountErrorMessage={validationFormMsgs.amount.message || ''}
+              amountErrorSeverity={validationFormMsgs.amount.severity}
+              amountAdjustmentInfo={transferState.amountAdjustmentInfo}
               isRecipientAddressUnknown={isRecipientAddressUnknown}
               isRecipientHumanizerKnownTokenOrSmartContract={
                 isRecipientHumanizerKnownTokenOrSmartContract
@@ -238,11 +248,11 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           updateType="Transfer&TopUp"
           estimationModalRef={estimationModalRef}
           closeEstimationModal={closeEstimationModalAndDispatch}
-          updateController={updateController}
-          handleUpdateStatus={handleUpdateStatus}
+          onEstimationModalClosed={handleEstimationModalClosed}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           Modals={Modals}
+          serviceFee={privacyPoolsDepositFee}
         />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>

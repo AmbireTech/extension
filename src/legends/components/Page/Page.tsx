@@ -20,7 +20,7 @@ const Page = ({
   showClaimRewardsModal
 }: {
   children: React.ReactNode | React.ReactNode[]
-  pageRef?: React.RefObject<HTMLDivElement>
+  pageRef?: React.RefObject<HTMLDivElement | null>
   style?: React.CSSProperties
   containerSize?: 'md' | 'responsive' | 'lg' | 'full'
   contentClassName?: string

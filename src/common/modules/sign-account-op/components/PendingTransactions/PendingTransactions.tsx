@@ -1,10 +1,11 @@
-import React, { FC } from 'react'
+import React, { FC, useMemo } from 'react'
 import { View } from 'react-native'
 
+import { WARNINGS } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { Hex } from '@ambire-common/interfaces/hex'
 import { Network } from '@ambire-common/interfaces/network'
 import { ISignAccountOpController } from '@ambire-common/interfaces/signAccountOp'
-import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import PendingTransactionsSkeleton from '@common/modules/sign-account-op/components/PendingTransactions/PendingTransactionsSkeleton'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
@@ -30,19 +31,27 @@ const PendingTransactions: FC<Props> = ({
   size = 'lg'
 }) => {
   const controllerSignAccountOpState = useController('SignAccountOpController').state
+  const { isCompactLayout } = useCompactLayout()
   const { humanization, banners } = signAccountOpState || controllerSignAccountOpState || {}
 
+  // The significant balance decrease warning is shown on the simulation's "Assets out" card
+  const visibleBanners = useMemo(
+    () => banners?.filter((banner) => banner.id !== WARNINGS.significantBalanceDecrease.id),
+    [banners]
+  )
+
   return (
-    <View style={isWeb ? spacings.mbMd : spacings.mbSm}>
-      {!!banners && !!banners.length && (
+    <View style={isCompactLayout ? spacings.mbSm : spacings.mbMd}>
+      {!!visibleBanners && !!visibleBanners.length && (
         <View style={spacings.mbTy}>
-          {banners.map((banner) => (
+          {visibleBanners.map((banner) => (
             <SafetyChecksBanner
               key={banner.id}
               type={banner.type}
               title={banner.title}
               text={banner.text}
               secondaryText={banner.secondaryText}
+              trustableDappUrls={banner.trustableDappUrls}
               style={spacings.mbTy}
             />
           ))}

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo } from 'react'
+import { ReactNode, useEffect, useMemo, useRef } from 'react'
 import { BackHandler, GestureResponderEvent } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
@@ -33,17 +33,24 @@ const GestureHandler = ({ children }: { children: ReactNode }) => {
     }
   }, [path, prevPath])
 
+  // Read through a ref so the listener below is registered once. Android calls the latest
+  // registered one first, so re-registering on every navigation would outrank the screens' own.
+  const goBackActionRef = useRef(goBackAction)
+  useEffect(() => {
+    goBackActionRef.current = goBackAction
+  }, [goBackAction])
+
   useEffect(() => {
     if (!isAndroid) return
 
     // When nothing in the app can consume the press, Android handles it as it normally
     // would and sends the app to the background
-    const backAction = () => goBackAction()
+    const backAction = () => goBackActionRef.current()
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction)
 
     return () => backHandler.remove()
-  }, [goBackAction])
+  }, [])
 
   // Both of these only read touches bubbling up from the tree: the entropy pool takes their
   // coordinates (it feeds seed and Keystore secret generation), and an open dropdown closes when the

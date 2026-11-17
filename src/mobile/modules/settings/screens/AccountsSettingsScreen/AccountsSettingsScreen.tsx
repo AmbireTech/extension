@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import isEqual from 'react-fast-compare'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -13,6 +12,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
+import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -22,14 +22,10 @@ import useElementSize from '@common/hooks/useElementSize'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
-import {
-  ACCOUNT_SELECT_ACCOUNT_HEIGHT,
-  ACCOUNT_SELECT_ACCOUNT_MB
-} from '@common/modules/account-select/components/Account/styles'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -37,12 +33,23 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
-import ExportAccountsToExtensionSheet from '@mobile/modules/accounts-sync/components/ExportAccountsToExtensionSheet'
-import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
+import ExportToExtensionSheet from '@mobile/modules/app-data-sync/components/ExportToExtensionSheet'
+import { SMART_SETTINGS_ACCOUNT_PARAM } from '@mobile/modules/settings/screens/AccountSmartSettingsScreen'
+
+const DRAG_ICON_WIDTH = 10
+// Its horizontal padding plus the icon
+const DRAG_HANDLE_WIDTH = SPACING_SM + SPACING_MI + DRAG_ICON_WIDTH
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
-  const { accounts, control, keyExtractor, getItemLayout } = useAccountsList()
+  const {
+    accounts,
+    control,
+    isFiltered,
+    keyExtractor,
+    getAccountItemHeight,
+    onAccountExtraHeightChange
+  } = useAccountsList()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
@@ -67,43 +74,42 @@ const AccountsSettingsScreen = () => {
   } = useModalize()
   const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
   const {
-    ref: sheetRefAccountSmartSettings,
-    open: openAccountSmartSettings,
-    close: closeAccountSmartSettings
+    ref: sheetRefAccountDeploySettings,
+    open: openAccountDeploySettings,
+    close: closeAccountDeploySettings
   } = useModalize()
 
   const [exportImportAccount, setExportImportAccount] = useState<AccountInterface | null>(null)
   const [accountToRemove, setAccountToRemove] = useState<AccountInterface | null>(null)
-  const [smartSettingsAccount, setSmartSettingsAccount] = useState<AccountInterface | null>(null)
-  const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
+  const [accountSettingsAccount, setAccountSettingsAccount] = useState<AccountInterface | null>(
+    null
+  )
+  // The order a drag left the list in, shown until the controller sends the reordered accounts
+  const [draggedOrder, setDraggedOrder] = useState<{
+    from: AccountInterface[]
+    order: AccountInterface[]
+  } | null>(null)
+  const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
-  useEffect(() => {
-    setLocalAccounts((prev) => {
-      if (!isEqual(prev, accounts)) {
-        return accounts
-      }
-      return prev
-    })
-  }, [accounts])
+  // Any newer list from the controller already carries the drag, or replaces it
+  const displayedAccounts = draggedOrder?.from === accounts ? draggedOrder.order : accounts
 
   const handleAccDragEnd = useCallback(
     (fromIndex: number, toIndex: number) => {
       if (fromIndex === toIndex) return
-      setLocalAccounts((prev) => {
-        const updated = [...prev]
-        const [moved] = updated.splice(fromIndex, 1)
-        updated.splice(toIndex, 0, moved!)
-        accountsDispatch({
-          type: 'method',
-          params: {
-            method: 'reorderAccounts',
-            args: [{ fromIndex, toIndex }]
-          }
-        })
-        return updated
+
+      const updated = [...displayedAccounts]
+      const [moved] = updated.splice(fromIndex, 1)
+      updated.splice(toIndex, 0, moved!)
+      setDraggedOrder({ from: accounts, order: updated })
+
+      // Not inside a setState updater: React may call those twice
+      accountsDispatch({
+        type: 'method',
+        params: { method: 'reorderAccounts', args: [{ fromIndex, toIndex }] }
       })
     },
-    [accountsDispatch]
+    [accounts, accountsDispatch, displayedAccounts]
   )
 
   useEffect(() => {
@@ -115,8 +121,21 @@ const AccountsSettingsScreen = () => {
   }, [openRemoveAccount, accountToRemove])
 
   useEffect(() => {
-    if (smartSettingsAccount) openAccountSmartSettings()
-  }, [openAccountSmartSettings, smartSettingsAccount])
+    if (accountSettingsAccount?.safeCreation) openAccountDeploySettings()
+  }, [accountSettingsAccount, openAccountDeploySettings])
+
+  // Smart settings is a screen of its own, while activation settings is a sheet
+  const openAccountSettings = useCallback(
+    (account: AccountInterface) => {
+      if (account.safeCreation) {
+        setAccountSettingsAccount(account)
+        return
+      }
+
+      navigate(`${ROUTES.accountSmartSettings}?${SMART_SETTINGS_ACCOUNT_PARAM}=${account.addr}`)
+    },
+    [navigate]
+  )
 
   const shortenAccountAddr = useCallback(() => {
     if (maxElementWidthSize(800)) return undefined
@@ -130,10 +149,10 @@ const AccountsSettingsScreen = () => {
     () => ({
       withOptionsButton: true,
       setAccountToImportOrExport: setExportImportAccount,
-      setSmartSettingsAccount,
+      setAccountSettingsAccount: openAccountSettings,
       setAccountToRemove
     }),
-    [setExportImportAccount, setSmartSettingsAccount, setAccountToRemove]
+    [setExportImportAccount, openAccountSettings, setAccountToRemove]
   )
 
   const removeAccount = useCallback(() => {
@@ -166,32 +185,36 @@ const AccountsSettingsScreen = () => {
               flexbox.flex1,
               flexbox.directionRow,
               flexbox.alignCenter,
+              // As wide as the hidden drag handle, so the content stays in place
+              isFiltered && { paddingLeft: DRAG_HANDLE_WIDTH },
               {
                 backgroundColor: theme.secondaryBackground,
                 borderRadius: BORDER_RADIUS_PRIMARY
               }
             ]}
           >
-            <View {...listeners} {...attributes}>
-              <Pressable
-                style={[
-                  flexbox.alignCenter,
-                  flexbox.justifyCenter,
-                  spacings.pvMi,
-                  isWeb && spacings.phSm,
-                  isMobile && spacings.plSm,
-                  isMobile && spacings.prMi,
-                  isWeb && spacings.mbMi,
-                  //@ts-ignore
-                  { cursor: 'grab', touchAction: 'manipulation' }
-                ]}
-              >
-                <DragIndicatorIcon
-                  color={isDragging ? theme.primary : theme.iconPrimary}
-                  width={isMobile ? 10 : 12.5}
-                />
-              </Pressable>
-            </View>
+            {!isFiltered && (
+              <View {...listeners} {...attributes}>
+                <Pressable
+                  style={[
+                    flexbox.alignCenter,
+                    flexbox.justifyCenter,
+                    spacings.pvMi,
+                    isWeb && spacings.phSm,
+                    isMobile && spacings.plSm,
+                    isMobile && spacings.prMi,
+                    isWeb && spacings.mbMi,
+                    //@ts-ignore
+                    { cursor: 'grab', touchAction: 'manipulation' }
+                  ]}
+                >
+                  <DragIndicatorIcon
+                    color={isDragging ? theme.primary : theme.iconPrimary}
+                    width={DRAG_ICON_WIDTH}
+                  />
+                </Pressable>
+              </View>
+            )}
             <View style={flexbox.flex1}>
               <Account
                 account={item}
@@ -202,6 +225,7 @@ const AccountsSettingsScreen = () => {
                 containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
                 withReceive={!isMobile}
                 withCopy={!isMobile}
+                onExtraHeightChange={onAccountExtraHeightChange}
               />
             </View>
           </View>
@@ -213,8 +237,23 @@ const AccountsSettingsScreen = () => {
       theme.primary,
       theme.iconPrimary,
       shortenAccountAddr,
-      accountOptions
+      accountOptions,
+      onAccountExtraHeightChange,
+      isFiltered
     ]
+  )
+  // Adapts the draggable row renderer to the plain list shown while searching
+  const renderSearchResult = useCallback(
+    ({ item, index }: { item: AccountInterface; index: number }) =>
+      renderItem(item, index, false, undefined, undefined),
+    [renderItem]
+  )
+
+  // The list positions its rows by these heights, so a row whose badges wrapped is given
+  // the room it grew by
+  const getDraggableItemHeight = useCallback(
+    (item: AccountInterface) => getAccountItemHeight(item.addr),
+    [getAccountItemHeight]
   )
 
   return (
@@ -250,24 +289,24 @@ const AccountsSettingsScreen = () => {
         <Search control={control} containerStyle={spacings.mbLg} />
         <View style={[flexbox.flex1]} ref={accountsContainerRef}>
           <ScrollableWrapper
-            type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
-            data={localAccounts}
+            // Search results are ordered by relevance, so there is no order to rearrange in them
+            type={isFiltered ? WRAPPER_TYPES.FLAT_LIST : WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+            data={displayedAccounts}
             keyExtractor={keyExtractor}
             onDragEnd={handleAccDragEnd}
-            renderItem={renderItem as any}
-            getItemLayout={getItemLayout}
-            itemHeight={ACCOUNT_SELECT_ACCOUNT_HEIGHT + ACCOUNT_SELECT_ACCOUNT_MB}
+            renderItem={renderSearchResult}
+            renderDraggableItem={renderItem}
+            itemHeight={getDraggableItemHeight}
+            keyboardDismissMode="on-drag"
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />
         </View>
 
-        <AccountSmartSettingsBottomSheet
-          sheetRef={sheetRefAccountSmartSettings}
-          closeBottomSheet={() => {
-            setSmartSettingsAccount(null)
-            closeAccountSmartSettings()
-          }}
-          account={smartSettingsAccount}
+        <SafeActivationBottomSheet
+          sheetRef={sheetRefAccountDeploySettings}
+          closeBottomSheet={closeAccountDeploySettings}
+          onClosed={clearAccountSettingsAccount}
+          account={accountSettingsAccount?.safeCreation ? accountSettingsAccount : null}
         />
         <AccountKeysBottomSheet
           sheetRef={sheetRefExportImportKey}
@@ -338,13 +377,10 @@ const AccountsSettingsScreen = () => {
           }}
           onImportPress={() => {
             closeSyncBottomSheet()
-            navigate(ROUTES.importAccountsFromExtension)
+            navigate(ROUTES.importFromExtension)
           }}
         />
-        <ExportAccountsToExtensionSheet
-          sheetRef={exportSheetRef}
-          closeBottomSheet={closeExportSheet}
-        />
+        <ExportToExtensionSheet sheetRef={exportSheetRef} closeBottomSheet={closeExportSheet} />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

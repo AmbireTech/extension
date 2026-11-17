@@ -21,6 +21,8 @@ const ThemeColors = {
   primaryBackground: NEUTRAL_PRIMITIVES.neutral300,
   secondaryBackground: NEUTRAL_PRIMITIVES.neutral100,
   tertiaryBackground: NEUTRAL_PRIMITIVES.neutral400,
+  /** "bg 3, hover, stroke" in Figma */
+  hoverBackground: NEUTRAL_PRIMITIVES.neutral500,
   // --- Text tokens ---
   primaryText: NEUTRAL_PRIMITIVES.neutral900,
   secondaryText: NEUTRAL_PRIMITIVES.neutral700,
@@ -60,6 +62,15 @@ const ThemeColors = {
   errorText: FEEDBACK_PRIMITIVES.error300,
   errorDecorative: FEEDBACK_PRIMITIVES.error300,
   errorBackground: FEEDBACK_PRIMITIVES.error100,
+  // --- Privacy Pools tokens ---
+  privacyPoolsText: {
+    [THEME_TYPES.LIGHT]: '#B34205',
+    [THEME_TYPES.DARK]: '#FF955C'
+  },
+  privacyPoolsBackground: {
+    [THEME_TYPES.LIGHT]: '#FFF0E8',
+    [THEME_TYPES.DARK]: '#402517'
+  },
   // --- Other tokens ---
   backdrop: {
     [THEME_TYPES.LIGHT]: hexToRgba('#2C2F33', 0.8),

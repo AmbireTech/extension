@@ -3,6 +3,7 @@ import { FlatList, ScrollView, SectionList, View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_MD, SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
@@ -12,13 +13,48 @@ import useIsScrollable from '@web/hooks/useIsScrollable'
 
 import Backdrop from './Backdrop'
 import { BottomSheetProps } from './BottomSheet'
-import { BottomSheetContext } from './BottomSheetContext'
+import { BottomSheetContext, useBottomSheetContextValue } from './BottomSheetContext'
 import getStyles from './styles'
 import useBottomSheetInternal from './useBottomSheetInternal'
 
 const DEFAULT_ANIMATION_DURATION: number = 250
 
 const { isPopup } = getUiType()
+
+const SELF_SCROLLING_CONTENT_PROPS = {
+  scrollEnabled: false,
+  nestedScrollEnabled: true,
+  contentContainerStyle: { flex: 1 }
+}
+
+/** The props of Modalize's own ScrollView, which scrolls the content unless a list is given. */
+const getModalizeScrollProps = ({
+  hasList,
+  isScrollEnabled,
+  isListScrollingItself,
+  scrollViewProps
+}: {
+  hasList: boolean
+  isScrollEnabled: boolean
+  isListScrollingItself: boolean
+  scrollViewProps: BottomSheetProps['scrollViewProps']
+}) => {
+  if (!hasList) {
+    return {
+      scrollViewProps: {
+        bounces: false,
+        keyboardShouldPersistTaps: 'handled' as const,
+        ...(!isScrollEnabled && SELF_SCROLLING_CONTENT_PROPS),
+        ...(scrollViewProps || {})
+      }
+    }
+  }
+  // A full height sheet's list scrolls itself, so its sticky headers and
+  // scrollbar work - otherwise Modalize's own ScrollView would scroll it whole
+  if (isListScrollingItself) return { scrollViewProps: SELF_SCROLLING_CONTENT_PROPS }
+
+  return {}
+}
 
 const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const {
@@ -43,6 +79,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     backgroundColor = 'primaryBackground',
     autoWidth = false,
     shouldBeClosableOnDrag = true,
+    withHandle = true,
     withBackdropBlur,
     customRenderer,
     customZIndex,
@@ -51,6 +88,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = props
 
   const { styles, theme } = useTheme(getStyles)
+  const { isNarrowWebLayout } = useCompactLayout()
 
   const {
     isScrollable,
@@ -59,6 +97,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   } = useIsScrollable()
   const closeBottomSheet = useCallback(_closeBottomSheet, [_closeBottomSheet])
   const scrollViewRef = externalScrollViewRef || internalScrollViewRef
+  // A full height sheet's list scrolls itself, and its own ref reaches it through the list
+  // props. Modalize re-attaches its ref on every render, so giving it the same ref would
+  // point it at Modalize's ScrollView instead, which doesn't scroll
+  const isListScrollingItself =
+    !!(flatListProps || sectionListProps) && !isScrollEnabled && !adjustToContentHeight
 
   const {
     modalTopOffset,
@@ -136,14 +179,25 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     shouldUseScrollPadding
   ])
 
+  const bottomSheetContextValue = useBottomSheetContextValue(isOpen)
+
   return (
     <Portal hostName="global">
-      <BottomSheetContext.Provider value={true}>
+      {/* PortalHost renders portals in a keyless array - without this key React matches */}
+      {/* them by position and rebuilds this sheet closed when another one unmounts. True */}
+      {/* in @gorhom/portal 1.0.14 (2026-09-10); fix proposed in gorhom/react-native-portal#62. */}
+      <BottomSheetContext.Provider key={id} value={bottomSheetContextValue}>
         {/* Wrapping the content in a View with a stable `key` prevents Portal */}
         {/* from losing track of its subtree during React reconciliation and re-renders. */}
         {/* Without this, the backdrop stays, but Modalize could disappear */}
         {/* without even triggering `onClose` or (this) component unmount */}
-        <View key={`portal-host-${id}`} style={[styles.portalHost, { zIndex: computedZIndex }]}>
+        {/* Modalize mounts the sheet translated below the viewport, which makes the page taller. */}
+        {/* A focus inside it then scrolls the whole app up; `clip` cuts that overflow off unscrollably. */}
+        <View
+          key={`portal-host-${id}`}
+          // @ts-expect-error `clip` is supported by react-native-web, but missing in types
+          style={[styles.portalHost, { zIndex: computedZIndex, overflow: 'clip' }]}
+        >
           {!!isBackdropVisible && (
             <Backdrop
               isVisible={isBackdropVisible}
@@ -163,7 +217,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
             key={id}
             ref={setRef}
             // React 19 makes refs strictly nullable. Temporary cast until Modalize updates its types.
-            contentRef={scrollViewRef as RefObject<ScrollView>}
+            contentRef={
+              (isListScrollingItself
+                ? internalScrollViewRef
+                : scrollViewRef) as RefObject<ScrollView>
+            }
             modalStyle={[
               styles.bottomSheet,
               isModal
@@ -174,7 +232,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 paddingHorizontal: isWeb ? (isModal ? SPACING_MD : SPACING_SM) : SPACING,
                 backgroundColor: theme[backgroundColor]
               },
-              style
+              style,
+              // In a narrow view the bottom spacing matches the side one, whatever the call site sets
+              isNarrowWebLayout && !isModal ? { paddingBottom: SPACING_SM } : {}
             ]}
             rootStyle={[isPopup && isModal ? spacings.phSm : {}]}
             handleStyle={[
@@ -186,6 +246,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 : {}
             ]}
             handlePosition="inside"
+            withHandle={withHandle}
             useNativeDriver={false}
             avoidKeyboardLikeIOS
             modalTopOffset={modalTopOffset}
@@ -201,20 +262,12 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               return true
             }}
             panGestureEnabled={shouldBeClosableOnDrag}
-            {...(!flatListProps && !sectionListProps
-              ? {
-                  scrollViewProps: {
-                    bounces: false,
-                    keyboardShouldPersistTaps: 'handled',
-                    ...(!isScrollEnabled && {
-                      scrollEnabled: false,
-                      nestedScrollEnabled: true,
-                      contentContainerStyle: { flex: 1 }
-                    }),
-                    ...(scrollViewProps || {})
-                  }
-                }
-              : {})}
+            {...getModalizeScrollProps({
+              hasList: !!(flatListProps || sectionListProps),
+              isScrollEnabled,
+              isListScrollingItself,
+              scrollViewProps
+            })}
             openAnimationConfig={{
               timing: { duration: animationDuration, delay: 0 }
             }}

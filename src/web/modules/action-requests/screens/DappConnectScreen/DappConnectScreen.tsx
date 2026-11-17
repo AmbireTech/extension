@@ -1,13 +1,13 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
-import DAppConnectAccountSettings from '@common/modules/action-requests/components/DAppConnect/DAppConnectAccountSettings'
 import DAppConnectBody from '@common/modules/action-requests/components/DAppConnect/DAppConnectBody'
 import DAppConnectHeader from '@common/modules/action-requests/components/DAppConnect/DAppConnectHeader'
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
@@ -23,23 +23,38 @@ const DappConnectScreen = () => {
   const {
     t,
     dappToConnect,
+    websiteContentUpdate,
     isAuthorizing,
     handleDenyButtonPress,
     handleAuthorizeButtonPress,
     shouldHoldToProceed,
-    resolveButtonText
+    resolveButtonText,
+    isTrustedByUser,
+    canBeTrustedByUser,
+    isScamCheckerEnabled,
+    handleEnableScamChecker,
+    toggleTrust,
+    impersonation
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
+  const accountSelectProps = useMemo(
+    () => ({ dappToConnect: dappToConnect || undefined }),
+    [dappToConnect]
+  )
   const { minHeightSize } = useWindowSize()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow()
+  const { isNarrowWebLayout } = useCompactLayout()
 
   return (
     <TabLayoutContainer
       width="full"
-      header={<ActionHeader />}
+      header={<ActionHeader accountSelectProps={accountSelectProps} />}
       renderDirectChildren={() => (
         <ActionFooter
           onReject={handleDenyButtonPress}
+          withRejectOptions
+          rejectOptionsTitle={t('Cancel connection')}
+          rejectOptionText={t('Cancel this connection')}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
           resolveNode={
             shouldHoldToProceed ? (
@@ -47,7 +62,7 @@ const DappConnectScreen = () => {
                 testID="dapp-connect-button"
                 onHoldComplete={handleAuthorizeButtonPress}
                 holdDuration={1600}
-                style={{ height: 56 }}
+                size="regular"
                 text={resolveButtonText}
                 buttonType={
                   !!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED'
@@ -68,11 +83,18 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       )}
-      style={{ marginTop: minHeightSize(650) ? 0 : SPACING * responsiveSizeMultiplier }}
+      style={{
+        marginTop: isNarrowWebLayout || minHeightSize(650) ? 0 : SPACING * responsiveSizeMultiplier
+      }}
     >
       {!!dappToConnect && (
         <TabLayoutWrapperMainContent
-          contentContainerStyle={{ ...spacings.pb4Xl, ...spacings.mtMi }}
+          contentContainerStyle={
+            // In a narrow view the header and the footer already space the content like on mobile
+            isNarrowWebLayout
+              ? [spacings.mt0, spacings.pbSm]
+              : { ...spacings.pb4Xl, ...spacings.mtMi }
+          }
         >
           <View style={[styles.container]}>
             <View
@@ -84,21 +106,29 @@ const DappConnectScreen = () => {
               ]}
             >
               <DAppConnectHeader
-                name={dappToConnect.name}
                 id={dappToConnect.id}
                 icon={dappToConnect.icon!}
                 securityCheck={dappToConnect.blacklisted}
+                isTrustedByUser={isTrustedByUser}
+                isScamCheckerEnabled={isScamCheckerEnabled}
+                isInAppCatalog={!dappToConnect.isCustom}
+                isImpersonating={!!impersonation}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
               <DAppConnectBody
+                id={dappToConnect.id}
                 securityCheck={dappToConnect.blacklisted}
+                isTrustedByUser={isTrustedByUser}
+                canBeTrustedByUser={canBeTrustedByUser}
+                onToggleTrust={toggleTrust}
+                onEnableScamChecker={handleEnableScamChecker}
+                isScamCheckerEnabled={isScamCheckerEnabled}
+                websiteContentUpdate={websiteContentUpdate}
+                isInAppCatalog={!dappToConnect.isCustom}
+                impersonation={impersonation}
                 responsiveSizeMultiplier={responsiveSizeMultiplier}
               />
             </View>
-            <DAppConnectAccountSettings
-              id={dappToConnect.id}
-              accountPreferences={dappToConnect.accountPreferences}
-            />
           </View>
         </TabLayoutWrapperMainContent>
       )}

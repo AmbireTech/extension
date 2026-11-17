@@ -2,10 +2,6 @@ import { nanoid } from 'nanoid'
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Animated, NativeScrollEvent, NativeSyntheticEvent } from 'react-native'
-import { useSearchParams } from 'react-router-dom'
-
-import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
@@ -16,33 +12,40 @@ import Collections from '../Collections'
 import DeFiPositions from '../DeFiPositions'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import Tokens from '../Tokens'
+import SessionIdInUrl from './SessionIdInUrl'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { DashboardPagesCarouselProps } from '@common/modules/dashboard/components/DashboardPagesCarousel/DashboardPagesCarousel'
 
 interface Props {
-  /** Only web collapses the overview and hides the search on scroll. */
-  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
-  animatedOverviewHeight: Animated.Value
-  isSearchHidden?: boolean
   refreshing?: boolean
   onRefresh?: () => void
+  /** How far the open overview pushes the pages down. They slide over its collapsing part. */
+  overviewHeight?: number
+  /** See `DashboardPagesCarouselProps['onOverviewCollapseChange']` */
+  onOverviewCollapseChange?: DashboardPagesCarouselProps['onOverviewCollapseChange']
 }
 
+const selectDashboardNetworkFilter = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.dashboardNetworkFilter
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const DashboardPages = ({
-  onScroll,
-  isSearchHidden,
-  animatedOverviewHeight,
   refreshing,
-  onRefresh
+  onRefresh,
+  overviewHeight,
+  onOverviewCollapseChange
 }: Props) => {
   const { t } = useTranslation()
   const route = useRoute()
   const [sessionId] = useState(`dashboard-${nanoid()}`)
-  const [, setSearchParams] = useSearchParams()
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
-    'dashboardNetworkFilter'
+    selectDashboardNetworkFilter
   )
 
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const [openTab, setOpenTab] = useState(() => {
     const params = new URLSearchParams(route?.search)
@@ -61,7 +64,7 @@ const DashboardPages = ({
     [key: string]: boolean
   }>({})
 
-  // The mobile carousel keeps all pages mounted side by side, so they must be
+  // The carousel keeps all pages mounted side by side, so they must be
   // populated upfront instead of when the tab is opened.
   const initAllTabs = useCallback(() => {
     setInitTab((prev) =>
@@ -70,13 +73,6 @@ const DashboardPages = ({
         : { tokens: true, collectibles: true, defi: true, activity: true }
     )
   }, [])
-
-  // Every page must stay mounted on mobile, because the carousel maps a page
-  // index to a tab and an unmounted page would shift the ones after it.
-  const shouldRenderPage = useCallback(
-    (tab: TabType) => isMobile || openTab === tab || !!initTab?.[tab],
-    [initTab, openTab]
-  )
 
   const network = useMemo(() => {
     if (!dashboardNetworkFilter || dashboardNetworkFilter === 'rewards') return null
@@ -102,85 +98,46 @@ const DashboardPages = ({
     }
   }, [openTab, prevOpenTab, initTab])
 
-  // The sessions this screen's pages open are tied to the extension's port through the
-  // id in the url, so the background can drop them when the tab goes away (there is no
-  // window event for that - see `port.onDisconnect`). Each page owns the lifecycle of
-  // its own session, so there is nothing to undo here.
-  useEffect(() => {
-    setSearchParams((prev) => {
-      prev.set('sessionId', sessionId)
-      return prev
-    })
-    // setSearchParams changes identity on every call, so it must stay out of the deps.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId])
-
   return (
-    <DashboardPagesCarousel
-      openTab={openTab}
-      setOpenTab={setOpenTab}
-      sessionId={sessionId}
-      initAllTabs={initAllTabs}
-      onRefresh={onRefresh}
-      refreshing={refreshing}
-    >
-      <Tokens
-        openTab={pagesOpenTab}
-        sessionId={sessionId}
+    <>
+      <SessionIdInUrl sessionId={sessionId} />
+      <DashboardPagesCarousel
+        openTab={openTab}
         setOpenTab={setOpenTab}
-        onScroll={onScroll}
-        initTab={initTab}
-        dashboardNetworkFilterName={dashboardNetworkFilterName}
-        animatedOverviewHeight={animatedOverviewHeight}
-        isSearchHidden={isSearchHidden}
+        sessionId={sessionId}
+        initAllTabs={initAllTabs}
         onRefresh={onRefresh}
         refreshing={refreshing}
-      />
-      {shouldRenderPage('defi') && (
+        overviewHeight={overviewHeight}
+        onOverviewCollapseChange={onOverviewCollapseChange}
+      >
+        {/* Every page stays mounted, because the carousel maps a page index to a tab and
+        an unmounted page would shift the ones after it */}
+        <Tokens
+          openTab={pagesOpenTab}
+          initTab={initTab}
+          dashboardNetworkFilterName={dashboardNetworkFilterName}
+        />
         <DeFiPositions
           openTab={pagesOpenTab}
-          sessionId={sessionId}
-          setOpenTab={setOpenTab}
-          onScroll={onScroll}
           initTab={initTab}
+          sessionId={sessionId}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
-          animatedOverviewHeight={animatedOverviewHeight}
-          isSearchHidden={isSearchHidden}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
         />
-      )}
-
-      {shouldRenderPage('collectibles') && (
         <Collections
           openTab={pagesOpenTab}
-          sessionId={sessionId}
-          setOpenTab={setOpenTab}
           initTab={initTab}
-          onScroll={onScroll}
           networks={networks}
           dashboardNetworkFilterName={dashboardNetworkFilterName}
-          animatedOverviewHeight={animatedOverviewHeight}
-          isSearchHidden={isSearchHidden}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
         />
-      )}
-
-      {shouldRenderPage('activity') && (
         <Activity
           openTab={pagesOpenTab}
           sessionId={sessionId}
-          setOpenTab={setOpenTab}
-          onScroll={onScroll}
           initTab={initTab}
-          animatedOverviewHeight={animatedOverviewHeight}
           network={network}
-          onRefresh={onRefresh}
-          refreshing={refreshing}
         />
-      )}
-    </DashboardPagesCarousel>
+      </DashboardPagesCarousel>
+    </>
   )
 }
 

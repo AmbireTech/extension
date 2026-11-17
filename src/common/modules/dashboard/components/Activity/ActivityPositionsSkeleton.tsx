@@ -1,7 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import SkeletonLoader from '@common/components/SkeletonLoader'
+import SummarySkeleton from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/SummarySkeleton'
 import spacings from '@common/styles/spacings'
 
 const ActivityPositionsSkeleton = ({ amount = 5 }: { amount?: number }) => {
@@ -10,10 +10,11 @@ const ActivityPositionsSkeleton = ({ amount = 5 }: { amount?: number }) => {
     return { key: index }
   })
 
+  // Laid out like the rows, which swap in one by one as each finishes loading
   return (
-    <View style={[spacings.phTy, spacings.ptMi]}>
+    <View>
       {skeletonItems.map((item) => (
-        <SkeletonLoader key={item.key} width="100%" height={96} style={spacings.mbTy} />
+        <SummarySkeleton key={item.key} style={spacings.mbSm} />
       ))}
     </View>
   )

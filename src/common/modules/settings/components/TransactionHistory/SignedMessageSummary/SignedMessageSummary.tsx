@@ -18,14 +18,18 @@ import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   signedMessage: SignedMessage
   style?: ViewStyle
 }
 
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const SignedMessageSummary = ({ signedMessage, style }: Props) => {
   const { styles } = useTheme(getStyles)
-  const { state: networks } = useController('NetworksController', 'networks')
+  const { state: networks } = useController('NetworksController', selectNetworks)
 
   const humanizedMessage = useMemo(() => {
     return humanizeMessage(signedMessage)

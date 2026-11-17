@@ -66,7 +66,8 @@ const Backdrop = ({
           zIndex: customZIndex || styles.backDrop.zIndex
         }
       ]}
-      nativeID={withBlur ? 'modalBackdrop' : undefined}
+      // Dropped as the sheet starts closing, so the page blur fades out along with the dimming
+      nativeID={withBlur && isBottomSheetVisible ? 'modalBackdrop' : undefined}
       pointerEvents={isVisible ? 'auto' : 'none'}
     >
       <TouchableOpacity style={flexboxStyles.flex1} activeOpacity={1} onPress={onPress}>
@@ -76,7 +77,7 @@ const Backdrop = ({
             intensity={55}
             tint="dark"
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 opacity: 0.95
               }
@@ -85,7 +86,7 @@ const Backdrop = ({
         ) : (
           <Animated.View
             style={[
-              StyleSheet.absoluteFillObject,
+              StyleSheet.absoluteFill,
               {
                 backgroundColor: theme.backdrop
               }

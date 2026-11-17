@@ -1,5 +1,4 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import isEqual from 'react-fast-compare'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -9,33 +8,102 @@ import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
+import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
+import { isPrivacyPoolsEnabled, isPrivacyPoolsSupported } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrivacyPoolsAccounts, {
+  filterPrivacyPoolsAccountsBySearch,
+  PrivacyPoolsAccountDisplay
+} from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
-import SyncBottomSheet from '@common/modules/accounts-sync/components/SyncBottomSheet'
+import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
+import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const privacyPoolsAccountKeyExtractor = (account: PrivacyPoolsAccountDisplay) => account.seedId
+const selectPrivacyPoolsAccountId = (
+  state: AllControllersMappingType['SelectedAccountController']
+) => state.privacyPoolsAccountId
+
+const DRAG_ICON_WIDTH = 12.5
+// Its padding on both sides plus the icon
+const DRAG_HANDLE_WIDTH = SPACING_SM * 2 + DRAG_ICON_WIDTH
+
+/** The handle a row of the draggable list is dragged by */
+const DragHandle = React.memo(
+  ({
+    isDragging,
+    listeners,
+    attributes
+  }: {
+    isDragging: boolean
+    listeners: any
+    attributes: any
+  }) => {
+    const { theme } = useTheme()
+
+    return (
+      <div {...listeners} {...attributes}>
+        <Pressable
+          style={[
+            flexbox.alignCenter,
+            flexbox.justifyCenter,
+            spacings.pvMi,
+            spacings.phSm,
+            spacings.mbMi,
+            // @ts-expect-error: Web style
+            { cursor: 'grab', touchAction: 'manipulation' }
+          ]}
+        >
+          <DragIndicatorIcon
+            color={isDragging ? theme.primary : theme.iconPrimary}
+            width={DRAG_ICON_WIDTH}
+          />
+        </Pressable>
+      </div>
+    )
+  }
+)
+
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
-  const { accounts, control, keyExtractor, getItemLayout } = useAccountsList()
+  const {
+    accounts,
+    control,
+    debouncedSearch,
+    isFiltered,
+    keyExtractor,
+    getItemLayout,
+    onAccountExtraHeightChange
+  } = useAccountsList()
+  const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  const { state: privacyPoolsAccountId } = useController(
+    'SelectedAccountController',
+    selectPrivacyPoolsAccountId
+  )
+  const { dispatch: privacyPoolsDispatch } = useController('PrivacyPoolsController')
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
@@ -55,6 +123,11 @@ const AccountsSettingsScreen = () => {
     close: closeRemoveAccount
   } = useModalize()
   const {
+    ref: sheetRefRemovePrivacyPoolsAccount,
+    open: openRemovePrivacyPoolsAccount,
+    close: closeRemovePrivacyPoolsAccount
+  } = useModalize()
+  const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
@@ -64,6 +137,11 @@ const AccountsSettingsScreen = () => {
     open: openAccountSmartSettings,
     close: closeAccountSmartSettings
   } = useModalize()
+  const {
+    ref: sheetRefAccountDeploySettings,
+    open: openAccountDeploySettings,
+    close: closeAccountDeploySettings
+  } = useModalize()
 
   useEffect(() => {
     setCurrentSettingsPage('accounts')
@@ -71,36 +149,46 @@ const AccountsSettingsScreen = () => {
 
   const [exportImportAccount, setExportImportAccount] = useState<AccountInterface | null>(null)
   const [accountToRemove, setAccountToRemove] = useState<AccountInterface | null>(null)
-  const [smartSettingsAccount, setSmartSettingsAccount] = useState<AccountInterface | null>(null)
-  const [localAccounts, setLocalAccounts] = useState<AccountInterface[]>([...accounts])
+  const [accountSettingsAccount, setAccountSettingsAccount] = useState<AccountInterface | null>(
+    null
+  )
+  const [privacyPoolsAccountToRemove, setPrivacyPoolsAccountToRemove] =
+    useState<PrivacyPoolsAccountDisplay | null>(null)
+  // The search stays when switching tabs, so it filters the newly opened tab too. Opens on the
+  // tab of the selected account.
+  const [activeTab, setActiveTab] = useState<AccountsTab>(
+    privacyPoolsAccountId ? 'private' : 'public'
+  )
+  // The order a drag left the list in, shown until the controller sends the reordered accounts
+  const [draggedOrder, setDraggedOrder] = useState<{
+    from: AccountInterface[]
+    order: AccountInterface[]
+  } | null>(null)
+  // The same for the Privacy Pools accounts
+  const [draggedPrivacyPoolsOrder, setDraggedPrivacyPoolsOrder] = useState<{
+    from: PrivacyPoolsAccountDisplay[]
+    order: PrivacyPoolsAccountDisplay[]
+  } | null>(null)
+  const clearAccountSettingsAccount = useCallback(() => setAccountSettingsAccount(null), [])
 
-  useEffect(() => {
-    setLocalAccounts((prev) => {
-      if (!isEqual(prev, accounts)) {
-        return accounts
-      }
-      return prev
-    })
-  }, [accounts])
+  // Any newer list from the controller already carries the drag, or replaces it
+  const displayedAccounts = draggedOrder?.from === accounts ? draggedOrder.order : accounts
 
   const handleAccDragEnd = useCallback(
     (fromIndex: number, toIndex: number) => {
       if (fromIndex === toIndex) return
-      setLocalAccounts((prev) => {
-        const updated = [...prev]
-        const [moved] = updated.splice(fromIndex, 1)
-        updated.splice(toIndex, 0, moved!)
-        accountsDispatch({
-          type: 'method',
-          params: {
-            method: 'reorderAccounts',
-            args: [{ fromIndex, toIndex }]
-          }
-        })
-        return updated
+
+      const updated = [...displayedAccounts]
+      const [moved] = updated.splice(fromIndex, 1)
+      updated.splice(toIndex, 0, moved!)
+      setDraggedOrder({ from: accounts, order: updated })
+
+      accountsDispatch({
+        type: 'method',
+        params: { method: 'reorderAccounts', args: [{ fromIndex, toIndex }] }
       })
     },
-    [accountsDispatch]
+    [accounts, accountsDispatch, displayedAccounts]
   )
 
   useEffect(() => {
@@ -112,8 +200,19 @@ const AccountsSettingsScreen = () => {
   }, [openRemoveAccount, accountToRemove])
 
   useEffect(() => {
-    if (smartSettingsAccount) openAccountSmartSettings()
-  }, [openAccountSmartSettings, smartSettingsAccount])
+    if (!accountSettingsAccount) return
+
+    if (accountSettingsAccount.safeCreation) {
+      openAccountDeploySettings()
+      return
+    }
+
+    openAccountSmartSettings()
+  }, [accountSettingsAccount, openAccountDeploySettings, openAccountSmartSettings])
+
+  useEffect(() => {
+    if (privacyPoolsAccountToRemove) openRemovePrivacyPoolsAccount()
+  }, [openRemovePrivacyPoolsAccount, privacyPoolsAccountToRemove])
 
   const shortenAccountAddr = useCallback(() => {
     if (maxElementWidthSize(800)) return undefined
@@ -127,10 +226,10 @@ const AccountsSettingsScreen = () => {
     () => ({
       withOptionsButton: true,
       setAccountToImportOrExport: setExportImportAccount,
-      setSmartSettingsAccount,
+      setAccountSettingsAccount,
       setAccountToRemove
     }),
-    [setExportImportAccount, setSmartSettingsAccount, setAccountToRemove]
+    [setExportImportAccount, setAccountSettingsAccount, setAccountToRemove]
   )
 
   const removeAccount = useCallback(() => {
@@ -145,6 +244,91 @@ const AccountsSettingsScreen = () => {
     })
     closeRemoveAccount()
   }, [accountToRemove, mainDispatch, closeRemoveAccount])
+
+  const cancelRemovePrivacyPoolsAccount = useCallback(() => {
+    setPrivacyPoolsAccountToRemove(null)
+    closeRemovePrivacyPoolsAccount()
+  }, [closeRemovePrivacyPoolsAccount])
+
+  const removePrivacyPoolsAccount = useCallback(() => {
+    if (!privacyPoolsAccountToRemove) return
+
+    privacyPoolsDispatch({
+      type: 'method',
+      params: { method: 'removeAccount', args: [privacyPoolsAccountToRemove.seedId] }
+    })
+    cancelRemovePrivacyPoolsAccount()
+  }, [cancelRemovePrivacyPoolsAccount, privacyPoolsAccountToRemove, privacyPoolsDispatch])
+
+  // Any newer list from the controller already carries the drag, or replaces it
+  const displayedPrivacyPoolsAccounts =
+    draggedPrivacyPoolsOrder?.from === privacyPoolsAccounts
+      ? draggedPrivacyPoolsOrder.order
+      : privacyPoolsAccounts
+  // Filtered by the debounced search, like the regular ones, so this follows the same value
+  const isPrivacyPoolsFiltered = !!debouncedSearch.trim()
+  const filteredPrivacyPoolsAccounts = useMemo(
+    () => filterPrivacyPoolsAccountsBySearch(displayedPrivacyPoolsAccounts, debouncedSearch, t),
+    [displayedPrivacyPoolsAccounts, debouncedSearch, t]
+  )
+
+  const handlePrivacyPoolsAccountDragEnd = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return
+
+      const updated = [...displayedPrivacyPoolsAccounts]
+      const [moved] = updated.splice(fromIndex, 1)
+      updated.splice(toIndex, 0, moved!)
+      setDraggedPrivacyPoolsOrder({ from: privacyPoolsAccounts, order: updated })
+
+      privacyPoolsDispatch({
+        type: 'method',
+        params: { method: 'reorderAccounts', args: [{ fromIndex, toIndex }] }
+      })
+    },
+    [displayedPrivacyPoolsAccounts, privacyPoolsAccounts, privacyPoolsDispatch]
+  )
+
+  const renderPrivacyPoolsAccount = useCallback(
+    (
+      privacyPoolsAccount: PrivacyPoolsAccountDisplay,
+      index: number,
+      isDragging: boolean,
+      listeners: any,
+      attributes: any
+    ) => (
+      <View
+        style={[
+          flexbox.flex1,
+          flexbox.directionRow,
+          flexbox.alignCenter,
+          spacings.mbTy,
+          // As wide as the hidden drag handle, so the content stays in place
+          isPrivacyPoolsFiltered && { paddingLeft: DRAG_HANDLE_WIDTH },
+          { backgroundColor: theme.secondaryBackground, borderRadius: BORDER_RADIUS_PRIMARY }
+        ]}
+      >
+        {!isPrivacyPoolsFiltered && (
+          <DragHandle isDragging={isDragging} listeners={listeners} attributes={attributes} />
+        )}
+        <View style={flexbox.flex1}>
+          <PrivacyPoolsAccountRow
+            account={privacyPoolsAccount}
+            onRemove={setPrivacyPoolsAccountToRemove}
+            withRename
+            containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
+          />
+        </View>
+      </View>
+    ),
+    [isPrivacyPoolsFiltered, theme.secondaryBackground]
+  )
+  // Adapts the draggable row renderer to the plain list shown while searching
+  const renderPrivacyPoolsSearchResult = useCallback(
+    ({ item, index }: { item: PrivacyPoolsAccountDisplay; index: number }) =>
+      renderPrivacyPoolsAccount(item, index, false, undefined, undefined),
+    [renderPrivacyPoolsAccount]
+  )
 
   const renderItem = useCallback(
     (
@@ -161,27 +345,17 @@ const AccountsSettingsScreen = () => {
             flexbox.directionRow,
             flexbox.alignCenter,
             spacings.mbTy,
+            // As wide as the hidden drag handle, so the content stays in place
+            isFiltered && { paddingLeft: DRAG_HANDLE_WIDTH },
             {
               backgroundColor: theme.secondaryBackground,
               borderRadius: BORDER_RADIUS_PRIMARY
             }
           ]}
         >
-          <div {...listeners} {...attributes}>
-            <Pressable
-              style={[
-                flexbox.alignCenter,
-                flexbox.justifyCenter,
-                spacings.pvMi,
-                spacings.phSm,
-                spacings.mbMi,
-                //@ts-ignore
-                { cursor: 'grab', touchAction: 'manipulation' }
-              ]}
-            >
-              <DragIndicatorIcon color={isDragging ? theme.primary : theme.iconPrimary} />
-            </Pressable>
-          </div>
+          {!isFiltered && (
+            <DragHandle isDragging={isDragging} listeners={listeners} attributes={attributes} />
+          )}
           <View style={flexbox.flex1}>
             <Account
               account={item}
@@ -191,6 +365,7 @@ const AccountsSettingsScreen = () => {
               isSelectable={false}
               containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
               withReceive
+              onExtraHeightChange={onAccountExtraHeightChange}
             />
           </View>
         </View>
@@ -198,11 +373,17 @@ const AccountsSettingsScreen = () => {
     },
     [
       theme.secondaryBackground,
-      theme.primary,
-      theme.iconPrimary,
       shortenAccountAddr,
-      accountOptions
+      accountOptions,
+      onAccountExtraHeightChange,
+      isFiltered
     ]
+  )
+  // Adapts the draggable row renderer to the plain list shown while searching
+  const renderSearchResult = useCallback(
+    ({ item, index }: { item: AccountInterface; index: number }) =>
+      renderItem(item, index, false, undefined, undefined),
+    [renderItem]
   )
   const { maxWidthSize } = useWindowSize()
   const isWidthS = maxWidthSize('s')
@@ -264,23 +445,47 @@ const AccountsSettingsScreen = () => {
         </>
       </SettingsPageHeader>
       <View style={[flexbox.flex1]} ref={accountsContainerRef}>
-        <ScrollableWrapper
-          type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
-          data={localAccounts}
-          keyExtractor={keyExtractor}
-          onDragEnd={handleAccDragEnd}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
-        />
+        {isPrivacyPoolsSupported && (
+          <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        )}
+        {isPrivacyPoolsEnabled && activeTab === 'private' ? (
+          <ScrollableWrapper
+            // Search results are ordered by relevance, so there is no order to rearrange in them
+            type={
+              isPrivacyPoolsFiltered ? WRAPPER_TYPES.FLAT_LIST : WRAPPER_TYPES.DRAGGABLE_FLAT_LIST
+            }
+            data={filteredPrivacyPoolsAccounts}
+            keyExtractor={privacyPoolsAccountKeyExtractor}
+            onDragEnd={handlePrivacyPoolsAccountDragEnd}
+            renderItem={renderPrivacyPoolsSearchResult}
+            renderDraggableItem={renderPrivacyPoolsAccount}
+            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          />
+        ) : (
+          <ScrollableWrapper
+            // Search results are ordered by relevance, so there is no order to rearrange in them
+            type={isFiltered ? WRAPPER_TYPES.FLAT_LIST : WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+            data={displayedAccounts}
+            keyExtractor={keyExtractor}
+            onDragEnd={handleAccDragEnd}
+            renderItem={renderSearchResult}
+            renderDraggableItem={renderItem}
+            getItemLayout={getItemLayout}
+            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+          />
+        )}
       </View>
+      <SafeActivationBottomSheet
+        sheetRef={sheetRefAccountDeploySettings}
+        closeBottomSheet={closeAccountDeploySettings}
+        onClosed={clearAccountSettingsAccount}
+        account={accountSettingsAccount?.safeCreation ? accountSettingsAccount : null}
+      />
       <AccountSmartSettingsBottomSheet
         sheetRef={sheetRefAccountSmartSettings}
-        closeBottomSheet={() => {
-          setSmartSettingsAccount(null)
-          closeAccountSmartSettings()
-        }}
-        account={smartSettingsAccount}
+        closeBottomSheet={closeAccountSmartSettings}
+        onClosed={clearAccountSettingsAccount}
+        account={accountSettingsAccount?.safeCreation ? null : accountSettingsAccount}
       />
       <AccountKeysBottomSheet
         sheetRef={sheetRefExportImportKey}
@@ -338,17 +543,58 @@ const AccountsSettingsScreen = () => {
           />
         </View>
       </BottomSheet>
+      <BottomSheet
+        id="remove-privacy-pools-account-sheet"
+        type="modal"
+        sheetRef={sheetRefRemovePrivacyPoolsAccount}
+        closeBottomSheet={cancelRemovePrivacyPoolsAccount}
+        onBackdropPress={cancelRemovePrivacyPoolsAccount}
+        scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
+        containerInnerWrapperStyles={{ flex: 1 }}
+        style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
+          <PanelBackButton onPress={cancelRemovePrivacyPoolsAccount} style={spacings.mrSm} />
+          <PanelTitle
+            title={t('Remove {{ label }}', {
+              label: privacyPoolsAccountToRemove?.label || t('account')
+            })}
+            style={text.left}
+          />
+        </View>
+        <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
+          <Text fontSize={16} weight="medium" style={{ ...spacings.mbSm, textAlign: 'center' }}>
+            {t('Are you sure you want to remove the Private account from {{seedLabel}}?', {
+              seedLabel: privacyPoolsAccountToRemove?.sourceLabel
+            })}
+          </Text>
+          <Text fontSize={14} appearance="secondaryText" style={{ textAlign: 'center' }}>
+            {t(
+              'Its funds stay in Privacy Pools, tied to its recovery phrase. Adding the account again from the same phrase brings them back.'
+            )}
+          </Text>
+        </View>
+        <View style={flexbox.alignCenter}>
+          <Button
+            testID="confirm-remove-privacy-pools-account-button"
+            type="danger"
+            style={spacings.mtTy}
+            text={t('Remove account')}
+            onPress={removePrivacyPoolsAccount}
+          />
+        </View>
+      </BottomSheet>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
       <SyncBottomSheet
         sheetRef={syncSheetRef}
         closeBottomSheet={closeSyncBottomSheet}
         onExportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.exportAccountsToMobile)
+          navigate(WEB_ROUTES.exportToMobile)
         }}
         onImportPress={() => {
           closeSyncBottomSheet()
-          navigate(WEB_ROUTES.importAccountsFromMobile)
+          navigate(WEB_ROUTES.importFromMobile)
         }}
       />
     </>

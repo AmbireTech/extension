@@ -17,6 +17,8 @@ jobs:
   publish-ota-android:
     name: Publish Android OTA bundle to Stallion
     uses: ./.github/workflows/_publish-ota.yml
+    permissions:
+      contents: write # Lets the reusable workflow attach the source map to this repo's release
     with:
       platform: android
       runner: ubuntu-latest

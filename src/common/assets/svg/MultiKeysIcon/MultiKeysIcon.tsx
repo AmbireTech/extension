@@ -1,10 +1,21 @@
 import React, { FC } from 'react'
 import { G, Path, Svg, SvgProps } from 'react-native-svg'
 
-const MultiKeysIcon: FC<SvgProps> = ({ width = 22.5, height = 24.5 }) => {
+import useTheme from '@common/hooks/useTheme'
+
+const MultiKeysIcon: FC<SvgProps> = ({ width = 22.5, height = 24.5, color, ...rest }) => {
+  const { theme } = useTheme()
+  const strokeColor = color || theme.iconPrimary
+
   return (
-    <Svg viewBox="0 0 22.486 24.508" width={width} height={height}>
-      <G fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+    <Svg viewBox="0 0 22.486 24.508" width={width} height={height} {...rest}>
+      <G
+        fill="none"
+        stroke={strokeColor}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      >
         <Path d="M3.69 14.73a.98.98 0 0 1-.143-.01l-1.525-.206a1.324 1.324 0 0 1-1.047-1.051L.764 11.94a1.415 1.415 0 0 1 .342-1.042l3.287-3.286a5.294 5.294 0 1 1 10.063.169 6.479 6.479 0 0 0-3.268 1.792 6.972 6.972 0 0 0-1.311 1.743 5.345 5.345 0 0 1-.418.016 5.248 5.248 0 0 1-1.576-.241l-3.289 3.29a1.352 1.352 0 0 1-.904.349Z" />
         <Path d="m4.177 11.576 1.61 1.61" />
         <Path d="M9.497 7.525A1.537 1.537 0 1 0 7.96 5.988a1.537 1.537 0 0 0 1.537 1.537Z" />

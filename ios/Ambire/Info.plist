@@ -20,7 +20,7 @@
     <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
     <!-- This is planned to be in sync with app.json 's "version" two components, e.g. 5.39 -->
     <key>CFBundleShortVersionString</key>
-    <string>6.20</string>
+    <string>6.27</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleURLTypes</key>
@@ -35,7 +35,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>70</string>
+    <string>78</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSApplicationQueriesSchemes</key>
@@ -84,6 +84,23 @@
     <false/>
     <key>RCTNewArchEnabled</key>
     <true/>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+      <key>UIApplicationSupportsMultipleScenes</key>
+      <false/>
+      <key>UISceneConfigurations</key>
+      <dict>
+        <key>UIWindowSceneSessionRoleApplication</key>
+        <array>
+          <dict>
+            <key>UISceneConfigurationName</key>
+            <string>Default Configuration</string>
+            <key>UISceneDelegateClassName</key>
+            <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+          </dict>
+        </array>
+      </dict>
+    </dict>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
@@ -101,7 +118,7 @@
     <key>UIUserInterfaceStyle</key>
     <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
-    <false/>
+    <true/>
     <key>StallionProjectId</key>
     <string>__STALLION_PROJECT_ID__</string>
     <key>StallionAppToken</key>

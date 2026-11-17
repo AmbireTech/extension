@@ -13,14 +13,32 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectIsReady = (state: AllControllersMappingType['DappsController']) => state.isReady
+const selectIsReadyToDisplayDapps = (state: AllControllersMappingType['DappsController']) =>
+  state.isReadyToDisplayDapps
+
 const DappsSkeletonLoader = () => {
-  const { state, dispatch: dappsDispatch } = useController('DappsController')
+  const { state: isReady, dispatch: dappsDispatch } = useController(
+    'DappsController',
+    selectIsReady
+  )
+  const { state: isReadyToDisplayDapps } = useController(
+    'DappsController',
+    selectIsReadyToDisplayDapps
+  )
   const { theme } = useTheme()
   const { t } = useTranslation()
 
+  // `isReadyToDisplayDapps` starts out true and only drops while a fetch is in flight,
+  // so on its own it would report an uninitialized controller as a failed fetch. The
+  // catalog is initialized after the portfolio on mobile, which makes that window real.
+  const isLoading = !isReady || !isReadyToDisplayDapps
+
   return (
     <View style={[flexbox.flex1, spacings.phSm, spacings.pvSm]}>
-      {!state.isReadyToDisplayDapps ? (
+      {isLoading ? (
         <>
           <SkeletonLoader width="100%" height={40} style={spacings.mbTy} />
           <View

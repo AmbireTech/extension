@@ -1,14 +1,13 @@
 import React, { FC, useState } from 'react'
-import { LayoutChangeEvent, View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 
 import FooterGlassView from '@common/components/FooterGlassView'
+import ItemPanel from '@common/components/ItemPanel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
-import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -23,29 +22,6 @@ type WrapperProps = {
 type ContentProps = {
   children: React.ReactNode
   buttons: React.ReactNode
-}
-
-type ItemPanelProps = {
-  children: React.ReactNode
-  style?: ViewStyle
-}
-
-const ItemPanel: FC<ItemPanelProps> = ({ children, style = {} }) => {
-  const { theme } = useTheme()
-
-  return (
-    <View
-      style={{
-        ...spacings.phSm,
-        ...spacings.pvSm,
-        backgroundColor: theme.secondaryBackground,
-        borderRadius: BORDER_RADIUS_PRIMARY,
-        ...style
-      }}
-    >
-      {children}
-    </View>
-  )
 }
 
 const Wrapper: FC<WrapperProps> = ({ children }) => {
@@ -68,32 +44,35 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
 }
 
 const Content: FC<ContentProps> = ({ children, buttons }) => {
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  // Reserves exactly as much scroll space as the floating footer occupies, so content only
-  // becomes scrollable once it would otherwise be covered by the footer, not before
+  const { isNarrowWebLayout } = useCompactLayout()
+  // Reserves exactly as much scroll space as the floating (wide view) footer occupies, so content
+  // only becomes scrollable once it would otherwise be covered by the footer, not before
   const [footerHeight, setFooterHeight] = useState(0)
   const handleFooterLayout = (event: LayoutChangeEvent) => {
     setFooterHeight(event.nativeEvent.layout.height)
   }
 
   return (
-    <View style={[flexbox.flex1, spacings.pvSm]}>
+    // In a narrow view the header already spaces the content and the footer pads its own bottom edge
+    <View style={[flexbox.flex1, spacings.pvSm, isNarrowWebLayout && spacings.pv0]}>
       <ScrollableWrapper
         contentContainerStyle={[
           flexbox.flex1,
           spacings.phSm,
-          { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 0 }
+          !isNarrowWebLayout && { paddingBottom: footerHeight ? footerHeight + SPACING_SM : 0 }
         ]}
       >
         {children}
       </ScrollableWrapper>
       <FooterGlassView
         size="sm"
-        fullWidth={isCompactSidePanelLayout}
-        style={isRequestWindow ? { bottom: SPACING } : {}}
+        // In a narrow view the footer sits under the content like on mobile, instead of floating over it
+        absolute={!isNarrowWebLayout}
+        fullWidth={isNarrowWebLayout}
+        style={isRequestWindow && !isNarrowWebLayout ? { bottom: SPACING } : {}}
         onLayout={handleFooterLayout}
       >
-        {isCompactSidePanelLayout ? (
+        {isNarrowWebLayout ? (
           buttons
         ) : (
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>{buttons}</View>

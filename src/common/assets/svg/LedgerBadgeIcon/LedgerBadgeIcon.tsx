@@ -13,6 +13,7 @@ const LedgerBadgeIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, .
       <Mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
         <Circle cx="12" cy="12" r="10" fill="white" />
         <Path
+          fill="none"
           stroke="black"
           strokeWidth="1.5"
           strokeLinecap="round"
@@ -20,6 +21,7 @@ const LedgerBadgeIcon: React.FC<SvgProps> = ({ width = 24, height = 24, color, .
           d="M10.889 16.222H7V14"
         />
         <Path
+          fill="none"
           stroke="black"
           strokeWidth="1.2"
           strokeLinecap="round"

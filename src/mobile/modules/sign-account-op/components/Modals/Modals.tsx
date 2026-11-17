@@ -20,8 +20,6 @@ const Modals: FC<ModalsProps> = ({
   gasFeeUpdatedModalRef,
   handleAcceptGasFeeUpdate,
   handleDismissGasFeeUpdate,
-  feePayerKeyType,
-  signingKeyType,
   slowPaymasterRequest,
   warningToPromptBeforeSign,
   acknowledgeWarning,
@@ -40,16 +38,9 @@ const Modals: FC<ModalsProps> = ({
   signingStep
 }) => {
   const { t } = useTranslation()
-  const {
-    state: { signAccountOpController: swapAndBridgeSignAccountOp },
-    dispatch: swapAndBridgeDispatch
-  } = useController('SwapAndBridgeController')
-  const {
-    state: { signAccountOpController: transferSignAccountOp },
-    dispatch: transferDispatch
-  } = useController('TransferController')
-  const { state: currentSignAccountOp, dispatch: signAccountOpDispatch } =
-    useController('SignAccountOpController')
+  const { dispatch: swapAndBridgeDispatch } = useController('SwapAndBridgeController')
+  const { dispatch: transferDispatch } = useController('TransferController')
+  const { dispatch: signAccountOpDispatch } = useController('SignAccountOpController')
 
   const transactionProgress = useMemo(() => {
     const totalTransactions = signAccountOpState?.accountOp?.calls?.length || 0
@@ -149,6 +140,7 @@ const Modals: FC<ModalsProps> = ({
         currentRequest={currentRequest}
         signingStep={signingStep}
         signingRequest={signAccountOpState?.hardwareWalletSigningRequest}
+        humanization={signAccountOpState?.humanization}
         transactionProgress={transactionProgress}
         submitSignatureResponse={handleQrSigningFlowSubmitSignatureResponse}
         onReject={handleQrSigningFlowOnRejectPressed}
@@ -160,24 +152,15 @@ const Modals: FC<ModalsProps> = ({
   if (renderedButNotNecessarilyVisibleModal === 'hw-sign' && signAccountOpState) {
     return (
       <SignAccountOpHardwareWalletSigningModal
-        signingKeyType={signingKeyType}
-        feePayerKeyType={feePayerKeyType}
-        isSignAndBroadcastInProgress={(() => {
-          if (actionType === 'swapAndBridge') {
-            return !!swapAndBridgeSignAccountOp?.isSignAndBroadcastInProgress
-          }
-          if (actionType === 'transfer') {
-            return !!transferSignAccountOp?.isSignAndBroadcastInProgress
-          }
-
-          return currentSignAccountOp ? currentSignAccountOp.isSignAndBroadcastInProgress : false
-        })()}
-        signAccountOpStatusType={signAccountOpState.status?.type}
+        activeSigningKeyType={signAccountOpState.activeSigningKeyType}
         shouldSignAuth={signAccountOpState.shouldSignAuth}
         signedTransactionsCount={signAccountOpState.signedTransactionsCount}
         hardwareWalletSigningRequest={signAccountOpState.hardwareWalletSigningRequest}
+        humanization={signAccountOpState.humanization}
+        isPaymasterSlow={slowPaymasterRequest}
         accountOp={signAccountOpState.accountOp}
-        actionType={actionType}
+        // A Safe owner approval is signed in the Safe request's window, so it isn't moved to one
+        actionType={actionType === 'safeOwnerApproval' ? undefined : actionType}
         cancelReq={() => {
           void trezorDeeplinkService.signingCleanup()
 
@@ -191,6 +174,12 @@ const Modals: FC<ModalsProps> = ({
             return transferDispatch({
               type: 'method',
               params: { method: 'cancelSignReq', args: [] }
+            })
+          }
+          if (actionType === 'safeOwnerApproval') {
+            return signAccountOpDispatch({
+              type: 'method',
+              params: { method: 'callSafeOwnerApprovalMethod', args: ['cancelSignReq', []] }
             })
           }
 

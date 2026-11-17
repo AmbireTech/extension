@@ -2,6 +2,11 @@ import 'dotenv/config'
 
 import { PlaywrightTestConfig } from '@playwright/test'
 
+// Without this, Playwright routes requests made by pages but not by the extension's service
+// worker, so the crash-analytics spec could never intercept a report sent from the background.
+// (we already do it in CI, this is for local runs)
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1'
+
 const workersFromEnv = process.env.PLAYWRIGHT_WORKERS
   ? Number.parseInt(process.env.PLAYWRIGHT_WORKERS, 10)
   : NaN
@@ -17,6 +22,8 @@ const config: PlaywrightTestConfig = {
   },
   testDir: 'tests',
   testMatch: '**/*.spec.ts',
+  // Benzin specs need a served build and run only before deploy with `playwright.benzin.config.ts`
+  testIgnore: '**/benzin/**',
   // In CI each suite/shard emits a `blob` report and the `report` job merges them into a
   // single HTML report. Locally we keep the directly-viewable HTML report.
   reporter: process.env.CI

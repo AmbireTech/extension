@@ -1,0 +1,774 @@
+import Fuse from 'fuse.js'
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ColorValue, Pressable, View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
+
+import { Contact } from '@ambire-common/interfaces/addressBook'
+import { AddressState } from '@ambire-common/interfaces/domains'
+import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
+import { isNearIdenticalAddressMatch } from '@ambire-common/libs/transfer/address-poisoning'
+import { getSearchableNames } from '@ambire-common/services/nameResolvers'
+import { validateAddress, Validation } from '@ambire-common/services/validations'
+import { getIsViewOnly } from '@ambire-common/utils/accounts'
+import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
+import WalletIcon from '@common/assets/svg/WalletIcon'
+import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
+import AddressBookContact from '@common/components/AddressBookContact'
+import AddressInput from '@common/components/AddressInput'
+import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
+import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
+import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
+import NearIdenticalAddressSuggestion from '@common/components/AddressSelect/NearIdenticalAddressSuggestion'
+import { InputProps } from '@common/components/Input'
+import { INPUT_HEIGHT, INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
+import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
+import { SectionedSelect } from '@common/components/Select'
+import {
+  RenderSelectedOptionParams,
+  SectionedSelectProps,
+  SelectValue
+} from '@common/components/Select/types'
+import Text from '@common/components/Text'
+import TitleAndIcon from '@common/components/TitleAndIcon'
+import { isMobile, isPrivacyPoolsSupported, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
+import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
+import useNavigation from '@common/hooks/useNavigation'
+import usePrevious from '@common/hooks/usePrevious'
+import {
+  filterPrivacyPoolsAccountsBySearch,
+  PrivacyPoolsAccountDisplay
+} from '@common/hooks/usePrivacyPoolsAccounts'
+import useTheme from '@common/hooks/useTheme'
+import { ROUTES } from '@common/modules/router/constants/common'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
+
+import styles from './styles'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
+export interface AddressSelectProps extends InputProps {
+  setAddress: (text: string) => void
+  address: string
+  resolvedAddress: AddressState['resolvedAddress']
+  resolvedAddressType: AddressState['resolvedAddressType']
+  validation: Validation
+  isRecipientDomainResolving: boolean
+  menuPosition?: 'top' | 'bottom'
+  // Title of the list, on the surfaces that show it in a bottom sheet.
+  bottomSheetTitle?: string
+  // Shortens the addresses in the list, for a container too narrow to fit a full one.
+  withShortenedAddresses?: boolean
+  /** Includes the active wallet account, which is normally omitted to prevent self-transfers. */
+  includeSelectedAccount?: boolean
+  /**
+   * Background color of the idle input. Set it when the parent has the same color as the
+   * default input background, so the input stays visible.
+   */
+  inputBackgroundColor?: ColorValue
+  /** Addresses left out of the list, e.g. the ones the flow has already picked */
+  hiddenAddresses?: string[]
+  /**
+   * Shows a valid address like any other value, without the "Valid address" label and the
+   * success border, e.g. where several fields would all show it. The validation still runs.
+   * The empty line kept under the input for a message is left out too.
+   */
+  isSuccessHidden?: boolean
+  // The props below drive the "Add to address book" prompt, which only applies when the
+  // address is a transfer recipient. Other flows can leave them out.
+  addressValidationMsg?: string
+  domainVerificationMessage?: string
+  isRecipientHumanizerKnownTokenOrSmartContract?: boolean
+  isRecipientAddressUnknown?: boolean
+  addressPoisoningMatch?: AddressPoisoningMatch | null
+  /** Listed as recipients. Having no address, picking one calls `onSelectPrivacyPoolsAccount`. */
+  privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
+  onSelectPrivacyPoolsAccount?: (seedId: string) => void
+}
+
+// Marks a Privacy Pools account option - see `setAddressWrapped`
+const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
+const NO_PRIVACY_POOLS_ACCOUNTS: PrivacyPoolsAccountDisplay[] = []
+
+const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
+  severity: 'error', // Don't let the user submit, just in case there is an error
+  message: ''
+}
+
+const SelectedMenuOption: React.FC<{
+  selectRef?: React.RefObject<any>
+  validation: Validation
+  isMenuOpen: boolean
+  resolvedAddress: AddressState['resolvedAddress']
+  resolvedAddressType: AddressState['resolvedAddressType']
+  isRecipientDomainResolving: boolean
+  address: string
+  setAddress: (text: string) => void
+  disabled?: boolean
+  setIsMenuOpen: (isMenuOpen: boolean) => void
+  filteredContacts: Contact[]
+  renderConfirmAddress?: () => React.ReactNode
+  type?: 'input' | 'selected-menu-option'
+  autoFocus?: boolean
+  addressHighlight?: {
+    prefix: number
+    suffix: number
+    color: 'errorText'
+    differingFrom?: string
+  }
+  inputBackgroundColor?: ColorValue
+  plainAddressMaxLength?: number
+  isSuccessHidden?: boolean
+  customBottomLabel?: ReactNode
+}> = ({
+  selectRef,
+  filteredContacts,
+  validation,
+  isMenuOpen,
+  resolvedAddress,
+  resolvedAddressType,
+  isRecipientDomainResolving,
+  address,
+  setAddress,
+  disabled,
+  setIsMenuOpen,
+  renderConfirmAddress,
+  type = 'selected-menu-option',
+  autoFocus = false,
+  addressHighlight,
+  inputBackgroundColor,
+  plainAddressMaxLength,
+  isSuccessHidden,
+  customBottomLabel
+}) => {
+  const [isFocused, setIsFocused] = useState(false)
+  const { theme } = useTheme()
+  const prevFilteredContactsLength = usePrevious(filteredContacts.length)
+
+  const isValidAddress = useMemo(
+    () =>
+      validateAddress(getAddressFromAddressState({ resolvedAddress, fieldValue: address }))
+        .severity === 'success',
+    [resolvedAddress, address]
+  )
+  const prevIsValidAddress = usePrevious(isValidAddress)
+
+  useEffect(() => {
+    if (type === 'input') return
+
+    if (isMenuOpen && !filteredContacts.length && !!isFocused) {
+      setIsMenuOpen(false)
+    }
+    if (!isMenuOpen && !prevFilteredContactsLength && !!filteredContacts.length && !!isFocused) {
+      setIsMenuOpen(true)
+    }
+    if (!prevIsValidAddress && isValidAddress) {
+      setIsMenuOpen(false)
+    }
+  }, [
+    address,
+    filteredContacts.length,
+    prevFilteredContactsLength,
+    isMenuOpen,
+    setIsMenuOpen,
+    isFocused,
+    prevIsValidAddress,
+    isValidAddress,
+    type
+  ])
+
+  const isButtonMode = type === 'selected-menu-option' && isMobile
+  // On mobile the near-identical address wraps to show all of its mistyped chars, so the
+  // input grows to fit it instead of keeping its single line height
+  const shouldGrowInput = isMobile && !!addressHighlight?.differingFrom
+
+  const content = useMemo(
+    () => (
+      <AddressInput
+        inputBorderWrapperRef={selectRef}
+        validation={
+          isMenuOpen && type === 'selected-menu-option'
+            ? ADDRESS_BOOK_VISIBLE_VALIDATION
+            : validation
+        }
+        autoFocus={autoFocus}
+        // Address entry never benefits from the keyboard's autocorrect
+        autoCorrect={false}
+        containerStyle={styles.inputContainer}
+        backgroundColor={inputBackgroundColor}
+        resolvedAddress={resolvedAddress}
+        resolvedAddressType={resolvedAddressType}
+        addressHighlight={addressHighlight}
+        plainAddressMaxLength={plainAddressMaxLength}
+        isSuccessHidden={isSuccessHidden}
+        customBottomLabel={customBottomLabel}
+        isRecipientDomainResolving={isRecipientDomainResolving}
+        value={address}
+        // On mobile input mode we still need details view when poisoning highlight exists,
+        // because highlight rendering lives in the detailed address row.
+        withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
+        onChangeText={setAddress}
+        onScanAddress={type === 'input' ? setAddress : undefined}
+        // The collapsed row is a button that opens the contacts menu, so the scan
+        // icon is rendered next to the dropdown arrow to stay reachable without it.
+        childrenBeforeButtons={
+          isButtonMode && !address ? <AddressScanButton onScanned={setAddress} /> : undefined
+        }
+        disabled={disabled}
+        editable={!isButtonMode}
+        pointerEvents={isButtonMode ? 'none' : 'auto'}
+        renderConfirmAddress={renderConfirmAddress}
+        onFocus={() => {
+          setIsFocused(true)
+          if (type === 'input') return
+
+          if (filteredContacts.length) {
+            setIsMenuOpen(true)
+          }
+        }}
+        onBlur={() => {
+          if (type === 'input') return
+
+          setIsFocused(false)
+        }}
+        onClearButtonPress={() => setIsMenuOpen(true)}
+        button={
+          type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
+        }
+        buttonProps={{ onPress: () => setIsMenuOpen(!isMenuOpen) }}
+        inputWrapperStyle={{
+          ...(type === 'input' && { backgroundColor: theme.neutral400 }),
+          ...(shouldGrowInput && { height: 'auto', minHeight: INPUT_WRAPPER_HEIGHT })
+        }}
+        inputStyle={
+          shouldGrowInput
+            ? { height: 'auto', minHeight: INPUT_HEIGHT, ...spacings.pvTy }
+            : undefined
+        }
+        buttonStyle={{
+          ...spacings.pv0,
+          // Even padding keeps the clear button's press area centered on its icon
+          ...(address ? spacings.phTy : { ...spacings.pl, ...spacings.prTy }),
+          ...spacings.mr0,
+          ...spacings.ml0
+        }}
+      />
+    ),
+    [
+      address,
+      autoFocus,
+      disabled,
+      resolvedAddress,
+      filteredContacts.length,
+      isButtonMode,
+      isMenuOpen,
+      isRecipientDomainResolving,
+      resolvedAddressType,
+      renderConfirmAddress,
+      selectRef,
+      setAddress,
+      setIsMenuOpen,
+      theme.neutral400,
+      addressHighlight,
+      shouldGrowInput,
+      inputBackgroundColor,
+      plainAddressMaxLength,
+      isSuccessHidden,
+      customBottomLabel,
+      type,
+      validation
+    ]
+  )
+
+  return isButtonMode ? (
+    <Pressable onPress={() => setIsMenuOpen(true)}>{content}</Pressable>
+  ) : (
+    content
+  )
+}
+
+// An address field that doubles as a picker: the user can type, paste or scan an address,
+// or pick one of their own wallets or address book contacts from the list it drops down.
+const AddressSelect: React.FC<AddressSelectProps> = ({
+  setAddress,
+  address,
+  resolvedAddress,
+  resolvedAddressType,
+  addressValidationMsg = '',
+  domainVerificationMessage,
+  isRecipientHumanizerKnownTokenOrSmartContract = false,
+  isRecipientAddressUnknown = false,
+  validation,
+  isRecipientDomainResolving,
+  disabled,
+  addressPoisoningMatch,
+  bottomSheetTitle,
+  withShortenedAddresses,
+  includeSelectedAccount = false,
+  inputBackgroundColor,
+  hiddenAddresses,
+  isSuccessHidden,
+  privacyPoolsAccounts,
+  onSelectPrivacyPoolsAccount,
+  customBottomLabel
+}) => {
+  const { isNarrowWebLayout } = useCompactLayout()
+  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const canSendToPrivacyPoolsAccounts = useMemo(
+    () => !account || !getIsViewOnly(keys, account.associatedKeys),
+    [account, keys]
+  )
+  const actualAddress = getAddressFromAddressState({
+    resolvedAddress,
+    fieldValue: address
+  })
+  const { navigate } = useNavigation()
+  const { t } = useTranslation()
+  const { theme } = useTheme()
+  const contactAddressMaxLength = isNarrowWebLayout || withShortenedAddresses ? 16 : undefined
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { state: contacts } = useController('AddressBookController', 'contacts')
+  const {
+    state: { domains }
+  } = useController('DomainsController')
+  const [bindManageBtnAnim, manageBtnAnimStyle] = useHover({
+    preset: 'opacityInverted'
+  })
+  // Split like the accounts list: Privacy Pools accounts, having no address, are private. Without
+  // them, the list is as it was. Where they are not released yet, the Private tab is only a teaser
+  const hasAccountsTabs = isPrivacyPoolsSupported && !!onSelectPrivacyPoolsAccount
+  // The search stays when switching tabs, so it filters the newly opened tab too
+  const [activeTab, setActiveTab] = useState<AccountsTab>('public')
+
+  const contactsWithSelectedAccount = useMemo<Contact[]>(() => {
+    if (!includeSelectedAccount || !account) return contacts
+    const isSelectedAccountIncluded = contacts.some(
+      ({ address: contactAddress }) => contactAddress.toLowerCase() === account.addr.toLowerCase()
+    )
+    if (isSelectedAccountIncluded) return contacts
+
+    return [
+      {
+        name: account.preferences.label,
+        address: account.addr,
+        isWalletAccount: true
+      },
+      ...contacts
+    ]
+  }, [account, contacts, includeSelectedAccount])
+
+  const selectableContacts = useMemo<Contact[]>(() => {
+    if (!hiddenAddresses?.length) return contactsWithSelectedAccount
+
+    const hiddenAddressSet = new Set(hiddenAddresses.map((addr) => addr.toLowerCase()))
+    return contactsWithSelectedAccount.filter(
+      ({ address: contactAddress }) => !hiddenAddressSet.has(contactAddress.toLowerCase())
+    )
+  }, [contactsWithSelectedAccount, hiddenAddresses])
+
+  // Computed once for the whole list, so the rows don't each subscribe to the keystore.
+  // Safe accounts are left out, like in the accounts list
+  const viewOnlyAccountAddresses = useMemo(
+    () =>
+      new Set(
+        accounts
+          .filter((acc) => !acc.safeCreation && getIsViewOnly(keys, acc.associatedKeys))
+          .map((acc) => acc.addr)
+      ),
+    [accounts, keys]
+  )
+
+  const onManagePress = useCallback(() => {
+    navigate(ROUTES.addressBook)
+  }, [navigate])
+
+  const searchableContacts = useMemo(
+    () =>
+      selectableContacts.map((contact) => ({
+        contact,
+        name: contact.name.toLowerCase(),
+        address: contact.address.toLowerCase(),
+        domain: getSearchableNames(domains[contact.address]?.names)
+      })),
+    [selectableContacts, domains]
+  )
+
+  const filteredContacts = useMemo(() => {
+    if (!actualAddress) return selectableContacts
+
+    const fuse = new Fuse(searchableContacts, {
+      keys: [
+        { name: 'name', weight: 0.5 },
+        { name: 'domain', weight: 0.3 },
+        { name: 'address', weight: 0.2 }
+      ],
+      threshold: 0.3,
+      ignoreLocation: true,
+      minMatchCharLength: 1
+    })
+
+    const results = fuse.search(actualAddress)
+    return results.map((result) => result.item.contact)
+  }, [selectableContacts, actualAddress, searchableContacts])
+
+  // Mobile lists every account and contact; web narrows them to what's typed. Typing on mobile
+  // must not rebuild the options, or every row re-renders on each keystroke
+  const privacyPoolsSearch = isMobile ? '' : actualAddress
+  const listedContacts = isMobile ? selectableContacts : filteredContacts
+
+  const filteredPrivacyPoolsAccounts = useMemo(
+    () =>
+      privacyPoolsAccounts && onSelectPrivacyPoolsAccount
+        ? filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, privacyPoolsSearch, t)
+        : NO_PRIVACY_POOLS_ACCOUNTS,
+    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, privacyPoolsSearch, t]
+  )
+
+  // Looked up rather than parsed back from the option value
+  const privacyPoolsSeedIdByOptionValue = useMemo(
+    () =>
+      new Map(
+        filteredPrivacyPoolsAccounts.map(({ seedId }) => [
+          `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
+          seedId
+        ])
+      ),
+    [filteredPrivacyPoolsAccounts]
+  )
+
+  const setAddressWrapped = useCallback(
+    ({ value: newAddress }: Pick<SelectValue, 'value'>) => {
+      if (typeof newAddress !== 'string') return
+
+      const privacyPoolsSeedId = privacyPoolsSeedIdByOptionValue.get(newAddress)
+      if (privacyPoolsSeedId) {
+        onSelectPrivacyPoolsAccount?.(privacyPoolsSeedId)
+        return
+      }
+
+      setAddress(newAddress)
+    },
+    [onSelectPrivacyPoolsAccount, privacyPoolsSeedIdByOptionValue, setAddress]
+  )
+
+  const privacyPoolsAccountOptions = useMemo(
+    () =>
+      filteredPrivacyPoolsAccounts.map(({ seedId, label, sourceLabel }) => ({
+        value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
+        // Named like in the accounts list: the account has no address of its own
+        label: (
+          <View
+            testID={`address-book-privacy-pools-account-${seedId}`}
+            style={[flexbox.directionRow, flexbox.alignCenter]}
+          >
+            <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
+            <View style={flexbox.flex1}>
+              <Text fontSize={14} weight="medium" numberOfLines={1}>
+                {label}
+              </Text>
+              <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
+                {t('From {{seedLabel}}', { seedLabel: sourceLabel })}
+              </Text>
+            </View>
+          </View>
+        )
+      })),
+    [filteredPrivacyPoolsAccounts, t]
+  )
+
+  const walletAccountsSourcedContactOptions = useMemo(
+    () =>
+      listedContacts
+        .filter((contact) => contact.isWalletAccount)
+        .map((contact, index) => ({
+          value: contact.address,
+          label: (
+            <AddressBookContact
+              avatarSize={32}
+              testID={`address-book-my-wallet-contact-${index + 1}`}
+              key={contact.address}
+              style={{
+                borderRadius: 0,
+                ...spacings.ph0,
+                ...spacings.pv0
+              }}
+              address={contact.address}
+              name={contact.name}
+              plainAddressMaxLength={contactAddressMaxLength}
+              // Tapping a row selects the address, so a copy icon is not needed on mobile
+              withCopy={isWeb}
+              isViewOnly={viewOnlyAccountAddresses.has(contact.address)}
+            />
+          )
+        })),
+    [listedContacts, contactAddressMaxLength, viewOnlyAccountAddresses]
+  )
+
+  const manuallyAddedContactOptions = useMemo(
+    () =>
+      listedContacts
+        .filter((contact) => !contact.isWalletAccount)
+        .map((contact) => ({
+          value: contact.address,
+          label: (
+            <AddressBookContact
+              avatarSize={32}
+              key={contact.address}
+              style={{
+                borderRadius: 0,
+                ...spacings.ph0,
+                ...spacings.pv0
+              }}
+              address={contact.address}
+              name={contact.name}
+              plainAddressMaxLength={contactAddressMaxLength}
+              withCopy={isWeb}
+            />
+          )
+        })),
+    [listedContacts, contactAddressMaxLength]
+  )
+
+  const selectedOption = useMemo(
+    () =>
+      walletAccountsSourcedContactOptions.find((contact) => contact.value === address) ||
+      manuallyAddedContactOptions.find((contact) => contact.value === address),
+    [walletAccountsSourcedContactOptions, manuallyAddedContactOptions, address]
+  )
+
+  const sections = useMemo(() => {
+    const myWallets = { data: walletAccountsSourcedContactOptions, key: 'my-wallets' }
+    const privacyPoolsAccountsSection = {
+      data: privacyPoolsAccountOptions,
+      key: 'privacy-pools-accounts'
+    }
+    const addressBook = { data: manuallyAddedContactOptions, key: 'contacts' }
+    const shownSections = !hasAccountsTabs
+      ? [myWallets, addressBook]
+      : activeTab === 'private'
+        ? [privacyPoolsAccountsSection]
+        : [myWallets, addressBook]
+
+    if (shownSections.every(({ data }) => !data.length)) return []
+
+    return shownSections
+  }, [
+    activeTab,
+    hasAccountsTabs,
+    walletAccountsSourcedContactOptions,
+    privacyPoolsAccountOptions,
+    manuallyAddedContactOptions
+  ])
+
+  const accountsTabs = useMemo(
+    () =>
+      hasAccountsTabs ? (
+        <AccountsTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          disabledTabReasons={
+            canSendToPrivacyPoolsAccounts
+              ? undefined
+              : { private: t('A view-only account cannot send to a private account.') }
+          }
+          style={spacings.mvTy}
+        />
+      ) : undefined,
+    [activeTab, canSendToPrivacyPoolsAccounts, hasAccountsTabs, t]
+  )
+
+  const renderSectionHeader = useCallback(
+    ({ section }: { section: SectionedSelectProps['sections'][0] }) => {
+      if (section.data.length === 0) return null
+
+      return section.key === 'contacts' ? (
+        <TitleAndIcon title={t('Address Book')} icon={AddressBookIcon}>
+          {isWeb && (
+            <AnimatedPressable
+              style={[flexbox.directionRow, flexbox.alignCenter, manageBtnAnimStyle]}
+              onPress={onManagePress}
+              {...bindManageBtnAnim}
+            >
+              <SettingsIcon width={18} height={18} color={theme.secondaryText} />
+              <Text fontSize={14} style={spacings.mlMi} appearance="secondaryText">
+                {t('Manage contacts')}
+              </Text>
+            </AnimatedPressable>
+          )}
+        </TitleAndIcon>
+      ) : (
+        // The Privacy Pools accounts too: they are the user's own, like those of the public tab
+        <TitleAndIcon title={t('My wallets')} icon={WalletIcon} />
+      )
+    },
+    [bindManageBtnAnim, manageBtnAnimStyle, onManagePress, t, theme.secondaryText]
+  )
+
+  // A near-identical address is most likely a typo of a known recipient, not a poisoning lookalike
+  const nearIdenticalAddressMatch =
+    addressPoisoningMatch && isNearIdenticalAddressMatch(addressPoisoningMatch)
+      ? addressPoisoningMatch
+      : null
+
+  const renderConfirmAddress = useCallback(
+    () =>
+      nearIdenticalAddressMatch ? (
+        // Saving a likely typo to the address book would only make it look trusted later
+        <NearIdenticalAddressSuggestion
+          suggestedAddress={nearIdenticalAddressMatch.matchedAddress}
+          setAddress={setAddress}
+        />
+      ) : (
+        <AddToAddressBook
+          isRecipientHumanizerKnownTokenOrSmartContract={
+            isRecipientHumanizerKnownTokenOrSmartContract
+          }
+          isRecipientAddressSavable={isRecipientAddressUnknown && !addressPoisoningMatch}
+          isRecipientAddressSameAsSender={actualAddress === account?.addr}
+          addressValidationMsg={addressValidationMsg}
+          domainVerificationMessage={domainVerificationMessage}
+          onAddToAddressBookPress={openBottomSheet}
+        />
+      ),
+    [
+      nearIdenticalAddressMatch,
+      setAddress,
+      isRecipientHumanizerKnownTokenOrSmartContract,
+      isRecipientAddressUnknown,
+      addressPoisoningMatch,
+      actualAddress,
+      account,
+      addressValidationMsg,
+      domainVerificationMessage,
+      openBottomSheet
+    ]
+  )
+
+  // Highlights what differs from the known address: everything between the matching edges of a
+  // poisoning lookalike, or only the few mistyped chars of a near-identical address.
+  const selectedAddressHighlight = useMemo(
+    () =>
+      addressPoisoningMatch
+        ? {
+            prefix: addressPoisoningMatch.matchedPrefixCharsCount,
+            suffix: addressPoisoningMatch.matchedSuffixCharsCount,
+            color: 'errorText' as const,
+            differingFrom: nearIdenticalAddressMatch?.matchedAddress
+          }
+        : undefined,
+    [addressPoisoningMatch, nearIdenticalAddressMatch]
+  )
+
+  const renderSelectedOption = useCallback(
+    ({ setIsMenuOpen, isMenuOpen, selectRef }: RenderSelectedOptionParams) => {
+      return (
+        <SelectedMenuOption
+          setIsMenuOpen={setIsMenuOpen}
+          selectRef={selectRef}
+          filteredContacts={filteredContacts}
+          isMenuOpen={isMenuOpen}
+          validation={validation}
+          resolvedAddress={resolvedAddress}
+          resolvedAddressType={resolvedAddressType}
+          isRecipientDomainResolving={isRecipientDomainResolving}
+          address={address}
+          setAddress={setAddress}
+          disabled={disabled}
+          renderConfirmAddress={renderConfirmAddress}
+          addressHighlight={selectedAddressHighlight}
+          inputBackgroundColor={inputBackgroundColor}
+          plainAddressMaxLength={contactAddressMaxLength}
+          isSuccessHidden={isSuccessHidden}
+          customBottomLabel={customBottomLabel}
+        />
+      )
+    },
+    [
+      filteredContacts,
+      validation,
+      resolvedAddress,
+      resolvedAddressType,
+      isRecipientDomainResolving,
+      address,
+      setAddress,
+      disabled,
+      renderConfirmAddress,
+      selectedAddressHighlight,
+      inputBackgroundColor,
+      contactAddressMaxLength,
+      isSuccessHidden,
+      customBottomLabel
+    ]
+  )
+
+  return (
+    <>
+      <SectionedSelect
+        value={selectedOption}
+        setValue={setAddressWrapped}
+        mode={isNarrowWebLayout ? 'bottomSheet' : undefined}
+        sections={sections}
+        headerHeight={32}
+        menuOptionHeight={54}
+        withSearch={false}
+        renderSectionHeader={renderSectionHeader}
+        renderSelectedOption={renderSelectedOption}
+        emptyListPlaceholderText={
+          hasAccountsTabs && activeTab === 'private'
+            ? t('No accounts found')
+            : t('No contacts found')
+        }
+        menuHeader={accountsTabs}
+        menuPosition="bottom"
+        bottomSheetTitle={bottomSheetTitle}
+        isBottomSheetFullHeight
+        renderHeaderChildren={({ toggleMenu, isMenuOpen, selectRef }) => (
+          <SelectedMenuOption
+            type="input"
+            selectRef={selectRef}
+            autoFocus
+            setIsMenuOpen={toggleMenu}
+            filteredContacts={filteredContacts}
+            isMenuOpen={isMenuOpen}
+            validation={validation}
+            resolvedAddress={resolvedAddress}
+            resolvedAddressType={resolvedAddressType}
+            // Keep highlight visible on mobile; don't show resolving UI when poisoning highlight exists.
+            isRecipientDomainResolving={isRecipientDomainResolving && !selectedAddressHighlight}
+            address={address}
+            setAddress={setAddress}
+            disabled={disabled}
+            addressHighlight={selectedAddressHighlight}
+            plainAddressMaxLength={contactAddressMaxLength}
+            isSuccessHidden={isSuccessHidden}
+            customBottomLabel={customBottomLabel}
+          />
+        )}
+        containerStyle={spacings.mb0}
+      />
+
+      <AddContactBottomSheet
+        sheetRef={sheetRef}
+        address={getAddressFromAddressState({
+          resolvedAddress,
+          fieldValue: address
+        })}
+        closeBottomSheet={closeBottomSheet}
+      />
+    </>
+  )
+}
+
+export default React.memo(AddressSelect)

@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono'
 import {
   Poppins_300Light,
@@ -14,6 +16,8 @@ import {
   Roboto_900Black
 } from '@expo-google-fonts/roboto'
 
+import { captureException } from '@common/config/analytics/CrashAnalytics'
+
 import { UseFontsReturnType } from './constants'
 
 // Web implementation: fonts are loaded at runtime and registered as @font-face families.
@@ -21,7 +25,7 @@ import { UseFontsReturnType } from './constants'
 // and the native embedded fonts. On native this file is overridden by `useFonts.native`, which
 // relies on the natively embedded fonts and needs no runtime loading.
 export default function useFonts(): UseFontsReturnType {
-  const [fontsLoaded] = useFontsRn({
+  const [fontsLoaded, fontsError] = useFontsRn({
     'Poppins-Light': Poppins_300Light,
     'Poppins-Regular': Poppins_400Regular,
     'Poppins-Medium': Poppins_500Medium,
@@ -34,5 +38,13 @@ export default function useFonts(): UseFontsReturnType {
     'GeistMono-Regular': GeistMono_400Regular
   })
 
-  return { fontsLoaded }
+  useEffect(() => {
+    if (!fontsError) return
+
+    captureException(fontsError)
+  }, [fontsError])
+
+  // A failed font check must not block the app forever. Text falls back to system fonts, and the
+  // browser still applies a web font whose @font-face finishes loading later.
+  return { fontsLoaded: fontsLoaded || !!fontsError }
 }

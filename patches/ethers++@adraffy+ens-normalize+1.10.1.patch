@@ -1,0 +1,82 @@
+diff --git a/node_modules/ethers/node_modules/@adraffy/ens-normalize/dist/index.cjs b/node_modules/ethers/node_modules/@adraffy/ens-normalize/dist/index.cjs
+index ffd0ffb..7629266 100644
+--- a/node_modules/ethers/node_modules/@adraffy/ens-normalize/dist/index.cjs
++++ b/node_modules/ethers/node_modules/@adraffy/ens-normalize/dist/index.cjs
+@@ -742,7 +742,7 @@ function should_escape(cp) {
+ // ordered by length then lexicographic 
+ function ens_emoji() {
+ 	init();
+-	return EMOJI_LIST.map(x => x.slice()); // emoji are exposed so copy
++	return EMOJI_LIST.map(x => Emoji.from(x)); // emoji are exposed so copy (Emoji.from keeps the class on Hermes)
+ }
+ 
+ function ens_normalize_fragment(frag, decompose) {
+@@ -798,7 +798,7 @@ function array_replace(v, a, b) {
+ }
+ 
+ function ens_split(name, preserve_emoji) {
+-	return split(name, nfc, preserve_emoji ? x => x.slice() : filter_fe0f); // emoji are exposed so copy
++	return split(name, nfc, preserve_emoji ? x => Emoji.from(x) : filter_fe0f); // emoji are exposed so copy (Emoji.from keeps the class on Hermes)
+ }
+ 
+ function split(name, nf, ef) {
+@@ -1106,7 +1106,8 @@ function tokens_from_str(input, nf, ef) {
+ }
+ 
+ function filter_fe0f(cps) {
+-	return cps.filter(cp => cp != FE0F);
++	// rebuild as Emoji: Hermes has no Symbol.species, so filter() returns a plain Array and drops is_emoji
++	return Emoji.from(cps.filter(cp => cp != FE0F));
+ }
+ 
+ // given array of codepoints
+@@ -1154,7 +1155,7 @@ function ens_tokenize(name, {
+ 		if (emoji) {
+ 			tokens.push({
+ 				type: TY_EMOJI,
+-				emoji: emoji.slice(), // copy emoji
++				emoji: Emoji.from(emoji), // copy emoji (Emoji.from keeps the class on Hermes)
+ 				input: eaten,
+ 				cps: filter_fe0f(emoji)
+ 			});
+diff --git a/node_modules/ethers/node_modules/@adraffy/ens-normalize/dist/index.mjs b/node_modules/ethers/node_modules/@adraffy/ens-normalize/dist/index.mjs
+index a82f7a2..191f966 100644
+--- a/node_modules/ethers/node_modules/@adraffy/ens-normalize/dist/index.mjs
++++ b/node_modules/ethers/node_modules/@adraffy/ens-normalize/dist/index.mjs
+@@ -740,7 +740,7 @@ function should_escape(cp) {
+ // ordered by length then lexicographic 
+ function ens_emoji() {
+ 	init();
+-	return EMOJI_LIST.map(x => x.slice()); // emoji are exposed so copy
++	return EMOJI_LIST.map(x => Emoji.from(x)); // emoji are exposed so copy (Emoji.from keeps the class on Hermes)
+ }
+ 
+ function ens_normalize_fragment(frag, decompose) {
+@@ -796,7 +796,7 @@ function array_replace(v, a, b) {
+ }
+ 
+ function ens_split(name, preserve_emoji) {
+-	return split(name, nfc, preserve_emoji ? x => x.slice() : filter_fe0f); // emoji are exposed so copy
++	return split(name, nfc, preserve_emoji ? x => Emoji.from(x) : filter_fe0f); // emoji are exposed so copy (Emoji.from keeps the class on Hermes)
+ }
+ 
+ function split(name, nf, ef) {
+@@ -1104,7 +1104,8 @@ function tokens_from_str(input, nf, ef) {
+ }
+ 
+ function filter_fe0f(cps) {
+-	return cps.filter(cp => cp != FE0F);
++	// rebuild as Emoji: Hermes has no Symbol.species, so filter() returns a plain Array and drops is_emoji
++	return Emoji.from(cps.filter(cp => cp != FE0F));
+ }
+ 
+ // given array of codepoints
+@@ -1152,7 +1153,7 @@ function ens_tokenize(name, {
+ 		if (emoji) {
+ 			tokens.push({
+ 				type: TY_EMOJI,
+-				emoji: emoji.slice(), // copy emoji
++				emoji: Emoji.from(emoji), // copy emoji (Emoji.from keeps the class on Hermes)
+ 				input: eaten,
+ 				cps: filter_fe0f(emoji)
+ 			});

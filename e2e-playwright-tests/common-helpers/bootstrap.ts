@@ -2,16 +2,41 @@ import { KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
 
+import path from 'path'
+
 import { BrowserContext, chromium, Page } from '@playwright/test'
 
-const buildPath = `build/${process.env.WEBPACK_BUILD_OUTPUT_PATH || 'webkit-prod'}`
+// Mirrors the build output resolution of webpack/env.js, so the tests pick up the
+// extension even when BUILD_DIR moves the builds outside of the repo.
+const buildDir = process.env.BUILD_DIR || path.resolve(__dirname, '../../build')
+const extensionPath = path.join(buildDir, process.env.WEBPACK_BUILD_OUTPUT_PATH || 'webkit-prod')
 const USER_DATA_DIR = '' // you can set a temp dir if needed
+const DEFAULT_SLOW_MO = 10
+
+// Launching a persistent context ignores `use.headless` from the config, so watching a run
+// locally is opted into here instead
+const isHeaded = process.env.PLAYWRIGHT_HEADED === 'true'
+const slowMoFromEnv = process.env.PLAYWRIGHT_SLOW_MO
+  ? Number.parseInt(process.env.PLAYWRIGHT_SLOW_MO, 10)
+  : NaN
+const slowMo = Number.isFinite(slowMoFromEnv) ? slowMoFromEnv : DEFAULT_SLOW_MO
 
 let currentContext: BrowserContext | null = null
 
+// Storage flags that hide one-time UI announcements (e.g. the CoW Swap card on Swap & Bridge),
+// so they don't cover the elements the tests interact with
+const DISMISSED_ANNOUNCEMENTS_STORAGE = {
+  cowSwapAnnouncementDismissed: true
+}
+
+// Disables CoW Swap in Swap & Bridge, while keeping every other swap provider enabled
+const SWAP_PROVIDERS_STORAGE = {
+  disabledSwapProviderIds: JSON.stringify(['cowswap'])
+}
+
 const playwrightArgs = [
-  `--disable-extensions-except=${__dirname}/../../${buildPath}/`,
-  `--load-extension=${__dirname}/../${buildPath}/`,
+  `--disable-extensions-except=${extensionPath}/`,
+  `--load-extension=${extensionPath}/`,
   '--disable-features=DialMediaRouteProvider,LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests',
   '--clipboard-write=granted',
   '--clipboard-read=prompt',
@@ -55,7 +80,8 @@ async function initBrowser(namespace: string): Promise<{
   // 1. Launch persistent context with extension
   const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
     channel: 'chromium',
-    slowMo: 10,
+    headless: !isHeaded,
+    slowMo,
     ignoreHTTPSErrors: true,
     args: playwrightArgs,
     env: process.env.DISPLAY ? { DISPLAY: process.env.DISPLAY } : undefined,
@@ -140,7 +166,11 @@ export async function bootstrap(namespace: string) {
 
   await waitForStorage(serviceWorker)
 
-  await serviceWorker.evaluate(() => chrome.storage.local.set({ isE2EStorageSet: true }))
+  await serviceWorker.evaluate((params) => chrome.storage.local.set(params), {
+    isE2EStorageSet: true,
+    ...DISMISSED_ANNOUNCEMENTS_STORAGE,
+    ...SWAP_PROVIDERS_STORAGE
+  })
   return { page, context, extensionURL }
 }
 
@@ -179,6 +209,8 @@ export async function bootstrapWithStorage(
     selectedAccount,
     isE2EStorageSet: true,
     isSetupComplete: 'true',
+    ...DISMISSED_ANNOUNCEMENTS_STORAGE,
+    ...SWAP_PROVIDERS_STORAGE,
     ...(!shouldUnlockKeystoreManually && {
       keyStoreUid,
       keystoreKeys,

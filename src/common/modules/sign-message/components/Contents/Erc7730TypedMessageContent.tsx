@@ -6,7 +6,9 @@ import type { ISignMessageController } from '@ambire-common/interfaces/signMessa
 import type { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
 import { stringify } from '@ambire-common/libs/richJson/richJson'
 import CopyText from '@common/components/CopyText'
-import HumanizedVisualization from '@common/components/HumanizedVisualization'
+import HumanizedVisualization, {
+  getErc7730IntentText
+} from '@common/components/HumanizedVisualization'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Label from '@common/components/Label'
 import Text from '@common/components/Text'
@@ -39,7 +41,10 @@ const Erc7730TypedMessageContent = ({
   const { styles, theme } = useTheme(getStyles)
   const { maxWidthSize } = useWindowSize()
   const [activeTab, setActiveTab] = useState<ActiveTab>('parsed')
-  const title = useMemo(() => data.find((item) => !!item.title)?.title, [data])
+  const title = useMemo(
+    () => data.map((item) => getErc7730IntentText(item)).find((text) => !!text),
+    [data]
+  )
   const rawMessageContent = useMemo(
     () => (messageContent ? stringify(messageContent, { pretty: true }) : ''),
     [messageContent]

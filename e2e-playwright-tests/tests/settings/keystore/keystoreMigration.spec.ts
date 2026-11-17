@@ -84,7 +84,7 @@ test.describe('keystore AES-CTR → AES-GCM migration', { tag: '@keystoreMigrati
     expect(actualCount).toBe(expectedIds.length)
 
     for (const [seedId, expected] of Object.entries(EXPECTED_SEEDS)) {
-      const { phrase, passphrase } = await pages.recoveryPhrases.revealSeed(seedId)
+      const { phrase, passphrase } = await pages.recoveryPhrases.revealSeed({ seedId: seedId })
       expect(phrase).toBe(expected.seed)
       if (expected.passPhrase) {
         expect(passphrase).toBe(expected.passPhrase)
@@ -96,7 +96,10 @@ test.describe('keystore AES-CTR → AES-GCM migration', { tag: '@keystoreMigrati
 
   test('internal PKs export correctly; HW keys not exportable', async ({ pages }) => {
     for (const key of EXPORTABLE_KEYS) {
-      const privateKey = await pages.accountKeys.exportPrivateKey(key.addr, key.accountAddr)
+      const privateKey = await pages.accountKeys.exportPrivateKey({
+        keyAddr: key.addr,
+        accountAddr: key.accountAddr
+      })
       // The migrated (AES-GCM re-encrypted) key still decrypts to a private key that derives
       // back to its address — proving the re-encrypted material is intact and usable
       expect(ethers.computeAddress(privateKey).toLowerCase()).toBe(key.addr.toLowerCase())

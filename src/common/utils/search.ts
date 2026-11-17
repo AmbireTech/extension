@@ -1,7 +1,7 @@
 import Fuse from 'fuse.js'
 
 import { Network } from '@ambire-common/interfaces/network'
-import { TokenResult } from '@ambire-common/libs/portfolio'
+import { PortfolioAsset } from '@ambire-common/libs/portfolio/interfaces'
 
 const searchWithNetworkName = <T extends object>({
   networks,
@@ -62,14 +62,14 @@ const searchWithNetworkName = <T extends object>({
   return result.map(({ item }) => item) as T[]
 }
 
-const tokenOrCollectionSearch = ({
+const tokenOrCollectionSearch = <T extends PortfolioAsset>({
   networks,
   assets,
   search,
   searchType = 'token'
 }: {
   networks: Network[]
-  assets: TokenResult[]
+  assets: T[]
   search: string
   searchType?: 'token' | 'collection'
 }) => {

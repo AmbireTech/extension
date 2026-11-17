@@ -12,10 +12,16 @@ import {
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import useController from '@common/hooks/useController'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+
 const useHasGasTank = ({ account }: { account: Account | null }) => {
   const { t } = useTranslation()
-  const { state: keys } = useController('KeystoreController', 'keys')
-  const { state: accountStates } = useController('AccountsController', 'accountStates')
+  const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: accountStates } = useController('AccountsController', selectAccountStates)
 
   const isViewOnly = useMemo(
     () => account && getIsViewOnly(keys, account.associatedKeys),

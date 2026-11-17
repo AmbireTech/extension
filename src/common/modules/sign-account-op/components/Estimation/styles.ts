@@ -13,6 +13,7 @@ interface Style {
   estimationScrollView: ViewStyle
   spinner: ViewStyle
   nativeBridgeFeeContainer: ViewStyle
+  feeHeaderDivider: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
@@ -45,6 +46,12 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       width: '100%',
       height: SELECT_SIZE_TO_HEIGHT[DEFAULT_SELECT_SIZE],
       backgroundColor: theme.secondaryBackground
+    },
+    feeHeaderDivider: {
+      width: 1,
+      height: 20,
+      // The border tokens are white or near-white in the light theme, so they vanish on the footer
+      backgroundColor: theme.tertiaryBackground
     }
   })
 

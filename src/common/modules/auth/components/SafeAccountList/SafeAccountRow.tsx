@@ -48,7 +48,7 @@ const SafeAccountRow = ({
     () => (
       <View style={styles.deployedOnContainer}>
         <Text appearance="secondaryText" fontSize={12}>
-          {t('Deployed on:')}
+          {t('Active on:')}
         </Text>
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
           {account.deployedOn.map((chainId, index) => (

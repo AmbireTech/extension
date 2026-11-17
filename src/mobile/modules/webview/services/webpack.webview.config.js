@@ -7,6 +7,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const fs = require('fs')
 const crypto = require('crypto')
 const { execSync } = require('child_process')
+const { validateRelayerCustomHeaders } = require('../../../../../scripts/validateEnv')
+
+// The worker bundle never gets the custom headers, but the build refuses them in CI anyway.
+validateRelayerCustomHeaders(process.env)
 
 // Since Webpack is executed from the project root via package.json scripts,
 // process.cwd() provides the absolute path to the project root directory
@@ -81,7 +85,6 @@ const sharedResolve = {
     react: path.resolve(ROOT_DIR, 'node_modules/react'),
     'react-native$': 'react-native-web',
     'react-native-quick-crypto': 'crypto-browserify',
-    'react-native-quick-base64': 'buffer',
     'scrypt-js': path.resolve(ROOT_DIR, 'src/mobile/shims/scrypt-js.ts'),
     pbkdf2: path.resolve(ROOT_DIR, 'src/mobile/shims/pbkdf2.ts'),
     '@react-native-community/netinfo': false,
@@ -346,8 +349,8 @@ class EmitOtaBundleJsonPlugin {
  * Why only these three keys? Everything else is already inlined WITHOUT this object:
  *   - our own `process.env.X` reads -> babel's transform-inline-environment-variables replaces them
  *     with their literal value at each read site;
- *   - `@env` imports (RELAYER_URL, VELCRO_URL, the REACT_APP_ keys, LI_FI, BUNGEE, UNISWAP,
- *     WALLETCONNECT, SENTRY_DSN, ...) -> react-native-dotenv inlines them at each import site.
+ *   - `@env` imports (RELAYER_URL, VELCRO_URL, the REACT_APP_ keys, LI_FI, COWSWAP, BUNGEE, UNISWAP,
+ *     WALLETCONNECT, SENTRY_DSN_MOBILE, ...) -> react-native-dotenv inlines them at each import site.
  * This object only backstops WHOLESALE `process.env` reads in third-party deps, and the only key a
  * bundled dep actually reads that way is NODE_ENV (React et al. branch on it). WEB_ENGINE and APP_ENV
  * are kept as an explicit, build-host-independent fallback for our own env.ts.
@@ -498,7 +501,8 @@ const inpageConfig = {
   output: {
     path: path.resolve(ROOT_DIR, 'src/mobile/modules/webview/services'),
     filename: '[name]-bundle.js',
-    libraryTarget: 'window',
+    // Deliberately no `libraryTarget: 'window'`: it copies the entry exports onto the dapp's
+    // window, `__esModule` included, which breaks webpack-bundled dapps reading `window` (#8387).
     publicPath: isDev ? '/' : ''
   },
   resolve: sharedResolve,

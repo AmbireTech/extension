@@ -7,11 +7,15 @@ import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Text from '@common/components/Text'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+// Applied to each part but the badge, which stays readable on a disabled option
+const disabledStyle = { opacity: 0.5 }
 
 interface Props {
   text: string
@@ -25,6 +29,8 @@ interface Props {
   status?: 'default' | 'expanded' | 'collapsed' | 'none'
   icons?: { key: string; component: React.FC<any> }[]
   ref?: React.Ref<any>
+  /** A badge next to the text, e.g. "Soon" for an option that is not available yet. Never dimmed */
+  badge?: React.ReactNode
 }
 
 const Option = ({
@@ -38,7 +44,8 @@ const Option = ({
   disabled,
   status = 'default',
   icons = [],
-  ref
+  ref,
+  badge
 }: Props) => {
   const { theme, styles, themeType } = useTheme(getStyles)
   const [bindAnim, animStyle, isHovered] = useCustomHover({
@@ -55,20 +62,22 @@ const Option = ({
       style={[
         styles.container,
         withBottomSpacing && spacings.mb,
+        // Keeps the space below the expanded options
+        !!children && spacings.pbTy,
         animStyle,
         status === 'expanded' && {
           backgroundColor: theme.secondaryBackground
-        },
-        disabled && { opacity: 0.5 }
+        }
       ]}
       onPress={onPress}
       {...bindAnim}
       testID={testID}
       disabled={disabled}
+      accessibilityRole="button"
       ref={ref}
     >
-      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-        <View style={styles.iconWrapper}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter, { height: BUTTON_HEIGHT }]}>
+        <View style={[styles.iconWrapper, disabled && disabledStyle]}>
           <Icon
             color={
               isHovered && themeType === THEME_TYPES.LIGHT ? theme.primaryAccent : theme.iconPrimary
@@ -76,24 +85,33 @@ const Option = ({
             {...iconProps}
           />
         </View>
-        <Text style={flexbox.flex1} fontSize={14} weight="medium" numberOfLines={1}>
-          {text}
-        </Text>
+        {/* The badge follows the text right away, so the text only takes as much room as it needs */}
+        <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
+          <Text
+            style={[{ flexShrink: 1 }, !!badge && spacings.mrTy, disabled && disabledStyle]}
+            fontSize={14}
+            weight="medium"
+            numberOfLines={1}
+          >
+            {text}
+          </Text>
+          {badge}
+        </View>
         {icons.length > 0 && (
-          <View style={[flexbox.directionRow, spacings.mrTy]}>
+          <View style={[flexbox.directionRow, spacings.mrTy, disabled && disabledStyle]}>
             {icons.map(({ key, component: Component }) => (
               <Component key={key} width={32} height={32} style={spacings.mrMi} />
             ))}
           </View>
         )}
 
-        <View style={spacings.mrSm}>
+        <View style={[spacings.mrSm, disabled && disabledStyle]}>
           {status === 'default' && <RightArrowIcon />}
           {status === 'expanded' && <UpArrowIcon />}
           {status === 'collapsed' && <DownArrowIcon />}
         </View>
       </View>
-      {children}
+      {disabled ? <View style={disabledStyle}>{children}</View> : children}
     </AnimatedPressable>
   )
 }

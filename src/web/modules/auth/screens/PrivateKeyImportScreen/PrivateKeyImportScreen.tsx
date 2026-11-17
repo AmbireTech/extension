@@ -1,14 +1,13 @@
 import React from 'react'
-import { Controller } from 'react-hook-form'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
-import Input from '@common/components/Input'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import PrivateKeyImportFields from '@common/modules/auth/components/PrivateKeyImportFields'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import usePrivateKeyImport from '@common/modules/auth/hooks/usePrivateKeyImport'
 import spacings from '@common/styles/spacings'
@@ -23,9 +22,14 @@ export const CARD_WIDTH = 400
 const PrivateKeyImportScreen = () => {
   const {
     control,
+    fields,
+    addPrivateKeyField,
+    removePrivateKeyField,
+    canAddMore,
     handleFormSubmit,
-    errors,
+    privateKeyFieldStates,
     isValid,
+    isImporting,
     handleValidation,
     agreedToBackupWarning,
     setAgreedToBackupWarning
@@ -49,30 +53,20 @@ const PrivateKeyImportScreen = () => {
           totalSteps={2}
         >
           <View style={[flexbox.justifySpaceBetween, flexbox.flex1]}>
-            <View>
-              <Controller
+            {/* Only the fields scroll, so the checkbox and the button below always stay visible */}
+            <ScrollView style={spacings.mbLg}>
+              <PrivateKeyImportFields
                 control={control}
-                rules={{ validate: (value) => handleValidation(value), required: true }}
-                name="privateKey"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    testID="enter-private-key-field"
-                    onBlur={onBlur}
-                    autoFocus
-                    placeholder={t('Input private key')}
-                    onChangeText={onChange}
-                    value={value}
-                    isValid={!handleValidation(value) && !!value.length}
-                    validLabel={t('✅ Valid private key')}
-                    secureTextEntry
-                    containerStyle={spacings.mbLg}
-                    backgroundColor={theme.secondaryBackground}
-                    error={value.length ? errors?.privateKey?.message : ''}
-                    autoCorrect={false}
-                    onSubmitEditing={handleFormSubmit}
-                  />
-                )}
+                fields={fields}
+                fieldStates={privateKeyFieldStates}
+                canAddMore={canAddMore}
+                onAdd={addPrivateKeyField}
+                onRemove={removePrivateKeyField}
+                handleValidation={handleValidation}
+                onSubmitEditing={handleFormSubmit}
               />
+            </ScrollView>
+            <View>
               <Checkbox
                 value={agreedToBackupWarning}
                 onValueChange={() => setAgreedToBackupWarning((prev) => !prev)}
@@ -80,20 +74,21 @@ const PrivateKeyImportScreen = () => {
                 style={spacings.mlTy}
                 label={
                   <Text fontSize={14} appearance="secondaryText">
-                    {t('I know I must keep a secure backup of my key.')}
+                    {fields.length > 1
+                      ? t('I know I must keep a secure backup of my keys.')
+                      : t('I know I must keep a secure backup of my key.')}
                   </Text>
                 }
               />
+              <Button
+                testID="import-button"
+                size="large"
+                text={t('Confirm')}
+                hasBottomSpacing={false}
+                onPress={handleFormSubmit}
+                disabled={!isValid || !agreedToBackupWarning || isImporting}
+              />
             </View>
-
-            <Button
-              testID="import-button"
-              size="large"
-              text={t('Confirm')}
-              hasBottomSpacing={false}
-              onPress={handleFormSubmit}
-              disabled={!isValid || !agreedToBackupWarning}
-            />
           </View>
         </Panel>
       </TabLayoutWrapperMainContent>

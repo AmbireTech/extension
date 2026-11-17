@@ -21,7 +21,8 @@ import {
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import HumanizedVisualization, {
-  getVisibleErc7730RowsExcludingTitleParts,
+  getErc7730IntentText,
+  getVisibleErc7730RowsExcludingIntentFields,
   MOBILE_ERC7730_TEXT_SIZE,
   shouldUseErc7730DetailedLayout
 } from '@common/components/HumanizedVisualization'
@@ -30,8 +31,8 @@ import Label from '@common/components/Label'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
-import useDecodeTransactionData from '@common/hooks/useDecodeTransactionData'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -39,7 +40,6 @@ import ExpandedContent from '@common/modules/sign-account-op/components/Transact
 import FallbackVisualization from '@common/modules/sign-account-op/components/TransactionSummary/FallbackVisualization'
 import spacings, { SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getUiType } from '@common/utils/uiType'
 
 import { sizeMultiplier } from './sizeMultiplier'
 import getStyles from './styles'
@@ -50,8 +50,8 @@ import type {
   IrCall
 } from '@ambire-common/libs/humanizer/interfaces'
 
-const { isSidePanel } = getUiType()
-const withMobileLayout = isMobile || isSidePanel
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props {
   style: ViewStyle
   call: IrCall
@@ -64,7 +64,6 @@ interface Props {
   onRightIconPress?: () => void
   hideDeleteIcon?: boolean
   hasCallFailed?: boolean
-  disableSelectorFetching?: boolean
 }
 
 export { sizeMultiplier }
@@ -147,6 +146,9 @@ const DataArgs = ({
   })
 }
 
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+
 const TransactionSummary = ({
   style,
   call,
@@ -158,22 +160,19 @@ const TransactionSummary = ({
   rightIcon,
   onRightIconPress,
   hideDeleteIcon,
-  hasCallFailed,
-  disableSelectorFetching
+  hasCallFailed
 }: Props) => {
   const textSize = 16 * sizeMultiplier[size]
   const imageSize = 32 * sizeMultiplier[size]
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { state: signAccountOpState, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
   const { styles, theme } = useTheme(getStyles)
   const { addToast } = useToast()
+  const { isCompactLayout: withMobileLayout } = useCompactLayout()
   const { t } = useTranslation()
-  const { decodedFunction, isLoading: isDecodedFunctionLoading } = useDecodeTransactionData(
-    call,
-    !!disableSelectorFetching
-  )
+  const { decodedCall } = call
 
   /**
    * It takes some time to remove the call from the controller state, so we optimistically
@@ -200,7 +199,7 @@ const TransactionSummary = ({
   const hasErc7730TransactionSummaryRows = useMemo(
     () =>
       !!erc7730Visualization &&
-      getVisibleErc7730RowsExcludingTitleParts(erc7730Visualization).length > 0,
+      getVisibleErc7730RowsExcludingIntentFields(erc7730Visualization).length > 0,
     [erc7730Visualization]
   )
   const shouldPadMobileErc7730TitleBottom =
@@ -209,7 +208,7 @@ const TransactionSummary = ({
   const erc7730DetailedTitle = useMemo(() => {
     if (!erc7730Visualization) return ''
 
-    return erc7730Visualization.title || call.dapp?.name || t('Transaction details')
+    return getErc7730IntentText(erc7730Visualization) || call.dapp?.name || t('Transaction details')
   }, [call.dapp?.name, erc7730Visualization, t])
   const erc7730DetailedIcon = erc7730Visualization?.dapp?.icon || call.dapp?.icon
   const erc7730VisualizationKey = useMemo(
@@ -553,9 +552,9 @@ const TransactionSummary = ({
     if (!call.isFallback) return call.fullVisualization
     if (!call.to) return call.fullVisualization
     if (!call.data || call.data === '0x' || call.data.length < 10) return call.fullVisualization
-    if (isDecodedFunctionLoading) return [getLabel('Loading...')]
-    if (!decodedFunction) return call.fullVisualization
-    const functionName = decodedFunction.signature.split('(')[0]
+    if (call.isDecodingCall) return [getLabel('Loading...')]
+    if (!decodedCall) return call.fullVisualization
+    const functionName = decodedCall.signature.split('(')[0]
     if (!functionName || !functionName[0]) return call.fullVisualization
 
     const capitalizedFunction = functionName[0].toUpperCase() + functionName.slice(1)
@@ -574,11 +573,11 @@ const TransactionSummary = ({
   }, [
     call.data,
     call.fullVisualization,
+    call.isDecodingCall,
     call.isFallback,
     call.to,
     call.value,
-    decodedFunction,
-    isDecodedFunctionLoading
+    decodedCall
   ])
   const shouldShowDeleteControl = !!call.id && type === 'default' && !rightIcon && !hideDeleteIcon
   const shouldShowRightControl = !!rightIcon && !!onRightIconPress && !hasCallFailed
@@ -602,7 +601,7 @@ const TransactionSummary = ({
             {...bindDeleteIconAnim}
             testID={`delete-txn-call-${index}`}
           >
-            <DeleteIcon width={withMobileLayout ? 26 : 28} height={withMobileLayout ? 26 : 28} />
+            <DeleteIcon width={withMobileLayout ? 24 : 26} height={withMobileLayout ? 24 : 26} />
           </AnimatedPressable>
         )}
         {shouldShowRightControl && (
@@ -626,6 +625,7 @@ const TransactionSummary = ({
   }, [
     bindDeleteIconAnim,
     deleteIconAnimStyle,
+    withMobileLayout,
     handleRemoveCall,
     index,
     isCallRemovedOptimistic,
@@ -674,17 +674,12 @@ const TransactionSummary = ({
     }
 
     // Non-detailed ("transaction summary") intents can be an interpolated sentence
-    // (erc7730Visualization.titleParts, e.g. "Swap {amount} for at least {amount}" with real
-    // token icons/amounts) rather than a static string. Reading `.title` directly like the
-    // detailed branch above would silently drop that interpolated detail, so this goes through
-    // the same HumanizedVisualization/Erc7730StructuredVisualization renderer the desktop
-    // title (content row, erc7730TransactionSummarySection="title") already uses.
-    if (
-      !erc7730Visualization.dapp?.icon &&
-      !erc7730Visualization.title &&
-      !erc7730Visualization.titleParts?.length
-    )
-      return null
+    // (erc7730Visualization.intent, e.g. "Swap {amount} for at least {amount}" with
+    // real token icons/amounts) rather than a static string. Reading a plain string directly
+    // like the detailed branch above would silently drop that interpolated detail, so this
+    // goes through the same HumanizedVisualization/Erc7730StructuredVisualization renderer the
+    // desktop title (content row, erc7730TransactionSummarySection="title") already uses.
+    if (!erc7730Visualization.dapp?.icon && !erc7730Visualization.intent.length) return null
 
     return (
       <HumanizedVisualization
@@ -729,7 +724,7 @@ const TransactionSummary = ({
         hasPadding={false}
         style={{ width: '100%', alignContent: 'flex-start' }}
         disableFlex
-        inlineDappIcon={isMobile}
+        inlineDappIcon
         editApprovalCallInfo={editApprovalCallInfo}
         dapp={call.dapp}
       />
@@ -738,6 +733,7 @@ const TransactionSummary = ({
     call.dapp,
     callVisualization,
     chainId,
+    withMobileLayout,
     editApprovalCallInfo,
     erc7730Visualization,
     imageSize,
@@ -749,11 +745,11 @@ const TransactionSummary = ({
   const tabOptions = useMemo(() => {
     let tabs: ([Tab, string] | null)[] = [
       ['raw', t('Raw data')],
-      decodedFunction ? ['parsed', t('Parsed data')] : null
+      decodedCall ? ['parsed', t('Parsed data')] : null
     ]
 
     return tabs.filter((x) => !!x)
-  }, [decodedFunction, t])
+  }, [decodedCall, t])
   const shouldAlignContentStart = useMemo(() => {
     if (shouldUseErc7730TransactionSummaryLayout) return true
     if (type !== 'default') return false
@@ -983,16 +979,16 @@ const TransactionSummary = ({
               sizeMultiplier={sizeMultiplier}
               styles={styles}
             />
-          ) : decodedFunction ? (
+          ) : decodedCall ? (
             <View style={styles.bodyText}>
               <Text selectable style={{ color: theme.secondaryText }} fontSize={12}>
                 {t('Function to call: ')}
-                {decodedFunction.signature}
+                {decodedCall.signature}
               </Text>
               <Text style={{ color: theme.secondaryText }} fontSize={12}>
                 {t('Decoded function arguments:')}
               </Text>
-              <DataArgs decodedArgs={decodedFunction.args} key="" />
+              <DataArgs decodedArgs={decodedCall.args} key="" />
             </View>
           ) : null}
         </View>
@@ -1028,9 +1024,7 @@ const TransactionSummary = ({
       <View
         style={{
           paddingHorizontal:
-            (shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout) &&
-            isWeb &&
-            !withMobileLayout
+            shouldUseErc7730TransactionSummaryLayout || shouldUseDetailedErc7730Layout
               ? SPACING_SM
               : 42 * sizeMultiplier[size] // magic number
         }}

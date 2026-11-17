@@ -6,22 +6,26 @@ import { SvgProps } from 'react-native-svg'
 import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import { ROUTES } from '@common/modules/router/constants/common'
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+
+const DEFAULT_ICON_SIZE = 24
 
 interface Props {
   label: string
   path: string
   isActive: boolean
   Icon?: FC<SvgProps>
+  iconSize?: number
   isExternal?: boolean
   onPress?: () => void | Promise<void>
   style?: ViewStyle
@@ -33,6 +37,7 @@ const SettingsLink: FC<Props> = ({
   label,
   path,
   Icon,
+  iconSize = DEFAULT_ICON_SIZE,
   isActive,
   isExternal,
   onPress,
@@ -79,8 +84,7 @@ const SettingsLink: FC<Props> = ({
         flexbox.justifySpaceBetween,
         flexbox.alignCenter,
         spacings.phSm,
-        isWeb && spacings.pv,
-        isMobile && { height: 54 },
+        { minHeight: BUTTON_HEIGHT },
         isSidebarLink ? spacings.prLg : {},
         isSidebarLink ? spacings.mbMi : flexbox.flex1,
         {
@@ -95,13 +99,21 @@ const SettingsLink: FC<Props> = ({
       ]}
       {...bindAnim}
     >
-      <View style={flexbox.directionRow}>
+      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
         {Icon ? (
-          <Icon
-            width={24}
-            height={24}
-            color={isSidebarLink && isActive ? theme.primaryAccent300 : theme.iconPrimary}
-          />
+          <View
+            style={{
+              width: DEFAULT_ICON_SIZE,
+              height: DEFAULT_ICON_SIZE,
+              ...flexbox.center
+            }}
+          >
+            <Icon
+              width={iconSize}
+              height={iconSize}
+              color={isSidebarLink && isActive ? theme.primaryAccent300 : theme.iconPrimary}
+            />
+          </View>
         ) : null}
         <Text style={[Icon && spacings.mlSm, isMobile && { lineHeight: 24 }]} weight="medium">
           {t(label)}

@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient'
 import { memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 
@@ -11,7 +10,6 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import CompactHumanizedCalls from '@common/modules/sign-account-op/components/CompactHumanizedCalls'
 import spacings from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
@@ -23,23 +21,13 @@ interface Props {
   /** Whether the nonce of the transaction is the one that executes next on its chain. A
    * fully signed transaction on a later nonce still has to wait for the ones before it. */
   isCurrentNonce: boolean
-  /** Whether an OR divider floats above the bundle. Half of the height of the divider is
-   * then reserved by the bundle, so that the divider needs no background of its own. */
-  hasDividerAbove: boolean
-  /** Whether an OR divider floats below the bundle. */
-  hasDividerBelow: boolean
 }
 
 /**
  * A single pending Safe transaction bundle. Shows the humanized calls it contains, how many
  * of the required signatures it has collected, and opens the sign flow through the Open button.
  */
-const PendingTransactionBundle: FC<Props> = ({
-  request,
-  isCurrentNonce,
-  hasDividerAbove,
-  hasDividerBelow
-}) => {
+const PendingTransactionBundle: FC<Props> = ({ request, isCurrentNonce }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const { dispatch: requestsDispatch } = useController('RequestsController')
@@ -65,43 +53,43 @@ const PendingTransactionBundle: FC<Props> = ({
   }, [request.id, requestsDispatch])
 
   return (
-    <LinearGradient
-      testID={`pending-transaction-bundle-${request.id}`}
-      // A soft diagonal sheen, so a pending transaction stands out from the executed ones
-      colors={[
-        hexToRgba(theme.primaryAccent, 0.14),
-        hexToRgba(theme.primaryAccent, 0.03),
-        hexToRgba(theme.primaryAccent, 0.1)
-      ]}
-      locations={[0, 0.55, 1]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[
-        styles.bundle,
-        spacings.phSm,
-        spacings.pvSm,
-        hasDividerAbove && styles.bundleWithDividerAbove,
-        hasDividerBelow && styles.bundleWithDividerBelow
-      ]}
-    >
+    <View testID={`pending-transaction-bundle-${request.id}`} style={styles.bundle}>
       {humanization?.length ? (
-        <CompactHumanizedCalls humanization={humanization} chainId={accountOp.chainId} />
+        <CompactHumanizedCalls
+          humanization={humanization}
+          chainId={accountOp.chainId}
+          textSize={14}
+          titleTextSize={16}
+          labelTextSize={12}
+          labelWeight="medium"
+          itemStyle={styles.bundleCard}
+        />
       ) : (
-        <Text fontSize={12} appearance="secondaryText">
-          {t('Preparing transaction details...')}
-        </Text>
+        <View style={styles.bundleCard}>
+          <Text fontSize={12} appearance="secondaryText">
+            {t('Preparing transaction details...')}
+          </Text>
+        </View>
       )}
 
       <View
         style={[
+          styles.bundleFooter,
           flexbox.directionRow,
           flexbox.alignCenter,
-          flexbox.justifySpaceBetween,
-          spacings.mtSm
+          flexbox.justifySpaceBetween
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, flexbox.flex1]}>
-          <Text fontSize={12} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            flexbox.wrap,
+            flexbox.flex1,
+            spacings.phSm
+          ]}
+        >
+          <Text fontSize={14} weight="medium" appearance="secondaryText" style={spacings.mrTy}>
             {t('{{signedCount}}/{{threshold}} signatures', { signedCount, threshold })}
           </Text>
           {hasAllSignatures && isCurrentNonce && (
@@ -145,10 +133,11 @@ const PendingTransactionBundle: FC<Props> = ({
           text={t('Open')}
           onPress={handleOpen}
           hasBottomSpacing={false}
-          style={[spacings.ml, { minWidth: 76, height: 40 }]}
+          textStyle={styles.actionButtonText}
+          style={[spacings.ml, styles.actionButton]}
         />
       </View>
-    </LinearGradient>
+    </View>
   )
 }
 

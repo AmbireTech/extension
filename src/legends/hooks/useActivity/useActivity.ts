@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { RELAYER_URL } from '@env'
 import { ActivityResponse } from '@legends/contexts/activityContext/types'
 
@@ -18,7 +19,7 @@ const useActivity = ({ page, accountAddress }: Props) => {
       if (!accountAddress) return null
       if (!isLoading) setIsLoading(true)
 
-      const activityResponse = await fetch(
+      const activityResponse = await fetchWithRelayerCustomHeaders(
         `${RELAYER_URL}/legends/activity/${accountAddress}?page=${page}`
       )
       if (!activityResponse.ok) {

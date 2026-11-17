@@ -10,6 +10,8 @@ import flexbox from '@common/styles/utils/flexbox'
 import BaseAddress from '../BaseAddress'
 import InlineAddressAvatar from './InlineAddressAvatar'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 interface Props extends TextProps {
   address: string
   chainId: bigint
@@ -17,7 +19,12 @@ interface Props extends TextProps {
   actionsMode?: 'tooltip' | 'inline'
   fallbackLabel?: string
   isToken?: boolean
+  /** Shows only names already known locally, with no lookup that sends the address out. */
+  isLocalLabelOnly?: boolean
 }
+
+const selectContractNames = (state: AllControllersMappingType['ContractNamesController']) =>
+  state.contractNames
 
 const BenzinAddressName: FC<Props> = ({
   address,
@@ -26,23 +33,27 @@ const BenzinAddressName: FC<Props> = ({
   actionsMode = 'tooltip',
   fallbackLabel,
   isToken,
+  isLocalLabelOnly,
   ...rest
 }) => {
-  const { isLoading: isLoadingEns, name } = useReverseLookup({ address })
+  const { isLoading: isLoadingEns, name } = useReverseLookup({
+    address,
+    privacyUpdateMode: isLocalLabelOnly ? 'never' : undefined
+  })
 
-  const {
-    state: { contractNames },
-    dispatch
-  } = useController('ContractNamesController')
+  const { state: contractNames, dispatch } = useController(
+    'ContractNamesController',
+    selectContractNames
+  )
 
   useEffect(() => {
-    if (!contractNames[address]) {
+    if (!contractNames[address] && !isLocalLabelOnly) {
       dispatch({
         type: 'method',
         params: { method: 'getName', args: [address, chainId] }
       })
     }
-  }, [address, chainId, contractNames, dispatch])
+  }, [address, chainId, contractNames, dispatch, isLocalLabelOnly])
 
   const foundContractName = useMemo(() => {
     const name = contractNames?.[address]?.name

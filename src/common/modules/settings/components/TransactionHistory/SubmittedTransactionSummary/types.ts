@@ -2,6 +2,7 @@ import { ViewStyle } from 'react-native'
 
 import {
   BalanceChange,
+  NftBalanceChange,
   SubmittedAccountOpLike
 } from '@ambire-common/libs/accountOp/submittedAccountOp'
 
@@ -19,14 +20,19 @@ export type DappInteraction = {
   id: string
   name: string
   iconUrl?: string | null
-  iconType?: 'send' | 'swap' | 'receive' | 'ambire' | 'safe'
+  iconType?: 'send' | 'swap' | 'receive' | 'ambire' | 'walletStaking' | 'safe'
   description?: string
   address?: string
-  safeNonce?: bigint
+  /** The nonce of the transaction a cancel takes the place of */
+  nonce?: bigint
   token?: string
   amount?: bigint
 }
 
-export type DisplayBalanceChange = BalanceChange & {
-  iconType?: 'gasTank'
-}
+export type DisplayBalanceChange =
+  | (BalanceChange & {
+      iconType?: 'gasTank'
+    })
+  | (NftBalanceChange & {
+      iconType?: never
+    })

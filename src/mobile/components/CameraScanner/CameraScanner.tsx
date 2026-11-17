@@ -6,7 +6,9 @@ import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import { useIsScreenFocused } from '@common/contexts/screenFocusContext'
 import useTheme from '@common/hooks/useTheme'
+import QrScanProgressBar from '@common/modules/hardware-wallets/components/QrScanProgressBar'
 import { getQrCodeCoverage } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
+import { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import MaskedView from '@react-native-masked-view/masked-view'
 
@@ -23,12 +25,20 @@ interface Props {
   // When true, scans are ignored (e.g. while the caller processes a result).
   isProcessing?: boolean
   frameSize?: number
+  // How much of an animated QR code is read, from 0 to 1. Shown as a bar along the
+  // bottom of the scan frame, hidden when not passed.
+  progress?: number
 }
 
 // Reusable camera surface: renders the back-facing QR camera with a blurred
 // overlay that cuts out a rounded scan frame. Permission gating is the caller's
 // responsibility — mount this only once camera access is granted.
-const CameraScanner = ({ onScan, isProcessing = false, frameSize = SCAN_FRAME_SIZE }: Props) => {
+const CameraScanner = ({
+  onScan,
+  isProcessing = false,
+  frameSize = SCAN_FRAME_SIZE,
+  progress
+}: Props) => {
   const { styles } = useTheme(getStyles)
   // The screen stays mounted underneath when another one is pushed on top of it,
   // so the camera has to be switched off explicitly.
@@ -72,6 +82,21 @@ const CameraScanner = ({ onScan, isProcessing = false, frameSize = SCAN_FRAME_SI
           <View style={[styles.corner, styles.cornerBottomRight]} />
         </View>
       </View>
+
+      {containerSize && progress !== undefined && (
+        <QrScanProgressBar
+          progress={progress}
+          // Inside the frame, because the screens size the camera to the frame and leave no
+          // room around it
+          style={{
+            position: 'absolute',
+            bottom: frameTop + SPACING,
+            left: frameLeft + SPACING,
+            width: frameSize - SPACING * 2,
+            zIndex: 200
+          }}
+        />
+      )}
 
       {/* Blur overlay with a rounded hole where the camera shows through */}
       {containerSize && (

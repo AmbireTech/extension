@@ -1,38 +1,45 @@
-import React, { FC, memo, useCallback } from 'react'
+import React, { FC, memo, ReactNode, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { textToValidDecimal } from '@ambire-common/utils/numbers/formatters'
-import FlipIcon from '@common/assets/svg/FlipIcon'
-import AmountInput from '@common/components/AmountInput'
+import InfoIcon from '@common/assets/svg/InfoIcon'
+import TokenAndAmountSelector from '@common/components/TokenAndAmountSelector'
 import Select, { SectionedSelect } from '@common/components/Select'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
-import MaxAmount from '@common/modules/swap-and-bridge/components/MaxAmount'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
-import { hexToRgba } from '@common/styles/utils/common'
+import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { ItemPanel } from '@web/components/TransactionsScreen'
+import {
+  getSliderAmountFieldValue,
+  parseSliderAmount,
+  SLIDER_FIAT_DECIMALS,
+  toFiatSliderAmount
+} from '@common/utils/amountSlider'
 
-import getStyles from './styles'
-
+import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const SECTION_MENU_HEADER_HEIGHT = 50
 
 type Props = {
   label: string
+  /** Puts the label left of the balance, on the same row, to save height. */
+  isLabelInline?: boolean
+  /** Amounts to pick with one tap, shown in place of the slider. */
+  amountPresets?: ReactNode
   fromTokenOptions: SelectValue[]
   fromTokenValue?: SelectValue
   fromAmountValue: string
   fromTokenAmountSelectDisabled: boolean
   handleChangeFromToken: (value: SelectValue) => void
-  fromSelectedToken: TokenResult | null
+  // Narrowed so non-portfolio tokens can be passed too
+  fromSelectedToken: Pick<TokenResult, 'symbol' | 'priceIn' | 'decimals'> | null
   fromAmount?: string
   fromAmountInFiat?: string
   fromAmountFieldMode: 'token' | 'fiat'
@@ -49,12 +56,24 @@ type Props = {
   selectTestId?: string
   maxAmountDisabled?: boolean
   simulationFailed?: boolean
+  amountAdjustmentInfo?: AmountAdjustmentInfo | null
   sections?: SectionedSelectProps['sections']
   renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
+  /** Whether the max amount is loading. Defaults to the selected account's portfolio state. */
+  isMaxAmountLoading?: boolean
+  /** Extra styling for the amount slider's own row, e.g. to give it room before the panel ends. */
+  sliderStyle?: ViewStyle
+  /** Shown at the bottom of the panel, e.g. what makes the amount a risk. */
+  customBottomLabel?: ReactNode
 }
+
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
 
 const SendToken: FC<Props> = ({
   label,
+  isLabelInline,
+  amountPresets,
   fromTokenOptions,
   fromTokenValue,
   fromAmountValue,
@@ -73,15 +92,16 @@ const SendToken: FC<Props> = ({
   selectTestId,
   maxAmountDisabled,
   simulationFailed,
+  amountAdjustmentInfo,
   sections,
-  renderSectionHeader
+  renderSectionHeader,
+  isMaxAmountLoading,
+  sliderStyle,
+  customBottomLabel
 }) => {
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
-  const { theme, styles } = useTheme(getStyles)
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
+  const { theme } = useTheme()
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
-  const isError = validateFromAmount?.severity === 'error' && !!validateFromAmount?.message
-  const isWarning = validateFromAmount?.severity === 'warning' && !!validateFromAmount?.message
 
   const handleOnChangeTextAndFormat = useCallback(
     (text: string) => {
@@ -94,182 +114,191 @@ const SendToken: FC<Props> = ({
     [fromAmountValue, onFromAmountChange]
   )
 
-  const nonEmptySections = sections?.filter((s) => s.data.length > 0)
+  const formattedAdjustedFeeAmount = useMemo(
+    () =>
+      amountAdjustmentInfo ? formatDecimals(Number(amountAdjustmentInfo.feeAmount), 'precise') : '',
+    [amountAdjustmentInfo]
+  )
+
+  const nonEmptySections = useMemo(() => sections?.filter((s) => s.data.length > 0), [sections])
+
+  // The slider moves whichever amount the field is currently showing, so its axis is the token's
+  // own balance in token mode and that same balance priced in USD in fiat mode.
+  const tokenDecimals = fromSelectedToken?.decimals ?? 0
+  const sliderDecimals = fromAmountFieldMode === 'fiat' ? SLIDER_FIAT_DECIMALS : tokenDecimals
+  const tokenUsdPrice = fromSelectedToken?.priceIn.find(
+    ({ baseCurrency }) => baseCurrency.toLowerCase() === 'usd'
+  )?.price
+  const maxTokenAmount = parseSliderAmount(maxFromAmount, tokenDecimals)
+  const maxSliderAmount =
+    fromAmountFieldMode === 'fiat'
+      ? toFiatSliderAmount(maxTokenAmount, tokenDecimals, tokenUsdPrice)
+      : maxTokenAmount
+  const sliderAmount = parseSliderAmount(fromAmountValue, sliderDecimals)
+  const handleSliderValueChange = useCallback(
+    (nextAmount: bigint) => {
+      // Sliding all the way is the same as pressing Max, so the controller sets the exact max
+      // itself (incl. any fee it reserves) instead of the slider's converted approximation of it.
+      if (maxSliderAmount > 0n && nextAmount >= maxSliderAmount) {
+        handleSetMaxFromAmount()
+        return
+      }
+
+      onFromAmountChange(getSliderAmountFieldValue(nextAmount, sliderDecimals))
+    },
+    [handleSetMaxFromAmount, maxSliderAmount, onFromAmountChange, sliderDecimals]
+  )
+
+  const tokenSelect = nonEmptySections?.length ? (
+    <SectionedSelect
+      setValue={handleChangeFromToken}
+      sections={nonEmptySections}
+      value={fromTokenValue}
+      testID={selectTestId}
+      bottomSheetTitle={t('Send token')}
+      searchPlaceholder={t('Token name or address...')}
+      emptyListPlaceholderText={t('No tokens found.')}
+      containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
+      selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
+      mode="bottomSheet"
+      headerHeight={SECTION_MENU_HEADER_HEIGHT}
+      renderSectionHeader={renderSectionHeader}
+      disabled={fromTokenAmountSelectDisabled}
+      stickySectionHeadersEnabled
+    />
+  ) : (
+    <Select
+      setValue={handleChangeFromToken}
+      options={fromTokenOptions}
+      value={fromTokenValue}
+      testID={selectTestId}
+      bottomSheetTitle={t('Send token')}
+      searchPlaceholder={t('Token name or address...')}
+      emptyListPlaceholderText={t('No tokens found.')}
+      containerStyle={{ ...spacings.mb0, ...flexbox.flex1 }}
+      selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
+      mode="bottomSheet"
+      disabled={fromTokenAmountSelectDisabled}
+    />
+  )
+
+  const balance = useMemo(
+    () => ({
+      amount: Number(maxFromAmount),
+      symbol: fromSelectedToken?.symbol || '',
+      isLoading: isMaxAmountLoading ?? !portfolio?.isReadyToVisualize,
+      isInaccurate: simulationFailed
+    }),
+    [
+      maxFromAmount,
+      fromSelectedToken?.symbol,
+      isMaxAmountLoading,
+      portfolio?.isReadyToVisualize,
+      simulationFailed
+    ]
+  )
+
+  const hasPrice = !!fromSelectedToken && fromSelectedToken.priceIn.length !== 0
+  const amountFieldModeSwitch = useMemo(
+    () =>
+      hasPrice
+        ? {
+            label:
+              fromAmountFieldMode === 'token'
+                ? `${
+                    fromAmountInFiat
+                      ? formatDecimals(parseFloat(fromAmountInFiat || '0'), 'price')
+                      : '$0'
+                  }`
+                : `${fromAmount ? formatDecimals(parseFloat(fromAmount), 'amount') : 0} ${
+                    fromSelectedToken?.symbol
+                  }`,
+            onPress: handleSwitchFromAmountFieldMode
+          }
+        : undefined,
+    [
+      hasPrice,
+      fromAmountFieldMode,
+      fromAmountInFiat,
+      fromAmount,
+      fromSelectedToken?.symbol,
+      handleSwitchFromAmountFieldMode
+    ]
+  )
+
+  const slider = useMemo(
+    () => ({
+      value: sliderAmount,
+      maximumValue: maxSliderAmount,
+      onValueChange: handleSliderValueChange
+    }),
+    [sliderAmount, maxSliderAmount, handleSliderValueChange]
+  )
+
+  const message = useMemo(
+    () => ({ text: validateFromAmount?.message, severity: validateFromAmount?.severity }),
+    [validateFromAmount?.message, validateFromAmount?.severity]
+  )
+
+  const testIDs = useMemo(
+    () => ({
+      amount: inputTestId,
+      amountFieldModeSwitch: 'switch-currency-sab',
+      maxButton: 'max-amount-button'
+    }),
+    [inputTestId]
+  )
 
   return (
-    <>
-      <View style={[styles.outerContainer, isError ? styles.outerContainerError : {}]}>
-        <ItemPanel
-          style={{
-            // magic number to match the curve of the outer container
-            // which is with borderRadius: 16
-            borderRadius: 13,
-            ...spacings.pv,
-            ...(isWeb ? spacings.prMd : spacings.prSm),
-            ...(isError ? styles.containerError : {})
-          }}
+    <TokenAndAmountSelector
+      label={label}
+      isLabelInline={isLabelInline}
+      token={tokenSelect}
+      balance={balance}
+      amountFieldModeSwitch={amountFieldModeSwitch}
+      amountFieldMode={fromAmountFieldMode}
+      amount={fromAmountValue}
+      onAmountChange={handleOnChangeTextAndFormat}
+      disabled={fromTokenAmountSelectDisabled}
+      slider={slider}
+      amountPresets={amountPresets}
+      onMaxPress={handleSetMaxFromAmount}
+      isMaxDisabled={maxAmountDisabled || !Number(maxFromAmount)}
+      message={message}
+      testIDs={testIDs}
+      sliderStyle={sliderStyle}
+    >
+      {!!amountAdjustmentInfo && (
+        <View
+          testID="amount-adjustment-info"
+          style={[
+            flexbox.directionRow,
+            flexbox.alignStart,
+            spacings.mtSm,
+            spacings.phSm,
+            spacings.pvSm,
+            {
+              backgroundColor: theme.primaryAccent100,
+              borderRadius: 12
+            }
+          ]}
         >
-          <Text appearance="secondaryText" fontSize={14} weight="medium" style={spacings.mbSm}>
-            {label}
-          </Text>
-          <View
-            style={[
-              flexbox.flex1,
-              isCompactSidePanelLayout
-                ? { gap: SPACING_SM }
-                : [
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    { columnGap: isMobile ? SPACING_SM : SPACING }
-                  ]
-            ]}
-          >
-            <View style={isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1}>
-              {nonEmptySections?.length ? (
-                <SectionedSelect
-                  setValue={handleChangeFromToken}
-                  sections={nonEmptySections}
-                  value={fromTokenValue}
-                  testID={selectTestId}
-                  bottomSheetTitle={t('Send token')}
-                  searchPlaceholder={t('Token name or address...')}
-                  emptyListPlaceholderText={t('No tokens found.')}
-                  containerStyle={{
-                    ...spacings.mb0,
-                    ...(isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1)
-                  }}
-                  selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
-                  mode="bottomSheet"
-                  headerHeight={SECTION_MENU_HEADER_HEIGHT}
-                  renderSectionHeader={renderSectionHeader}
-                  disabled={fromTokenAmountSelectDisabled}
-                  stickySectionHeadersEnabled
-                />
-              ) : (
-                <Select
-                  setValue={handleChangeFromToken}
-                  options={fromTokenOptions}
-                  value={fromTokenValue}
-                  testID={selectTestId}
-                  bottomSheetTitle={t('Send token')}
-                  searchPlaceholder={t('Token name or address...')}
-                  emptyListPlaceholderText={t('No tokens found.')}
-                  containerStyle={{
-                    ...spacings.mb0,
-                    ...(isCompactSidePanelLayout ? { width: '100%' } : flexbox.flex1)
-                  }}
-                  selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
-                  mode="bottomSheet"
-                  disabled={fromTokenAmountSelectDisabled}
-                />
-              )}
-            </View>
-            {isCompactSidePanelLayout ? (
-              <View style={{ width: '100%', alignItems: 'flex-end' }}>
-                <AmountInput
-                  type={fromAmountFieldMode}
-                  value={fromAmountValue}
-                  onChangeText={handleOnChangeTextAndFormat}
-                  disabled={fromTokenAmountSelectDisabled}
-                  inputTestId={inputTestId}
-                />
-              </View>
-            ) : (
-              <AmountInput
-                type={fromAmountFieldMode}
-                value={fromAmountValue}
-                onChangeText={handleOnChangeTextAndFormat}
-                disabled={fromTokenAmountSelectDisabled}
-                inputTestId={inputTestId}
-              />
-            )}
+          <InfoIcon width={20} height={20} color={theme.primaryAccent} />
+          <View style={[flexbox.flex1, spacings.mlSm]}>
+            <Text fontSize={12} weight="semiBold">
+              {t('Max amount adjusted')}
+            </Text>
+            <Text fontSize={12} appearance="secondaryText" style={spacings.mtMi}>
+              {t('{{feeAmount}} {{tokenSymbol}} kept for the network fee', {
+                feeAmount: formattedAdjustedFeeAmount,
+                tokenSymbol: amountAdjustmentInfo.tokenSymbol
+              })}
+            </Text>
           </View>
-          <View
-            style={[
-              flexbox.directionRow,
-              flexbox.alignCenter,
-              flexbox.justifySpaceBetween,
-              spacings.ptMd
-            ]}
-          >
-            {!fromTokenAmountSelectDisabled ? (
-              <MaxAmount
-                isLoading={!portfolio?.isReadyToVisualize}
-                maxAmount={Number(maxFromAmount)}
-                selectedTokenSymbol={fromSelectedToken?.symbol || ''}
-                onMaxButtonPress={handleSetMaxFromAmount}
-                disabled={maxAmountDisabled}
-                simulationFailed={simulationFailed}
-              />
-            ) : (
-              // Prevent layout shifting
-              <View style={{ height: 22 }} />
-            )}
-            {fromSelectedToken && fromSelectedToken.priceIn.length !== 0 ? (
-              <>
-                <Pressable
-                  onPress={handleSwitchFromAmountFieldMode}
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    flexbox.alignSelfStart,
-                    {
-                      position: 'absolute',
-                      right: 0,
-                      top: -6
-                    }
-                  ]}
-                  disabled={fromTokenAmountSelectDisabled}
-                >
-                  {({ hovered }: any) => (
-                    <View
-                      style={{
-                        ...flexbox.center,
-                        borderRadius: 10,
-                        backgroundColor: hovered
-                          ? hexToRgba(theme.primaryAccent200, 0.16)
-                          : theme.primaryAccent100,
-                        width: 20,
-                        height: 20
-                      }}
-                    >
-                      <FlipIcon width={11} height={11} color={theme.primary} />
-                    </View>
-                  )}
-                </Pressable>
-                <Text
-                  fontSize={12}
-                  color={theme.secondaryText}
-                  weight="medium"
-                  testID="switch-currency-sab"
-                >
-                  {fromAmountFieldMode === 'token'
-                    ? `${
-                        fromAmountInFiat
-                          ? formatDecimals(parseFloat(fromAmountInFiat || '0'), 'price')
-                          : '$0'
-                      }`
-                    : `${fromAmount ? formatDecimals(parseFloat(fromAmount), 'amount') : 0} ${
-                        fromSelectedToken?.symbol
-                      }`}
-                </Text>
-              </>
-            ) : (
-              <View />
-            )}
-          </View>
-        </ItemPanel>
-      </View>
-      {validateFromAmount?.message && (
-        <Text
-          fontSize={12}
-          style={[spacings.mlMi, spacings.mtMi]}
-          appearance={isWarning ? 'warningText' : 'errorText'}
-        >
-          {validateFromAmount?.message}
-        </Text>
+        </View>
       )}
-    </>
+      {customBottomLabel}
+    </TokenAndAmountSelector>
   )
 }
 

@@ -22,7 +22,12 @@ import { bootstrapWithStorage } from '../../common-helpers/bootstrap'
  * deliberate, understood increase.
  */
 
-const EAGER_JS_BUDGET_BYTES = 11 * 1024 * 1024
+// Raised from 11MB: the measured build is the LavaMoat policy-generating one, whose runtime
+// alone is ~60KB larger than a release build's, and the dashboard carousel added its own code.
+// Raised again from 11.5MB for the Privacy Pools privacy UI on the Send forms (~66KB), which loads
+// with the dashboard because the Send screens are not lazy routes and because the Expo SDK 58 upgrade
+// added ~236KB (gesture-handler 3, reanimated 4.7, react-dom 19.3).
+const EAGER_JS_BUDGET_BYTES = 12 * 1024 * 1024
 
 test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
   test.setTimeout(120000)
@@ -79,7 +84,7 @@ test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
         1024 /
         1024
       ).toFixed(
-        0
+        1
       )}MB budget. Likely background-only code (a controller/humanizer/heavy lib) leaked into the UI bundle - check for a missing \`import type\`. Largest chunks:\n${breakdown}`
     ).toBeLessThan(EAGER_JS_BUDGET_BYTES)
   })

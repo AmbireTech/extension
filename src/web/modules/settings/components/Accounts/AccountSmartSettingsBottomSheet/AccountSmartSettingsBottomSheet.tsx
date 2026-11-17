@@ -1,13 +1,11 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react'
+import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 import { Modalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
-import { has7702 } from '@ambire-common/libs/7702/7702'
-import { canBecomeSmarter } from '@ambire-common/libs/account/account'
-import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
@@ -18,118 +16,70 @@ import NetworkIcon from '@common/components/NetworkIcon'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
-import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
+import { loadAmbireSignerApdus } from '@common/modules/hardware-wallet/libs/ledgerAppInstall/artifacts'
+import Step from '@common/modules/settings/components/AccountSmartSettingsStep'
+import useAccountSmartSettings from '@common/modules/settings/hooks/useAccountSmartSettings'
+import useAmbireSignerInstall from '@common/modules/settings/hooks/useAmbireSignerInstall'
 import Authorization7702 from '@common/modules/sign-message/components/Contents/authorization7702'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { TAB_CONTENT_WIDTH } from '@web/constants/spacings'
-
-import { getIsDelegationEnableDisabled } from './helpers'
+import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
+import { installLedgerApp } from '@web/modules/hardware-wallet/controllers/LedgerController/ledgerSideload'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
   closeBottomSheet: () => void
+  onClosed?: () => void
   account: Account | null
 }
 
-const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, account }) => {
-  const {
-    state: { accountStates },
-    dispatch: accountsDispatch
-  } = useController('AccountsController')
-  const { state: keys } = useController('KeystoreController', 'keys')
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { dispatch: requestsDispatch } = useController('RequestsController')
-  const {
-    dispatch: featureFlagsDispatch,
-    state: { flags }
-  } = useController('FeatureFlagsController')
+const AccountSmartSettingsBottomSheet: FC<Props> = ({
+  sheetRef,
+  closeBottomSheet,
+  onClosed,
+  account
+}) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const accountStateCheckedForRef = React.useRef<string | null>(null)
+  const {
+    is7702,
+    canInstallAmbireSigner,
+    isUnsupportedLedger,
+    unsupportedLedgerTitle,
+    isEip7702Enabled,
+    networkRows,
+    enableEip7702,
+    delegate
+  } = useAccountSmartSettings(account)
+  const {
+    installStep,
+    installStepText,
+    installButtonText,
+    isAmbireSignerInstalled,
+    installAmbireSigner
+  } = useAmbireSignerInstall()
 
-  const accountState = useMemo(() => {
-    if (!account) return null
-
-    return accountStates[account.addr] || null
-  }, [account, accountStates])
-
-  const delegationNetworks = useMemo(() => networks.filter((n) => has7702(n)), [networks])
-
-  useEffect(() => {
-    const checkedForThisAcc = accountStateCheckedForRef.current === account?.addr
-
-    if (checkedForThisAcc || !account || !!accountState || delegationNetworks.length === 0) return
-
-    accountStateCheckedForRef.current = account.addr
-
-    accountsDispatch({
-      type: 'method',
-      params: {
-        method: 'updateAccountState',
-        args: [account.addr, 'latest', delegationNetworks.map((n) => n.chainId)]
-      }
-    })
-  }, [accountState, delegationNetworks, account, accountsDispatch])
-
-  const is7702 = useMemo(() => {
-    if (!account) return false
-
-    return canBecomeSmarter(
-      account,
-      keys.filter((k) => account.associatedKeys.includes(k.addr))
-    )
-  }, [account, keys])
-
-  const isEip7702Enabled = flags.eip7702
-
-  const enableEip7702 = useCallback(() => {
-    featureFlagsDispatch({
-      type: 'method',
-      params: {
-        method: 'setFeatureFlag',
-        args: ['eip7702', true]
-      }
-    })
-  }, [featureFlagsDispatch])
-
-  const delegate = (chainId: bigint) => {
-    const network = networks.find((n) => n.chainId === chainId)
-    if (!network || !account || !accountState || !accountState[chainId.toString()]) return
-
-    const delegatedContract = accountState[chainId.toString()]?.delegatedContract
-    if (getIsDelegationEnableDisabled(isEip7702Enabled, delegatedContract)) return
-
-    requestsDispatch({
-      type: 'method',
-      params: {
-        method: 'build',
-        args: [
-          {
-            type: 'calls',
-            params: {
-              userRequestParams: {
-                calls: [{ to: ZERO_ADDRESS, data: '0x', value: BigInt(0) }],
-                meta: {
-                  chainId: network.chainId,
-                  accountAddr: account.addr,
-                  setDelegation: !accountState?.[chainId.toString()]?.delegatedContract
-                }
-              }
-            }
-          }
-        ]
-      }
-    })
-  }
+  // Sideloads the "Ambire Signer" app (a fork of the Ethereum app that whitelists
+  // the Ambire EIP-7702 delegator) needed to authorize delegation with a Ledger.
+  // It coexists with the official Ethereum app and is used only for this one-off.
+  const installAmbireSignerOverWebHid = useCallback(
+    () =>
+      installAmbireSigner(async (onProgress) => {
+        await LedgerController.grantDevicePermissionIfNeeded()
+        await installLedgerApp(await loadAmbireSignerApdus(), onProgress)
+      }),
+    [installAmbireSigner]
+  )
 
   return (
     <BottomSheet
       id="account-delegations-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
+      onClosed={onClosed}
       scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
       isScrollEnabled={false}
       containerInnerWrapperStyles={{ flex: 1 }}
@@ -145,14 +95,83 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
           )}
         </View>
         <Authorization7702>
-          {is7702 && delegationNetworks?.length ? (
+          {is7702 && networkRows.length ? (
             <>
+              {canInstallAmbireSigner && isEip7702Enabled && (
+                <Alert
+                  type="info"
+                  size="md"
+                  style={spacings.mbMd}
+                  customIcon={LedgerLetterIcon}
+                  title={
+                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                      <Text fontSize={14} weight="semiBold">
+                        {t('Extra step for Ledger devices')}
+                      </Text>
+                      <Badge type="warning" text={t('Experimental')} style={spacings.mlTy} />
+                    </View>
+                  }
+                  text={t(
+                    'Ledger’s official Ethereum app blocks every other wallet’s upgrade, Ambire included. Ambire Signer is a custom companion app for your Ledger that unlocks the Ambire upgrade.\nInstall it once and use it only to approve the upgrade - everything else is still signed with the official Ethereum app.'
+                  )}
+                >
+                  <View style={spacings.mtSm}>
+                    {isAmbireSignerInstalled ? (
+                      <Step
+                        number={1}
+                        isCompleted
+                        title={t('Ambire Signer is installed on your Ledger')}
+                      />
+                    ) : (
+                      <Step
+                        number={1}
+                        title={t('Install Ambire Signer on your Ledger')}
+                        description={
+                          installStepText ??
+                          t(
+                            'Needed before you can turn on any of the networks below. Unlock your Ledger and stay on its home screen. Already have Ambire Signer? Install it again to get the latest version - your Ledger will ask to remove the old one first.'
+                          )
+                        }
+                      >
+                        <Button
+                          type="info"
+                          size="small"
+                          disabled={!!installStep}
+                          style={spacings.mb0}
+                          onPress={installAmbireSignerOverWebHid}
+                          text={installButtonText}
+                        />
+                      </Step>
+                    )}
+                    <Step number={2} title={t('Turn on the networks you want, below')} />
+                    <Text fontSize={14} appearance="secondaryText">
+                      {t(
+                        'Ambire Signer is not available in Ledger Wallet. Install and manage it only from these smart settings. Requires a Ledger device that supports custom apps: Nano S Plus, Stax, Flex or Nano Gen5.'
+                      )}
+                    </Text>
+                  </View>
+                </Alert>
+              )}
+
               <Text fontSize={14} style={[spacings.mbMd]} appearance="secondaryText">
                 {t(
                   'While we support multiple networks, only those that have implemented EIP-7702 are listed here. As more networks adopt this upgrade, we will update the list to reflect broader availability.'
                 )}
               </Text>
-              {!isEip7702Enabled && (
+
+              {!!unsupportedLedgerTitle && (
+                <Alert
+                  type="warning"
+                  size="md"
+                  style={spacings.mbMd}
+                  title={unsupportedLedgerTitle}
+                  text={t(
+                    'Enabling or revoking them needs a small companion app that this Ledger does not allow. Managing delegation works on newer devices like Ledger Nano S Plus, Stax, Flex and Nano Gen5.'
+                  )}
+                />
+              )}
+
+              {!isEip7702Enabled && !isUnsupportedLedger && (
                 <View
                   style={[
                     {
@@ -167,7 +186,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                 >
                   <View style={flexbox.flex1}>
                     <Text fontSize={14} weight="medium">
-                      {t('Enable EIP-7702')}
+                      {t('EIP-7702 smart account features are disabled.')}
                     </Text>
                   </View>
                   <View style={[flexbox.flex1, flexbox.alignEnd]}>
@@ -181,6 +200,7 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   </View>
                 </View>
               )}
+
               <View
                 style={[
                   {
@@ -207,89 +227,103 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet
                   </Text>
                 </View>
               </View>
-              {delegationNetworks.map((net, i) => (
-                <View
-                  key={net.chainId.toString()}
-                  style={[
-                    {
-                      borderBottomWidth: i !== delegationNetworks.length - 1 ? 1 : 0,
-                      borderBottomColor: theme.secondaryBorder
-                    },
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    spacings.pvTy
-                  ]}
-                >
-                  <View style={[flexbox.flex1]}>
-                    <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                      <NetworkIcon id={net.chainId.toString()} />
-                      <Text style={spacings.mlTy} fontSize={14}>
-                        {net.name}
-                      </Text>
+              {networkRows.map(
+                (
+                  {
+                    network: net,
+                    isLoading,
+                    delegatedContract,
+                    delegatedContractName,
+                    isEnableDisabled
+                  },
+                  i
+                ) => (
+                  <View
+                    key={net.chainId.toString()}
+                    style={[
+                      {
+                        borderBottomWidth: i !== networkRows.length - 1 ? 1 : 0,
+                        borderBottomColor: theme.secondaryBorder
+                      },
+                      flexbox.directionRow,
+                      flexbox.alignCenter,
+                      spacings.pvTy
+                    ]}
+                  >
+                    <View style={[flexbox.flex1]}>
+                      <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                        <NetworkIcon id={net.chainId.toString()} />
+                        <Text style={spacings.mlTy} fontSize={14}>
+                          {net.name}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={[flexbox.flex1, flexbox.alignCenter]}>
+                      {!isLoading ? (
+                        <View style={[flexbox.directionRow]}>
+                          {delegatedContractName ? (
+                            <>
+                              {delegatedContractName === 'AMBIRE' && (
+                                <AmbireLogo width={20} height={20} />
+                              )}
+                              {delegatedContractName === 'METAMASK' && (
+                                <MetamaskIcon width={20} height={20} />
+                              )}
+                              {delegatedContractName === 'UNKNOWN' && (
+                                <Badge type="success" text={t('Unknown')} />
+                              )}
+                            </>
+                          ) : (
+                            <Badge type="default" text={t('Disabled')} />
+                          )}
+                        </View>
+                      ) : (
+                        <SkeletonLoader width={72} height={32} />
+                      )}
+                    </View>
+                    <View style={[flexbox.flex1, flexbox.alignEnd]}>
+                      {!isLoading ? (
+                        <View
+                          style={[flexbox.directionRow]}
+                          dataSet={
+                            // The warning above already explains an unsupported Ledger
+                            isEnableDisabled && !isUnsupportedLedger
+                              ? createGlobalTooltipDataSet({
+                                  id: `enable-eip-7702-${net.chainId.toString()}`,
+                                  content: t('Enable EIP-7702 first')
+                                })
+                              : {}
+                          }
+                        >
+                          <Button
+                            type={!delegatedContract ? 'success' : 'danger'}
+                            size="tiny"
+                            style={[
+                              spacings.mb0,
+                              { minWidth: 78, height: 32 },
+                              // A light green Enable, to match the light red Revoke
+                              !delegatedContract && {
+                                backgroundColor: theme.successBackground,
+                                borderWidth: 1,
+                                borderColor: theme.successDecorative
+                              }
+                            ]}
+                            textStyle={!delegatedContract && { color: theme.successText }}
+                            // An unsupported Ledger can't sign either, as the warning above explains
+                            disabled={isEnableDisabled || isUnsupportedLedger}
+                            // Fainter than the default disabled look, so it clearly isn't an action
+                            disabledStyle={{ opacity: 0.4 }}
+                            onPress={() => delegate(net.chainId)}
+                            text={!delegatedContract ? t('Enable') : t('Revoke')}
+                          />
+                        </View>
+                      ) : (
+                        <SkeletonLoader width={72} height={32} />
+                      )}
                     </View>
                   </View>
-                  <View style={[flexbox.flex1, flexbox.alignCenter]}>
-                    {accountState && accountState[net.chainId.toString()] ? (
-                      <View style={[flexbox.directionRow]}>
-                        {accountState?.[net.chainId.toString()]?.delegatedContractName ? (
-                          <>
-                            {accountState?.[net.chainId.toString()]?.delegatedContractName ===
-                              'AMBIRE' && <AmbireLogo width={20} height={20} />}
-                            {accountState?.[net.chainId.toString()]?.delegatedContractName ===
-                              'METAMASK' && <MetamaskIcon width={20} height={20} />}
-                            {accountState?.[net.chainId.toString()]?.delegatedContractName ===
-                              'UNKNOWN' && <Badge type="success" text={t('unknown')} />}
-                          </>
-                        ) : (
-                          <Badge type="default" text={t('disabled')} />
-                        )}
-                      </View>
-                    ) : (
-                      <SkeletonLoader width={72} height={32} />
-                    )}
-                  </View>
-                  <View style={[flexbox.flex1, flexbox.alignEnd]}>
-                    {accountState && accountState[net.chainId.toString()] ? (
-                      <View
-                        style={[flexbox.directionRow]}
-                        dataSet={
-                          getIsDelegationEnableDisabled(
-                            isEip7702Enabled,
-                            accountState[net.chainId.toString()]?.delegatedContract
-                          )
-                            ? createGlobalTooltipDataSet({
-                                id: `enable-eip-7702-${net.chainId.toString()}`,
-                                content: t('Enable EIP-7702 first')
-                              })
-                            : {}
-                        }
-                      >
-                        <Button
-                          type={
-                            !accountState?.[net.chainId.toString()]?.delegatedContract
-                              ? 'secondary'
-                              : 'danger'
-                          }
-                          size="tiny"
-                          style={[spacings.mb0, { minWidth: 78, height: 32 }]}
-                          disabled={getIsDelegationEnableDisabled(
-                            isEip7702Enabled,
-                            accountState[net.chainId.toString()]?.delegatedContract
-                          )}
-                          onPress={() => delegate(net.chainId)}
-                          text={
-                            !accountState?.[net.chainId.toString()]?.delegatedContract
-                              ? t('Enable')
-                              : t('Revoke')
-                          }
-                        />
-                      </View>
-                    ) : (
-                      <SkeletonLoader width={72} height={32} />
-                    )}
-                  </View>
-                </View>
-              ))}
+                )
+              )}
             </>
           ) : (
             <View>

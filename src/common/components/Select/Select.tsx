@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 
 import EmptyListPlaceholder from './components/EmptyListPlaceholder'
 import SelectContainer from './components/SelectContainer'
+import { SELECT_LIST_VIRTUALIZATION } from './styles'
 import { SectionedSelectProps, SelectProps } from './types'
 import useSelectInternal from './useSelectInternal'
 
@@ -27,7 +28,9 @@ const Select = ({
     menuOptionHeight,
     attemptToFetchMoreOptions,
     mode: props.mode,
-    onSearch
+    onSearch,
+    renderOption: props.renderOption,
+    closeMenuOnSelect: props.closeMenuOnSelect
   })
   const {
     listRef,
@@ -46,9 +49,7 @@ const Select = ({
       renderItem: renderItem as any,
       keyExtractor,
       onLayout: handleLayout,
-      initialNumToRender: 15,
-      windowSize: 10,
-      maxToRenderPerBatch: 20,
+      ...SELECT_LIST_VIRTUALIZATION,
       removeClippedSubviews: true,
       getItemLayout,
       ListEmptyComponent: <EmptyListPlaceholder placeholderText={emptyListPlaceholderText} />,

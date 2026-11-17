@@ -1,19 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { MenuOption } from '@common/components/Select/components/MenuOption'
+import { isMobile } from '@common/config/env'
 import usePrevious from '@common/hooks/usePrevious'
 
 import { SectionedSelectProps, SelectProps, SelectValue } from './types'
 
-type Props = Pick<SelectProps, 'size' | 'value' | 'mode'> &
+type Props = Pick<SelectProps, 'size' | 'value' | 'mode' | 'renderOption'> &
   Pick<SectionedSelectProps, 'sections'> & {
     listHeight: number
     optionHeight: number
     headerHeight: number
     isMenuOpen: boolean
     stickySectionHeadersEnabled?: boolean
-    setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>
+    setIsMenuOpen: (isMenuOpen: boolean) => void
     handleOptionSelect: (item: SelectValue) => void
+    listRef?: SectionedSelectProps['listRef']
   }
 
 const useSelectKeyboardControl = ({
@@ -27,9 +29,12 @@ const useSelectKeyboardControl = ({
   stickySectionHeadersEnabled,
   setIsMenuOpen,
   handleOptionSelect,
-  mode
+  mode,
+  renderOption,
+  listRef: externalListRef
 }: Props) => {
-  const listRef: any = useRef(null)
+  const internalListRef = useRef(null)
+  const listRef: any = externalListRef ?? internalListRef
   const highlightedItemOnMouseMoveEnabled = useRef(true)
   const scrollOffset = useRef(0)
 
@@ -79,6 +84,9 @@ const useSelectKeyboardControl = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isMenuOpen) return
+      // Custom rows are buttons of their own, next to other buttons (e.g. Hide / Show), so the
+      // browser's focus handles Tab, Enter and the arrows instead of a highlight nobody sees
+      if (renderOption && e.key !== 'Escape') return
 
       try {
         if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
@@ -235,7 +243,9 @@ const useSelectKeyboardControl = ({
     optionHeight,
     listHeight,
     headerHeight,
-    stickySectionHeadersEnabled
+    stickySectionHeadersEnabled,
+    renderOption,
+    listRef
   ])
 
   useEffect(() => {
@@ -261,25 +271,40 @@ const useSelectKeyboardControl = ({
     setHighlightedItemIndex(null)
   }, [])
 
+  // Highlighting is driven by hover and by the keyboard, neither of which exists on
+  // mobile. Keeping it out of `renderItem` there keeps that callback's identity stable,
+  // so the list does not re-render every mounted row whenever the highlight moves.
+  const highlightedItemIndexForRender = isMobile ? null : highlightedItemIndex
+
   const renderItem = useCallback(
     ({ item, index: optionIndex, section }: { item: SelectValue; index: number; section: any }) => {
-      let onHoverIn = () => {}
+      if (renderOption) {
+        const lastSection = sections[sections.length - 1]
+        const isInLastSection =
+          !section || sections.length === 1 || section?.key === lastSection?.key
+
+        return renderOption({
+          item,
+          isSelected: item.value === value?.value,
+          isLast: isInLastSection && optionIndex === (lastSection?.data.length ?? 0) - 1,
+          onPress: handleOptionSelect
+        })
+      }
+
+      let sectionIndex = -1
       let isHighlighted = false
 
       try {
-        let sectionIndex: number
-
         if (sections.length === 1 && sections[0]?.key === 'default') {
           sectionIndex = 0
         } else {
           sectionIndex = sections.findIndex((s) => s.key === (section as any)?.key)
         }
-        onHoverIn = () => handleSetHoverIn({ sectionIndex, optionIndex })
 
         if (
-          highlightedItemIndex &&
-          highlightedItemIndex.sectionIndex === sectionIndex &&
-          highlightedItemIndex.optionIndex === optionIndex
+          highlightedItemIndexForRender &&
+          highlightedItemIndexForRender.sectionIndex === sectionIndex &&
+          highlightedItemIndexForRender.optionIndex === optionIndex
         ) {
           isHighlighted = true
         }
@@ -288,13 +313,14 @@ const useSelectKeyboardControl = ({
       }
       return (
         <MenuOption
+          sectionIndex={sectionIndex}
           index={optionIndex}
           item={item}
           height={optionHeight}
           isSelected={item.value === value?.value}
           isHighlighted={isHighlighted}
           onPress={handleOptionSelect}
-          onHoverIn={onHoverIn}
+          onHoverIn={handleSetHoverIn}
           onHoverOut={handleSetHoverOut}
           disabled={!!item?.disabled}
           size={size}
@@ -307,11 +333,12 @@ const useSelectKeyboardControl = ({
       value?.value,
       handleOptionSelect,
       size,
-      highlightedItemIndex,
+      highlightedItemIndexForRender,
       handleSetHoverIn,
       handleSetHoverOut,
       sections,
-      mode
+      mode,
+      renderOption
     ]
   )
 

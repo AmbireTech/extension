@@ -199,4 +199,19 @@ const reduceStack = (entries: StackState, event: NavigationEvent): StackState =>
   return [...entries, entry]
 }
 
-export { reduceStack }
+/**
+ * How far the history has to go back once the platform has dismissed the top
+ * `dismissCount` screens (a swipe, the native back button). A card can own several
+ * history entries - an in-place update pushes one without adding a card - so going
+ * back one entry per card could land on the very screen that was just dismissed and
+ * leave the stack out of step with what the platform shows.
+ */
+const getDismissDelta = (entries: StackState, currentIndex: number, dismissCount: number) => {
+  const lowestDismissed = entries[entries.length - Math.max(dismissCount, 1)]
+
+  if (!lowestDismissed) return -Math.max(dismissCount, 1)
+
+  return lowestDismissed.firstIndex - 1 - currentIndex
+}
+
+export { getDismissDelta, reduceStack }

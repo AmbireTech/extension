@@ -7,7 +7,16 @@ const mainConstants = {
   urls: {
     dashboard: '/tab.html#/dashboard',
     getStarted: '/tab.html#/get-started',
-    accountSelect: '/tab.html#/account-select'
+    accountSelect: '/tab.html#/account-select',
+    requestWindow: 'request-window.html',
+    // Served by the tests themselves, on an origin the dApp security check already trusts
+    stubDapp: 'https://sigtool.ambire.com/e2e-stub-dapp'
+  },
+  chainIds: {
+    base: 8453
+  },
+  dappErrorCodes: {
+    userRejected: 4001
   },
   addresses: {
     basicAccount: '0x048d8573402CE085A6c8f34d568eC2Ccc995196e',

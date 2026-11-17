@@ -8,8 +8,6 @@ export type ModalsProps = Pick<
   | 'gasFeeUpdatedModalRef'
   | 'handleAcceptGasFeeUpdate'
   | 'handleDismissGasFeeUpdate'
-  | 'feePayerKeyType'
-  | 'signingKeyType'
   | 'slowPaymasterRequest'
   | 'shouldDisplayLedgerConnectModal'
   | 'handleDismissLedgerConnectModal'
@@ -27,5 +25,5 @@ export type ModalsProps = Pick<
 > & {
   signAccountOpState: ISignAccountOpController | null
   autoOpen?: 'warnings' | 'gas-fee-updated'
-  actionType?: 'swapAndBridge' | 'transfer'
+  actionType?: 'swapAndBridge' | 'transfer' | 'safeOwnerApproval'
 }

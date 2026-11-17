@@ -1,0 +1,82 @@
+import HardwareSDK from '@onekeyfe/hd-web-sdk'
+import { UI_EVENT, UI_REQUEST, UI_RESPONSE } from '@onekeyfe/hd-core'
+
+import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
+import { OneKeyBridgeInterface } from '@web/modules/hardware-wallet/onekey/types'
+
+const { HardwareWebSdk } = HardwareSDK
+
+class OneKeySdkBridge implements OneKeyBridgeInterface {
+  #initPromise: Promise<void> | null = null
+
+  constructor() {
+    // Registered once, so retrying a failed init doesn't answer every device prompt twice
+    HardwareWebSdk.on(UI_EVENT, (event: { type: string }) => {
+      if (event.type === UI_REQUEST.REQUEST_PIN) {
+        HardwareWebSdk.uiResponse({
+          type: UI_RESPONSE.RECEIVE_PIN,
+          payload: '@@ONEKEY_INPUT_PIN_IN_DEVICE'
+        })
+      }
+
+      if (event.type === UI_REQUEST.REQUEST_PASSPHRASE) {
+        HardwareWebSdk.uiResponse({
+          type: UI_RESPONSE.RECEIVE_PASSPHRASE,
+          payload: { value: '', passphraseOnDevice: true, save: true }
+        })
+      }
+    })
+  }
+
+  async init() {
+    if (this.#initPromise) return this.#initPromise
+
+    this.#initPromise = (async () => {
+      const isInitialized = await HardwareWebSdk.init({
+        debug: false,
+        connectSrc: 'https://jssdk.onekey.so/1.1.0/',
+        env: 'webusb'
+      })
+      // The SDK returns false only when its iframe from OneKey's servers fails to load or times out
+      if (!isInitialized)
+        throw new ExternalSignerError(
+          "Ambire couldn't reach the OneKey service. Check your internet connection and try again."
+        )
+    })().catch((error) => {
+      // Let the next request try again (the SDK removes its iframe after a failed init),
+      // instead of failing until the extension restarts
+      this.#initPromise = null
+      throw error
+    })
+
+    return this.#initPromise
+  }
+
+  searchDevices: OneKeyBridgeInterface['searchDevices'] = () => HardwareWebSdk.searchDevices()
+
+  getOnekeyFeatures: OneKeyBridgeInterface['getOnekeyFeatures'] = (connectId) =>
+    HardwareWebSdk.getOnekeyFeatures(connectId)
+
+  getPassphraseState: OneKeyBridgeInterface['getPassphraseState'] = (connectId) =>
+    HardwareWebSdk.getPassphraseState(connectId)
+
+  evmGetAddress: OneKeyBridgeInterface['evmGetAddress'] = (connectId, deviceId, params) =>
+    HardwareWebSdk.evmGetAddress(connectId, deviceId, params as any) as ReturnType<
+      OneKeyBridgeInterface['evmGetAddress']
+    >
+
+  evmSignTransaction: OneKeyBridgeInterface['evmSignTransaction'] = (connectId, deviceId, params) =>
+    HardwareWebSdk.evmSignTransaction(connectId, deviceId, params as any)
+
+  evmSignMessage: OneKeyBridgeInterface['evmSignMessage'] = (connectId, deviceId, params) =>
+    HardwareWebSdk.evmSignMessage(connectId, deviceId, params as any)
+
+  evmSignTypedData: OneKeyBridgeInterface['evmSignTypedData'] = (connectId, deviceId, params) =>
+    HardwareWebSdk.evmSignTypedData(connectId, deviceId, params as any)
+
+  cancel: OneKeyBridgeInterface['cancel'] = async (connectId) => {
+    HardwareWebSdk.cancel(connectId)
+  }
+}
+
+export default OneKeySdkBridge

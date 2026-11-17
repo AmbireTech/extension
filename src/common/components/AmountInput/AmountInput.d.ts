@@ -8,6 +8,8 @@ export interface AmountInputProps extends InputProps {
   fontSize?: number
   inputWrapperStyle?: ViewStyle
   textAlign?: 'left' | 'right' | 'center'
+  /** The most decimals the field accepts, passed through to NumberInput. */
+  precision?: number
 }
 
 declare const AmountInput: React.FC<AmountInputProps>

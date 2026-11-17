@@ -1,17 +1,15 @@
 import { Linking } from 'react-native'
 
-import TrezorConnect from '@trezor/connect-mobile'
-
 import { TREZOR_CONNECT_MANIFEST } from '@common/modules/hardware-wallet/constants/trezor'
+import TrezorConnect from '@trezor/connect-mobile'
 
 // All Trezor communication on mobile happens HERE, in the React Native native
 // JS context. Trezor has no supported way to talk to the device from inside our own process on mobile:
 // the only official path is @trezor/connect-mobile, which deep-links into the
 // Trezor Suite app — Suite owns the USB/Bluetooth connection, shows the
 // on-device confirmation, and returns the signed result back to us via a deep
-// link. The WebView worker (where the controllers live) can't open deep links,
-// so the worker-side TrezorController forwards every SDK call to this singleton
-// over the message bridge (see WebViewWorker.tsx `trezor.*` cases).
+// link. The mobile TrezorController uses this singleton directly as its
+// `walletSDK`.
 
 const CALLBACK_URL = 'ambire://trezor'
 
@@ -77,7 +75,7 @@ class TrezorDeeplinkService {
 
   /**
    * Pure passthroughs: the params/response cross the worker bridge as JSON, and
-   * the SDK methods are overloaded (e.g. getPublicKey has single/bundle forms)
+   * the SDK methods are overloaded (e.g. ethereumGetPublicKey has single/bundle forms)
    * which a single arrow can't satisfy — so these are typed loosely here. The
    * real argument/response typing is enforced where the shared TrezorSigner /
    * TrezorKeyIterator call `controller.walletSDK.*` (typed via TrezorWalletSDK).
@@ -87,9 +85,9 @@ class TrezorDeeplinkService {
     return this.#normalizeDeeplinkFailure(await TrezorConnect.ethereumGetAddress(params))
   }
 
-  getPublicKey = async (params: any): Promise<any> => {
+  ethereumGetPublicKey = async (params: any): Promise<any> => {
     await this.#ensureInit()
-    return this.#normalizeDeeplinkFailure(await TrezorConnect.getPublicKey(params))
+    return this.#normalizeDeeplinkFailure(await TrezorConnect.ethereumGetPublicKey(params))
   }
 
   ethereumSignTransaction = async (params: any): Promise<any> => {

@@ -1,10 +1,12 @@
+import { formatUnits } from 'ethers'
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import gasTankFeeTokens from '@ambire-common/consts/gasTankFeeTokens'
 import CoinsIcon from '@common/assets/svg/CoinsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import Alert from '@common/components/Alert'
+import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
 import Recipient from '@common/components/Recipient'
 import { SectionedSelectProps, SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
@@ -16,19 +18,35 @@ import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
+import { PrivacyPoolsAccountDisplay } from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
+import PrivacyPoolsDepositPrivacy from '@common/modules/transfer/components/PrivacyPoolsDepositPrivacy'
+import PrivacyPoolsRecipient from '@common/modules/transfer/components/PrivacyPoolsRecipient'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { parseSliderAmount } from '@common/utils/amountSlider'
+import { getPrivacyPoolsSuggestedAmounts } from '@common/utils/privacyPools'
+import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { getTokenId } from '@common/utils/token'
 import { RELAYER_URL } from '@env'
+import SendNft from '@common/modules/transfer/components/SendNft'
 import useSimulationError from '@web/modules/portfolio/hooks/SimulationError/useSimulationError'
 
+import type { AmountAdjustmentInfo } from '@ambire-common/interfaces/transfer'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 type GasTankSection = {
   title: { icon: FC<SvgProps>; text: string }
   data: SelectValue[]
   key: string
 }
+
+const selectPortfolio = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.portfolio
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+const selectVerifiedDomainsStatus = (state: AllControllersMappingType['DomainsController']) =>
+  state.verifiedDomainsStatus
 
 const SendForm = ({
   addressInputState,
@@ -40,7 +58,10 @@ const SendForm = ({
   amountFieldValue,
   setAmountFieldValue,
   addressStateFieldValue,
-  setAddressStateFieldValue
+  setAddressStateFieldValue,
+  amountAdjustmentInfo,
+  privacyPoolsAccounts,
+  onSelectPrivacyPoolsRecipient
 }: {
   addressInputState: ReturnType<typeof useAddressInput>
   canUseGasTank: boolean
@@ -52,6 +73,11 @@ const SendForm = ({
   setAmountFieldValue: (value: string) => void
   addressStateFieldValue: string
   setAddressStateFieldValue: (value: string) => void
+  amountAdjustmentInfo?: AmountAdjustmentInfo | null
+  /** Offered as recipients where Privacy Pools is available. */
+  privacyPoolsAccounts?: PrivacyPoolsAccountDisplay[]
+  /** Picks a Privacy Pools account by its recovery phrase id, or null to go back to an address. */
+  onSelectPrivacyPoolsRecipient?: (seedId: string | null) => void
 }) => {
   const { validation } = addressInputState
   const {
@@ -61,20 +87,29 @@ const SendForm = ({
       amountFieldMode,
       amountInFiat,
       selectedToken,
+      selectedNft,
       isTopUp,
       addressState,
       amount: controllerAmount,
       areDefaultsSet,
-      addressPoisoningMatch
+      addressPoisoningMatch,
+      privacyPoolsRecipient,
+      privacyPoolsDepositError,
+      privacyPoolsDepositPrivacy,
+      privacyPoolsMaxAmount,
+      privacyPoolsFeeAmount
     },
     dispatch: transferDispatch
   } = useController('TransferController')
-  const { state: portfolio } = useController('SelectedAccountController', 'portfolio')
+  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
 
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: networks } = useController('NetworksController', 'networks')
-  const { verifiedDomainsStatus } = useController('DomainsController').state
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: verifiedDomainsStatus } = useController(
+    'DomainsController',
+    selectVerifiedDomainsStatus
+  )
   const domainVerificationMessage =
     verifiedDomainsStatus[addressStateFieldValue.trim()] === 'VERIFIED' ? 'Verified by Colibri' : ''
 
@@ -84,7 +119,7 @@ const SendForm = ({
 
   useEffect(() => {
     if (!isTopUp) return
-    fetch(`${RELAYER_URL}/gas-tank/assets`)
+    fetchWithRelayerCustomHeaders(`${RELAYER_URL}/gas-tank/assets`)
       .then((r) => r.json())
       .then((assets) => {
         const safeAssets = Array.isArray(assets)
@@ -113,7 +148,13 @@ const SendForm = ({
 
   const { simulationError } = useSimulationError({ chainId: selectedToken?.chainId })
 
-  const disableForm = (!canUseGasTank && isTopUp) || !tokens.length
+  // An account may hold only NFTs and still send them
+  const disableForm = (!canUseGasTank && isTopUp) || (!tokens.length && !selectedNft)
+
+  const nftValidation = useMemo(
+    () => ({ severity: amountErrorSeverity || 'error', message: amountErrorMessage }),
+    [amountErrorMessage, amountErrorSeverity]
+  )
 
   const renderSectionHeader: SectionedSelectProps['renderSectionHeader'] = useCallback(
     ({ section }: { section: NonNullable<SectionedSelectProps['sections']>[number] }) => {
@@ -152,11 +193,6 @@ const SendForm = ({
         return !currentOptionKeys.has(getKey(asset.address, asset.chainId))
       })
       .map((asset) => {
-        const feeToken = gasTankFeeTokens.find(
-          (ft) =>
-            ft.address.toLowerCase() === asset.address?.toLowerCase() &&
-            ft.chainId === BigInt(asset.chainId!)
-        )
         const network = networks.find((n) => n.chainId === BigInt(asset.chainId!))
 
         const symbol = (asset.symbol?.trim() || 'No symbol').toUpperCase()
@@ -218,7 +254,7 @@ const SendForm = ({
   }, [options, tokenSections])
 
   const handleChangeToken = useCallback(
-    (value: string) => {
+    ({ value }: SelectValue) => {
       const tokenToSelect = tokens.find((tokenRes: TokenResult) => getTokenId(tokenRes) === value)
       transferDispatch({
         type: 'method',
@@ -250,6 +286,77 @@ const SendForm = ({
     })
   }, [transferDispatch])
 
+  // A chip or a privacy fix is an amount in the token, so the field switches to token mode
+  const setRawTokenAmount = useCallback(
+    (rawAmount: bigint) => {
+      if (!selectedToken) return
+      transferDispatch({
+        type: 'method',
+        params: {
+          method: 'update',
+          args: [
+            {
+              amountFieldMode: 'token',
+              amount: formatUnits(rawAmount, selectedToken.decimals),
+              isAmountUpdateFromOutsideField: true
+            }
+          ]
+        }
+      })
+    },
+    [selectedToken, transferDispatch]
+  )
+
+  const parsedTokenAmount = useMemo(
+    () => (selectedToken ? parseSliderAmount(controllerAmount, selectedToken.decimals) : 0n),
+    [controllerAmount, selectedToken]
+  )
+
+  // Max and the chips need the pool's fee, which comes on top of the amount
+  const isPrivacyPoolsMaxLoading = !!privacyPoolsRecipient && privacyPoolsMaxAmount === null
+
+  const privacyPoolsDepositChips = useMemo(() => {
+    if (!privacyPoolsRecipient || !selectedToken) return undefined
+
+    return (
+      <PrivacyPoolsAmountChips
+        amounts={getPrivacyPoolsSuggestedAmounts(
+          selectedToken.chainId.toString(),
+          selectedToken.address
+        )}
+        decimals={selectedToken.decimals}
+        selectedAmount={parsedTokenAmount}
+        // What the balance can put into the pool, after the pool's fee
+        maxAmount={privacyPoolsMaxAmount ?? 0n}
+        onSelect={setRawTokenAmount}
+        disabled={disableForm || isPrivacyPoolsMaxLoading}
+        testID="privacy-pools-deposit-amount"
+        style={spacings.mt0}
+      />
+    )
+  }, [
+    disableForm,
+    isPrivacyPoolsMaxLoading,
+    parsedTokenAmount,
+    privacyPoolsMaxAmount,
+    privacyPoolsRecipient,
+    selectedToken,
+    setRawTokenAmount
+  ])
+
+  const privacyPoolsRecipientAccount = useMemo(
+    () =>
+      privacyPoolsRecipient
+        ? (privacyPoolsAccounts || []).find(({ seedId }) => seedId === privacyPoolsRecipient)
+        : undefined,
+    [privacyPoolsAccounts, privacyPoolsRecipient]
+  )
+
+  const clearPrivacyPoolsRecipient = useCallback(
+    () => onSelectPrivacyPoolsRecipient?.(null),
+    [onSelectPrivacyPoolsRecipient]
+  )
+
   const switchAmountFieldMode = useCallback(() => {
     transferDispatch({
       type: 'method',
@@ -267,7 +374,14 @@ const SendForm = ({
   return (
     <>
       <View>
-        {!isTopUp && (
+        {!isTopUp && !!privacyPoolsRecipient && (
+          <PrivacyPoolsRecipient
+            name={privacyPoolsRecipientAccount?.label || t('Private account')}
+            sourceLabel={privacyPoolsRecipientAccount?.sourceLabel}
+            onClear={clearPrivacyPoolsRecipient}
+          />
+        )}
+        {!isTopUp && !privacyPoolsRecipient && (
           <Recipient
             disabled={disableForm}
             address={addressStateFieldValue}
@@ -284,27 +398,46 @@ const SendForm = ({
             isRecipientDomainResolving={addressState.isDomainResolving}
             selectedTokenSymbol={selectedToken?.symbol}
             addressPoisoningMatch={addressPoisoningMatch}
+            // Privacy Pools accounts hold tokens only, so they aren't offered for an NFT
+            privacyPoolsAccounts={selectedNft ? undefined : privacyPoolsAccounts}
+            onSelectPrivacyPoolsAccount={selectedNft ? undefined : onSelectPrivacyPoolsRecipient}
           />
         )}
       </View>
 
-      {(!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
-        <SkeletonLoader width="100%" height={156} />
+      {!!privacyPoolsRecipient && !tokens.length && areDefaultsSet && (
+        <Alert
+          type="info"
+          size="sm"
+          style={spacings.mbTy}
+          text={t(
+            'None of your tokens can be sent to a Privacy Pools account. It accepts ETH, USDC, USDT and a few other tokens on Ethereum.'
+          )}
+        />
+      )}
+
+      {selectedNft ? (
+        <SendNft nft={selectedNft} validation={nftValidation} />
+      ) : (!selectedToken && tokens.length) || !portfolio?.isReadyToVisualize || !areDefaultsSet ? (
+        <SkeletonLoader width="100%" height={180} />
       ) : (
         <SendToken
           label={t('Send token')}
+          isLabelInline
+          amountPresets={privacyPoolsDepositChips}
           fromTokenOptions={allFromTokenOptions}
           sections={tokenSections}
           renderSectionHeader={tokenSections ? renderSectionHeader : undefined}
           fromTokenValue={tokenSelectValue}
           fromAmountValue={amountFieldValue}
           fromTokenAmountSelectDisabled={disableForm || amountSelectDisabled}
-          handleChangeFromToken={({ value }) => handleChangeToken(value as string)}
+          handleChangeFromToken={handleChangeToken}
           fromSelectedToken={selectedToken}
           fromAmount={controllerAmount}
           fromAmountInFiat={amountInFiat}
           fromAmountFieldMode={amountFieldMode}
           maxFromAmount={maxAmount}
+          maxAmountDisabled={isPrivacyPoolsMaxLoading}
           validateFromAmount={{
             success: !amountIsError,
             message: amountErrorMessage,
@@ -316,7 +449,23 @@ const SendForm = ({
           inputTestId="amount-field"
           selectTestId="tokens-select"
           simulationFailed={!!simulationError}
+          amountAdjustmentInfo={amountAdjustmentInfo}
         />
+      )}
+
+      {!!privacyPoolsRecipient && !!selectedToken && !!privacyPoolsDepositPrivacy && (
+        <PrivacyPoolsDepositPrivacy
+          privacy={privacyPoolsDepositPrivacy}
+          token={selectedToken}
+          amount={parsedTokenAmount}
+          feeAmount={privacyPoolsFeeAmount}
+          disabled={disableForm}
+          onSetAmount={setRawTokenAmount}
+        />
+      )}
+
+      {!!privacyPoolsRecipient && !!tokens.length && !!privacyPoolsDepositError && (
+        <Alert type="error" size="sm" style={spacings.mtSm} text={privacyPoolsDepositError} />
       )}
     </>
   )

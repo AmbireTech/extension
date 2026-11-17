@@ -9,6 +9,23 @@ const MIN_DAYS = Number(process.argv[2] || 14)
 const LOCKFILE = 'yarn.lock'
 const REGISTRY = 'https://registry.npmjs.org'
 const BASE_REF = process.env.GITHUB_BASE_REF ? `origin/${process.env.GITHUB_BASE_REF}` : 'origin/v2'
+// Selector ranges resolved from somewhere other than the npm registry (local
+// modules, git checkouts, tarball URLs). They have no publish time to check.
+const NON_REGISTRY_PROTOCOLS = [
+  'link:',
+  'file:',
+  'portal:',
+  'workspace:',
+  'patch:',
+  'git:',
+  'git+',
+  'github:',
+  'http:',
+  'https:'
+]
+// First-party packages we publish ourselves. The gate exists to catch a
+// compromised upstream release, and we control this publish end to end.
+const FIRST_PARTY_PACKAGES = ['@ambire/react-native-crypto']
 
 /* -------- helpers -------- */
 
@@ -21,6 +38,10 @@ function readBaseLockfile() {
 function parseLockfile(text) {
   // Keep it strict: if parsing doesn't succeed, `object` will be undefined and the script will fail.
   return lockfile.parse(text).object
+}
+
+function isRegistryRange(range) {
+  return !NON_REGISTRY_PROTOCOLS.some((protocol) => range.startsWith(protocol))
 }
 
 function extractResolvedPackages(lockObject) {
@@ -36,6 +57,8 @@ function extractResolvedPackages(lockObject) {
     for (const selector of key.split(/,\s*/)) {
       const at = selector.lastIndexOf('@')
       if (at > 0) {
+        if (!isRegistryRange(selector.slice(at + 1))) continue
+
         let name = selector.slice(0, at)
         // yarn npm-alias selectors look like "alias@npm:real-name@range"
         // (e.g. "string-width-cjs@npm:string-width@^4.2.0"). Only the real
@@ -52,6 +75,12 @@ function extractResolvedPackages(lockObject) {
   return result
 }
 
+function splitNameAndVersion(nameAndVersion) {
+  const at = nameAndVersion.lastIndexOf('@')
+
+  return { name: nameAndVersion.slice(0, at), version: nameAndVersion.slice(at + 1) }
+}
+
 function getChangedPackages() {
   const headText = fs.readFileSync(LOCKFILE, 'utf8')
   const baseText = readBaseLockfile()
@@ -59,7 +88,9 @@ function getChangedPackages() {
   const headPackages = extractResolvedPackages(parseLockfile(headText))
   const basePackages = extractResolvedPackages(parseLockfile(baseText))
 
-  return [...headPackages].filter((pkg) => !basePackages.has(pkg))
+  return [...headPackages].filter(
+    (pkg) => !basePackages.has(pkg) && !FIRST_PARTY_PACKAGES.includes(splitNameAndVersion(pkg).name)
+  )
 }
 
 async function fetchPackageMetadata(name) {
@@ -77,9 +108,7 @@ async function checkPackageAges(packages, minDays) {
   const tooNew = []
 
   for (const item of packages) {
-    const idx = item.lastIndexOf('@')
-    const name = item.slice(0, idx)
-    const version = item.slice(idx + 1)
+    const { name, version } = splitNameAndVersion(item)
 
     try {
       const meta = await fetchPackageMetadata(name)

@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Pressable, ScrollView, View } from 'react-native'
-import { SvgProps } from 'react-native-svg'
+import { ScrollView, View } from 'react-native'
 
-import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
+import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
+import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import NfcIcon from '@common/assets/svg/NfcIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
@@ -11,45 +11,39 @@ import SafeIcon from '@common/assets/svg/SafeIcon'
 import ScanIcon from '@common/assets/svg/ScanIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorLockIcon from '@common/assets/svg/TrezorLockIcon'
-import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import ExpandableImportMethod, {
+  getImportMethodTestID,
+  IMPORT_METHOD_ICON_SLOT_SIZE,
+  ImportMethod
+} from '@common/modules/auth/components/ExpandableImportMethod'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useNfcAccountImport from '@common/modules/hardware-wallets/nfc/hooks/useNfcAccountImport'
 import { NfcWalletConfigs } from '@common/modules/hardware-wallets/nfc/wallets'
 import { NfcWalletIcons } from '@common/modules/hardware-wallets/nfc/wallets/icons'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
 
-// Keeps the expandable NFC section the same height as the regular size buttons
-const ROW_HEIGHT = 56
-const ICON_SLOT_SIZE = 24
-
-type ImportMethod = {
-  title: string
-  onPress: () => void
-  icon: React.FC<SvgProps>
-  /**
-   * Icons that fill their whole box (like SafeIcon) must be drawn smaller than the slot
-   * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
-   */
-  iconSize?: number
-}
-
-const toTestID = (title: string) =>
-  `import-method-${title.toLocaleLowerCase().split(' ').join('-')}`
+type ExpandableImportMethodTitle = 'Safe' | 'NFC card'
 
 const ImportMethodButton = React.memo(
-  ({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE }: ImportMethod) => {
+  ({
+    title,
+    onPress,
+    icon: IconComponent,
+    iconSize = IMPORT_METHOD_ICON_SLOT_SIZE,
+    iconColor
+  }: ImportMethod) => {
     const { theme } = useTheme()
     const { t } = useTranslation()
 
@@ -57,7 +51,7 @@ const ImportMethodButton = React.memo(
       <Button
         type="tertiary"
         onPress={onPress}
-        testID={toTestID(title)}
+        testID={getImportMethodTestID(title)}
         childrenContainerStyle={{
           ...flexbox.directionRow,
           ...flexbox.alignCenter,
@@ -66,8 +60,17 @@ const ImportMethodButton = React.memo(
         }}
       >
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <View style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}>
-            <IconComponent width={iconSize} height={iconSize} color={theme.iconPrimary} />
+          <View
+            style={[
+              flexbox.center,
+              { width: IMPORT_METHOD_ICON_SLOT_SIZE, height: IMPORT_METHOD_ICON_SLOT_SIZE }
+            ]}
+          >
+            <IconComponent
+              width={iconSize}
+              height={iconSize}
+              color={iconColor || theme.iconPrimary}
+            />
           </View>
           <Text style={spacings.mlSm} fontSize={16} weight="medium">
             {t(title)}
@@ -81,104 +84,31 @@ const ImportMethodButton = React.memo(
 
 ImportMethodButton.displayName = 'ImportMethodButton'
 
-/** The cards live inside the section container, so they read as nested options. */
-const NfcCardSection = React.memo(
-  ({
-    cards,
-    isExpanded,
-    onToggle
-  }: {
-    cards: ImportMethod[]
-    isExpanded: boolean
-    onToggle: () => void
-  }) => {
-    const { theme } = useTheme()
-    const { t } = useTranslation()
-
-    return (
-      <View
-        style={[
-          spacings.mbSm,
-          {
-            // Darkens while expanded, matching the hover color of the other buttons
-            backgroundColor: isExpanded ? theme.tertiaryBackground : theme.secondaryBackground,
-            borderRadius: BORDER_RADIUS_PRIMARY,
-            overflow: 'hidden'
-          }
-        ]}
-      >
-        <Pressable
-          onPress={onToggle}
-          testID={toTestID('NFC card')}
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            flexbox.justifySpaceBetween,
-            spacings.phSm,
-            { height: ROW_HEIGHT }
-          ]}
-        >
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <NfcIcon width={24} height={24} color={theme.iconPrimary} />
-            <Text style={spacings.mlSm} fontSize={16} weight="medium">
-              {t('NFC card')}
-            </Text>
-          </View>
-          {isExpanded ? (
-            <UpArrowIcon color={theme.iconPrimary} />
-          ) : (
-            <DownArrowIcon color={theme.iconPrimary} />
-          )}
-        </Pressable>
-        {isExpanded && (
-          <View style={[spacings.phTy, spacings.pbTy]}>
-            {cards.map(({ title, onPress, icon: IconComponent }, index) => (
-              <Pressable
-                key={title}
-                onPress={onPress}
-                testID={toTestID(title)}
-                style={[
-                  flexbox.directionRow,
-                  flexbox.alignCenter,
-                  flexbox.justifySpaceBetween,
-                  spacings.phSm,
-                  spacings.pvSm,
-                  !!index && spacings.mtTy,
-                  {
-                    backgroundColor: theme.secondaryBackground,
-                    borderRadius: BORDER_RADIUS_PRIMARY
-                  }
-                ]}
-              >
-                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                  <IconComponent width={24} height={24} color={theme.iconPrimary} />
-                  <Text style={spacings.mlSm} fontSize={16} weight="medium">
-                    {t(title)}
-                  </Text>
-                </View>
-                <RightArrowIcon color={theme.iconPrimary} />
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
-    )
-  }
-)
-
-NfcCardSection.displayName = 'NfcCardSection'
-
 const ImportExistingAccountSelectorScreen = () => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
 
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
-  const [areNfcCardsExpanded, setAreNfcCardsExpanded] = useState(false)
+  // One open at a time, so the list doesn't grow past the screen
+  const [expandedMethodTitle, setExpandedMethodTitle] =
+    useState<ExpandableImportMethodTitle | null>(null)
   // The card session runs on this screen: the tap and PIN prompts come up in the
   // globally mounted NfcCardSessionModal and the account picker follows.
   const { scanCard } = useNfcAccountImport()
 
+  // The methods before Safe
   const buttons: ImportMethod[] = useMemo(
     () => [
+      {
+        // Accounts the user already has in the Ambire extension come over with a sync
+        title: 'Already an Ambire user',
+        onPress: () => {
+          goToNextRoute(ROUTES.importFromExtension)
+        },
+        icon: AmbireLogoSquare,
+        // The full Ambire purple, not the logo's default lighter tint
+        iconColor: theme.primary
+      },
       {
         title: 'Private key',
         onPress: () => {
@@ -194,14 +124,6 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: SeedPhraseIcon
       },
       {
-        title: 'Safe',
-        onPress: () => {
-          goToNextRoute(ROUTES.safeImport)
-        },
-        icon: SafeIcon,
-        iconSize: 20
-      },
-      {
         title: 'Ledger',
         onPress: () => {
           goToNextRoute(ROUTES.ledgerConnect)
@@ -214,17 +136,35 @@ const ImportExistingAccountSelectorScreen = () => {
           goToNextRoute(ROUTES.trezorConnect)
         },
         icon: TrezorLockIcon
+      }
+    ],
+    [goToNextRoute, theme.primary]
+  )
+
+  const safeImportMethods: ImportMethod[] = useMemo(
+    () => [
+      // The same text and icons as the Safe options of the add account menu
+      {
+        title: 'Import by address',
+        onPress: () => {
+          goToNextRoute(ROUTES.safeImportAddress)
+        },
+        icon: ImportAccountIcon,
+        testID: getImportMethodTestID('Safe by address')
       },
       {
-        title: 'QR-based',
+        title: 'Import by owner',
         onPress: () => {
-          goToNextRoute(ROUTES.qrConnect)
+          goToNextRoute(ROUTES.safeImportByOwner)
         },
-        icon: ScanIcon
+        icon: SingleKeyIcon,
+        testID: getImportMethodTestID('Safe by owner')
       }
     ],
     [goToNextRoute]
   )
+
+  const goToQrConnect = useCallback(() => goToNextRoute(ROUTES.qrConnect), [goToNextRoute])
 
   const goToViewOnlyAccountAdder = useCallback(
     () => goToNextRoute(ROUTES.viewOnlyAccountAdder),
@@ -241,7 +181,14 @@ const ImportExistingAccountSelectorScreen = () => {
     [scanCard]
   )
 
-  const toggleNfcCards = useCallback(() => setAreNfcCardsExpanded((p) => !p), [])
+  const toggleExpandedMethod = useCallback((title: ExpandableImportMethodTitle) => {
+    setExpandedMethodTitle((prevTitle) => (prevTitle === title ? null : title))
+  }, [])
+  const toggleSafeImportMethods = useCallback(
+    () => toggleExpandedMethod('Safe'),
+    [toggleExpandedMethod]
+  )
+  const toggleNfcCards = useCallback(() => toggleExpandedMethod('NFC card'), [toggleExpandedMethod])
 
   return (
     <MobileLayoutContainer>
@@ -255,9 +202,20 @@ const ImportExistingAccountSelectorScreen = () => {
             {buttons.map((button) => (
               <ImportMethodButton key={button.title} {...button} />
             ))}
-            <NfcCardSection
-              cards={nfcCards}
-              isExpanded={areNfcCardsExpanded}
+            <ExpandableImportMethod
+              title="Safe"
+              icon={SafeIcon}
+              iconSize={20}
+              options={safeImportMethods}
+              isExpanded={expandedMethodTitle === 'Safe'}
+              onToggle={toggleSafeImportMethods}
+            />
+            <ImportMethodButton title="QR-based" onPress={goToQrConnect} icon={ScanIcon} />
+            <ExpandableImportMethod
+              title="NFC card"
+              icon={NfcIcon}
+              options={nfcCards}
+              isExpanded={expandedMethodTitle === 'NFC card'}
               onToggle={toggleNfcCards}
             />
             <ImportMethodButton

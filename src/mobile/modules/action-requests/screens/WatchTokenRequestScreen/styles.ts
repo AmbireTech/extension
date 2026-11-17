@@ -17,14 +17,13 @@ interface Styles {
 const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
   StyleSheet.create<Styles>({
     container: {
-      ...flexbox.alignCenter,
-      ...flexbox.flex1,
-      marginTop: -21
+      ...flexbox.alignCenter
     },
     content: {
       ...common.fullWidth,
-      backgroundColor: theme.tertiaryBackground,
-      ...flexbox.flex1
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      overflow: 'hidden',
+      backgroundColor: theme.tertiaryBackground
     },
     contentHeader: {
       ...flexbox.alignCenter,

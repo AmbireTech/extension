@@ -1,52 +1,79 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import { EARLIER_PENDING_TRANSACTION_ERROR_CODE } from '@ambire-common/consts/signAccountOp/errorHandling'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { Key } from '@ambire-common/interfaces/keystore'
 import {
   ISignAccountOpController,
-  SignAccountOpError
+  SignAccountOpError,
+  SigningStatus
 } from '@ambire-common/interfaces/signAccountOp'
-import { SwapAndBridgeRoute } from '@ambire-common/interfaces/swapAndBridge'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
-import Button from '@common/components/Button'
+import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
+import SigningAuthBottomSheet from '@common/components/SigningAuthBottomSheet'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
+import useCallSignAccountOpMethod, {
+  getSignAccountOpType
+} from '@common/hooks/useCallSignAccountOpMethod'
+import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
-import useCompactActionRequestLayout from '@common/modules/action-requests/hooks/useCompactActionRequestLayout'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
+import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
+import CompactFooterButtons, {
+  COMPACT_FEE_TO_BUTTONS_SPACING
+} from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
+import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
+import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
+import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import type { EstimationServiceFee } from '@common/modules/sign-account-op/components/Estimation/types'
 
 export type OneClickEstimationProps = {
   closeEstimationModal: () => void
-  handleUpdateStatus: (status: SigningStatus) => void
-  updateController: (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) => void
+  /** Called once the sheet closed. Must only reset state, closing the sheet from it loops */
+  onEstimationModalClosed?: () => void
   estimationModalRef: React.RefObject<any>
   errors?: SignAccountOpError[]
   signAccountOpController: ISignAccountOpController | null
   hasProceeded: boolean
-  updateType: 'Swap&Bridge' | 'Transfer&TopUp'
-  serviceFee?: SwapAndBridgeRoute['serviceFee']
+  updateType: 'Swap&Bridge' | 'Transfer&TopUp' | 'SafeOwnerApproval'
+  serviceFee?: EstimationServiceFee
   shouldShowTxnDetails?: boolean
   Modals: React.ComponentType<ModalsProps>
 }
 
 const { isRequestWindow, isTab, isSidePanel } = getUiType()
+// A full tab shows the estimation in a centered modal, everywhere else it's a bottom sheet with a dragger
+const isEstimationSheetModal = isTab && !isSidePanel
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
+const ONE_CLICK_MODALS_ACTION_TYPES: Record<
+  OneClickEstimationProps['updateType'],
+  ModalsProps['actionType']
+> = {
+  'Swap&Bridge': 'swapAndBridge',
+  'Transfer&TopUp': 'transfer',
+  SafeOwnerApproval: 'safeOwnerApproval'
+}
 
 const OneClickEstimation = ({
   closeEstimationModal,
-  handleUpdateStatus,
-  updateController,
+  onEstimationModalClosed,
   estimationModalRef,
   signAccountOpController,
   hasProceeded,
@@ -57,19 +84,55 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
-  const { isCompactSidePanelLayout } = useCompactActionRequestLayout()
+  const { isCompactLayout } = useCompactLayout()
+  const { state: networks } = useController('NetworksController', selectNetworks)
+  const chainId = signAccountOpController?.accountOp.chainId
+  const network = useMemo(() => networks.find((n) => n.chainId === chainId), [networks, chainId])
   const hasFreshActionPressRef = useRef(false)
+  const callSignAccountOpMethod = useCallSignAccountOpMethod(getSignAccountOpType(updateType))
+
+  const handleUpdateStatus = useCallback(
+    (status: SigningStatus) => callSignAccountOpMethod('updateStatus', [status]),
+    [callSignAccountOpMethod]
+  )
+  const updateController = useCallback(
+    (params: { signingKeyAddr?: Key['addr']; signingKeyType?: Key['type'] }) =>
+      callSignAccountOpMethod('update', [params]),
+    [callSignAccountOpMethod]
+  )
+  const replacePendingAccountOp = useCallback(
+    () => callSignAccountOpMethod('replacePendingAccountOp', []),
+    [callSignAccountOpMethod]
+  )
+  const stopReplacingPendingAccountOp = useCallback(
+    () => callSignAccountOpMethod('stopReplacingPendingAccountOp', []),
+    [callSignAccountOpMethod]
+  )
 
   const signingErrors = useMemo(() => {
     const signAccountOpErrors = signAccountOpController ? signAccountOpController.errors : []
     return [...(errors || []), ...signAccountOpErrors]
   }, [errors, signAccountOpController])
+  // The earlier pending transaction box already explains this error
+  const visibleSigningErrors = useMemo(
+    () => signingErrors.filter((error) => error.code !== EARLIER_PENDING_TRANSACTION_ERROR_CODE),
+    [signingErrors]
+  )
+  const canChangeFee = useMemo(() => {
+    if (!signAccountOpController) return false
+
+    const { status, earlierPendingAccountOp } = signAccountOpController
+    if (status?.type === SigningStatus.ReadyToSign) return true
+    if (status?.type !== SigningStatus.UnableToSign) return false
+
+    // Held back by a pending transaction of the account that pays the fee, so it can pay another
+    // way instead, e.g. a smart account by itself or an EOA through the bundler
+    return !!earlierPendingAccountOp
+  }, [signAccountOpController])
 
   const {
     isViewOnly,
     hasEstimation,
-    signingKeyType,
-    feePayerKeyType,
     handleDismissLedgerConnectModal,
     shouldDisplayLedgerConnectModal,
     isChooseSignerShown,
@@ -91,7 +154,9 @@ const OneClickEstimation = ({
     setIsChooseFeePayerKeyShown,
     slowPaymasterRequest,
     signButtonText,
+    holdToSignButtonText,
     extremeGasFeeSignButtonType,
+    isLinkingNewFeePayerToSafe,
     bundlerNonceDiscrepancy,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
@@ -100,7 +165,11 @@ const OneClickEstimation = ({
     handleQrSigningFlowOnRejectPressed,
     handleQrSigningFlowOnBackPressed,
     currentRequest,
-    signingStep
+    signingStep,
+    signingAuthSheetRef,
+    cancelSigningAuth,
+    signingAuthProps,
+    showSafeSigners
   } = useSign({
     signAccountOpState: signAccountOpController,
     handleUpdate: updateController,
@@ -109,8 +178,6 @@ const OneClickEstimation = ({
     updateType
   })
   const { banners } = signAccountOpController || {}
-
-  const ButtonsWrapper = isMobile ? View : FooterGlassView
 
   useEffect(() => {
     // Require a fresh click/press for each newly opened estimation flow.
@@ -129,20 +196,210 @@ const OneClickEstimation = ({
     action()
   }, [])
 
+  // Everything from the network fee down is the sheet's footer, so it stays visible while the
+  // transaction details above it scroll
+  const footerComponent = useMemo(() => {
+    if (!signAccountOpController) return null
+
+    // The wide footer keeps `smaller` buttons, but as tall as the compact ones
+    const signButtonStyle = isCompactLayout ? { width: '100%' as const } : { height: BUTTON_HEIGHT }
+    const signButton =
+      (!!banners && !!banners.length) || isLinkingNewFeePayerToSafe ? (
+        <HoldToProceedButton
+          testID="sign-proceed-btn"
+          text={holdToSignButtonText}
+          buttonType={
+            extremeGasFeeSignButtonType === 'warning' || isLinkingNewFeePayerToSafe
+              ? 'warning'
+              : 'primary'
+          }
+          disabled={isSignDisabled || signingErrors.length > 0}
+          onPressIn={markFreshActionPress}
+          onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
+          size={isCompactLayout ? 'regular' : 'smaller'}
+          style={signButtonStyle}
+        />
+      ) : (
+        <ButtonWithLoader
+          testID="sign-button"
+          text={signButtonText}
+          type={extremeGasFeeSignButtonType}
+          isLoading={isSignLoading}
+          disabled={isSignDisabled || signingErrors.length > 0}
+          onPressIn={markFreshActionPress}
+          onPress={() => runWithFreshActionPress(onSignButtonClick)}
+          size={isCompactLayout ? 'regular' : 'smaller'}
+          style={signButtonStyle}
+        />
+      )
+
+    return (
+      <View
+        style={[
+          // Keeps the fee header off the bottom sheet's dragger
+          !isEstimationSheetModal && spacings.ptTy
+        ]}
+      >
+        <KeySelect
+          isSigning={isSignLoading || !signAccountOpController.readyToSign}
+          isChooseSignerShown={isChooseSignerShown}
+          isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
+          handleChooseKey={
+            isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
+          }
+          account={signAccountOpController.account}
+          selectedAccountKeyStoreKeys={
+            isChooseFeePayerKeyShown
+              ? signAccountOpController.feePayerKeyStoreKeys
+              : signAccountOpController.accountKeyStoreKeys
+          }
+          handleClose={() => {
+            setIsChooseSignerShown(false)
+            setIsChooseFeePayerKeyShown(false)
+          }}
+        />
+        {/* A Safe collects the signatures of its owners before it can be sent */}
+        {!!signAccountOpController.account.safeCreation &&
+          !signAccountOpController.canBroadcast &&
+          showSafeSigners && (
+            <SafeOwners
+              account={signAccountOpController.account}
+              onSign={handleChangeSigningKey}
+              isSignLoading={isSignLoading}
+              signingKeyAddr={signAccountOpController.accountOp.signingKeyAddr}
+              chainId={signAccountOpController.accountOp.chainId.toString()}
+              signed={signAccountOpController.accountOp.signed || []}
+              importedKeys={signAccountOpController.accountKeyStoreKeys}
+              threshold={signAccountOpController.threshold}
+              style={spacings.mb}
+            />
+          )}
+        {signAccountOpController?.canBroadcast && (
+          <Estimation
+            updateType={updateType}
+            signAccountOpState={signAccountOpController}
+            disabled={!canChangeFee}
+            hasEstimation={!!hasEstimation}
+            // TODO<oneClickSwap>
+            slowRequest={false}
+            // TODO<oneClickSwap>
+            isViewOnly={isViewOnly}
+            isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
+            sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
+            serviceFee={serviceFee}
+            isOneClick
+          />
+        )}
+        {isViewOnly && (
+          <NoKeysToSignAlert
+            style={spacings.mt}
+            chainId={signAccountOpController?.accountOp?.chainId}
+          />
+        )}
+        {!isViewOnly && visibleSigningErrors[0] && (
+          <Alert title={t(visibleSigningErrors[0].title)} type="error" style={spacings.mt} />
+        )}
+        <EarlierPendingTransaction
+          style={spacings.mt}
+          signAccountOpState={signAccountOpController}
+          onReplace={replacePendingAccountOp}
+          onStopReplacing={stopReplacingPendingAccountOp}
+          onReplacementRequestOpen={closeEstimationModal}
+        />
+        <BundlerWarning
+          signAccountOpState={signAccountOpController}
+          bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
+          updateType={updateType}
+          hasMarginTop
+        />
+        {isCompactLayout ? (
+          <View style={{ paddingTop: COMPACT_FEE_TO_BUTTONS_SPACING }}>
+            <CompactFooterButtons
+              isEvenSplit
+              secondaryActions={
+                <Button
+                  testID="back-button"
+                  // The web secondary background matches the sheet, tertiary keeps it visible
+                  type={isWeb ? 'tertiary' : 'secondary'}
+                  text={t('Back')}
+                  onPress={closeEstimationModal}
+                  hasBottomSpacing={false}
+                  disabled={isSignLoading}
+                  size="regular"
+                  style={flexbox.flex1}
+                />
+              }
+              primaryAction={signButton}
+            />
+          </View>
+        ) : (
+          <FooterGlassView size="sm" absolute={false} isSimpleBlur={false} style={spacings.pt}>
+            <Button
+              testID="back-button"
+              type="secondary"
+              text={t('Back')}
+              onPress={closeEstimationModal}
+              hasBottomSpacing={false}
+              disabled={isSignLoading}
+              style={{ width: 98, height: BUTTON_HEIGHT, ...spacings.mrLg }}
+              size="smaller"
+            />
+            {signButton}
+          </FooterGlassView>
+        )}
+      </View>
+    )
+  }, [
+    signAccountOpController,
+    banners,
+    canChangeFee,
+    isLinkingNewFeePayerToSafe,
+    bundlerNonceDiscrepancy,
+    closeEstimationModal,
+    extremeGasFeeSignButtonType,
+    handleChangeFeePayerKeyType,
+    handleChangeSigningKey,
+    hasEstimation,
+    isChooseFeePayerKeyShown,
+    isChooseSignerShown,
+    isCompactLayout,
+    isSignDisabled,
+    isSignLoading,
+    isViewOnly,
+    markFreshActionPress,
+    onSignButtonClick,
+    runWithFreshActionPress,
+    serviceFee,
+    setIsChooseFeePayerKeyShown,
+    setIsChooseSignerShown,
+    signButtonText,
+    holdToSignButtonText,
+    signingErrors,
+    showSafeSigners,
+    t,
+    updateType,
+    visibleSigningErrors,
+    replacePendingAccountOp,
+    stopReplacingPendingAccountOp
+  ])
+
   return (
     <>
       <BottomSheet
         id="estimation-modal"
         sheetRef={estimationModalRef}
-        type={isTab && !isSidePanel ? 'modal' : 'bottom-sheet'}
+        type={isEstimationSheetModal ? 'modal' : 'bottom-sheet'}
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
         style={spacings.pb}
         closeBottomSheet={isWeb ? undefined : closeEstimationModal}
+        // Dragging the sheet down closes it without calling closeBottomSheet, which would leave the
+        // flow marked as proceeded and the Proceed button disabled. Every other close already resets it
+        onClosed={isMobile ? onEstimationModalClosed : undefined}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile || shouldShowTxnDetails}
-        reserveScrollPadding={shouldShowTxnDetails}
         shouldBeClosableOnDrag={isMobile}
+        FooterComponent={footerComponent}
       >
         {!!banners && !!banners.length && (
           <View style={spacings.mbTy}>
@@ -153,128 +410,33 @@ const OneClickEstimation = ({
                 title={banner.title}
                 text={banner.text}
                 secondaryText={banner.secondaryText}
+                trustableDappUrls={banner.trustableDappUrls}
                 style={spacings.mbTy}
               />
             ))}
           </View>
         )}
-        {!!signAccountOpController && (
-          <View>
-            <KeySelect
-              isSigning={isSignLoading || !signAccountOpController.readyToSign}
-              isChooseSignerShown={isChooseSignerShown}
-              isChooseFeePayerKeyShown={isChooseFeePayerKeyShown}
-              handleChooseKey={
-                isChooseFeePayerKeyShown ? handleChangeFeePayerKeyType : handleChangeSigningKey
-              }
-              account={signAccountOpController.account}
-              selectedAccountKeyStoreKeys={
-                isChooseFeePayerKeyShown
-                  ? signAccountOpController.feePayerKeyStoreKeys
-                  : signAccountOpController.accountKeyStoreKeys
-              }
-              handleClose={() => {
-                setIsChooseSignerShown(false)
-                setIsChooseFeePayerKeyShown(false)
-              }}
-            />
-            {signAccountOpController?.canBroadcast && (
-              <Estimation
-                updateType={updateType}
-                signAccountOpState={signAccountOpController}
-                disabled={signAccountOpController.status?.type !== SigningStatus.ReadyToSign}
-                hasEstimation={!!hasEstimation}
-                // TODO<oneClickSwap>
-                slowRequest={false}
-                // TODO<oneClickSwap>
-                isViewOnly={isViewOnly}
-                isSponsored={signAccountOpController ? signAccountOpController.isSponsored : false}
-                sponsor={signAccountOpController ? signAccountOpController.sponsor : undefined}
-                serviceFee={serviceFee}
-                isOneClick
-                shouldShowTxnDetails={shouldShowTxnDetails}
-              />
-            )}
-            {isViewOnly && (
-              <NoKeysToSignAlert
-                style={spacings.mt}
-                chainId={signAccountOpController?.accountOp?.chainId}
-              />
-            )}
-            {!isViewOnly && signingErrors && signingErrors[0] && (
-              <Alert title={t(signingErrors[0].title)} type="error" style={spacings.mt} />
-            )}
-            <BundlerWarning
+        {!!signAccountOpController && shouldShowTxnDetails && (
+          // A small top margin keeps the sheet's drag handle vertically centered
+          <View style={spacings.mtTy}>
+            <PendingTransactions
+              network={network}
+              setDelegation={signAccountOpController.accountOp.meta?.setDelegation}
+              delegatedContract={signAccountOpController.delegatedContract}
+              hideDeleteIcon
               signAccountOpState={signAccountOpController}
-              bundlerNonceDiscrepancy={bundlerNonceDiscrepancy}
-              hasMarginTop
+              size="md"
             />
-            <ButtonsWrapper
-              size="sm"
-              absolute={false}
-              isSimpleBlur={false}
-              style={isMobile ? spacings.ptLg : spacings.pt}
-              innerContainerStyle={
-                isCompactSidePanelLayout
-                  ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
-                  : undefined
-              }
-            >
-              {!isMobile && !isCompactSidePanelLayout && (
-                <Button
-                  testID="back-button"
-                  type="secondary"
-                  text={t('Back')}
-                  onPress={closeEstimationModal}
-                  hasBottomSpacing={false}
-                  disabled={isSignLoading}
-                  style={{ width: 98, ...spacings.mrLg }}
-                  size="smaller"
-                />
-              )}
-
-              {!!banners && !!banners.length ? (
-                <HoldToProceedButton
-                  testID="sign-proceed-btn"
-                  text={t('Hold to sign')}
-                  buttonType={extremeGasFeeSignButtonType === 'warning' ? 'warning' : 'primary'}
-                  disabled={isSignDisabled || signingErrors.length > 0}
-                  onPressIn={markFreshActionPress}
-                  onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
-                  size={isMobile ? 'regular' : 'smaller'}
-                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
-                />
-              ) : (
-                <ButtonWithLoader
-                  testID="sign-button"
-                  text={signButtonText}
-                  type={extremeGasFeeSignButtonType}
-                  isLoading={isSignLoading}
-                  disabled={isSignDisabled || signingErrors.length > 0}
-                  onPressIn={markFreshActionPress}
-                  onPress={() => runWithFreshActionPress(onSignButtonClick)}
-                  size={isMobile ? 'regular' : 'smaller'}
-                  style={isCompactSidePanelLayout ? { flex: 1, minWidth: 0 } : undefined}
-                />
-              )}
-
-              {/* Side panel only: stack Back under the primary action */}
-              {!isMobile && isCompactSidePanelLayout && (
-                <Button
-                  testID="back-button"
-                  type="secondary"
-                  text={t('Back')}
-                  onPress={closeEstimationModal}
-                  hasBottomSpacing={false}
-                  disabled={isSignLoading}
-                  style={{ flex: 1, minWidth: 0 }}
-                  size="smaller"
-                />
-              )}
-            </ButtonsWrapper>
           </View>
         )}
       </BottomSheet>
+      {isMobile && (
+        <SigningAuthBottomSheet
+          sheetRef={signingAuthSheetRef}
+          onCancel={cancelSigningAuth}
+          {...signingAuthProps}
+        />
+      )}
       <Modals
         renderedButNotNecessarilyVisibleModal={renderedButNotNecessarilyVisibleModal}
         signAccountOpState={signAccountOpController}
@@ -282,8 +444,6 @@ const OneClickEstimation = ({
         gasFeeUpdatedModalRef={gasFeeUpdatedModalRef}
         handleAcceptGasFeeUpdate={handleAcceptGasFeeUpdate}
         handleDismissGasFeeUpdate={handleDismissGasFeeUpdate}
-        feePayerKeyType={feePayerKeyType}
-        signingKeyType={signingKeyType}
         slowPaymasterRequest={slowPaymasterRequest}
         shouldDisplayLedgerConnectModal={shouldDisplayLedgerConnectModal}
         handleDismissLedgerConnectModal={handleDismissLedgerConnectModal}
@@ -309,7 +469,7 @@ const OneClickEstimation = ({
               ? 'gas-fee-updated'
               : undefined
         }
-        actionType={updateType === 'Swap&Bridge' ? 'swapAndBridge' : 'transfer'}
+        actionType={ONE_CLICK_MODALS_ACTION_TYPES[updateType]}
       />
     </>
   )

@@ -1,3 +1,6 @@
+/** The host every Sentry DSN builds its envelope endpoint on, including the fake e2e one. */
+const SENTRY_HOST = 'sentry.io'
+
 function categorizeRequests(requests: string[]) {
   const thirdPartyExactMatchAllowlist = [
     'https://api.github.com/repos/MetaMask/eth-phishing-detect/contents/src/config.json?ref=main',
@@ -16,6 +19,7 @@ function categorizeRequests(requests: string[]) {
     'li.quest',
     'dedicated-backend.socket.tech',
     'trade-api.gateway.uniswap.org',
+    'partners.cow.fi',
     // RPCs
     '480.rpc.thirdweb.com',
     'unichain-rpc.publicnode.com',
@@ -47,7 +51,9 @@ function categorizeRequests(requests: string[]) {
     'strapi.jumper.exchange',
     'assets.coingecko.com',
     'coin-images.coingecko.com',
-    'cdn.dexscreener.com'
+    'cdn.dexscreener.com',
+    // swap&bridge to tokens
+    'files.cow.fi'
   ]
 
   const reqs = requests.reduce(
@@ -57,6 +63,8 @@ function categorizeRequests(requests: string[]) {
       // Cloudflare Turnstile serves its challenge-platform from rotating
       // codename subdomains (e.g. brunhild.challenges.cloudflare.com).
       const isCloudflareChallenge = url.hostname.endsWith('.challenges.cloudflare.com')
+      // Self-hosted and region-specific DSNs use subdomains, e.g. o0.ingest.us.sentry.io
+      const isCrashReport = url.hostname === SENTRY_HOST || url.hostname.endsWith(`.${SENTRY_HOST}`)
       const isThirdPartyAllowed =
         thirdPartyExactMatchAllowlist.includes(urlStr) ||
         thirdPartyHostsAllowList.includes(url.hostname) ||
@@ -73,6 +81,8 @@ function categorizeRequests(requests: string[]) {
         acc.batchedPrices.push(urlStr)
       } else if (url.hostname === 'invictus.ambire.com') {
         acc.rpc.push(urlStr)
+      } else if (isCrashReport) {
+        acc.crashReports.push(urlStr)
       } else if (isThirdPartyAllowed) {
         acc.thirdParty.push(urlStr)
       } else if (isAmbire) {
@@ -89,6 +99,7 @@ function categorizeRequests(requests: string[]) {
       batchedPrices: [],
       hints: [],
       rpc: [],
+      crashReports: [], // Sentry envelopes
       thirdParty: [], // Explicitly whitelisted third-party URLs
       allowedUncategorized: [], // Ambire domains not matched by any known category
 

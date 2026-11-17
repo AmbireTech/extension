@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -10,28 +10,46 @@ import DAppConnectHeader from '@common/modules/action-requests/components/DAppCo
 import getStyles from '@common/modules/action-requests/components/DAppConnect/styles'
 import useDappConnect from '@common/modules/action-requests/hooks/useDappConnect'
 import spacings from '@common/styles/spacings'
-import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
+import {
+  MobileLayoutContainer,
+  MobileLayoutWrapperMainContent
+} from '@mobile/components/MobileLayoutWrapper'
 
 // Screen for dApps authorization to connect to extension - will be triggered on dApp connect request
 const DappConnectScreen = () => {
   const {
     t,
     dappToConnect,
+    websiteContentUpdate,
     isAuthorizing,
     handleDenyButtonPress,
     handleAuthorizeButtonPress,
     shouldHoldToProceed,
-    resolveButtonText
+    resolveButtonText,
+    isTrustedByUser,
+    canBeTrustedByUser,
+    isScamCheckerEnabled,
+    handleEnableScamChecker,
+    toggleTrust,
+    impersonation
   } = useDappConnect()
   const { styles } = useTheme(getStyles)
+  const accountSelectProps = useMemo(
+    () => ({ dappToConnect: dappToConnect || undefined }),
+    [dappToConnect]
+  )
 
   return (
     <MobileLayoutContainer
-      header={<ActionHeader />}
+      withHorizontalPadding
+      header={<ActionHeader accountSelectProps={accountSelectProps} />}
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <ActionFooter
           onReject={handleDenyButtonPress}
+          withRejectOptions
+          rejectOptionsTitle={t('Cancel connection')}
+          rejectOptionText={t('Cancel this connection')}
           onResolve={!shouldHoldToProceed ? handleAuthorizeButtonPress : () => {}}
           resolveNode={
             shouldHoldToProceed ? (
@@ -39,7 +57,6 @@ const DappConnectScreen = () => {
                 testID="dapp-connect-button"
                 onHoldComplete={handleAuthorizeButtonPress}
                 holdDuration={1600}
-                style={{ height: 56 }}
                 text={resolveButtonText}
                 buttonType={
                   !!dappToConnect && dappToConnect.blacklisted === 'BLACKLISTED'
@@ -60,18 +77,34 @@ const DappConnectScreen = () => {
           resolveButtonTestID={!shouldHoldToProceed ? 'dapp-connect-button' : undefined}
         />
       }
-      style={spacings.mt}
     >
       {!!dappToConnect && (
-        <View style={styles.content}>
-          <DAppConnectHeader
-            name={dappToConnect.name}
-            id={dappToConnect.id}
-            icon={dappToConnect.icon!}
-            securityCheck={dappToConnect.blacklisted}
-          />
-          <DAppConnectBody securityCheck={dappToConnect.blacklisted} />
-        </View>
+        // Scrolls on short screens, so the whole body can be seen
+        <MobileLayoutWrapperMainContent withScroll withHorizontalPadding={false}>
+          <View style={styles.content}>
+            <DAppConnectHeader
+              id={dappToConnect.id}
+              icon={dappToConnect.icon!}
+              securityCheck={dappToConnect.blacklisted}
+              isTrustedByUser={isTrustedByUser}
+              isScamCheckerEnabled={isScamCheckerEnabled}
+              isInAppCatalog={!dappToConnect.isCustom}
+              isImpersonating={!!impersonation}
+            />
+            <DAppConnectBody
+              id={dappToConnect.id}
+              securityCheck={dappToConnect.blacklisted}
+              isTrustedByUser={isTrustedByUser}
+              canBeTrustedByUser={canBeTrustedByUser}
+              onToggleTrust={toggleTrust}
+              onEnableScamChecker={handleEnableScamChecker}
+              isScamCheckerEnabled={isScamCheckerEnabled}
+              websiteContentUpdate={websiteContentUpdate}
+              isInAppCatalog={!dappToConnect.isCustom}
+              impersonation={impersonation}
+            />
+          </View>
+        </MobileLayoutWrapperMainContent>
       )}
     </MobileLayoutContainer>
   )

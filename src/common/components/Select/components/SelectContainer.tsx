@@ -65,7 +65,12 @@ const SelectContainer: FC<Props> = ({
   listRef,
   sectionListProps,
   flatListProps,
-  renderHeaderChildren
+  renderHeaderChildren,
+  menuHeader,
+  onBottomSheetClosed,
+  isBottomSheetFullHeight,
+  renderBottomSheetFooter,
+  withBottomSheetBackButton = true
 }) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
@@ -74,6 +79,10 @@ const SelectContainer: FC<Props> = ({
   const setInputRef = useCallback((ref: TextInput | null) => {
     if (ref) searchInputRef.current = ref
   }, [])
+
+  // The close button must close, never toggle - a second tap while the sheet is
+  // still animating out would otherwise reopen it.
+  const closeMenu = useCallback(() => setIsMenuOpen(false), [setIsMenuOpen])
 
   // Workaround for auto-focusing the Search input when it's rendered inside the BottomSheet.
   // If we try to enable it via the <Search autoFocus /> prop, a layout shift occurs beneath the BottomSheet.
@@ -95,7 +104,10 @@ const SelectContainer: FC<Props> = ({
   const bottomSheetHeader = useMemo(
     () => (
       <View>
-        <ModalHeader title={bottomSheetTitle} handleClose={toggleMenu} />
+        <ModalHeader
+          title={bottomSheetTitle}
+          handleClose={withBottomSheetBackButton ? closeMenu : undefined}
+        />
         {renderHeaderChildren?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef })}
         {!!withSearch && (
           <Search
@@ -106,10 +118,14 @@ const SelectContainer: FC<Props> = ({
             containerStyle={spacings.mb}
           />
         )}
+        {menuHeader}
       </View>
     ),
     [
+      menuHeader,
       bottomSheetTitle,
+      withBottomSheetBackButton,
+      closeMenu,
       toggleMenu,
       renderHeaderChildren,
       setIsMenuOpen,
@@ -121,6 +137,12 @@ const SelectContainer: FC<Props> = ({
       setInputRef,
       control
     ]
+  )
+
+  // Memoized like the header, so the BottomSheet only re-renders when the footer changes
+  const bottomSheetFooter = useMemo(
+    () => renderBottomSheetFooter?.({ toggleMenu, setIsMenuOpen, isMenuOpen, selectRef }),
+    [renderBottomSheetFooter, toggleMenu, setIsMenuOpen, isMenuOpen, selectRef]
   )
 
   return (
@@ -174,6 +196,7 @@ const SelectContainer: FC<Props> = ({
                 }}
               />
             )}
+            {menuHeader}
             {sectionListProps ? (
               <SectionList {...sectionListProps} />
             ) : flatListProps ? (
@@ -200,11 +223,13 @@ const SelectContainer: FC<Props> = ({
           id={id}
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}
-          toggleMenu={toggleMenu}
           contentRef={listRef}
           sectionListProps={sectionListProps}
           flatListProps={flatListProps}
           HeaderComponent={bottomSheetHeader}
+          FooterComponent={bottomSheetFooter}
+          onBottomSheetClosed={onBottomSheetClosed}
+          isFullHeight={isBottomSheetFullHeight}
         >
           {children}
         </BottomSheetContainer>

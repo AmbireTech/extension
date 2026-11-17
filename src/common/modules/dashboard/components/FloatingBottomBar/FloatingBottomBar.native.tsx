@@ -4,30 +4,24 @@ import {
   useKeyboardHandler,
   useReanimatedKeyboardAnimation
 } from 'react-native-keyboard-controller'
-import Animated, {
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-  withSpring
-} from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import ScanIcon from '@common/assets/svg/ScanIcon'
 import GlassView from '@common/components/GlassView'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
-import SelectNetwork from '@common/modules/dashboard/components/TabsAndSearch/SelectNetwork'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 import DashboardSearch from './DashboardSearch'
+import SelectNetwork from './SelectNetwork'
 import { FloatingBottomBarProps } from './FloatingBottomBar'
 
 const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
   control,
-  displayNetworkFilter = false,
-  isHidden,
+  networkFilterTab,
   searchPlaceholder
 }) => {
   const { bottom: safeBottom } = useSafeAreaInsets()
@@ -63,19 +57,12 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
     navigate(ROUTES.qrReader)
   }, [navigate])
 
-  const animatedBottom = useDerivedValue(() => {
-    const toValue = isHidden ? -60 - safeBottom : SPACING + safeBottom
-    return withSpring(toValue, {
-      damping: 20,
-      stiffness: 90,
-      overshootClamping: true
-    })
-  }, [isHidden, safeBottom])
-
+  // Follows the keyboard by a transform rather than by `bottom`, so it never relayouts anything.
+  // Hiding it is the carousel's, which moves it together with the overview
   const animatedStyle = useAnimatedStyle(() => {
     const keyboardOffset = isKeyboardHeightStale.value ? 0 : Math.abs(height.value)
     return {
-      bottom: animatedBottom.value + keyboardOffset
+      transform: [{ translateY: -keyboardOffset }]
     }
   }, [height, isKeyboardHeightStale])
 
@@ -84,6 +71,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
       style={[
         {
           position: 'absolute',
+          bottom: SPACING + safeBottom,
           zIndex: 3,
           ...flexbox.center,
           ...flexbox.alignSelfCenter,
@@ -105,7 +93,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
             { columnGap: SPACING }
           ]}
         >
-          <DashboardSearch control={control} placeholder={searchPlaceholder} />
+          {!!control && <DashboardSearch control={control} placeholder={searchPlaceholder} />}
           <Pressable
             style={{
               width: 40,
@@ -118,7 +106,7 @@ const FloatingBottomBar: React.FC<FloatingBottomBarProps> = ({
           >
             <ScanIcon width={24} height={24} />
           </Pressable>
-          {displayNetworkFilter && <SelectNetwork />}
+          {!!networkFilterTab && <SelectNetwork currentTab={networkFilterTab} />}
         </View>
       </GlassView>
     </Animated.View>

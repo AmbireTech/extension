@@ -1,8 +1,8 @@
-import { flushSync } from 'react-dom'
+import { isDev } from '@common/config/env'
+import eventBus from '@common/services/event/eventBus'
+import { reconcileState } from '@common/utils/reconcileState'
 
-import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
-import { isMobile } from '@common/config/env'
-import { isExtension } from '@web/constants/browserapi'
+import { createCtrlStateCommitter } from './ctrlStateCommitter'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -22,13 +22,20 @@ export class ControllerStore {
 
   #listeners: Map<string, Set<(eventData?: any) => void>> = new Map()
 
+  /**
+   * What puts a controller's state in front of React. Platform specific, because making
+   * sure the UI sees every forced update takes a `flushSync` on the DOM and a paced
+   * hand-over on React Native, which has none.
+   */
+  #committer = createCtrlStateCommitter((id, state) => this.#deliverState(id, state))
+
   controllersByName: (keyof AllControllersMappingType)[] = []
 
   #criticalControllers: (keyof AllControllersMappingType)[] = []
 
   /**
-   * Controllers the platform deliberately loads after the initial route renders. They
-   * still gate `isReady`, but waiting on them is expected, so they are left out of the
+   * Controllers the platform deliberately loads after the initial route renders.
+   * Waiting on them is expected, so they are left out of `isReady` and of the
    * `controllersLoadingTakingTooLong` check that reports a broken boot.
    */
   #deferredControllers: (keyof AllControllersMappingType)[] = []
@@ -49,20 +56,37 @@ export class ControllerStore {
     this.#onReady = onReady
     this.#onReadyToLoadRoutes = onReadyToLoadRoutes
 
+    eventBus.addEventListener('ctrlUpdate', this.#onCtrlUpdate)
+
     setTimeout(() => {
+      // Waiting on a deferred controller is expected and must not be reported as a
+      // broken boot
       if (this.isReady || !this.#listeners.has('events')) return
-
-      const hasNonDeferredPending =
-        !this.controllersByName.length ||
-        this.controllersByName.some(
-          (ctrlName) =>
-            !this.#deferredControllers.includes(ctrlName) && !this.#isControllerReady(ctrlName)
-        )
-
-      if (!hasNonDeferredPending) return
 
       this.#listeners.get('events')!.forEach((cb) => cb('controllersLoadingTakingTooLong'))
     }, CONTROLLER_STORE_MAX_LOADING_TIME)
+  }
+
+  #onCtrlUpdate = ({
+    ctrlName,
+    ctrlState,
+    forceEmit
+  }: {
+    ctrlName: string
+    ctrlState: any
+    forceEmit?: boolean
+  }) => {
+    try {
+      this.update(ctrlName as any, ctrlState, forceEmit)
+    } catch (e) {
+      console.error(`controllerStore.update failed for controller "${ctrlName}":`, e)
+    }
+  }
+
+  /** Stops the store from taking any further controller state. */
+  destroy() {
+    eventBus.removeEventListener('ctrlUpdate', this.#onCtrlUpdate)
+    this.#committer.destroy()
   }
 
   // Track which controllers have received their first update
@@ -96,10 +120,29 @@ export class ControllerStore {
     forceEmit?: boolean
   ) {
     if (ctrl === undefined) return
+    // The newest snapshot, which while a burst is being paced out is the last one the
+    // committer holds - reconciling against the delivered one would drop what it still
+    // has queued.
+    const prevState = this.#newestStateOf(id)
+    let nextState = prevState
     try {
-      this.#states[id] = isExtension || isMobile ? { ...ctrl } : parse(stringify(ctrl))
+      // Reconciling keeps the emit path cheap: the snapshot is detached from the
+      // controller's own objects, which is mandatory where the controllers run in this
+      // same realm, and every object the update did not touch keeps the identity it
+      // already had. So an emit that changed nothing returns the previous snapshot
+      // untouched and every subscriber exits on a reference check. The extension's
+      // state already arrives detached over the port, but it arrives as a fresh tree on
+      // every emit, which is what used to make each of its subscribers deep compare its
+      // own slice - and hand every memoized child new props for unchanged content.
+      nextState = reconcileState(prevState, ctrl, {
+        label: id as string,
+        detectCycles: isDev
+      })
     } catch (error) {
-      console.error(error)
+      // Leaving the snapshot unset means every consumer reads the empty state and
+      // the store never reports ready, so the controller has to be named or the
+      // failure looks like an unrelated crash in whichever screen read it first.
+      console.error(`controllerStore: could not snapshot the state of ${id}:`, error)
     }
     // Track first-emit. We re-check readiness on every update so a controller
     // whose `isReady` flips from `false` to `true` on a later emit can graduate
@@ -109,29 +152,40 @@ export class ControllerStore {
     if (!this.initializedControllers.has(id)) {
       this.initializedControllers.add(id)
     }
+    // An emit the reconcile found no change in leaves every subscriber's value at the
+    // very reference it already holds, so notifying them could only end in a no-op - and
+    // the newest snapshot is either the delivered one or one queued ahead of this emit,
+    // which keeps its place. `forceEmit` is let through: it is the path a user action is
+    // waiting on.
+    if (nextState !== prevState || forceEmit)
+      this.#committer.commit(id as string, nextState, forceEmit)
+
+    this.#checkReadiness()
+    this.#checkRoutesReadiness()
+  }
+
+  /** Exposes a snapshot and notifies the controller's subscribers of it. */
+  #deliverState(id: string, state: any) {
+    this.#states[id as keyof AllControllersMappingType] = state
+
+    const idListeners = this.#listeners.get(id)
+
+    idListeners?.forEach((callback) => callback())
+
+    // The snapshot that carries a controller's `isReady` can be one the committer held
+    // back, and the readiness checks read what was delivered, so the hand-over is the
+    // moment they have to run again.
     this.#checkReadiness()
     this.#checkRoutesReadiness()
 
-    const idListeners = this.#listeners.get(id as string)
-    if (!idListeners) return
+    // Whether anything is listening, not whether anything ever did: `subscribe` leaves
+    // the set behind when its last subscriber goes, and pacing a state no screen renders
+    // only holds the next one back for a frame nothing needs.
+    return !!idListeners?.size
+  }
 
-    if (forceEmit) {
-      /**
-       * For certain updates, we need to override React's default behavior of batching state updates and render the update immediately.
-       * This is particularly handy when multiple status flags are being updated rapidly.
-       * Without the forceEmit option, React will only render the very first and last status updates, batching the ones in between.
-       *
-       * Here's more info about `flushSync`:
-       * Introduced in React 18, flushSync is a function that forces React to re-render synchronously within its callback,
-       * before continuing with the rest of the JavaScript event loop.
-       * This goes against React's default behavior of batching state updates for optimized performance.
-       */
-      flushSync(() => {
-        idListeners.forEach((callback) => callback())
-      })
-    } else {
-      idListeners.forEach((callback) => callback())
-    }
+  #newestStateOf<K extends keyof AllControllersMappingType>(id: K) {
+    return this.#committer.pendingStateOf(id as string) ?? this.#states[id]
   }
 
   subscribe(id: string, listener: () => void) {
@@ -159,8 +213,18 @@ export class ControllerStore {
   #isControllerReady(ctrlName: keyof AllControllersMappingType) {
     if (!this.initializedControllers.has(ctrlName)) return false
 
-    if ('isReady' in (this.#states?.[ctrlName] || {})) {
-      return (this.#states[ctrlName] as any).isReady === true
+    // The delivered state, not the newest: the routes render on readiness and read what
+    // the store has handed over, so graduating on a snapshot the committer still holds
+    // would render them off the older one.
+    const deliveredState = this.#states[ctrlName]
+
+    // An update whose state could not be snapshotted still counts as a first emit, and
+    // leaves the UI on the empty state. Graduating on it would render the routes off a
+    // controller they can read nothing from.
+    if (!deliveredState) return false
+
+    if ('isReady' in deliveredState) {
+      return (deliveredState as any).isReady === true
     }
 
     return true
@@ -178,8 +242,12 @@ export class ControllerStore {
   #checkReadiness() {
     if (this.isReady) return
     if (!this.controllersByName.length) return
-    // Check if every required controller exists in the initialized set
-    const allReady = this.controllersByName.every((ctrlName) => this.#isControllerReady(ctrlName))
+    // Check if every required controller exists in the initialized set, leaving out the
+    // ones the platform deliberately loads after the first paint.
+    const allReady = this.controllersByName.every(
+      (ctrlName) =>
+        this.#deferredControllers.includes(ctrlName) || this.#isControllerReady(ctrlName)
+    )
 
     // NOTE: used for debugging the initial loading of controllers
     // console.log(

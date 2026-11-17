@@ -11,6 +11,8 @@ export class BasePage {
 
   context: BrowserContext
 
+  serviceWorker: any
+
   private _reqListener?: (r: PWRequest) => void
 
   private _monitorInstalled = false
@@ -23,9 +25,19 @@ export class BasePage {
     headers: Record<string, string>
   }> = []
 
-  constructor({ page, context }: BootstrapContext) {
+  constructor({ page, context, serviceWorker }: BootstrapContext) {
     this.page = page
     this.context = context
+    this.serviceWorker = serviceWorker
+  }
+
+  /** The address of the selected account, as the wallet saved it, or undefined when none is. */
+  async getSelectedAccount(): Promise<string | undefined> {
+    const { selectedAccount } = await this.serviceWorker.evaluate(() =>
+      chrome.storage.local.get('selectedAccount')
+    )
+
+    return selectedAccount
   }
 
   async navigateToURL(url: string) {
@@ -40,16 +52,29 @@ export class BasePage {
   }
 
   async clickOnMenuToken(token: Token, menuSelector: string = selectors.tokensSelect) {
-    await this.click(menuSelector)
+    // The dropdown trigger can still be disabled right after a preceding step (e.g. switching
+    // networks reloads the token list), so a click that lands during that window is silently
+    // ignored by the app and the menu never opens. We retry the click, but only while the
+    // BottomSheet isn't attached yet: toggleMenu (useSelect.ts) flips isMenuOpen on every call,
+    // so clicking again once it's already open/opening would close it right back. The
+    // BottomSheet only carries testID="bottom-sheet" while isOpen is true (BottomSheet.web.tsx),
+    // so "attached" mirrors that state directly, safe to use as the click-guard even before any
+    // animation finishes.
+    const bottomSheet = this.page.getByTestId(selectors.bottomSheet)
+    const searchInput = this.page.getByTestId(selectors.searchInput).first()
+    await expect(async () => {
+      if ((await bottomSheet.count()) === 0) {
+        await this.click(menuSelector)
+      }
+      await expect(searchInput).toBeVisible({ timeout: 5000 })
+    }).toPass({ timeout: 30000 })
 
     // If the token is outside the viewport, we ensure it becomes visible by searching for its symbol
-    await this.entertext(selectors.searchInput, token.symbol)
+    await searchInput.fill(token.symbol)
 
     // Ensure we click the token inside the BottomSheet,
     // not the one rendered as the default in the Select menu.
-    const tokenLocator = this.page
-      .getByTestId(selectors.bottomSheet)
-      .getByTestId(`option-${token.address}.${token.chainId}`)
+    const tokenLocator = bottomSheet.getByTestId(`option-${token.address}.${token.chainId}`)
     await tokenLocator.click()
   }
 
@@ -156,7 +181,11 @@ export class BasePage {
   async expectButtonEnabled(selector: string) {
     const locator = this.page.getByTestId(selector)
     await expect(locator).not.toHaveAttribute('aria-disabled', 'true', { timeout: 10000 })
-    await expect(locator).toBeEnabled({ timeout: 10000 })
+  }
+
+  async expectButtonDisabled(selector: string) {
+    const locator = this.page.getByTestId(selector)
+    await expect(locator).toHaveAttribute('aria-disabled', 'true', { timeout: 10000 })
   }
 
   async compareText(

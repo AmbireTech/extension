@@ -5,17 +5,23 @@ import useController from '@common/hooks/useController'
 import useToast from '@common/hooks/useToast'
 import useWindowSize from '@common/hooks/useWindowSize'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
+  state.account
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
+
 const useSwitchAccount = () => {
   const { t } = useTranslation()
   const { addToast } = useToast()
-  const { state: account } = useController('SelectedAccountController', 'account')
+  const { state: account } = useController('SelectedAccountController', selectAccount)
   const { dispatch: mainDispatch } = useController('MainController')
 
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch
   } = useController('RequestsController')
-  const { state: accounts } = useController('AccountsController', 'accounts')
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const [isAuthorizing, setIsAuthorizing] = useState(false)
   const { minHeightSize } = useWindowSize()
 
@@ -32,12 +38,6 @@ const useSwitchAccount = () => {
 
     return accounts.find((acc) => acc.addr === nextAccount) || null
   }, [accounts, nextAccount])
-  const nextRequestLabel = useMemo(() => {
-    if (nextRequestType === 'calls') return 'transaction signature'
-    if (nextRequestType === 'message') return 'message signature'
-
-    return 'unknown request'
-  }, [nextRequestType])
 
   const dAppData = useMemo(() => userRequest?.dappPromises[0]?.session, [userRequest])
 
@@ -105,7 +105,6 @@ const useSwitchAccount = () => {
     nextAccount,
     nextRequestType,
     nextAccountData,
-    nextRequestLabel,
     dAppData,
     handleDenyButtonPress,
     handleAuthorizeButtonPress,

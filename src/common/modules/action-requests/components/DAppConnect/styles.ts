@@ -27,20 +27,11 @@ const getStyles = (theme: ThemeProps) =>
           maxWidth: 480,
           width: '100%'
         },
-    content: isMobile
-      ? {
-          // Fixes the handle of the bottom sheet having a white background
-          marginTop: -21,
-          ...common.fullWidth,
-          overflow: 'hidden',
-          ...flexbox.flex1,
-          ...spacings.mbLg
-        }
-      : {
-          ...common.fullWidth,
-          borderRadius: BORDER_RADIUS_PRIMARY,
-          overflow: 'hidden'
-        },
+    content: {
+      ...common.fullWidth,
+      borderRadius: BORDER_RADIUS_PRIMARY,
+      overflow: 'hidden'
+    },
     contentHeader: isMobile
       ? {}
       : {
@@ -48,8 +39,7 @@ const getStyles = (theme: ThemeProps) =>
           ...flexbox.alignCenter
         },
     contentBody: {
-      backgroundColor: theme.secondaryBackground,
-      ...(isMobile && flexbox.flex1)
+      backgroundColor: theme.secondaryBackground
     },
     securityChecksContainer: {
       backgroundColor: theme.primaryBackground,

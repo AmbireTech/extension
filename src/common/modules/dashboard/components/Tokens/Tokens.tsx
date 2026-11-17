@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Animated, FlatListProps, View } from 'react-native'
+import { View } from 'react-native'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
 import { Network } from '@ambire-common/interfaces/network'
@@ -17,24 +17,21 @@ import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getTokenId } from '@common/utils/token'
 import { getUiType } from '@common/utils/uiType'
 
-import DashboardBanners from '../DashboardBanners'
 import DashboardPageScrollContainer from '../DashboardPageScrollContainer'
-import FloatingBottomBar from '../FloatingBottomBar'
 import { TabType } from '../TabsAndSearch/Tabs/Tab/Tab'
 import HiddenTokensFooter from './HiddenTokensFooter'
 import OtherTokensSummary from './OtherTokensSummary'
 import TokenItem from './TokenItem'
 import TokensEmptyState from './TokensEmptyState'
-import TokensListHeader from './TokensListHeader'
 import Skeleton from './TokensSkeleton'
 
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
 import type { PortfolioController } from '@ambire-common/controllers/portfolio/portfolio'
 import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
-
 const selectNetworks = (state: NetworksController) => state.networks
 const selectCustomTokens = (state: PortfolioController) => state.customTokens
-const selectPortfolio = (state: SelectedAccountController) => state.portfolio
+const selectPortfolioTokens = (state: SelectedAccountController) => state.portfolio?.tokens
+const selectPortfolioIsAllReady = (state: SelectedAccountController) => state.portfolio?.isAllReady
 const selectBalanceAffectingErrors = (state: SelectedAccountController) =>
   state.balanceAffectingErrors
 const selectDashboardNetworkFilter = (state: SelectedAccountController) =>
@@ -42,17 +39,10 @@ const selectDashboardNetworkFilter = (state: SelectedAccountController) =>
 
 interface Props {
   openTab: TabType
-  setOpenTab: React.Dispatch<React.SetStateAction<TabType>>
-  sessionId: string
   initTab?: {
     [key: string]: boolean
   }
-  onScroll?: FlatListProps<any>['onScroll']
   dashboardNetworkFilterName: string | null
-  animatedOverviewHeight: Animated.Value
-  isSearchHidden?: boolean
-  refreshing?: boolean
-  onRefresh?: () => void
 }
 
 // if any of the post amount (during simulation) or the current state
@@ -85,7 +75,8 @@ const PINNED_TOKEN_KEYS = new Set(
 const isCollapsibleToken = (
   token: TokenResult,
   balanceUSD: number,
-  isLargePortfolio: boolean
+  isLargePortfolio: boolean,
+  isTokenPricesEnabled: boolean
 ): boolean => {
   // Rewards and vesting tokens should never be hidden as lower-value tokens
   if (
@@ -109,8 +100,9 @@ const isCollapsibleToken = (
     return false
   }
 
+  // When token prices are disabled, tokens without a price cannot be classified as lower-value
   if (!tokenHasUSDPrice) {
-    return true
+    return isTokenPricesEnabled
   }
 
   if (isLargePortfolio) {
@@ -122,22 +114,21 @@ const isCollapsibleToken = (
 
 const { isPopup } = getUiType()
 
-const Tokens = ({
-  openTab,
-  setOpenTab,
-  initTab,
-  sessionId,
-  onScroll,
-  animatedOverviewHeight,
-  dashboardNetworkFilterName,
-  isSearchHidden,
-  refreshing,
-  onRefresh
-}: Props) => {
+const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const {
+    state: { flags }
+  } = useController('FeatureFlagsController')
   const { state: customTokens } = useController('PortfolioController', selectCustomTokens)
-  const { state: portfolio } = useController('SelectedAccountController', selectPortfolio)
+  const { state: portfolioTokens } = useController(
+    'SelectedAccountController',
+    selectPortfolioTokens
+  )
+  const { state: isPortfolioAllReady } = useController(
+    'SelectedAccountController',
+    selectPortfolioIsAllReady
+  )
   const { state: balanceAffectingErrors } = useController(
     'SelectedAccountController',
     selectBalanceAffectingErrors
@@ -176,7 +167,7 @@ const Tokens = ({
   }, [balanceAffectingErrors, networks])
 
   const tokens = useMemo(() => {
-    const tokenList = (portfolio?.tokens || []).filter((token) => {
+    const tokenList = (portfolioTokens || []).filter((token) => {
       // Hide gas tank and borrowed defi tokens from the list
       if (token.flags.onGasTank || token.flags.defiTokenType === AssetType.Borrow) return false
 
@@ -188,7 +179,7 @@ const Tokens = ({
     })
 
     return tokenOrCollectionSearch({ networks, assets: tokenList, search: searchValue })
-  }, [portfolio?.tokens, networks, searchValue, dashboardNetworkFilter])
+  }, [portfolioTokens, networks, searchValue, dashboardNetworkFilter])
 
   const userHasNoBalance = useMemo(
     // Exclude gas tank tokens from the check
@@ -213,20 +204,18 @@ const Tokens = ({
   const sortedTokens = useMemo(() => {
     const visible = tokens.filter((token) => {
       if (isGasTankTokenOnCustomNetwork(token, networks)) return false
-      if (token?.flags.isHidden || token.flags.rewardsType === 'wallet-projected-rewards')
-        return false
+      if (token?.flags.isHidden) return false
 
       const tokenKey = getTokenId(token)
       // exclude rewards from custom tokens
       const isCustom = customTokenKeys.has(tokenKey) && !token.flags.rewardsType
-      // projected rewards are already filtered out by the guard above
       const isPinned = PINNED_TOKEN_KEYS.has(tokenKey)
 
       return (
         hasAmount(token) ||
         isCustom ||
         // Don't display pinned tokens until we are sure the user has no balance
-        (isPinned && userHasNoBalance && portfolio?.isAllReady)
+        (isPinned && userHasNoBalance && isPortfolioAllReady)
       )
     })
 
@@ -260,7 +249,7 @@ const Tokens = ({
     })
 
     return decorated.map(({ token }) => token)
-  }, [tokens, networks, customTokenKeys, userHasNoBalance, portfolio?.isAllReady, balancesInUSD])
+  }, [tokens, networks, customTokenKeys, userHasNoBalance, isPortfolioAllReady, balancesInUSD])
 
   const { visibleTokens, dustTokens } = useMemo(() => {
     if (userHasNoBalance || searchValue.length > 0) {
@@ -278,7 +267,12 @@ const Tokens = ({
         // If there is a price fetch error for a network every token will be considered
         // lower-value, so we need to show all tokens in that case, regardless of their balance
         if (
-          isCollapsibleToken(token, balancesInUSD.get(token) ?? 0, isLargePortfolio) &&
+          isCollapsibleToken(
+            token,
+            balancesInUSD.get(token) ?? 0,
+            isLargePortfolio,
+            flags.tokenPrices
+          ) &&
           !networkIdsWithPriceError.has(token.chainId.toString())
         ) {
           acc.dustTokens.push(token)
@@ -289,7 +283,14 @@ const Tokens = ({
       },
       { visibleTokens: [] as TokenResult[], dustTokens: [] as TokenResult[] }
     )
-  }, [networkIdsWithPriceError, sortedTokens, userHasNoBalance, searchValue, balancesInUSD])
+  }, [
+    flags.tokenPrices,
+    networkIdsWithPriceError,
+    sortedTokens,
+    userHasNoBalance,
+    searchValue,
+    balancesInUSD
+  ])
 
   const dustTotalUSD = useMemo(
     () => dustTokens.reduce((sum, token) => sum + (balancesInUSD.get(token) ?? 0), 0),
@@ -305,10 +306,10 @@ const Tokens = ({
   const hasAnyTokens = visibleTokens.length > 0 || dustTokens.length > 0
 
   const listData = useMemo(() => {
-    const data: any[] = isMobile ? [] : ['header']
+    const data: any[] = []
 
     // Skeleton 1, order matters
-    if (!hasAnyTokens && !portfolio?.isAllReady) {
+    if (!hasAnyTokens && !isPortfolioAllReady) {
       data.push('skeleton')
     }
 
@@ -326,30 +327,26 @@ const Tokens = ({
 
     // Skeleton 2, order matters, needs to be after the tokens to show the user partial results
     // but also indicate that we are still loading
-    if (hasAnyTokens && !portfolio?.isAllReady) {
+    if (hasAnyTokens && !isPortfolioAllReady) {
       data.push('skeleton')
     }
 
-    if (portfolio?.isAllReady && !hasAnyTokens) {
+    if (isPortfolioAllReady && !hasAnyTokens) {
       data.push('empty')
     }
 
-    if (portfolio?.isAllReady) {
+    if (isPortfolioAllReady) {
       data.push('footer')
     }
 
     return data
-  }, [hasAnyTokens, portfolio?.isAllReady, showTokens, visibleTokens, dustTokens, isDustExpanded])
+  }, [hasAnyTokens, isPortfolioAllReady, showTokens, visibleTokens, dustTokens, isDustExpanded])
 
   const expandDust = useCallback(() => setIsDustExpanded(true), [])
   const collapseDust = useCallback(() => setIsDustExpanded(false), [])
 
   const renderItem = useCallback(
     ({ item }: any) => {
-      if (item === 'header') {
-        return <TokensListHeader openTab={openTab} setOpenTab={setOpenTab} sessionId={sessionId} />
-      }
-
       if (item === 'empty') {
         return (
           <TokensEmptyState
@@ -401,9 +398,6 @@ const Tokens = ({
     },
     [
       initTab?.tokens,
-      openTab,
-      setOpenTab,
-      sessionId,
       searchValue,
       dashboardNetworkFilterName,
       hiddenTokensCount,
@@ -427,41 +421,30 @@ const Tokens = ({
     setValue('search', '')
   }, [setValue])
 
-  // Rendered above the carousel on mobile, so it stays put through a swipe
+  // Rendered by the carousel above the pages, so it stays put through a swipe
   const floatingBar = useMemo(
     () => ({
       control,
       displayCurrentApp: true,
-      displayNetworkFilter: true,
+      networkFilterTab: 'tokens' as const,
       searchPlaceholder: t('Search token')
     }),
     [control, t]
   )
 
   return (
-    <>
-      <DashboardPageScrollContainer
-        floatingBar={floatingBar}
-        tab="tokens"
-        openTab={openTab}
-        ListHeaderComponent={isMobile ? undefined : <DashboardBanners />}
-        animatedOverviewHeight={animatedOverviewHeight}
-        data={listData}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        onEndReachedThreshold={isPopup ? 5 : 2.5}
-        initialNumToRender={isPopup ? 10 : 20}
-        windowSize={9} // Larger values can cause performance issues.
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-      />
-      {/* The carousel renders this above the pages instead, so a swipe leaves it be */}
-      {!isMobile && openTab === 'tokens' && (
-        <FloatingBottomBar {...floatingBar} isHidden={!!isSearchHidden} />
-      )}
-    </>
+    <DashboardPageScrollContainer
+      floatingBar={floatingBar}
+      tab="tokens"
+      openTab={openTab}
+      data={listData}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      onEndReachedThreshold={isPopup ? 5 : 2.5}
+      initialNumToRender={isPopup ? 10 : 20}
+      windowSize={isMobile ? 3 : 9} // Larger values can cause performance issues.
+      scrollEventThrottle={16}
+    />
   )
 }
 

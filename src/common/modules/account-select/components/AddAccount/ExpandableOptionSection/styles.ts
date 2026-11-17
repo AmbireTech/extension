@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { BUTTON_HEIGHT } from '@common/components/Button'
 import spacings from '@common/styles/spacings'
 import { ThemeProps, ThemeType } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
@@ -17,7 +18,7 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
     optionWrapper: {},
     option: {
       ...spacings.phSm,
-      ...spacings.pv,
+      height: BUTTON_HEIGHT,
       ...flexbox.directionRow,
       ...flexbox.alignCenter,
       ...common.borderRadiusPrimary

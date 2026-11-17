@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ethErrors } from 'eth-rpc-errors'
+import { EthereumRpcError, ethErrors } from 'eth-rpc-errors'
 import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
 import { Session } from '@ambire-common/classes/session'
-import { MainController } from '@ambire-common/controllers/main/main'
 import { Account } from '@ambire-common/interfaces/account'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
+import { IMainController } from '@ambire-common/interfaces/main'
 import { Network } from '@ambire-common/interfaces/network'
 import { UiManager } from '@ambire-common/interfaces/ui'
 import {
@@ -17,6 +17,7 @@ import {
   getVersion
 } from '@ambire-common/libs/5792/5792'
 import { getBaseAccount } from '@ambire-common/libs/account/getBaseAccount'
+import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import {
   AccountOpIdentifiedBy,
   isIdentifiedByMultipleTxn
@@ -27,6 +28,13 @@ import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
+import {
+  buildPq1Capabilities,
+  isEthGetCodeParams,
+  isPq1AccountCodeQuery,
+  isPq1Key,
+  resolvePq1AccountCode
+} from '@common/modules/hardware-wallet/libs/pq1DappProvider'
 import { SAFE_RPC_METHODS } from '@common/modules/inpage/methods'
 import { metadata } from '@common/modules/provider/metadata'
 import { RequestRes, Web3WalletPermission } from '@common/modules/provider/types'
@@ -57,28 +65,22 @@ const handleSignMessage = (requestRes: RequestRes) => {
   throw new Error('Internal error: request result not found', requestRes)
 }
 
-function getSelectedAccount(mainCtrl: MainController, id: string): string | undefined {
-  const extensionSelectedAccount = mainCtrl.selectedAccount.account?.addr
-  const preferences = mainCtrl.dapps.getDapp(id)?.accountPreferences
+function getSelectedAccount(mainCtrl: IMainController, id: string): string | undefined {
+  const [selectedAccount] = getAccountsForDapp(
+    mainCtrl.dapps.getDapp(id)?.accountPreferences,
+    mainCtrl.selectedAccount.account?.addr
+  )
 
-  if (
-    !preferences ||
-    !preferences.enabled ||
-    (extensionSelectedAccount && preferences.accounts.includes(extensionSelectedAccount))
-  ) {
-    return extensionSelectedAccount
-  }
-
-  return preferences.selectedAccount
+  return selectedAccount
 }
 
 export class ProviderController {
-  mainCtrl: MainController
+  mainCtrl: IMainController
 
   isUnlocked: boolean
   private notificationManager: UiManager['notification']
 
-  constructor(mainCtrl: MainController, notificationManager: UiManager['notification']) {
+  constructor(mainCtrl: IMainController, notificationManager: UiManager['notification']) {
     this.mainCtrl = mainCtrl
     this.notificationManager = notificationManager
 
@@ -88,8 +90,8 @@ export class ProviderController {
   }
 
   _getSelectedAccount(id: string) {
-    // If enabled and the extension's selected account is not a part of the allowed accounts, return
-    // the last selected account from the dapp preferences
+    // The account picked for the dapp, else the extension's selected account if the dapp may see it,
+    // else the last selected account from the dapp preferences
     return getSelectedAccount(this.mainCtrl, id)
   }
 
@@ -136,7 +138,54 @@ export class ProviderController {
     }
     if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
 
-    return provider.send(method, params)
+    try {
+      return await provider.send(method, params)
+    } catch (error: any) {
+      // ethers wraps the RPC node's error into its own (e.g. CALL_EXCEPTION), which doesn't
+      // survive the trip to the dapp in the EIP-1193 `{ code, message, data }` shape - dapps
+      // lose the revert data of an `eth_call` (needed for CCIP-Read, custom errors, etc.).
+      // Forward the node's original error instead, the way it would come from a direct RPC call.
+      const nodeError = error?.info?.error ?? error?.error
+      if (
+        Number.isInteger(nodeError?.code) &&
+        typeof nodeError?.message === 'string' &&
+        nodeError.message
+      ) {
+        throw new EthereumRpcError(nodeError.code, nodeError.message, nodeError.data)
+      }
+
+      throw error
+    }
+  }
+
+  // A PQ1 account is a smart-contract wallet, but one not deployed on this
+  // chain yet has no code, so a dapp connected to it would take it for an
+  // EOA. Its answer comes from the PQ1 module — see
+  // `hardware-wallet/libs/pq1DappProvider.ts`. Every other query is a plain
+  // `ethRpc` read. SAFE, like the `ethRpc` fallback in `rpcFlow`, so reading
+  // code never asks the user to unlock or connect.
+  @metadata('SAFE', true)
+  ethGetCode = async (request: DappProviderRequest) => {
+    const { params, session } = request
+    const { id } = session
+
+    const isConnectedAndUnlocked =
+      this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) && this.isUnlocked
+    if (!isConnectedAndUnlocked || !isEthGetCodeParams(params)) return this.ethRpc(request)
+
+    const chainId = this.getDappNetwork(id).chainId
+    const isPq1Query = isPq1AccountCodeQuery(
+      this.mainCtrl.keystore.keys,
+      this._internalGetAccounts(id),
+      chainId,
+      params[0]
+    )
+    if (!isPq1Query) return this.ethRpc(request)
+
+    const provider = this.mainCtrl.providers.providers[chainId.toString()]
+    if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
+
+    return resolvePq1AccountCode(provider, params)
   }
 
   ethRequestAccounts = async ({ session }: DappProviderRequest) => {
@@ -147,7 +196,7 @@ export class ProviderController {
 
     const accounts = this._internalGetAccounts(id)
 
-    await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts)
+    await this.mainCtrl.dapps.broadcastDappSessionEvent('accountsChanged', accounts, id)
 
     this.mainCtrl.ui.dispatchDappTabFocus?.([{ tabId: session.tabId, windowId: session.windowId }])
 
@@ -216,6 +265,11 @@ export class ProviderController {
       !this.mainCtrl.dapps.hasPermission(session.id, getRequestSource(session)) ||
       !this.isUnlocked
     ) {
+      throw ethErrors.provider.unauthorized()
+    }
+
+    // The same error as `rpcFlow` gives, so an app can't tell a Privacy Pools account is used
+    if (this.mainCtrl.selectedAccount.selectedType === 'privacyPools') {
       throw ethErrors.provider.unauthorized()
     }
 
@@ -347,7 +401,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'AddChain',
-    ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const chainParams = request.params[0]
 
       if (!chainParams)
@@ -463,6 +517,12 @@ export class ProviderController {
       throw ethErrors.rpc.invalidParams(`account with address ${accountAddr} does not exist`)
     }
 
+    // PQ1 wallets batch atomically in one userOp, but `getBaseAccount` sees
+    // them as EOAs — answer from the PQ1 module instead.
+    if (isPq1Key(this.mainCtrl.keystore.keys, accountAddr)) {
+      return buildPq1Capabilities(this.mainCtrl.networks.networks)
+    }
+
     const states = await this.mainCtrl.accounts.getOrFetchAccountStates(accountAddr)
     const capabilities: any = {}
     const isErc4337Enabled = this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
@@ -572,12 +632,26 @@ export class ProviderController {
 
     const selectedAccount = this._getSelectedAccount(data.session.id)
 
-    const accOp = selectedAccount
+    const requestedAccOp = selectedAccount
       ? this.mainCtrl.activity.findByIdentifiedBy(identifiedBy, selectedAccount, network.chainId)
       : undefined
-    const version = getVersion(accOp)
+    const version = getVersion(requestedAccOp)
 
-    if (!accOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+    if (!requestedAccOp) throw ethErrors.rpc.invalidParams('invalid identifier passed')
+
+    // A speed up or a cancel takes the place of the op the app sent, so the app is told how the
+    // op that went through in its place did
+    const canBeReplaced =
+      requestedAccOp.status === AccountOpStatus.UnknownButPastNonce ||
+      requestedAccOp.status === AccountOpStatus.BroadcastButStuck
+    const accOp =
+      (canBeReplaced &&
+        this.mainCtrl.activity.findReplacement(
+          identifiedBy,
+          requestedAccOp.accountAddr,
+          network.chainId
+        )) ||
+      requestedAccOp
 
     if (
       accOp.status === AccountOpStatus.Rejected ||
@@ -600,6 +674,13 @@ export class ProviderController {
       }
     }
 
+    // A cancel never runs the calls the app sent
+    if (isCancelAccountOp(accOp)) {
+      return {
+        status: getFailureStatus(version)
+      }
+    }
+
     const provider = this.mainCtrl.providers.providers[network.chainId.toString()]
 
     // check to satisfy the TS; should never happen
@@ -609,7 +690,7 @@ export class ProviderController {
       )
     }
 
-    if (identifiedBy.type === 'UserOperation') {
+    if (accOp.identifiedBy.type === 'UserOperation') {
       return {
         version,
         id: identifiedBy,
@@ -630,7 +711,7 @@ export class ProviderController {
     }
 
     const receipts = []
-    const isMultipleTxn = isIdentifiedByMultipleTxn(identifiedBy)
+    const isMultipleTxn = isIdentifiedByMultipleTxn(accOp.identifiedBy)
     if (!isMultipleTxn) {
       receipts.push({
         logs: [],
@@ -723,7 +804,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'AddChain',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const chainParams = request.params[0]
       if (!chainParams)
         throw ethErrors.rpc.invalidParams(
@@ -802,7 +883,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'WalletWatchAsset',
-    ({ request }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       const options = request.params?.options
       const tokenAddress = options?.address
 
@@ -853,7 +934,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'GetEncryptionPublicKey',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       let incomingAddress
       try {
         incomingAddress = getAddress(request.params?.[0])
@@ -891,7 +972,7 @@ export class ProviderController {
 
   @metadata('ACTION_REQUEST', [
     'Decrypt',
-    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: MainController }) => {
+    ({ request, mainCtrl }: { request: ProviderRequest; mainCtrl: IMainController }) => {
       let incomingAddress
       try {
         incomingAddress = getAddress(request.params?.[1])

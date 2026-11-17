@@ -4,26 +4,38 @@ import { Account } from '@ambire-common/interfaces/account'
 import { getSupportedNetworks } from '@ambire-common/libs/networks/networks'
 import useController from '@common/hooks/useController'
 
+import type { NetworksController } from '@ambire-common/controllers/networks/networks'
+
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const selectNetworks = (state: NetworksController) => state.networks
+
 /**
  * This returns all enabled networks in the extension with
  * a disabled flag & reason for those that are not supported
  * by the account OR the swap and bridge provider
  */
+const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
+  state.accountStates
+
 const useNetworks = ({
   acc,
-  additionalCheck
+  additionalCheck,
+  allowUndeployedSafeOnChainId
 }: {
   acc?: Account | null
   additionalCheck?: {
     chainIds: bigint[]
     reason: string
   }
+  allowUndeployedSafeOnChainId?: bigint
 }) => {
-  const { state: networks } = useController('NetworksController', (state) => state.networks)
-  const {
-    state: { accountStates },
-    dispatch: accountsDispatch
-  } = useController('AccountsController')
+  const { state: networks } = useController('NetworksController', selectNetworks)
+
+  const { state: accountStates, dispatch: accountsDispatch } = useController(
+    'AccountsController',
+    selectAccountStates
+  )
 
   // Safe accounts are dependant on the account state so be sure to fetch it
   // if it's not already fetched
@@ -39,13 +51,33 @@ const useNetworks = ({
     })
   }, [acc, accountStates, accountsDispatch])
 
-  const supportedNetworks = useMemo(() => {
-    const additionalCheckWithKnownChainIds = additionalCheck?.chainIds.length
-      ? additionalCheck
-      : undefined
+  // Callers pass `additionalCheck` as an object literal, so memoizing on it directly
+  // rebuilds the network list on every render of every caller. Everything downstream
+  // keys off this array's identity - the token Select rebuilds all of its options - so
+  // it is memoized on the contents instead.
+  const additionalCheckChainIdsKey = additionalCheck?.chainIds.join() || ''
+  const additionalCheckReason = additionalCheck?.reason
 
-    return getSupportedNetworks(networks, accountStates, acc, additionalCheckWithKnownChainIds)
-  }, [networks, accountStates, acc, additionalCheck])
+  // Rebuilt from the key rather than closing over the caller's array, so the result
+  // depends on nothing whose identity churns per render.
+  const knownAdditionalCheck = useMemo(() => {
+    if (!additionalCheckChainIdsKey || !additionalCheckReason) return undefined
+
+    return {
+      chainIds: additionalCheckChainIdsKey.split(',').map((chainId) => BigInt(chainId)),
+      reason: additionalCheckReason
+    }
+  }, [additionalCheckChainIdsKey, additionalCheckReason])
+
+  const supportedNetworks = useMemo(() => {
+    return getSupportedNetworks(
+      networks,
+      accountStates,
+      acc,
+      knownAdditionalCheck,
+      allowUndeployedSafeOnChainId
+    )
+  }, [networks, accountStates, acc, knownAdditionalCheck, allowUndeployedSafeOnChainId])
 
   return supportedNetworks
 }

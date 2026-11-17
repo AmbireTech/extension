@@ -1,8 +1,8 @@
-import React, { FC } from 'react'
+import { memo, RefObject, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View, ViewStyle } from 'react-native'
 
-import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
+import { getIsIntentRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
@@ -13,13 +13,18 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
+import type { FC } from 'react'
+
 type Props = {
   id: string
-  sheetRef: React.RefObject<any>
+  // Every swap or bridge has its own banner, so its sheet shows only that one
+  activeRouteId?: string
+  sheetRef: RefObject<any>
   closeBottomSheet: () => void
 }
 
-const WITH_BOTTOM_SHEET = ['update-available', 'bridge-in-progress']
+const BRIDGE_IN_PROGRESS = 'bridge-in-progress'
+const WITH_BOTTOM_SHEET = ['update-available', BRIDGE_IN_PROGRESS]
 const RENDER_AS_MODAL = ['update-available']
 
 const style: {
@@ -27,28 +32,49 @@ const style: {
 } = {
   'update-available': {
     overflow: 'hidden',
-    width: 496,
+    width: '100%',
+    maxWidth: 496,
     ...spacings.ph0,
     ...spacings.pv0
   }
 }
 
-const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet }) => {
+const DashboardBannerBottomSheet: FC<Props> = ({
+  id,
+  activeRouteId,
+  sheetRef,
+  closeBottomSheet
+}) => {
   const { t } = useTranslation()
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { state: activeRoutes } = useController('SwapAndBridgeController', 'activeRoutes')
+  const sheetKind = activeRouteId ? BRIDGE_IN_PROGRESS : id
+  const intentRoutes = useMemo(
+    () =>
+      activeRoutes.filter(
+        (activeRoute) =>
+          (!activeRouteId || activeRoute.activeRouteId === activeRouteId) &&
+          activeRoute.route &&
+          getIsIntentRoute(activeRoute.route) &&
+          (activeRoute.routeStatus === 'in-progress' ||
+            activeRoute.routeStatus === 'completed' ||
+            activeRoute.routeStatus === 'refunded' ||
+            activeRoute.routeStatus === 'failed')
+      ),
+    [activeRoutes, activeRouteId]
+  )
 
-  if (!WITH_BOTTOM_SHEET.includes(id)) return null
+  if (!WITH_BOTTOM_SHEET.includes(sheetKind)) return null
 
   return (
     <BottomSheet
       id={`${id}-bottom-sheet`}
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      style={style[id]}
-      type={RENDER_AS_MODAL.includes(id) ? 'modal' : undefined}
+      style={style[sheetKind]}
+      type={RENDER_AS_MODAL.includes(sheetKind) ? 'modal' : undefined}
     >
-      {id === 'update-available' && (
+      {sheetKind === 'update-available' && (
         <DualChoiceModal
           title={t('Are you sure you want to reload the extension?') as string}
           description={
@@ -70,35 +96,24 @@ const DashboardBannerBottomSheet: FC<Props> = ({ id, sheetRef, closeBottomSheet 
           onSecondaryButtonPress={closeBottomSheet}
         />
       )}
-      {id === 'bridge-in-progress' && (
+      {sheetKind === BRIDGE_IN_PROGRESS && (
         <View style={[flexbox.flex1, spacings.ptSm]}>
           <Text
             fontSize={isMobile ? 20 : 16}
             weight="medium"
             style={[spacings.mbLg, isMobile && text.center]}
           >
-            {t('Pending bridge transactions')}
+            {t('Pending transactions')}
           </Text>
-          {activeRoutes
-            .filter(
-              (route) =>
-                route.route &&
-                getIsBridgeRoute(route.route) &&
-                (route.routeStatus === 'in-progress' ||
-                  route.routeStatus === 'completed' ||
-                  route.routeStatus === 'refunded' ||
-                  route.routeStatus === 'failed')
-            )
-
-            .map((route) => (
-              <View key={route.activeRouteId} style={spacings.mbTy}>
-                <ActiveRouteCard activeRoute={route} />
-              </View>
-            ))}
+          {intentRoutes.map((activeRoute) => (
+            <View key={activeRoute.activeRouteId} style={spacings.mbTy}>
+              <ActiveRouteCard activeRoute={activeRoute} />
+            </View>
+          ))}
         </View>
       )}
     </BottomSheet>
   )
 }
 
-export default DashboardBannerBottomSheet
+export default memo(DashboardBannerBottomSheet)

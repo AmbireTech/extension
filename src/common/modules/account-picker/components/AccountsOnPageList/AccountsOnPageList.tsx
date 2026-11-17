@@ -31,6 +31,8 @@ import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
+import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
 const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }: NativeScrollEvent) => {
   const paddingToBottom = 40
   return layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom
@@ -45,6 +47,10 @@ type Props = {
   children?: any
 }
 
+const DEFAULT_MAX_PAGES = 1000
+
+const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
+
 const AccountsOnPageList = ({
   state,
   setPage,
@@ -54,7 +60,7 @@ const AccountsOnPageList = ({
   children
 }: Props) => {
   const { t } = useTranslation()
-  const { state: allNetworks } = useController('NetworksController', 'networks')
+  const { state: allNetworks } = useController('NetworksController', selectNetworks)
   const { state: accountPickerState, dispatch: accountPickerDispatch } =
     useController('AccountPickerController')
   const [hasReachedBottom, setHasReachedBottom] = useState<null | boolean>(null)
@@ -122,6 +128,9 @@ const AccountsOnPageList = ({
   }, [])
 
   const isImportingFromPrivateKey = subType === 'private-key'
+  // `maxPage` is set when the accounts can only be listed from what was scanned, not derived
+  // (e.g. a Ledger Live export from a QR wallet), so there is nothing to show past that page
+  const maxPages = state.maxPage ?? DEFAULT_MAX_PAGES
 
   const getAccounts = useCallback(
     ({
@@ -399,7 +408,13 @@ const AccountsOnPageList = ({
                   ]}
                 >
                   {!isImportingFromPrivateKey && (
-                    <Pagination page={state.page} maxPages={1000} setPage={setPage} hideLastPage />
+                    <Pagination
+                      page={state.page}
+                      maxPages={maxPages}
+                      setPage={setPage}
+                      isNextDisabled={state.page >= maxPages}
+                      hideLastPage={state.maxPage === undefined}
+                    />
                   )}
                 </View>
               )}
@@ -411,7 +426,13 @@ const AccountsOnPageList = ({
       {!isMobile && (
         <View style={[flexbox.alignEnd, spacings.mbMd]}>
           {!isImportingFromPrivateKey && (
-            <Pagination page={state.page} maxPages={1000} setPage={setPage} hideLastPage />
+            <Pagination
+              page={state.page}
+              maxPages={maxPages}
+              setPage={setPage}
+              isNextDisabled={state.page >= maxPages}
+              hideLastPage={state.maxPage === undefined}
+            />
           )}
         </View>
       )}

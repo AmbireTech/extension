@@ -1,5 +1,5 @@
 import { FC, ReactNode } from 'react'
-import { StyleProp, ViewStyle } from 'react-native'
+import { ScrollViewProps, StyleProp, ViewStyle } from 'react-native'
 
 // Platform-resolved layout wrapper for the shared sign-message Content
 // components. Previously each Content imported BOTH the web TabLayoutWrapper and
@@ -11,6 +11,8 @@ export interface MessageContentLayoutProps {
   // Mobile: forwarded to MobileLayoutWrapperMainContent (content padding is
   // always ph0 for these screens, so it's baked into the native impl).
   withScroll?: boolean
+  // Mobile: forwarded to the scroll view when `withScroll` is set.
+  nativeScrollViewProps?: Pick<ScrollViewProps, 'onScroll' | 'onLayout' | 'onContentSizeChange'>
   // Web: forwarded to TabLayoutWrapperMainContent.
   webStyle?: StyleProp<ViewStyle>
   webContentContainerStyle?: StyleProp<ViewStyle>

@@ -34,49 +34,40 @@ export class AccountKeysPage extends BasePage {
 
   private async findAndOpenAccountKeys(keyAddr: string, accountAddr: string): Promise<void> {
     // Filter the (potentially long) account list down to the owning account so we scan a
-    // handful of rows instead of every account. Fuzzy search may still return a few rows,
-    // so we keep the row loop below to pick the exact one holding the target key.
+    // single row instead of every account. The options (kebab) button is keyed by the
+    // account address, so we target the exact one directly instead of guessing based on
+    // DOM position/structure.
     await this.entertext(selectors.searchInput, accountAddr)
 
+    // The search is debounced, and once it applies the list is swapped for a non-draggable one,
+    // which remounts the rows and closes an options menu opened before that. A full address
+    // matches exactly one account, so a single row means the search has applied.
     const accountRows = this.page.getByTestId('account')
-    await expect(accountRows.first()).toBeVisible({ timeout: PRESENCE_TIMEOUT })
-    const count = await accountRows.count()
+    await expect(accountRows).toHaveCount(1, { timeout: PRESENCE_TIMEOUT })
 
-    for (let i = 0; i < count; i++) {
-      const row = accountRows.nth(i)
-      await row.locator('div>div>div>div>svg').last().click()
+    const optionsBtn = this.page.getByTestId(selectors.settings.accountOptionsButton(accountAddr))
+    await optionsBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+    await optionsBtn.click()
 
-      const manageKeys = this.page.getByText('Manage keys').first()
-      const dropdownVisible = await manageKeys
-        .waitFor({ state: 'visible', timeout: 1500 })
-        .then(() => true)
-        .catch(() => false)
+    const manageKeys = this.page.getByText('Manage keys').first()
+    await manageKeys.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+    await manageKeys.click()
 
-      if (!dropdownVisible) {
-        await this.page.keyboard.press('Escape')
-        continue
-      }
-
-      await manageKeys.click()
-
-      // Only locate the export button here — the caller asserts enabled/disabled, since HW
-      // keys render the same button in a disabled state.
-      const exportBtn = this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
-      const found = await exportBtn
-        .waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
-        .then(() => true)
-        .catch(() => false)
-
-      if (found) return
-
-      // Wrong account — close sheet and wait for backdrop to fully clear
-      await this.closeTopSheet()
-    }
-
-    throw new Error(`No account found containing key ${keyAddr}`)
+    // Only locate the export button here — the caller asserts enabled/disabled, since HW
+    // keys render the same button in a disabled state.
+    const exportBtn = this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
+    await exportBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
   }
 
-  async exportPrivateKey(keyAddr: string, accountAddr: string): Promise<string> {
+  async exportPrivateKey({
+    keyAddr,
+    accountAddr,
+    confirmModal = true
+  }: {
+    keyAddr: string
+    accountAddr: string
+    confirmModal?: boolean
+  }): Promise<string> {
     await this.open()
     await this.findAndOpenAccountKeys(keyAddr, accountAddr)
 
@@ -88,17 +79,23 @@ export class AccountKeysPage extends BasePage {
     await revealBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
     await revealBtn.click()
 
-    const passInput = this.page.getByTestId(selectors.passphraseField)
-    await passInput.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
-    await passInput.fill(KEYSTORE_PASS)
-    await this.click(selectors.submitButton)
+    // some flows do not require password confimation
+    if (confirmModal) {
+      const passInput = this.page.getByTestId(selectors.passphraseField)
+      await passInput.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+      await passInput.fill(KEYSTORE_PASS)
+      await this.click(selectors.submitButton)
+    }
 
     const keyEl = this.page.getByTestId(selectors.keystoreMigration.privateKeyValue)
+    const keyBlurContainer = this.page.getByTestId(
+      selectors.keystoreMigration.privateKeyBlurContainer
+    )
     await expect(keyEl).not.toBeEmpty({ timeout: 15000 })
     const copyBtn = this.page.getByTestId(selectors.keystoreMigration.copyPrivateKeyButton)
     await expect(copyBtn).toBeVisible()
     await expect(revealBtn).toHaveText('Show key')
-    await expect(keyEl.locator('..')).toHaveCSS('filter', 'blur(3px)')
+    await expect(keyBlurContainer).toHaveCSS('filter', 'blur(3px)')
 
     await this.context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await this.page.evaluate(() => navigator.clipboard.writeText('clipboard-test-sentinel'))
@@ -115,7 +112,7 @@ export class AccountKeysPage extends BasePage {
     expect(copiedPrivateKeyMatches).toBe(true)
 
     await expect(revealBtn).toHaveText('Show key')
-    await expect(keyEl.locator('..')).toHaveCSS('filter', 'blur(3px)')
+    await expect(keyBlurContainer).toHaveCSS('filter', 'blur(3px)')
 
     await revealBtn.click()
     await expect(revealBtn).toHaveText('Hide key')
