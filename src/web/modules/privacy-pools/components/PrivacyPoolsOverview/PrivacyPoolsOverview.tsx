@@ -21,7 +21,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsActions from './PrivacyPoolsActions'
 import PrivacyPoolsOverviewBackground from './PrivacyPoolsOverviewBackground'
 
-import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 
 interface Props {
@@ -42,7 +41,6 @@ interface Props {
   onCollapsibleHeightChange?: OverviewCollapsibleProps['onHeightChange']
 }
 
-const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
 
 // Fixed light colors, not theme ones: the card sits on the dark PrivacyPoolsOverviewBackground
@@ -65,10 +63,6 @@ const PrivacyPoolsOverview: FC<Props> = ({
   const { state: isPrivacyModeEnabled, dispatch: walletStateDispatch } = useController(
     'WalletStateController',
     selectIsPrivacyModeEnabled
-  )
-  const { state: isTokenPricesEnabled } = useController(
-    'FeatureFlagsController',
-    selectTokenPricesEnabled
   )
   const [isBalanceHovered, setIsBalanceHovered] = useState(false)
 
@@ -115,7 +109,6 @@ const PrivacyPoolsOverview: FC<Props> = ({
                     // whether the account is read, empty or waiting for its phrase backup
                     variant={isSyncing && !hasSyncedAnyChain ? 'skeleton' : 'ready'}
                     totalAmount={totalPrivateBalance}
-                    isTokenPricesEnabled={isTokenPricesEnabled}
                     color={hasSyncError ? theme.warningDecorative2 : PRIMARY_TEXT_COLOR}
                     isPrivacyModeEnabled={isPrivacyModeEnabled}
                     onPress={togglePrivacyMode}

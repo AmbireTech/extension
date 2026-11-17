@@ -1,6 +1,7 @@
 import React, { FC, useCallback } from 'react'
 import { Pressable, View } from 'react-native'
 
+import { canPriceNetwork } from '@ambire-common/libs/tokenPrices/canPriceNetwork'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
@@ -14,6 +15,7 @@ import useTheme from '@common/hooks/useTheme'
 import { NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP } from '@common/modules/networks/components/NetworkBottomSheet'
 import useNetworksBalances from '@common/modules/networks/hooks/useNetworksBalances'
 import getStyles from '@common/modules/networks/styles'
+import { selectIsTokenPricesEnabled } from '@common/selectors/featureFlags'
 import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -39,6 +41,10 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
     }
   })
   const { state: networks } = useController('NetworksController', selectNetworks)
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsTokenPricesEnabled
+  )
   const {
     state: { dashboardNetworkFilter }
   } = useController('SelectedAccountController')
@@ -62,6 +68,11 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
   }, [networkData, openBlockExplorer, isBlockExplorerMissing])
 
   const networkBalance = balancePerNetwork[chainId.toString()] || 0
+  // Unknown, rather than zero, when the network's tokens can't get a price from the source the
+  // user picked (e.g. World Chain). A balance that's there anyway (e.g. a DeFi position that
+  // comes with its value) is still shown.
+  const isBalanceUnknown =
+    !networkBalance && !!networkData && !canPriceNetwork(networkData, isTokenPricesEnabled)
   let networkName = networkData?.name
 
   if (chainId === 'rewards') {
@@ -130,7 +141,7 @@ const Network: FC<Props> = ({ chainId, openBlockExplorer, openSettingsBottomShee
           weight="medium"
           appearance={dashboardNetworkFilter === chainId ? 'primaryText' : 'secondaryText'}
         >
-          {`${formatDecimals(networkBalance, 'value')}` || '$-'}
+          {isBalanceUnknown ? '$-' : formatDecimals(networkBalance, 'value')}
         </Text>
         {!isInternalNetwork && !isMobile && (
           <Pressable
