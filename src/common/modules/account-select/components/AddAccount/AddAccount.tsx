@@ -279,20 +279,20 @@ const AddAccount = ({
           ? {
               // Prevent the scroll view from expanding when a dropdown is open
               style: { maxHeight: height },
-              showsVerticalScrollIndicator: false
+              showsVerticalScrollIndicator: false,
+              // The full content, with the sheet's padding around the options, so it fits unscrolled
+              onContentSizeChange: (_width: number, contentHeight: number) => {
+                if (height) return
+
+                setHeight(contentHeight)
+              }
             }
           : undefined
       }
       scrollViewRef={scrollViewRef}
       containerInnerWrapperStyles={isWeb ? spacings.pr0 : {}}
     >
-      <View
-        onLayout={(e) => {
-          if (height) return
-
-          setHeight(e.nativeEvent.layout.height)
-        }}
-      >
+      <View>
         <ModalHeader handleClose={closeBottomSheet} title={t('Add an account')} />
         <Option
           text={t('Add from stored recovery phrases')}
