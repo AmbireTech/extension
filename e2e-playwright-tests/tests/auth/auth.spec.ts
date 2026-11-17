@@ -67,12 +67,15 @@ test.describe('auth', { tag: '@auth' }, () => {
       // Opening settings reloads the dashboard, so these checks also cover the saved seed.
       await pages.recoveryPhrases.open()
       const seedId = await pages.recoveryPhrases.getFirstSeedId()
-      const restored = await pages.recoveryPhrases.revealSeed(seedId)
+      const restored = await pages.recoveryPhrases.revealSeed({ seedId })
       // Compare secrets as booleans to keep them out of assertion failure output.
       expect(restored.phrase === seed).toBe(true)
       expect(restored.passphrase === (input.passphrase || null)).toBe(true)
 
-      const privateKey = await pages.accountKeys.exportPrivateKey(expectedAddress, expectedAddress)
+      const privateKey = await pages.accountKeys.exportPrivateKey({
+        keyAddr: expectedAddress,
+        accountAddr: expectedAddress
+      })
       expect(computeAddress(privateKey)).toBe(expectedAddress)
     })
   }
