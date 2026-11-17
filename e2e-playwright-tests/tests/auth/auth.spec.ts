@@ -87,15 +87,27 @@ test.describe('auth', { tag: '@auth' }, () => {
     await pages.auth.click(selectors.getStarted.importMethodRecoveryPhrase)
     const input = pages.auth.page.getByTestId(selectors.getStarted.enterSeedPhraseField)
     const confirm = pages.auth.page.getByTestId(selectors.getStarted.importBtn)
+    // Confirm is disabled before anything is typed, so the error messages prove that the
+    // validation actually ran.
+    const unknownWordsError = pages.auth.page.getByText(
+      'Some words are not valid recovery phrase words.'
+    )
+    const invalidPhraseError = pages.auth.page.getByText(
+      'Invalid recovery phrase. Check that the words are spelled correctly and in the right order.'
+    )
 
     await input.fill(['abandox', ...Array(10).fill('aban'), 'abou'].join(' '))
+    await expect(unknownWordsError).toBeVisible()
     await expect(confirm).toHaveAttribute('aria-disabled', 'true')
 
     await input.fill(Array(12).fill('abandon').join(' '))
+    await expect(invalidPhraseError).toBeVisible()
     await expect(confirm).toHaveAttribute('aria-disabled', 'true')
 
     await input.fill([...Array(11).fill('aban'), 'abou'].join(' '))
     await expect(confirm).not.toHaveAttribute('aria-disabled', 'true')
+    await expect(unknownWordsError).toBeHidden()
+    await expect(invalidPhraseError).toBeHidden()
   })
 
   test('import a couple of view-only accounts (at once) and personalize some of them', async ({
