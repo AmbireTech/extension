@@ -1,3 +1,6 @@
+import { SelectedAccountPositionsByProvider } from '@ambire-common/interfaces/selectedAccount'
+import { getBorrowedValueInUSD } from '@ambire-common/libs/defiPositions/helpers'
+
 interface HasPendingDefiUpdateParams {
   /** {@link PortfolioController.scheduledUpdateChainIds} */
   scheduledUpdateChainIds: { [accountId: string]: bigint[] }
@@ -29,3 +32,11 @@ export const getHasPendingDefiUpdate = ({
 
   return pendingChainIds.some((chainId) => String(chainId) === filteredChainId)
 }
+
+/** The total USD value the account owes to DeFi apps. Zero when it has no loans. */
+export const getLoansInUSD = (
+  defiPositions: SelectedAccountPositionsByProvider[] | undefined
+): number =>
+  (defiPositions || [])
+    .flatMap((provider) => provider.positions)
+    .reduce((total, position) => total + getBorrowedValueInUSD(position.additionalData), 0)
