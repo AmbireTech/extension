@@ -26,8 +26,9 @@ import { getUiType } from '@common/utils/uiType'
 import AutoDiscoveryOffAlert from './AutoDiscoveryOffAlert'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
-import { getHasPendingDefiUpdate } from './helpers'
+import { getHasPendingDefiUpdate, getLoansInUSD } from './helpers'
 import styles from './styles'
+import SubtractLoansOption from './SubtractLoansOption'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -100,6 +101,8 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
       }),
     [scheduledUpdateChainIds, account?.addr, dashboardNetworkFilter]
   )
+
+  const loansInUSD = useMemo(() => getLoansInUSD(defiPositions), [defiPositions])
 
   const currentAccountBanners = useMemo(
     () =>
@@ -181,6 +184,10 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
             ))}
           </View>
         )
+      }
+
+      if (item === 'subtract-loans') {
+        return <SubtractLoansOption />
       }
 
       if (item === 'pending-update') {
@@ -268,6 +275,9 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
   const dataItems = useMemo(() => {
     const items: string[] = []
 
+    if (isPortfolioAllReady && loansInUSD > 0) {
+      items.push('subtract-loans')
+    }
     if (currentAccountBanners.length > 0) {
       items.push('banners')
     }
@@ -292,7 +302,8 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
     isAutoDiscoveryEnabled,
     hasPendingUpdate,
     initTab?.defi,
-    isPortfolioAllReady
+    isPortfolioAllReady,
+    loansInUSD
   ])
 
   // Rendered by the carousel above the pages, so it stays put through a swipe

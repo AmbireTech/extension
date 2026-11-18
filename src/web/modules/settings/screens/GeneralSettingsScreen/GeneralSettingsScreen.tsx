@@ -2,6 +2,7 @@ import React, { useContext, useEffect } from 'react'
 import { View } from 'react-native'
 
 import AvatarTypeControlOption from '@common/modules/settings/components/General/AvatarTypeControlOption'
+import BorrowedFundsControlOption from '@common/modules/settings/components/General/BorrowedFundsControlOption'
 import LogLevelControlOption from '@common/modules/settings/components/General/LogLevelControlOption'
 import ThemeControlOption from '@common/modules/settings/components/General/ThemeControlOption'
 // import { isProd } from '@common/config/env'
@@ -30,6 +31,7 @@ const GeneralSettingsScreen = () => {
         <SidePanelControlOption />
         <ThemeControlOption />
         <AvatarTypeControlOption />
+        <BorrowedFundsControlOption />
       </View>
       <SettingsPageHeader title="Support tools" />
       <LogLevelControlOption />
