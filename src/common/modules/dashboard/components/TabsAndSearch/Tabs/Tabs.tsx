@@ -11,7 +11,6 @@ import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
-import { selectShouldAskAboutBorrowedFunds } from '@common/modules/dashboard/hooks/useBorrowedFundsPreference'
 import usePendingSafeTransactions from '@common/modules/dashboard/hooks/usePendingSafeTransactions'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -74,10 +73,6 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery, tabs })
     'SelectedAccountController',
     selectSelectedAccountBanners
   )
-  const { state: shouldAskAboutBorrowedFunds } = useController(
-    'SelectedAccountController',
-    selectShouldAskAboutBorrowedFunds
-  )
   const { totalPendingCount } = usePendingSafeTransactions()
 
   const currentDefiBanners = useMemo(
@@ -119,7 +114,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery, tabs })
 
         const withBadge =
           (type === 'activity' && !isActive && (!!pendingBanner || !!failedBanner)) ||
-          (type === 'defi' && (currentDefiBanners.length > 0 || shouldAskAboutBorrowedFunds))
+          (type === 'defi' && currentDefiBanners.length > 0)
         let badgeText
         let badgeTextAppearance: ColorValue | undefined
         let badgeBorderColor: ColorValue | undefined
@@ -137,7 +132,7 @@ const Tabs: React.FC<Props> = ({ openTab, setOpenTab, handleChangeQuery, tabs })
           }
         }
 
-        if (type === 'defi' && (currentDefiBanners.length > 0 || shouldAskAboutBorrowedFunds)) {
+        if (type === 'defi' && currentDefiBanners.length > 0) {
           badgeBorderColor = theme.info300
           badgeTextAppearance = theme.info300
           badgeText = 1

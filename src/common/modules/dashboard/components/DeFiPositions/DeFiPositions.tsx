@@ -17,7 +17,6 @@ import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import DashboardBanner from '@common/modules/dashboard/components/DashboardBanners/DashboardBanner'
 import DashboardPageScrollContainer from '@common/modules/dashboard/components/DashboardPageScrollContainer'
-import { selectShouldAskAboutBorrowedFunds } from '@common/modules/dashboard/hooks/useBorrowedFundsPreference'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
 import spacings from '@common/styles/spacings'
 import { openInTab } from '@common/utils/links'
@@ -25,7 +24,6 @@ import { searchWithNetworkName } from '@common/utils/search'
 import { getUiType } from '@common/utils/uiType'
 
 import AutoDiscoveryOffAlert from './AutoDiscoveryOffAlert'
-import BorrowedFundsAlert from './BorrowedFundsAlert'
 import DefiPositionsSkeleton from './DefiPositionsSkeleton'
 import DeFiPosition from './DeFiProviderPosition'
 import { getHasPendingDefiUpdate } from './helpers'
@@ -85,10 +83,6 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
   const { state: isPortfolioAllReady } = useController(
     'SelectedAccountController',
     selectPortfolioIsAllReady
-  )
-  const { state: shouldAskAboutBorrowedFunds } = useController(
-    'SelectedAccountController',
-    selectShouldAskAboutBorrowedFunds
   )
   const { state: dashboardNetworkFilter } = useController(
     'SelectedAccountController',
@@ -189,10 +183,6 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
         )
       }
 
-      if (item === 'borrowed-funds') {
-        return <BorrowedFundsAlert />
-      }
-
       if (item === 'pending-update') {
         return (
           <Banner
@@ -281,9 +271,6 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
     if (currentAccountBanners.length > 0) {
       items.push('banners')
     }
-    if (isPortfolioAllReady && shouldAskAboutBorrowedFunds) {
-      items.push('borrowed-funds')
-    }
     // Only worth saying when the API positions refresh; with discovery off they never do
     if (isAutoDiscoveryEnabled && hasPendingUpdate) {
       items.push('pending-update')
@@ -301,7 +288,6 @@ const DeFiPositions: FC<Props> = ({ openTab, initTab, sessionId, dashboardNetwor
     return items
   }, [
     currentAccountBanners.length,
-    shouldAskAboutBorrowedFunds,
     filteredPositions,
     isAutoDiscoveryEnabled,
     hasPendingUpdate,
