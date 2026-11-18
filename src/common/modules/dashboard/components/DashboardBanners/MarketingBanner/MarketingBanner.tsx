@@ -40,6 +40,7 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
   const emoji = backendEmoji || TYPE_EMOJI_MAP[bannerType as MarketingBannerTypes] || FALLBACK_EMOJI
   const action = actions?.[0]
   const url = action?.actionName === 'open-link' ? action.meta.url : ''
+  const isPressable = action?.actionName === 'survey' || !!url
   const size = (banner.text?.length || 0) > 50 ? 'large' : 'normal'
   const emojiSize = isMobile ? 48 : size === 'large' ? 64 : 48
   const { navigate } = useNavigation()
@@ -69,6 +70,19 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
     })
   }, [banner.id, bannerDispatch])
 
+  const handlePress = useCallback(async () => {
+    if (action?.actionName === 'survey') {
+      surveyDispatch({
+        type: 'method',
+        params: { method: 'fetchSurvey', args: [action.meta.surveyId, banner.id] }
+      })
+      navigate(WEB_ROUTES.survey)
+      return
+    }
+
+    await openInTab({ url, shouldCloseCurrentWindow: isPopup })
+  }, [action, banner.id, isPopup, navigate, surveyDispatch, url])
+
   return (
     <AnimatedPressable
       style={[
@@ -80,16 +94,8 @@ const MarketingBanner: React.FC<Props> = ({ banner }) => {
         animStyle,
         { alignItems: 'center' }
       ]}
-      onPress={async () => {
-        const action = banner.actions[0]
-        if (action?.actionName === 'survey') {
-          surveyDispatch({
-            type: 'method',
-            params: { method: 'fetchSurvey', args: [action.meta.surveyId, banner.id] }
-          })
-          navigate(WEB_ROUTES.survey)
-        } else await openInTab({ url, shouldCloseCurrentWindow: isPopup })
-      }}
+      onPress={handlePress}
+      disabled={!isPressable}
       {...bindAnim}
     >
       <View

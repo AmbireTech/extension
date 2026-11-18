@@ -14,6 +14,11 @@ import {
 export type Port = chrome.runtime.Port & {
   id: string
   name: 'popup' | 'tab' | 'request-window' | 'side-panel'
+  /**
+   * The view's current URL, as reported by the view itself on every navigation.
+   * Kept apart from `sender`, so `sender` only ever holds what the browser reported.
+   */
+  currentUrl?: string
 }
 
 type MessageType = '> ui' | '> ui-error' | '> ui-toast' | '> background'

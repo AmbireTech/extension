@@ -9,7 +9,7 @@ const OverviewBackgroundLayer = ({
   children
 }: OverviewBackgroundLayerProps) => {
   const style = useMemo(() => {
-    if (!geometry || !collapse) return StyleSheet.absoluteFillObject
+    if (!geometry || !collapse) return StyleSheet.absoluteFill
 
     // The native animated value the pager is moved by on mobile
     const value = collapse as Animated.AnimatedInterpolation<number>

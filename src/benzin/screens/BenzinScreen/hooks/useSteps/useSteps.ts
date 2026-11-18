@@ -34,8 +34,8 @@ import { humanizeAccountOp } from '@ambire-common/libs/humanizer'
 import type { Erc7730CallDescriptors } from '@ambire-common/libs/humanizer/erc7730/types'
 import { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import { getTransferLogNfts, getTransferLogTokens } from '@ambire-common/libs/logsParser/parseLogs'
+import type { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import { parseLogs } from '@ambire-common/libs/userOperation/userOperation'
-import { resolveAssetInfo } from '@ambire-common/services/assetInfo'
 import { Bundler } from '@ambire-common/services/bundlers/bundler'
 import { BundlerSwitcher } from '@ambire-common/services/bundlers/bundlerSwitcher'
 import { BundlerTransactionReceipt } from '@ambire-common/services/bundlers/types'
@@ -68,7 +68,8 @@ export type FeePaidWith = {
   address: string
   amount: string
   symbol: string
-  usdValue: string
+  /** Null when the token has no price */
+  usdValue: string | null
   isErc20: boolean
   isSponsored: boolean
   chainId: bigint
@@ -239,7 +240,6 @@ const useSteps = ({
     'FeatureFlagsController',
     selectTokenPricesEnabled
   )
-  const isTokenPricesEnabled = useCallback(() => tokenPricesEnabled, [tokenPricesEnabled])
   const benzinActivityOp = useMemo(() => {
     if (!extensionAccOp || !('benzin' in accountsOps)) return null
 
@@ -974,10 +974,20 @@ const useSteps = ({
       (!!userOp && !!userOp.paymaster && userOp.paymaster !== AMBIRE_PAYMASTER)
     if (!address || (!amount && !isSponsored)) return
 
-    resolveAssetInfo(
-      address,
-      networks.find((net: Network) => net.chainId === tokenChainId)!,
-      ({ tokenInfo }) => {
+    // Priced by the ProvidersController's price controller, so the fee can be shown in USD
+    dispatchAndWait({
+      type: 'method',
+      params: {
+        method: 'resolveAssetInfoAndSendResToUi',
+        args: [
+          {
+            address,
+            network: networks.find((net: Network) => net.chainId === tokenChainId)!
+          }
+        ]
+      }
+    })
+      .then(({ tokenInfo }: { tokenInfo?: TokenResult } = {}) => {
         if (!tokenInfo || (!amount && !isSponsored)) return
         const { decimals, priceIn } = tokenInfo
         const price = priceIn.length && priceIn[0] ? priceIn[0].price : null
@@ -988,26 +998,26 @@ const useSteps = ({
         setFeePaidWith({
           amount: formatDecimals(fee),
           symbol: tokenInfo.symbol,
-          usdValue: price ? formatDecimals(fee * price, 'value') : '-$',
+          usdValue: price ? formatDecimals(fee * price, 'value') : null,
           isErc20: address !== ZeroAddress,
           address: address as string,
           isSponsored,
           chainId: tokenChainId
         })
-      },
-      isTokenPricesEnabled
-    ).catch(() => {
-      if (!isMounted) return
-      setFeePaidWith({
-        amount: address === ZeroAddress ? formatDecimals(parseFloat(formatUnits(amount, 18))) : '-',
-        symbol: address === ZeroAddress ? network.nativeAssetSymbol : '',
-        usdValue: '-$',
-        isErc20: false,
-        address: address as string,
-        isSponsored,
-        chainId: network.chainId
       })
-    })
+      .catch(() => {
+        if (!isMounted) return
+        setFeePaidWith({
+          amount:
+            address === ZeroAddress ? formatDecimals(parseFloat(formatUnits(amount, 18))) : '-',
+          symbol: address === ZeroAddress ? network.nativeAssetSymbol : '',
+          usdValue: null,
+          isErc20: false,
+          address: address as string,
+          isSponsored,
+          chainId: network.chainId
+        })
+      })
 
     return () => {
       isMounted = false
@@ -1020,7 +1030,7 @@ const useSteps = ({
     userOp,
     networks,
     extensionAccOp,
-    isTokenPricesEnabled
+    dispatchAndWait
   ])
 
   useEffect(() => {

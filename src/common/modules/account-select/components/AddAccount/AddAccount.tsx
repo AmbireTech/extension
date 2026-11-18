@@ -15,14 +15,22 @@ import PQ1BadgeIcon from '@common/assets/svg/PQ1BadgeIcon'
 import PrivacyPoolsIcon from '@common/assets/svg/PrivacyPoolsIcon'
 import PrivateKeyIcon from '@common/assets/svg/PrivateKeyIcon'
 import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
-import SafeBadgeIcon from '@common/assets/svg/SafeBadgeIcon'
+import SafeBadgeIcon, { SAFE_BRAND_GREEN } from '@common/assets/svg/SafeBadgeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
-import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
+import SoonBadge from '@common/components/SoonBadge'
+import {
+  isMobile,
+  isPrivacyPoolsComingSoon,
+  isPrivacyPoolsEnabled,
+  isPrivacyPoolsSupported,
+  isWeb
+} from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
@@ -39,6 +47,8 @@ import spacings from '@common/styles/spacings'
 import ExpandableOptionSection from './ExpandableOptionSection'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const SAFE_DROPDOWN_ICON_PROPS = { color: SAFE_BRAND_GREEN }
 
 const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
 
@@ -72,7 +82,7 @@ const AddAccount = ({
   const [height, setHeight] = useState<number>(0)
   const scrollViewRef = useRef<any>(null)
   const [expandedDropdown, setExpandedDropdown] = useState<
-    'import-acc' | 'connect-hw' | 'connect-nfc' | null
+    'import-acc' | 'connect-hw' | 'safe' | 'connect-nfc' | null
   >(null)
 
   const {
@@ -198,6 +208,37 @@ const AddAccount = ({
     }))
   }, [closeBottomSheet, scanCard, t])
 
+  const optionsSafe = useMemo(
+    () => [
+      ...(!showImportOnly
+        ? [
+            {
+              key: 'create-safe',
+              text: t('Create'),
+              icon: AddCircularIcon,
+              onPress: () => goToNextRoute(ROUTES.safeCreate),
+              testID: 'create-safe'
+            }
+          ]
+        : []),
+      {
+        key: 'import-safe-by-address',
+        text: t('Import by address'),
+        icon: ImportAccountIcon,
+        onPress: () => goToNextRoute(ROUTES.safeImportAddress),
+        testID: 'import-safe-by-address'
+      },
+      {
+        key: 'import-safe-by-owner',
+        text: t('Import by owner'),
+        icon: SingleKeyIcon,
+        onPress: () => goToNextRoute(ROUTES.safeImportByOwner),
+        testID: 'import-safe-by-owner'
+      }
+    ],
+    [goToNextRoute, showImportOnly, t]
+  )
+
   const optionsImportAccount = useMemo(() => {
     return [
       {
@@ -213,13 +254,6 @@ const AddAccount = ({
         icon: PrivateKeyIcon,
         onPress: () => goToNextRoute(ROUTES.importPrivateKey),
         testID: 'import-private-key'
-      },
-      {
-        key: 'import-safe',
-        text: t('Safe account'),
-        icon: SafeBadgeIcon,
-        onPress: () => goToNextRoute(ROUTES.safeImport),
-        testID: 'import-safe'
       },
       ...(!isMobile
         ? [
@@ -278,14 +312,21 @@ const AddAccount = ({
             disabled={isCreatingNewSeedAccount}
           />
         )}
-        {/* Extension only for now */}
-        {isPrivacyPoolsEnabled && !showImportOnly && (
+        {/* Extension only for now. Where not released yet, only a teaser that cannot be opened */}
+        {isPrivacyPoolsSupported && !showImportOnly && (
           <Option
-            text={t('Add a Privacy Pools account')}
+            // The teaser doesn't say which privacy provider is coming
+            text={
+              isPrivacyPoolsComingSoon
+                ? t('Add a private account')
+                : t('Add a Privacy Pools account')
+            }
             icon={PrivacyPoolsIcon}
             onPress={openPrivacyPoolsBottomSheet as any}
             testID="add-privacy-pools-account"
             status="none"
+            disabled={isPrivacyPoolsComingSoon}
+            badge={isPrivacyPoolsComingSoon ? <SoonBadge /> : undefined}
           />
         )}
         <ExpandableOptionSection
@@ -308,6 +349,17 @@ const AddAccount = ({
             setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'connect-hw' : null)}
           />
         )}
+        <ExpandableOptionSection
+          dropdownText={t('Safe accounts')}
+          dropdownIcon={SafeBadgeIcon}
+          // Keeps the Safe logo green instead of the generic icon and hover colors
+          dropdownIconProps={SAFE_DROPDOWN_ICON_PROPS}
+          dropdownTestID="safe-accounts"
+          options={optionsSafe}
+          scrollViewRef={scrollViewRef}
+          isExpanded={expandedDropdown === 'safe'}
+          setIsExpanded={(isExpanded) => setExpandedDropdown(isExpanded ? 'safe' : null)}
+        />
         {!!optionsNfc.length && (
           <ExpandableOptionSection
             dropdownText={t('Connect an NFC card')}

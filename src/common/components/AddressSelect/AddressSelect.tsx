@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -35,7 +35,7 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsSupported, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -76,6 +76,14 @@ export interface AddressSelectProps extends InputProps {
    * default input background, so the input stays visible.
    */
   inputBackgroundColor?: ColorValue
+  /** Addresses left out of the list, e.g. the ones the flow has already picked */
+  hiddenAddresses?: string[]
+  /**
+   * Shows a valid address like any other value, without the "Valid address" label and the
+   * success border, e.g. where several fields would all show it. The validation still runs.
+   * The empty line kept under the input for a message is left out too.
+   */
+  isSuccessHidden?: boolean
   // The props below drive the "Add to address book" prompt, which only applies when the
   // address is a transfer recipient. Other flows can leave them out.
   addressValidationMsg?: string
@@ -120,6 +128,8 @@ const SelectedMenuOption: React.FC<{
   }
   inputBackgroundColor?: ColorValue
   plainAddressMaxLength?: number
+  isSuccessHidden?: boolean
+  customBottomLabel?: ReactNode
 }> = ({
   selectRef,
   filteredContacts,
@@ -137,7 +147,9 @@ const SelectedMenuOption: React.FC<{
   autoFocus = false,
   addressHighlight,
   inputBackgroundColor,
-  plainAddressMaxLength
+  plainAddressMaxLength,
+  isSuccessHidden,
+  customBottomLabel
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -198,6 +210,8 @@ const SelectedMenuOption: React.FC<{
         resolvedAddressType={resolvedAddressType}
         addressHighlight={addressHighlight}
         plainAddressMaxLength={plainAddressMaxLength}
+        isSuccessHidden={isSuccessHidden}
+        customBottomLabel={customBottomLabel}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         // On mobile input mode we still need details view when poisoning highlight exists,
@@ -231,7 +245,7 @@ const SelectedMenuOption: React.FC<{
         button={
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-        buttonProps={{ onPress: () => setIsMenuOpen(true) }}
+        buttonProps={{ onPress: () => setIsMenuOpen(!isMenuOpen) }}
         inputWrapperStyle={{
           ...(type === 'input' && { backgroundColor: theme.neutral400 }),
           ...(shouldGrowInput && { height: 'auto', minHeight: INPUT_WRAPPER_HEIGHT })
@@ -269,6 +283,8 @@ const SelectedMenuOption: React.FC<{
       shouldGrowInput,
       inputBackgroundColor,
       plainAddressMaxLength,
+      isSuccessHidden,
+      customBottomLabel,
       type,
       validation
     ]
@@ -300,8 +316,11 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   withShortenedAddresses,
   includeSelectedAccount = false,
   inputBackgroundColor,
+  hiddenAddresses,
+  isSuccessHidden,
   privacyPoolsAccounts,
-  onSelectPrivacyPoolsAccount
+  onSelectPrivacyPoolsAccount,
+  customBottomLabel
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
@@ -328,12 +347,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     preset: 'opacityInverted'
   })
   // Split like the accounts list: Privacy Pools accounts, having no address, are private. Without
-  // them, the list is as it was
-  const hasAccountsTabs = isPrivacyPoolsEnabled && !!onSelectPrivacyPoolsAccount
+  // them, the list is as it was. Where they are not released yet, the Private tab is only a teaser
+  const hasAccountsTabs = isPrivacyPoolsSupported && !!onSelectPrivacyPoolsAccount
   // The search stays when switching tabs, so it filters the newly opened tab too
   const [activeTab, setActiveTab] = useState<AccountsTab>('public')
 
-  const selectableContacts = useMemo<Contact[]>(() => {
+  const contactsWithSelectedAccount = useMemo<Contact[]>(() => {
     if (!includeSelectedAccount || !account) return contacts
     const isSelectedAccountIncluded = contacts.some(
       ({ address: contactAddress }) => contactAddress.toLowerCase() === account.addr.toLowerCase()
@@ -349,6 +368,15 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       ...contacts
     ]
   }, [account, contacts, includeSelectedAccount])
+
+  const selectableContacts = useMemo<Contact[]>(() => {
+    if (!hiddenAddresses?.length) return contactsWithSelectedAccount
+
+    const hiddenAddressSet = new Set(hiddenAddresses.map((addr) => addr.toLowerCase()))
+    return contactsWithSelectedAccount.filter(
+      ({ address: contactAddress }) => !hiddenAddressSet.has(contactAddress.toLowerCase())
+    )
+  }, [contactsWithSelectedAccount, hiddenAddresses])
 
   // Computed once for the whole list, so the rows don't each subscribe to the keystore.
   // Safe accounts are left out, like in the accounts list
@@ -662,6 +690,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           addressHighlight={selectedAddressHighlight}
           inputBackgroundColor={inputBackgroundColor}
           plainAddressMaxLength={contactAddressMaxLength}
+          isSuccessHidden={isSuccessHidden}
+          customBottomLabel={customBottomLabel}
         />
       )
     },
@@ -677,7 +707,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       renderConfirmAddress,
       selectedAddressHighlight,
       inputBackgroundColor,
-      contactAddressMaxLength
+      contactAddressMaxLength,
+      isSuccessHidden,
+      customBottomLabel
     ]
   )
 
@@ -720,6 +752,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             disabled={disabled}
             addressHighlight={selectedAddressHighlight}
             plainAddressMaxLength={contactAddressMaxLength}
+            isSuccessHidden={isSuccessHidden}
+            customBottomLabel={customBottomLabel}
           />
         )}
         containerStyle={spacings.mb0}

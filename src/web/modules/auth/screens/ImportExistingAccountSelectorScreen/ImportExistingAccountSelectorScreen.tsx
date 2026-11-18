@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, ColorValue, ScrollView, View } from 'react-native'
-import { SvgProps } from 'react-native-svg'
+import { Animated, LayoutChangeEvent, ScrollView, View } from 'react-native'
 
 import AmbireLogoSquare from '@common/assets/svg/AmbireLogoSquare'
 import DiagonalRightArrowIcon from '@common/assets/svg/DiagonalRightArrowIcon'
 import GridPlusIcon from '@common/assets/svg/GridPlusIcon'
+import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import ImportJsonIcon from '@common/assets/svg/ImportJsonIcon'
 import LedgerBadgeIcon from '@common/assets/svg/LedgerBadgeIcon'
 import OneKeyIcon from '@common/assets/svg/OneKeyIcon'
@@ -14,19 +14,25 @@ import ReceiveIcon from '@common/assets/svg/ReceiveIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import SeedPhraseIcon from '@common/assets/svg/SeedPhraseIcon'
+import SingleKeyIcon from '@common/assets/svg/SingleKeyIcon'
 import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
-import Button, { BUTTON_HEIGHT } from '@common/components/Button'
+import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import ExpandableImportMethod, {
+  getImportMethodTestID,
+  IMPORT_METHOD_ICON_SLOT_SIZE,
+  ImportMethod
+} from '@common/modules/auth/components/ExpandableImportMethod'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import useAccountPickerHardwareInit from '@common/modules/hardware-wallets/hooks/useAccountPickerHardwareInit'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
@@ -39,20 +45,13 @@ import getStyles from './styles'
 
 export const CARD_WIDTH = 400
 const VISIBLE_BUTTONS_COUNT = 6
-const ICON_SLOT_SIZE = 24
 
-type ButtonType = {
-  title: string
-  onPress: () => void
-  icon: React.FC<SvgProps>
-  /**
-   * Icons that fill their whole box (like SafeIcon) must be drawn smaller than the slot
-   * to match the ones that draw a circle inset in it. The slot keeps the labels aligned.
-   */
-  iconSize?: number
-  /** Overrides the icon color, e.g. for a brand mark */
-  iconColor?: ColorValue
+/** An import method that opens into several, instead of going on by itself */
+type ExpandableImportMethodType = Pick<ImportMethod, 'title' | 'icon' | 'iconSize'> & {
+  options: ImportMethod[]
 }
+
+type ButtonType = ImportMethod | ExpandableImportMethodType
 
 const ImportExistingAccountSelectorScreen = () => {
   const { theme } = useTheme(getStyles)
@@ -75,6 +74,9 @@ const ImportExistingAccountSelectorScreen = () => {
     [initAccountPicker]
   )
   const [showMore, setShowMore] = useState(false)
+  const [expandedMethodTitle, setExpandedMethodTitle] = useState<string | null>(null)
+  // Measured, as it changes when an expandable method in it opens
+  const [moreMethodsHeight, setMoreMethodsHeight] = useState(0)
 
   const animatedHeight = useRef(new Animated.Value(0)).current
   const animatedOpacity = useRef(new Animated.Value(0)).current
@@ -126,14 +128,6 @@ const ImportExistingAccountSelectorScreen = () => {
         icon: SeedPhraseIcon
       },
       {
-        title: 'Safe',
-        onPress: () => {
-          goToNextRoute(WEB_ROUTES.safeImport)
-        },
-        icon: SafeIcon,
-        iconSize: 20
-      },
-      {
         title: 'Trezor',
         onPress: () => {
           if (isSafari()) {
@@ -169,6 +163,30 @@ const ImportExistingAccountSelectorScreen = () => {
           void connectHardwareWallet('MAIN_CONTROLLER_ACCOUNT_PICKER_INIT_LATTICE')
         },
         icon: GridPlusIcon
+      },
+      {
+        title: 'Safe',
+        icon: SafeIcon,
+        iconSize: 20,
+        options: [
+          // The same text and icons as the Safe options of the add account menu
+          {
+            title: 'Import by address',
+            onPress: () => {
+              goToNextRoute(WEB_ROUTES.safeImportAddress)
+            },
+            icon: ImportAccountIcon,
+            testID: getImportMethodTestID('Safe by address')
+          },
+          {
+            title: 'Import by owner',
+            onPress: () => {
+              goToNextRoute(WEB_ROUTES.safeImportByOwner)
+            },
+            icon: SingleKeyIcon,
+            testID: getImportMethodTestID('Safe by owner')
+          }
+        ]
       },
       {
         title: 'QR-based',
@@ -210,44 +228,79 @@ const ImportExistingAccountSelectorScreen = () => {
     }).start()
 
     Animated.timing(animatedHeight, {
-      toValue: showMore
-        ? (buttons.length - VISIBLE_BUTTONS_COUNT) * (BUTTON_HEIGHT + SPACING_SM)
-        : 0,
+      toValue: showMore ? moreMethodsHeight : 0,
       duration: 300,
       useNativeDriver: false
     }).start()
-  }, [animatedHeight, animatedOpacity, showMore, buttons.length])
+  }, [animatedHeight, animatedOpacity, showMore, moreMethodsHeight])
+
+  const handleMoreMethodsLayout = useCallback((event: LayoutChangeEvent) => {
+    setMoreMethodsHeight(event.nativeEvent.layout.height)
+  }, [])
+
+  const toggleExpandedMethod = useCallback((title: string) => {
+    setExpandedMethodTitle((prevTitle) => (prevTitle === title ? null : title))
+  }, [])
 
   const renderImportMethod = useCallback(
-    ({ title, onPress, icon: IconComponent, iconSize = ICON_SLOT_SIZE, iconColor }: ButtonType) => (
-      <Button
-        key={title}
-        type="tertiary"
-        onPress={onPress}
-        testID={`import-method-${title.toLocaleLowerCase().split(' ').join('-')}`}
-        childrenContainerStyle={{
-          ...flexbox.directionRow,
-          ...flexbox.alignCenter,
-          ...flexbox.justifySpaceBetween,
-          ...flexbox.flex1
-        }}
-      >
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <View style={[flexbox.center, { width: ICON_SLOT_SIZE, height: ICON_SLOT_SIZE }]}>
-            <IconComponent
-              width={iconSize}
-              height={iconSize}
-              color={iconColor || theme.iconPrimary}
-            />
+    (button: ButtonType) => {
+      if ('options' in button) {
+        return (
+          <ExpandableImportMethod
+            key={button.title}
+            title={button.title}
+            icon={button.icon}
+            iconSize={button.iconSize}
+            options={button.options}
+            isExpanded={expandedMethodTitle === button.title}
+            onToggle={() => toggleExpandedMethod(button.title)}
+          />
+        )
+      }
+
+      const {
+        title,
+        onPress,
+        icon: IconComponent,
+        iconSize = IMPORT_METHOD_ICON_SLOT_SIZE,
+        iconColor
+      } = button
+
+      return (
+        <Button
+          key={title}
+          type="tertiary"
+          onPress={onPress}
+          testID={getImportMethodTestID(title)}
+          childrenContainerStyle={{
+            ...flexbox.directionRow,
+            ...flexbox.alignCenter,
+            ...flexbox.justifySpaceBetween,
+            ...flexbox.flex1
+          }}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <View
+              style={[
+                flexbox.center,
+                { width: IMPORT_METHOD_ICON_SLOT_SIZE, height: IMPORT_METHOD_ICON_SLOT_SIZE }
+              ]}
+            >
+              <IconComponent
+                width={iconSize}
+                height={iconSize}
+                color={iconColor || theme.iconPrimary}
+              />
+            </View>
+            <Text style={spacings.mlSm} fontSize={16} weight="medium">
+              {t(title)}
+            </Text>
           </View>
-          <Text style={spacings.mlSm} fontSize={16} weight="medium">
-            {t(title)}
-          </Text>
-        </View>
-        <RightArrowIcon color={theme.iconPrimary} />
-      </Button>
-    ),
-    [t, theme.iconPrimary]
+          <RightArrowIcon color={theme.iconPrimary} />
+        </Button>
+      )
+    },
+    [t, theme.iconPrimary, expandedMethodTitle, toggleExpandedMethod]
   )
 
   return (
@@ -266,7 +319,9 @@ const ImportExistingAccountSelectorScreen = () => {
               <Animated.View
                 style={{ height: animatedHeight, opacity: animatedOpacity, overflow: 'hidden' }}
               >
-                {buttons.slice(VISIBLE_BUTTONS_COUNT).map(renderImportMethod)}
+                <View onLayout={handleMoreMethodsLayout}>
+                  {buttons.slice(VISIBLE_BUTTONS_COUNT).map(renderImportMethod)}
+                </View>
               </Animated.View>
             </ScrollView>
             {buttons.length > VISIBLE_BUTTONS_COUNT && (

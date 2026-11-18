@@ -9,12 +9,7 @@ import {
   EstimationStatus
 } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import {
-  FeeSpeed,
-  SigningStatus,
-  SpeedCalc,
-  Warning
-} from '@ambire-common/interfaces/signAccountOp'
+import { FeeSpeed, SigningStatus, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import { findPendingAccountOpById } from '@ambire-common/libs/accountOp/earlierPendingAccountOp'
@@ -43,7 +38,9 @@ import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
-import useCallSignAccountOpMethod, { getSignAccountOpType } from '@common/hooks/useCallSignAccountOpMethod'
+import useCallSignAccountOpMethod, {
+  getSignAccountOpType
+} from '@common/hooks/useCallSignAccountOpMethod'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
@@ -85,11 +82,11 @@ const getFeeSpeedLabelText = (speed: SpeedCalc) =>
 
 const FeeSpeedLabel = ({
   speed,
-  feeTokenPriceUnavailableWarning,
+  isFeeTokenPriceUnavailable,
   payValue
 }: {
   speed: SpeedCalc
-  feeTokenPriceUnavailableWarning?: Warning
+  isFeeTokenPriceUnavailable: boolean
   payValue?: SelectValue
 }) => {
   const { t } = useTranslation()
@@ -110,13 +107,13 @@ const FeeSpeedLabel = ({
         {t(getFeeSpeedLabelText(speed))}
       </Text>
       <Text
-        fontSize={!feeTokenPriceUnavailableWarning ? 14 : 12}
+        fontSize={!isFeeTokenPriceUnavailable ? 14 : 12}
         style={spacings.mlMi}
         numberOfLines={1}
-        weight={!feeTokenPriceUnavailableWarning ? 'regular' : 'medium'}
+        weight={!isFeeTokenPriceUnavailable ? 'regular' : 'medium'}
         appearance="secondaryText"
       >
-        {!feeTokenPriceUnavailableWarning
+        {!isFeeTokenPriceUnavailable
           ? formatDecimals(Number(speed.amountUsd), 'value')
           : `${formatDecimals(Number(speed.amountFormatted), 'precise')} ${payValue?.token.symbol}`}
       </Text>
@@ -302,6 +299,14 @@ const Estimation = ({
     return signAccountOpState?.networkFeeSpeeds[selectedOptionIdentifier] || []
   }, [signAccountOpState?.networkFeeSpeeds, selectedOptionIdentifier])
 
+  // The speeds show the fee in the token instead of USD when it has no price. The warning says so
+  // with token prices on; with them off (prices read from the network) it's left out, so a speed
+  // without a USD amount tells it then
+  const isFeeTokenPriceUnavailable = useMemo(
+    () => !!feeTokenPriceUnavailableWarning || networkFeeSpeeds.some((speed) => !speed.amountUsd),
+    [feeTokenPriceUnavailableWarning, networkFeeSpeeds]
+  )
+
   const isGaslessTransaction = useMemo(() => {
     return (
       feeSpeeds.every((speed) => !speed.amount) &&
@@ -358,7 +363,7 @@ const Estimation = ({
       label: (
         <FeeSpeedLabel
           speed={speed}
-          feeTokenPriceUnavailableWarning={feeTokenPriceUnavailableWarning}
+          isFeeTokenPriceUnavailable={isFeeTokenPriceUnavailable}
           payValue={payValue}
         />
       ),
@@ -366,7 +371,7 @@ const Estimation = ({
       speed,
       disabled: speed.disabled
     }))
-  }, [networkFeeSpeeds, feeTokenPriceUnavailableWarning, payValue])
+  }, [networkFeeSpeeds, isFeeTokenPriceUnavailable, payValue])
 
   const selectedFee = useMemo(
     () =>
@@ -412,6 +417,9 @@ const Estimation = ({
     () => (safeFeePayerLinks ? groupSafeFeeOptions(payOptionsPaidByEOA, safeFeePayerLinks) : null),
     [payOptionsPaidByEOA, safeFeePayerLinks]
   )
+  const hasSafeLinkedFeePayerGroups =
+    !!safeFeeOptionGroups &&
+    (!!safeFeeOptionGroups.owners.length || !!safeFeeOptionGroups.linked.length)
 
   const feeOptionSelectSections = useMemo(() => {
     if (!payOptionsPaidByUsOrGasTank.length && !payOptionsPaidByEOA.length)
@@ -434,6 +442,17 @@ const Estimation = ({
     // Paying from an EOA publicly links it to the Safe, so the ones that reveal nothing new come first
     if (safeFeeOptionGroups) {
       const { owners, linked, notLinked } = safeFeeOptionGroups
+      // "Other" only makes sense next to the owners and linked groups. Alone, it gets no title,
+      // unless the account's own tokens are listed above it and need to be told apart from it
+      let notLinkedTitle: { icon: typeof AssetIcon; text: string } | undefined = {
+        icon: VisibilityIcon,
+        text: t('Other')
+      }
+      if (!hasSafeLinkedFeePayerGroups) {
+        notLinkedTitle = payOptionsPaidByUsOrGasTank.length
+          ? { icon: AssetIcon, text: t('Native tokens from my EOAs') }
+          : undefined
+      }
 
       return [
         accountTokensSection,
@@ -448,7 +467,7 @@ const Estimation = ({
           key: 'safe-linked'
         },
         {
-          title: { icon: VisibilityIcon, text: t('Other') },
+          title: notLinkedTitle,
           data: notLinked,
           key: 'safe-not-linked'
         }
@@ -466,7 +485,13 @@ const Estimation = ({
         key: 'eoa-tokens'
       }
     ]
-  }, [payOptionsPaidByEOA, payOptionsPaidByUsOrGasTank, safeFeeOptionGroups, t])
+  }, [
+    hasSafeLinkedFeePayerGroups,
+    payOptionsPaidByEOA,
+    payOptionsPaidByUsOrGasTank,
+    safeFeeOptionGroups,
+    t
+  ])
 
   // Derived from payValue instead of the controller flag, which lags behind a local payer pick
   // until the update round-trip completes and would briefly name the wrong payer
@@ -528,11 +553,20 @@ const Estimation = ({
       feeOption.token.address === ZERO_ADDRESS
   )
 
+  // A fee in another token is paid by the same account, so only the token changes
+  const serviceFeeOption = useMemo(
+    () =>
+      nativeFeeOption && serviceFee?.token
+        ? { ...nativeFeeOption, token: serviceFee.token }
+        : nativeFeeOption,
+    [nativeFeeOption, serviceFee]
+  )
+
   const paidByNativeValue = useMemo(() => {
     if (!serviceFee || !signAccountOpState?.estimation.availableFeeOptions.length || !hasEstimation)
       return null
 
-    if (!nativeFeeOption) return
+    if (!nativeFeeOption || !serviceFeeOption) return
 
     const mappedFeeOption = mapFeeOptions(
       nativeFeeOption,
@@ -544,12 +578,20 @@ const Estimation = ({
       <PayOption
         amount={BigInt(serviceFee.amount)}
         amountUsd={serviceFee.amountUSD}
-        feeOption={nativeFeeOption}
+        feeOption={serviceFeeOption}
         paidByAccountLabel={mappedFeeOption.paidByAccountLabel}
       />
     )
     return mappedFeeOption
-  }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts, isViewOnly])
+  }, [
+    serviceFee,
+    signAccountOpState,
+    hasEstimation,
+    nativeFeeOption,
+    serviceFeeOption,
+    state.contacts,
+    isViewOnly
+  ])
 
   const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
   const isCancelTransaction =
@@ -659,12 +701,23 @@ const Estimation = ({
     const nativeSymbol = network?.nativeAssetSymbol || ''
     // A smart account pays its own fee through a service that sets it, so only another account can.
     // An upgraded basic account (7702) can set it when paying in the native token itself.
-    // A Safe lists the other accounts split by how they relate to it, so it names those sections
-    if (safeFeeOptionGroups) {
+    // A Safe lists the other accounts split by how they relate to it, so it names those sections.
+    // Without owner or linked groups the "Other" section loses its title, so none are named
+    if (hasSafeLinkedFeePayerGroups) {
       return {
         title,
         text: t(
           'This Safe’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}} from one of your other accounts, listed under "Safe owners", "Used in Ambire for this Safe" or "Other".',
+          { nativeSymbol }
+        )
+      }
+    }
+
+    if (safeFeeOptionGroups) {
+      return {
+        title,
+        text: t(
+          'This Safe’s fee is handled for you. To set it yourself, pay the fee in {{nativeSymbol}} from one of your other accounts.',
           { nativeSymbol }
         )
       }
@@ -689,6 +742,7 @@ const Estimation = ({
     }
   }, [
     canSetCustomGasPrices,
+    hasSafeLinkedFeePayerGroups,
     network?.nativeAssetSymbol,
     safeFeeOptionGroups,
     signAccountOpState?.account,
@@ -771,7 +825,7 @@ const Estimation = ({
         // Grows the menu to the left, as the select sits at the right of the row.
         // Wider still if the fee token price is unavailable as the token amount takes up more space
         menuLeftHorizontalOffset={
-          FEE_SPEED_MENU_EXTRA_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
+          FEE_SPEED_MENU_EXTRA_WIDTH + (isFeeTokenPriceUnavailable ? 60 : 0)
         }
         menuPosition="top"
         bottomSheetTitle={t('Transaction speed')}
@@ -785,7 +839,7 @@ const Estimation = ({
     customFeeSpeedOption,
     disabled,
     feeSpeedOptions,
-    feeTokenPriceUnavailableWarning,
+    isFeeTokenPriceUnavailable,
     isCustomFeeSpeedSelected,
     onFeeSelect,
     renderFeeSpeedSelectedOption,
@@ -847,7 +901,7 @@ const Estimation = ({
         <ServiceFee
           serviceFee={serviceFee}
           paidByNativeValue={paidByNativeValue}
-          nativeFeeOption={nativeFeeOption}
+          feeOption={serviceFeeOption}
         />
       </>
     )
@@ -983,7 +1037,7 @@ const Estimation = ({
       <ServiceFee
         serviceFee={serviceFee}
         paidByNativeValue={paidByNativeValue}
-        nativeFeeOption={nativeFeeOption}
+        feeOption={serviceFeeOption}
       />
       {v1warning && !signAccountOpState.errors.length && (
         <View

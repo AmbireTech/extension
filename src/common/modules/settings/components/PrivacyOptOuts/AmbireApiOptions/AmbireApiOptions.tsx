@@ -8,6 +8,7 @@ import SearchIcon from '@common/assets/svg/SearchIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import UnstakeIcon from '@common/assets/svg/UnstakeIcon'
+import ValueIcon from '@common/assets/svg/ValueIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -52,6 +53,14 @@ const AmbireApiOptions = () => {
             )}
             icon={<SearchIcon width={24} height={24} />}
             flag="tokenAndDefiAutoDiscovery"
+          />
+          <OptOutControlOption
+            title={t('Token prices')}
+            description={t(
+              `Fetch token prices through Ambire's API. When off, prices are read from the network directly: fewer tokens get a price, and price changes and market data aren't shown.`
+            )}
+            icon={<ValueIcon width={24} height={24} color={theme.iconPrimary} />}
+            flag="tokenPrices"
           />
           <OptOutControlOption
             title={t('Clear signing')}

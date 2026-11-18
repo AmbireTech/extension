@@ -16,6 +16,7 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
 import useTransfer from '@common/modules/transfer/hooks/useTransfer'
+import usePrivacyPoolsDepositFee from '@common/modules/transfer/hooks/usePrivacyPoolsDepositFee'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
@@ -64,6 +65,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     portfolio,
     account
   } = useTransfer(!!isTopUpScreen)
+  const privacyPoolsDepositFee = usePrivacyPoolsDepositFee()
 
   if (displayedView === 'loading') {
     return (
@@ -250,6 +252,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           Modals={Modals}
+          serviceFee={privacyPoolsDepositFee}
         />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
