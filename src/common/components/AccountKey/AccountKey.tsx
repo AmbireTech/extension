@@ -8,14 +8,16 @@ import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import ExportIcon from '@common/assets/svg/ExportIcon'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import ImportArrowIcon from '@common/assets/svg/ImportArrowIcon'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
+import WarningIcon from '@common/assets/svg/WarningIcon'
 import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
 import Button from '@common/components/Button'
+import Dropdown from '@common/components/Dropdown'
 import ExportKey from '@common/components/ExportKey'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -30,6 +32,7 @@ import spacings, { SPACING_MI } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { setStringAsync } from '@common/utils/clipboard'
+import { getKeyDeviceName } from '@common/utils/keys'
 import { getUiType } from '@common/utils/uiType'
 
 export type AccountKeyType = {
@@ -40,7 +43,12 @@ export type AccountKeyType = {
   meta?: Key['meta']
   label?: string
   onChains?: bigint[]
+  /** False for an imported key of a type this device can't sign with (synced from another device) */
+  isSupported?: boolean
 }
+
+/** The key a row's menu acts on */
+export type AccountKeyMenuTarget = { addr: Key['addr']; type?: Key['type']; label?: string }
 
 type Props = AccountKeyType & {
   isLast?: boolean
@@ -54,6 +62,8 @@ type Props = AccountKeyType & {
   tooltipContent?: string
   itemHeight?: number
   onExportKeyPress?: ({ addr, label }: { addr: string; label?: string }) => void
+  /** Adds "Remove key" to the menu of imported keys */
+  onRemoveKeyPress?: (key: AccountKeyMenuTarget) => void
   singleLineLabel?: boolean
   /**
    * Shows the key as a row of the account list: the name, the address below it, and a badge
@@ -67,9 +77,13 @@ type Props = AccountKeyType & {
   ownerAccount?: Account
 }
 
+const MENU_VALUES = { export: 'export', remove: 'remove' } as const
+
 const { isPopup } = getUiType()
-/** Short enough for the address to fit next to the Export / Import buttons */
+/** Short enough for the address to fit next to the options button */
 const KEY_ADDRESS_MAX_LENGTH = 20
+/** Shorter next to the Import button, which is wider than the options button */
+const NOT_IMPORTED_KEY_ADDRESS_MAX_LENGTH = 16
 /** The chain icons in the "Owner on" badge, as small as in the "Safe active on" badge */
 const OWNER_CHAIN_ICON_SIZE = 14
 const OWNER_CHAIN_ICON_OVERLAP = 5
@@ -102,7 +116,9 @@ const AccountKey: React.FC<Props> = ({
   tooltipContent,
   itemHeight = 48,
   onExportKeyPress,
+  onRemoveKeyPress,
   singleLineLabel = false,
+  isSupported = true,
   withNameAndAddress = false,
   name,
   ownerAccount
@@ -124,6 +140,7 @@ const AccountKey: React.FC<Props> = ({
   const isKeyAmbireV1 = addr === AMBIRE_V1_QUICK_ACC_MANAGER
   const canExportOrImportKey = showExportImport && !isKeyAmbireV1
   const [isShowingDetails, setIsShowingDetails] = useState<boolean>(false)
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
 
   const handleCopy = useCallback(async () => {
     try {
@@ -156,6 +173,33 @@ const AccountKey: React.FC<Props> = ({
     setIsShowingDetails((p) => !p)
   }, [])
 
+  // Hardware wallet keys never leave the device, so only private keys can be exported.
+  // A Safe's keys are its owners, so they are named so in its menu
+  const menuItems = useMemo(() => {
+    const isSafeOwner = !!account.safeCreation
+    const items: { label: string; value: string; style?: { color: string } }[] = []
+    if (canExportKey)
+      items.push({
+        label: isSafeOwner ? t('Export owner') : t('Export key'),
+        value: MENU_VALUES.export
+      })
+    if (onRemoveKeyPress)
+      items.push({
+        label: isSafeOwner ? t('Remove owner') : t('Remove key'),
+        value: MENU_VALUES.remove,
+        style: { color: theme.errorDecorative as string }
+      })
+    return items
+  }, [account.safeCreation, canExportKey, onRemoveKeyPress, t, theme.errorDecorative])
+
+  const handleMenuSelect = useCallback(
+    ({ value }: { value: string }) => {
+      if (value === MENU_VALUES.export) handleExportKeyPress()
+      if (value === MENU_VALUES.remove) onRemoveKeyPress?.({ addr, type, label })
+    },
+    [addr, handleExportKeyPress, label, onRemoveKeyPress, type]
+  )
+
   const networkIcons = !!onChains?.length && (
     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
       {onChains.map((c, i) => (
@@ -172,30 +216,17 @@ const AccountKey: React.FC<Props> = ({
   // The owners of a Safe have details even when they are not imported, e.g. its networks
   const safeAccount = account.safeCreation ? account : undefined
   const hasDetails = !!canExportOrImportKey && (isImported || !!safeAccount)
-  // On mobile the account row shows its copy button next to the actions, so the arrow goes to the
-  // end of the badges row, below the copy button, not next to it, where the two icons crowd
-  const isDetailsToggleWithBadges = withNameAndAddress && !isWeb
+  // First in the row, like the expand arrow of the calls on the sign transaction screen
   const detailsToggle = (
     <AnimatedPressable
       onPress={handleToggleDetails}
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        !isDetailsToggleWithBadges && spacings.mlSm
-      ]}
+      style={[flexbox.center, spacings.mrTy, { width: 28, height: 24 }]}
+      accessibilityRole="button"
+      accessibilityLabel={isShowingDetails ? t('Hide key details') : t('Show key details')}
       {...bindKeyDetailsAnim}
     >
       <Animated.View style={keyDetailsAnimStyles}>
-        <RightArrowIcon
-          width={16}
-          height={16}
-          color={theme.secondaryText}
-          style={
-            isShowingDetails
-              ? { transform: [{ rotate: '270deg' }] }
-              : { transform: [{ rotate: '90deg' }] }
-          }
-        />
+        {isShowingDetails ? <UpArrowIcon /> : <DownArrowIcon />}
       </Animated.View>
     </AnimatedPressable>
   )
@@ -203,42 +234,24 @@ const AccountKey: React.FC<Props> = ({
     <View>
       {isImported ? (
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <View>
-            {/*
-          When making the Pressable disabled, it disables literally everything in it.
-          So even the tooltip will not work.
-          The workaround is to set a wrapping <View> and make it the tooltip target
-        */}
-            <View
-              dataSet={createGlobalTooltipDataSet({
-                id: `export-${addr}-${type}-tooltip`,
-                content: t('Export unavailable as this is a hardware wallet key'),
-                hidden: canExportKey
-              })}
-            >
-              <Button
-                testID={`export-key-button-${addr}`}
-                style={{ height: 32 }}
-                hasBottomSpacing={false}
-                onPress={handleExportKeyPress}
-                size="small"
-                disabled={!canExportKey}
-                type="secondary"
-                text={t('Export')}
-              >
-                <ExportIcon
-                  style={spacings.mlTy}
-                  color={theme.iconPrimary}
-                  width={16}
-                  height={16}
-                />
-              </Button>
+          {!!menuItems.length && (
+            <View>
+              <Dropdown
+                data={menuItems}
+                externalPosition={menuPosition}
+                setExternalPosition={setMenuPosition}
+                onSelect={handleMenuSelect}
+                kebabIconProps={{ width: 24, height: 24 }}
+                testID={`key-options-${addr}-${type}`}
+              />
             </View>
-          </View>
-          {!isDetailsToggleWithBadges && detailsToggle}
+          )}
         </View>
       ) : (
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+        <View
+          // The compact row already leaves a gap after the address
+          style={[flexbox.directionRow, flexbox.alignCenter, withNameAndAddress && spacings.mlSm]}
+        >
           <Button
             onPress={reimportAccount}
             size="small"
@@ -249,7 +262,6 @@ const AccountKey: React.FC<Props> = ({
           >
             <ImportArrowIcon style={spacings.mlTy} color={theme.primary} width={16} height={16} />
           </Button>
-          {!isDetailsToggleWithBadges && hasDetails && detailsToggle}
         </View>
       )}
     </View>
@@ -272,8 +284,10 @@ const AccountKey: React.FC<Props> = ({
       preferences: { label: rowLabel, pfp: addr }
     }
   }, [addr, dedicatedToOneSA, name, ownerAccount, t])
+  // The key itself, not every key at its address, as e.g. a QR-based and an NFC key can share one
+  const badgeKeys = useMemo(() => (isImported && type ? [{ type }] : undefined), [isImported, type])
   const renderKeyActions = () => keyActions
-  const renderDetailsToggleWithBadges = () => hasDetails && detailsToggle
+  const renderDetailsToggle = () => detailsToggle
   // Labeled, as the owner may be a Safe of the wallet, deployed on other chains than these
   const renderOwnerNetworksBadge = () =>
     !!onChains?.length && (
@@ -312,15 +326,16 @@ const AccountKey: React.FC<Props> = ({
           // Pressing anywhere on the row opens the details, not only on the arrow
           isSelectable={hasDetails}
           onSelect={hasDetails ? handleToggleDetails : undefined}
+          renderLeftChildren={hasDetails ? renderDetailsToggle : undefined}
           switchAccountOnPress={false}
           withBalance={false}
-          maxAccountAddrLength={KEY_ADDRESS_MAX_LENGTH}
-          renderRightChildren={renderKeyActions}
-          renderBadgesEndChildren={
-            isDetailsToggleWithBadges ? renderDetailsToggleWithBadges : undefined
+          maxAccountAddrLength={
+            isImported ? KEY_ADDRESS_MAX_LENGTH : NOT_IMPORTED_KEY_ADDRESS_MAX_LENGTH
           }
+          renderRightChildren={renderKeyActions}
           renderExtraBadges={renderOwnerNetworksBadge}
           withAccountStatus={false}
+          badgeKeys={badgeKeys}
           containerStyle={spacings.mb0}
         />
       ) : (
@@ -344,9 +359,10 @@ const AccountKey: React.FC<Props> = ({
               actionsSpacing
             ]}
           >
+            {hasDetails && detailsToggle}
             {!!isImported && (
-              <View style={spacings.mrTy}>
-                <AccountKeyIcon iconSize={20} type={type || 'internal'} color={keyIconColor} />
+              <View style={spacings.mrMi}>
+                <AccountKeyIcon iconSize={24} type={type || 'internal'} color={keyIconColor} />
               </View>
             )}
 
@@ -392,6 +408,24 @@ const AccountKey: React.FC<Props> = ({
           </View>
 
           {keyActions}
+        </View>
+      )}
+      {!!isImported && !isSupported && (
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            spacings.phSm,
+            spacings.mbTy,
+            { marginTop: -SPACING_MI }
+          ]}
+        >
+          <WarningIcon width={14} height={14} color={theme.warningText} />
+          <Text fontSize={12} weight="medium" color={theme.warningText} style={spacings.mlMi}>
+            {t("{{device}} key can't sign on this device", {
+              device: type ? getKeyDeviceName(type) : ''
+            })}
+          </Text>
         </View>
       )}
       {!!isKeyAmbireV1 && (
