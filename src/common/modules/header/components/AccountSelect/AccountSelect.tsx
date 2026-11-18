@@ -27,6 +27,7 @@ import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useLatestCallback from '@common/hooks/useLatestCallback'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -187,37 +188,45 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
     [hiddenAccounts]
   )
 
-  const sections = useMemo((): SectionListData<SelectValue>[] => {
-    if (!dapp) return [{ key: DEFAULT_SECTION_KEY, data: accounts.map(toOption) }]
+  // One option per account, kept as accounts move between sections, so only the rows
+  // that change re-render on a pick, hide or show
+  const optionByAddr = useMemo(
+    () => new Map(accounts.map((acc) => [acc.addr, toOption(acc)])),
+    [accounts]
+  )
 
-    const visibleSection = { key: VISIBLE_SECTION_KEY, data: visibleAccounts.map(toOption) }
+  const sections = useMemo((): SectionListData<SelectValue>[] => {
+    const getOption = (acc: Account) => optionByAddr.get(acc.addr) ?? toOption(acc)
+
+    if (!dapp) return [{ key: DEFAULT_SECTION_KEY, data: accounts.map(getOption) }]
+
+    const visibleSection = { key: VISIBLE_SECTION_KEY, data: visibleAccounts.map(getOption) }
     if (!hiddenAccounts.length) return [visibleSection]
 
-    return [visibleSection, { key: HIDDEN_SECTION_KEY, data: hiddenAccounts.map(toOption) }]
-  }, [dapp, accounts, visibleAccounts, hiddenAccounts])
+    return [visibleSection, { key: HIDDEN_SECTION_KEY, data: hiddenAccounts.map(getOption) }]
+  }, [dapp, accounts, visibleAccounts, hiddenAccounts, optionByAddr])
 
-  const value = useMemo(() => {
-    const account = accounts.find((acc) => acc.addr === accountAddr)
+  const value = useMemo(() => optionByAddr.get(accountAddr) ?? null, [optionByAddr, accountAddr])
 
-    return account ? toOption(account) : null
-  }, [accounts, accountAddr])
+  // Stable, as it reaches every row: a new one on each pick would re-render all of them
+  const handleSetValue = useLatestCallback(({ value: addr }: SelectValue) => {
+    const nextAccountAddr = String(addr)
+    dismissKeyboard()
+    if (dapp) {
+      // Also guards keyboard selection - a hidden account has to be shown first
+      if (hiddenAddrs.has(nextAccountAddr)) return
 
-  const handleSetValue = useCallback(
-    ({ value: addr }: SelectValue) => {
-      const nextAccountAddr = String(addr)
-      dismissKeyboard()
-      if (dapp) {
-        // Also guards keyboard selection - a hidden account has to be shown first
-        if (hiddenAddrs.has(nextAccountAddr)) return
+      pickAccount(nextAccountAddr)
+      return
+    }
+    if (nextAccountAddr === selectedAccount?.addr) return
 
-        pickAccount(nextAccountAddr)
-        return
-      }
-      if (nextAccountAddr === selectedAccount?.addr) return
+    mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [nextAccountAddr] } })
+  })
 
-      mainDispatch({ type: 'method', params: { method: 'selectAccount', args: [nextAccountAddr] } })
-    },
-    [dapp, hiddenAddrs, pickAccount, selectedAccount?.addr, mainDispatch]
+  // Stable for the same reason; `showAccount` and `hideAccount` change on every pick, hide or show
+  const toggleAccountVisibility = useLatestCallback((addr: string) =>
+    hiddenAddrs.has(addr) ? showAccount(addr) : hideAccount(addr)
   )
 
   const applyChanges = useCallback(() => {
@@ -278,13 +287,11 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
           isHidden={isHidden}
           isLast={isLast}
           onPress={onPress}
-          onToggleVisibility={
-            canToggleVisibility ? (isHidden ? showAccount : hideAccount) : undefined
-          }
+          onToggleVisibility={canToggleVisibility ? toggleAccountVisibility : undefined}
         />
       )
     },
-    [hiddenAddrs, dapp, selectedBadgeText, showAccount, hideAccount]
+    [hiddenAddrs, dapp, selectedBadgeText, toggleAccountVisibility]
   )
 
   const renderSectionHeader = useCallback(

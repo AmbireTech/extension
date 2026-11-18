@@ -71,10 +71,7 @@ export const handleActions = async (
     case 'UPDATE_PORT_URL': {
       if (!port) return
 
-      if (port.sender) {
-        port.sender.url = params.url
-        if (port.sender.tab) port.sender.tab.url = params.url
-      }
+      port.currentUrl = params.url
       mainCtrl.ui.updateView(port.id, {
         currentRoute: params.route,
         searchParams: params.searchParams

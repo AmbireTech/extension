@@ -17,11 +17,13 @@ import BottomSheet from '@common/components/BottomSheet'
 import ExportKey from '@common/components/ExportKey'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import { isMobile, isWeb } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { selectKeys, selectUnsupportedKeys } from '@common/utils/keys'
+import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 interface Props {
@@ -37,8 +39,29 @@ interface Props {
   isFullWidthSheet: boolean
 }
 
+const { isPopup } = getUiType()
+
+// A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
+// The popup is barely wider than the width cap, so the modal there takes the popup's full width
+// instead of leaving a thin gap on each side
+const WIDE_LAYOUT_SHEET_STYLE = {
+  minHeight: 432,
+  ...spacings.pvLg,
+  ...(isPopup ? {} : { maxWidth: 432 })
+}
+
+// Sized like the export sheet above, but only as tall as its content
+const REMOVE_KEY_SHEET_STYLE = {
+  ...spacings.pvLg,
+  ...(isPopup ? {} : { maxWidth: 432 })
+}
+
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) =>
   state.networks || []
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts || []
+const selectContacts = (state: AllControllersMappingType['AddressBookController']) =>
+  state.contacts || []
 
 const AccountKeys: FC<Props> = ({
   account,
@@ -51,8 +74,7 @@ const AccountKeys: FC<Props> = ({
   isFullWidthSheet
 }) => {
   const { t } = useTranslation()
-  // Full width in the popup and in a narrow window, like the keys sheet they open from
-  const sheetMaxWidth = isFullWidthSheet ? {} : { maxWidth: 432 }
+  const { isCompactLayout } = useCompactLayout()
   const selectAccountState = useCallback(
     (state: AllControllersMappingType['AccountsController']) =>
       state.accountStates?.[account.addr] || null,
@@ -65,6 +87,8 @@ const AccountKeys: FC<Props> = ({
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: keys } = useController('KeystoreController', selectKeys)
   const { state: unsupportedKeys } = useController('KeystoreController', selectUnsupportedKeys)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
+  const { state: contacts } = useController('AddressBookController', selectContacts)
   const accountStateRefreshRef = useRef<{ accountAddr: string | null; chainIds: Set<string> }>({
     accountAddr: null,
     chainIds: new Set()
@@ -193,6 +217,16 @@ const AccountKeys: FC<Props> = ({
     ]
   }, [associatedKeys, keys, unsupportedKeys])
 
+  // Looked up once for the whole list, so that the rows do not subscribe to the accounts and contacts
+  const accountsByAddr = useMemo(
+    () => new Map(accounts.map((acc) => [acc.addr.toLowerCase(), acc])),
+    [accounts]
+  )
+  const contactNamesByAddr = useMemo(
+    () => new Map(contacts.map((contact) => [contact.address.toLowerCase(), contact.name])),
+    [contacts]
+  )
+
   const withAlert = useMemo(
     () => associatedKeys.length > 1 && isAmbireV1LinkedAccount(account.creation?.factoryAddr),
     [account.creation?.factoryAddr, associatedKeys.length]
@@ -254,9 +288,13 @@ const AccountKeys: FC<Props> = ({
         showsVerticalScrollIndicator={isWeb}
       >
         {accountKeys.map((accountKey, index) => {
-          const { type, addr, isImported, meta, dedicatedToOneSA } = accountKey
+          const { type, addr, isImported, meta, dedicatedToOneSA, label } = accountKey
           const isLast = index === accountKeys.length - 1
           const accountKeyProps = { addr, type, isLast, isImported }
+          const ownerAccount = accountsByAddr.get(addr.toLowerCase())
+          // The key label ("Key 2") tells the least, so it is shown only when there is no other name
+          const name =
+            contactNamesByAddr.get(addr.toLowerCase()) || ownerAccount?.preferences.label || label
 
           return (
             <AccountKey
@@ -273,6 +311,9 @@ const AccountKeys: FC<Props> = ({
               onRemoveKeyPress={canRemoveKeys && isImported ? handleRemoveKeyPress : undefined}
               isSupported={accountKey.isSupported}
               onChains={safeOwnersByNetwork[addr]}
+              withNameAndAddress
+              name={name}
+              ownerAccount={ownerAccount}
             />
           )
         })}
@@ -295,7 +336,7 @@ const AccountKeys: FC<Props> = ({
         closeBottomSheet={closeExportKey}
         scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
         containerInnerWrapperStyles={{ flex: 1 }}
-        style={isWeb ? { ...sheetMaxWidth, minHeight: 432, ...spacings.pvLg } : undefined}
+        style={isCompactLayout ? undefined : WIDE_LAYOUT_SHEET_STYLE}
         onClosed={handleExportKeyClosed}
       >
         {!!selectedExportKey && (
@@ -312,7 +353,7 @@ const AccountKeys: FC<Props> = ({
         id="account-key-remove-bottom-sheet"
         type={isWeb ? 'modal' : 'bottom-sheet'}
         closeBottomSheet={closeRemoveKey}
-        style={isWeb ? { ...sheetMaxWidth, ...spacings.pvLg } : undefined}
+        style={isCompactLayout ? undefined : REMOVE_KEY_SHEET_STYLE}
         onClosed={handleRemoveKeyClosed}
       >
         {!!keyToRemove && (

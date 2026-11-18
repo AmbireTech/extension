@@ -127,11 +127,10 @@ const RemoveKey: FC<Props> = ({
   }
 
   const isPrivateKey = keyToRemove.type === 'internal'
+  const fromSeedId = storedKey?.type === 'internal' ? storedKey.meta.fromSeedId : undefined
   // A key derived from a recovery phrase saved in the app can be added again from it
   const isSavedAsRecoveryPhrase =
-    isPrivateKey &&
-    !!storedKey?.meta?.fromSeedId &&
-    seeds.some((seed) => seed.id === storedKey.meta.fromSeedId)
+    isPrivateKey && !!fromSeedId && seeds.some((seed) => seed.id === fromSeedId)
   const isLostWithoutBackup = isPrivateKey && !isSavedAsRecoveryPhrase
   const deviceName = getKeyDeviceName(keyToRemove.type)
 

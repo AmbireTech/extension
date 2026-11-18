@@ -1,9 +1,9 @@
 <div align="center">
-  <a href="https://www.ambire.com/" target="_blank">
+  <a href="https://www.ambire.com/?utm_source=github&utm_medium=referral&utm_campaign=readme_hero" target="_blank">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="./mockups/mockup-extension-and-mobile-dark.png">
       <source media="(prefers-color-scheme: light)" srcset="./mockups/mockup-extension-and-mobile-light.png">
-      <img src="./mockups/mockup-extension-and-mobile-light.png" alt="Ambire Wallet browser extension and mobile app" width="640" height="469" />
+      <img src="./mockups/mockup-extension-and-mobile-light.png" alt="Ambire Wallet browser extension and mobile app" width="640" />
     </picture>
   </a>
 
@@ -17,19 +17,26 @@
 
   <h3>Downloads</h3>
 
+  <p>💻 <strong>Browser extension</strong></p>
   <p>
-    💻 <strong>Browser extension:</strong>
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_chrome" target="_blank">Chrome</a> ·
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_brave" target="_blank">Brave</a> ·
-    <a href="https://addons.mozilla.org/en-US/firefox/addon/ambire-web3-wallet/" target="_blank">Firefox</a> ·
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_edge" target="_blank">Edge</a> ·
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_opera" target="_blank">Opera</a> ·
-    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_arc" target="_blank">Arc</a>
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_chrome" target="_blank"><img src=".github/readme/chrome.svg" width="28" height="28" alt="" align="absmiddle" hspace="4">Chrome</a>&nbsp;&nbsp;&nbsp;
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_brave" target="_blank"><img src=".github/readme/brave.svg" width="28" height="28" alt="" align="absmiddle" hspace="4">Brave</a>&nbsp;&nbsp;&nbsp;
+    <a href="https://addons.mozilla.org/en-US/firefox/addon/ambire-web3-wallet/" target="_blank"><img src=".github/readme/firefox.svg" width="28" height="28" alt="" align="absmiddle" hspace="4">Firefox</a>&nbsp;&nbsp;&nbsp;
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_edge" target="_blank"><img src=".github/readme/edge.svg" width="28" height="28" alt="" align="absmiddle" hspace="4">Edge</a>&nbsp;&nbsp;&nbsp;
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_opera" target="_blank"><img src=".github/readme/opera.svg" width="28" height="28" alt="" align="absmiddle" hspace="4">Opera</a>&nbsp;&nbsp;&nbsp;
+    <a href="https://chromewebstore.google.com/detail/ambire-web3-wallet/ehgjhhccekdedpbkifaojjaefeohnoea?utm_source=github&utm_medium=referral&utm_campaign=readme_arc" target="_blank"><img src=".github/readme/arc.svg" width="28" height="28" alt="" align="absmiddle" hspace="4">Arc</a>
+  </p>
+
+  <p>📱 <strong>Mobile app</strong></p>
+  <p>
+    <a href="https://apps.apple.com/app/apple-store/id6444863857?pt=125821868&ct=github-readme&mt=8" target="_blank"><img src=".github/readme/app-store-badge.svg" height="40" alt="Download on the App Store"></a>
+    <a href="https://play.google.com/store/apps/details?id=com.ambire.wallet&referrer=utm_source%3Dgithub%26utm_medium%3Dreferral%26utm_campaign%3Dreadme_android" target="_blank"><img src=".github/readme/google-play-badge.png" height="40" alt="Get it on Google Play"></a>
+    <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.ambire.wallet%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FAmbireTech%2Fextension%22%2C%22author%22%3A%22AmbireTech%22%2C%22name%22%3A%22Ambire%20Web3%20Wallet%22%7D" target="_blank"><img src=".github/readme/obtainium-badge.png" height="40" alt="Get it on Obtainium"></a>
     <br />
-    📱 <strong>Mobile app:</strong>
-    <a href="https://apps.apple.com/app/apple-store/id6444863857?pt=125821868&ct=github-readme&mt=8" target="_blank">iOS</a> ·
-    <a href="https://play.google.com/store/apps/details?id=com.ambire.wallet&referrer=utm_source%3Dgithub%26utm_medium%3Dreferral%26utm_campaign%3Dreadme_android" target="_blank">Android</a>
-    <br /><br />
+    Or <a href="https://www.ambire.com/download/apk" target="_blank">download the APK directly</a>.
+  </p>
+
+  <p>
     👥 Join the community:
     <a href="https://x.com/ambire" target="_blank">X (Twitter)</a> |
     <a href="https://discord.com/invite/ambire" target="_blank">Discord</a> |
@@ -37,7 +44,7 @@
     <br />
     🐞
     <a href="https://github.com/AmbireTech/extension/issues">Report a Bug</a> ·
-    <a href="https://help.ambire.com/en" target="_blank">Get help</a>
+    <a href="https://help.ambire.com/en?utm_source=github&utm_medium=referral&utm_campaign=readme_help" target="_blank">Get help</a>
   </p>
 </div>
 
@@ -451,6 +458,10 @@ NOTE: that injection rewrites the committed "Info.plist" and "strings.xml" in pl
 OTA bundles are signed (RS256), so a tampered bundle cannot reach a device: the app verifies every incoming bundle against the `STALLION_PUBLIC_SIGNING_KEY` embedded into it at build time.
 
 Once an OTA is downloaded, the app shows an "Update Available" banner. The active OTA version and build are listed in Settings - About.
+
+Images `require`-d from JS travel with every OTA. That's why the bundled token and network icons are part of the native app instead: Xcode and Gradle package the icon folders of the [`@ambire/token-and-network-icons`](https://github.com/AmbireTech/token-and-network-icons) package directly, and the JS only references the files by path. New or updated icons therefore reach mobile users with the next native build, not with an OTA. To update them, refresh and publish the icons in that repo, then bump the package's version here.
+
+**Don't promote an OTA to app versions released before the bundled icons.** Those builds don't have the icon files, so every network icon falls back to its first letter, and token icons load from the internet again. Release a native build for every update that changes the icons package, and only target OTAs at app versions that include it.
 
 #### Two copies of the webview worker bundle
 

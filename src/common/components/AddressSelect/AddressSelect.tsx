@@ -1,5 +1,5 @@
 import Fuse from 'fuse.js'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, Pressable, View } from 'react-native'
 import { useModalize } from 'react-native-modalize'
@@ -7,6 +7,7 @@ import { useModalize } from 'react-native-modalize'
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
 import { AddressPoisoningMatch } from '@ambire-common/interfaces/transfer'
+import { isNearIdenticalAddressMatch } from '@ambire-common/libs/transfer/address-poisoning'
 import { getSearchableNames } from '@ambire-common/services/nameResolvers'
 import { validateAddress, Validation } from '@ambire-common/services/validations'
 import { getIsViewOnly } from '@ambire-common/utils/accounts'
@@ -22,7 +23,9 @@ import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
+import NearIdenticalAddressSuggestion from '@common/components/AddressSelect/NearIdenticalAddressSuggestion'
 import { InputProps } from '@common/components/Input'
+import { INPUT_HEIGHT, INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import { SectionedSelect } from '@common/components/Select'
 import {
@@ -32,16 +35,16 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsSupported, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
+import usePrevious from '@common/hooks/usePrevious'
 import {
   filterPrivacyPoolsAccountsBySearch,
   PrivacyPoolsAccountDisplay
 } from '@common/hooks/usePrivacyPoolsAccounts'
-import usePrevious from '@common/hooks/usePrevious'
 import useTheme from '@common/hooks/useTheme'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
@@ -52,6 +55,7 @@ import styles from './styles'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const selectKeys = (state: AllControllersMappingType['KeystoreController']) => state.keys
+const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 
 export interface AddressSelectProps extends InputProps {
   setAddress: (text: string) => void
@@ -72,6 +76,14 @@ export interface AddressSelectProps extends InputProps {
    * default input background, so the input stays visible.
    */
   inputBackgroundColor?: ColorValue
+  /** Addresses left out of the list, e.g. the ones the flow has already picked */
+  hiddenAddresses?: string[]
+  /**
+   * Shows a valid address like any other value, without the "Valid address" label and the
+   * success border, e.g. where several fields would all show it. The validation still runs.
+   * The empty line kept under the input for a message is left out too.
+   */
+  isSuccessHidden?: boolean
   // The props below drive the "Add to address book" prompt, which only applies when the
   // address is a transfer recipient. Other flows can leave them out.
   addressValidationMsg?: string
@@ -86,6 +98,7 @@ export interface AddressSelectProps extends InputProps {
 
 // Marks a Privacy Pools account option - see `setAddressWrapped`
 const PRIVACY_POOLS_OPTION_VALUE_PREFIX = 'privacy-pools-account:'
+const NO_PRIVACY_POOLS_ACCOUNTS: PrivacyPoolsAccountDisplay[] = []
 
 const ADDRESS_BOOK_VISIBLE_VALIDATION: Validation = {
   severity: 'error', // Don't let the user submit, just in case there is an error
@@ -111,9 +124,12 @@ const SelectedMenuOption: React.FC<{
     prefix: number
     suffix: number
     color: 'errorText'
+    differingFrom?: string
   }
   inputBackgroundColor?: ColorValue
   plainAddressMaxLength?: number
+  isSuccessHidden?: boolean
+  customBottomLabel?: ReactNode
 }> = ({
   selectRef,
   filteredContacts,
@@ -131,7 +147,9 @@ const SelectedMenuOption: React.FC<{
   autoFocus = false,
   addressHighlight,
   inputBackgroundColor,
-  plainAddressMaxLength
+  plainAddressMaxLength,
+  isSuccessHidden,
+  customBottomLabel
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -170,6 +188,9 @@ const SelectedMenuOption: React.FC<{
   ])
 
   const isButtonMode = type === 'selected-menu-option' && isMobile
+  // On mobile the near-identical address wraps to show all of its mistyped chars, so the
+  // input grows to fit it instead of keeping its single line height
+  const shouldGrowInput = isMobile && !!addressHighlight?.differingFrom
 
   const content = useMemo(
     () => (
@@ -189,6 +210,8 @@ const SelectedMenuOption: React.FC<{
         resolvedAddressType={resolvedAddressType}
         addressHighlight={addressHighlight}
         plainAddressMaxLength={plainAddressMaxLength}
+        isSuccessHidden={isSuccessHidden}
+        customBottomLabel={customBottomLabel}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         // On mobile input mode we still need details view when poisoning highlight exists,
@@ -222,8 +245,16 @@ const SelectedMenuOption: React.FC<{
         button={
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-        buttonProps={{ onPress: () => setIsMenuOpen(true) }}
-        inputWrapperStyle={type === 'input' ? { backgroundColor: theme.neutral400 } : undefined}
+        buttonProps={{ onPress: () => setIsMenuOpen(!isMenuOpen) }}
+        inputWrapperStyle={{
+          ...(type === 'input' && { backgroundColor: theme.neutral400 }),
+          ...(shouldGrowInput && { height: 'auto', minHeight: INPUT_WRAPPER_HEIGHT })
+        }}
+        inputStyle={
+          shouldGrowInput
+            ? { height: 'auto', minHeight: INPUT_HEIGHT, ...spacings.pvTy }
+            : undefined
+        }
         buttonStyle={{
           ...spacings.pv0,
           // Even padding keeps the clear button's press area centered on its icon
@@ -249,8 +280,11 @@ const SelectedMenuOption: React.FC<{
       setIsMenuOpen,
       theme.neutral400,
       addressHighlight,
+      shouldGrowInput,
       inputBackgroundColor,
       plainAddressMaxLength,
+      isSuccessHidden,
+      customBottomLabel,
       type,
       validation
     ]
@@ -282,12 +316,16 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   withShortenedAddresses,
   includeSelectedAccount = false,
   inputBackgroundColor,
+  hiddenAddresses,
+  isSuccessHidden,
   privacyPoolsAccounts,
-  onSelectPrivacyPoolsAccount
+  onSelectPrivacyPoolsAccount,
+  customBottomLabel
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
   const { state: keys } = useController('KeystoreController', selectKeys)
+  const { state: accounts } = useController('AccountsController', selectAccounts)
   const canSendToPrivacyPoolsAccounts = useMemo(
     () => !account || !getIsViewOnly(keys, account.associatedKeys),
     [account, keys]
@@ -309,12 +347,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     preset: 'opacityInverted'
   })
   // Split like the accounts list: Privacy Pools accounts, having no address, are private. Without
-  // them, the list is as it was
-  const hasAccountsTabs = isPrivacyPoolsEnabled && !!onSelectPrivacyPoolsAccount
+  // them, the list is as it was. Where they are not released yet, the Private tab is only a teaser
+  const hasAccountsTabs = isPrivacyPoolsSupported && !!onSelectPrivacyPoolsAccount
   // The search stays when switching tabs, so it filters the newly opened tab too
   const [activeTab, setActiveTab] = useState<AccountsTab>('public')
 
-  const selectableContacts = useMemo<Contact[]>(() => {
+  const contactsWithSelectedAccount = useMemo<Contact[]>(() => {
     if (!includeSelectedAccount || !account) return contacts
     const isSelectedAccountIncluded = contacts.some(
       ({ address: contactAddress }) => contactAddress.toLowerCase() === account.addr.toLowerCase()
@@ -330,6 +368,27 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       ...contacts
     ]
   }, [account, contacts, includeSelectedAccount])
+
+  const selectableContacts = useMemo<Contact[]>(() => {
+    if (!hiddenAddresses?.length) return contactsWithSelectedAccount
+
+    const hiddenAddressSet = new Set(hiddenAddresses.map((addr) => addr.toLowerCase()))
+    return contactsWithSelectedAccount.filter(
+      ({ address: contactAddress }) => !hiddenAddressSet.has(contactAddress.toLowerCase())
+    )
+  }, [contactsWithSelectedAccount, hiddenAddresses])
+
+  // Computed once for the whole list, so the rows don't each subscribe to the keystore.
+  // Safe accounts are left out, like in the accounts list
+  const viewOnlyAccountAddresses = useMemo(
+    () =>
+      new Set(
+        accounts
+          .filter((acc) => !acc.safeCreation && getIsViewOnly(keys, acc.associatedKeys))
+          .map((acc) => acc.addr)
+      ),
+    [accounts, keys]
+  )
 
   const onManagePress = useCallback(() => {
     navigate(ROUTES.addressBook)
@@ -364,16 +423,17 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     return results.map((result) => result.item.contact)
   }, [selectableContacts, actualAddress, searchableContacts])
 
+  // Mobile lists every account and contact; web narrows them to what's typed. Typing on mobile
+  // must not rebuild the options, or every row re-renders on each keystroke
+  const privacyPoolsSearch = isMobile ? '' : actualAddress
+  const listedContacts = isMobile ? selectableContacts : filteredContacts
+
   const filteredPrivacyPoolsAccounts = useMemo(
     () =>
       privacyPoolsAccounts && onSelectPrivacyPoolsAccount
-        ? filterPrivacyPoolsAccountsBySearch(
-            privacyPoolsAccounts,
-            isMobile ? '' : actualAddress,
-            t('Privacy Pools')
-          )
-        : [],
-    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, actualAddress, t]
+        ? filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, privacyPoolsSearch, t)
+        : NO_PRIVACY_POOLS_ACCOUNTS,
+    [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, privacyPoolsSearch, t]
   )
 
   // Looked up rather than parsed back from the option value
@@ -405,9 +465,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const privacyPoolsAccountOptions = useMemo(
     () =>
-      filteredPrivacyPoolsAccounts.map(({ seedId, label }) => ({
+      filteredPrivacyPoolsAccounts.map(({ seedId, label, sourceLabel }) => ({
         value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
-        // Named like in the accounts list: the account has no name or address of its own
+        // Named like in the accounts list: the account has no address of its own
         label: (
           <View
             testID={`address-book-privacy-pools-account-${seedId}`}
@@ -416,10 +476,10 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
             <View style={flexbox.flex1}>
               <Text fontSize={14} weight="medium" numberOfLines={1}>
-                {t('Private account')}
+                {label}
               </Text>
               <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-                {t('Added from {{seedLabel}}', { seedLabel: label })}
+                {t('From {{seedLabel}}', { seedLabel: sourceLabel })}
               </Text>
             </View>
           </View>
@@ -430,7 +490,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const walletAccountsSourcedContactOptions = useMemo(
     () =>
-      (isMobile ? selectableContacts : filteredContacts)
+      listedContacts
         .filter((contact) => contact.isWalletAccount)
         .map((contact, index) => ({
           value: contact.address,
@@ -449,15 +509,16 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
               plainAddressMaxLength={contactAddressMaxLength}
               // Tapping a row selects the address, so a copy icon is not needed on mobile
               withCopy={isWeb}
+              isViewOnly={viewOnlyAccountAddresses.has(contact.address)}
             />
           )
         })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+    [listedContacts, contactAddressMaxLength, viewOnlyAccountAddresses]
   )
 
   const manuallyAddedContactOptions = useMemo(
     () =>
-      (isMobile ? selectableContacts : filteredContacts)
+      listedContacts
         .filter((contact) => !contact.isWalletAccount)
         .map((contact) => ({
           value: contact.address,
@@ -477,7 +538,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             />
           )
         })),
-    [selectableContacts, filteredContacts, contactAddressMaxLength]
+    [listedContacts, contactAddressMaxLength]
   )
 
   const selectedOption = useMemo(
@@ -555,22 +616,38 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     [bindManageBtnAnim, manageBtnAnimStyle, onManagePress, t, theme.secondaryText]
   )
 
+  // A near-identical address is most likely a typo of a known recipient, not a poisoning lookalike
+  const nearIdenticalAddressMatch =
+    addressPoisoningMatch && isNearIdenticalAddressMatch(addressPoisoningMatch)
+      ? addressPoisoningMatch
+      : null
+
   const renderConfirmAddress = useCallback(
-    () => (
-      <AddToAddressBook
-        isRecipientHumanizerKnownTokenOrSmartContract={
-          isRecipientHumanizerKnownTokenOrSmartContract
-        }
-        isRecipientAddressUnknown={isRecipientAddressUnknown}
-        isRecipientAddressSameAsSender={actualAddress === account?.addr}
-        addressValidationMsg={addressValidationMsg}
-        domainVerificationMessage={domainVerificationMessage}
-        onAddToAddressBookPress={openBottomSheet}
-      />
-    ),
+    () =>
+      nearIdenticalAddressMatch ? (
+        // Saving a likely typo to the address book would only make it look trusted later
+        <NearIdenticalAddressSuggestion
+          suggestedAddress={nearIdenticalAddressMatch.matchedAddress}
+          setAddress={setAddress}
+        />
+      ) : (
+        <AddToAddressBook
+          isRecipientHumanizerKnownTokenOrSmartContract={
+            isRecipientHumanizerKnownTokenOrSmartContract
+          }
+          isRecipientAddressSavable={isRecipientAddressUnknown && !addressPoisoningMatch}
+          isRecipientAddressSameAsSender={actualAddress === account?.addr}
+          addressValidationMsg={addressValidationMsg}
+          domainVerificationMessage={domainVerificationMessage}
+          onAddToAddressBookPress={openBottomSheet}
+        />
+      ),
     [
+      nearIdenticalAddressMatch,
+      setAddress,
       isRecipientHumanizerKnownTokenOrSmartContract,
       isRecipientAddressUnknown,
+      addressPoisoningMatch,
       actualAddress,
       account,
       addressValidationMsg,
@@ -579,16 +656,19 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     ]
   )
 
+  // Highlights what differs from the known address: everything between the matching edges of a
+  // poisoning lookalike, or only the few mistyped chars of a near-identical address.
   const selectedAddressHighlight = useMemo(
     () =>
       addressPoisoningMatch
         ? {
             prefix: addressPoisoningMatch.matchedPrefixCharsCount,
             suffix: addressPoisoningMatch.matchedSuffixCharsCount,
-            color: 'errorText' as const
+            color: 'errorText' as const,
+            differingFrom: nearIdenticalAddressMatch?.matchedAddress
           }
         : undefined,
-    [addressPoisoningMatch]
+    [addressPoisoningMatch, nearIdenticalAddressMatch]
   )
 
   const renderSelectedOption = useCallback(
@@ -610,6 +690,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           addressHighlight={selectedAddressHighlight}
           inputBackgroundColor={inputBackgroundColor}
           plainAddressMaxLength={contactAddressMaxLength}
+          isSuccessHidden={isSuccessHidden}
+          customBottomLabel={customBottomLabel}
         />
       )
     },
@@ -625,7 +707,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       renderConfirmAddress,
       selectedAddressHighlight,
       inputBackgroundColor,
-      contactAddressMaxLength
+      contactAddressMaxLength,
+      isSuccessHidden,
+      customBottomLabel
     ]
   )
 
@@ -668,6 +752,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             disabled={disabled}
             addressHighlight={selectedAddressHighlight}
             plainAddressMaxLength={contactAddressMaxLength}
+            isSuccessHidden={isSuccessHidden}
+            customBottomLabel={customBottomLabel}
           />
         )}
         containerStyle={spacings.mb0}

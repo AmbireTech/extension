@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
+import useLatestCallback from '@common/hooks/useLatestCallback'
+
 const DEBOUNCE_MS = 300
 
 const getForceUpdateIdentifier = (forceUpdateOnChangeList?: (string | number | boolean)[]) => {
@@ -46,22 +48,25 @@ const useSyncedState = <T>({
    * Updates the local state immediately and schedules an update of the background state
    * Local state --> Background state
    * This is debounced to avoid excessive updates to the background state.
+   * Stable, so it can be passed to memoized children such as select rows.
    */
-  const updateLocalStateWithDebounce = (newState: T, skipControllerUpdate?: boolean) => {
-    setState(newState)
+  const updateLocalStateWithDebounce = useLatestCallback(
+    (newState: T, skipControllerUpdate?: boolean) => {
+      setState(newState)
 
-    if (skipControllerUpdate) return
+      if (skipControllerUpdate) return
 
-    clearDebounceTimeout()
-
-    debounceRef.current = setTimeout(() => {
-      // Local state --> Background state
-      updateBackgroundState(newState)
-
-      // Clear the debounce timeout after the update
       clearDebounceTimeout()
-    }, DEBOUNCE_MS)
-  }
+
+      debounceRef.current = setTimeout(() => {
+        // Local state --> Background state
+        updateBackgroundState(newState)
+
+        // Clear the debounce timeout after the update
+        clearDebounceTimeout()
+      }, DEBOUNCE_MS)
+    }
+  )
 
   // Update the local state with the background state when the
   // tab is focused

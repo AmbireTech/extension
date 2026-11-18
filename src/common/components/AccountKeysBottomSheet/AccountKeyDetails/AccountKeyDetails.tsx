@@ -4,6 +4,7 @@ import { View } from 'react-native'
 
 import { SMART_ACCOUNT_SIGNER_KEY_DERIVATION_OFFSET } from '@ambire-common/consts/derivation'
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
+import { Account } from '@ambire-common/interfaces/account'
 import { ExternalKey, InternalKey } from '@ambire-common/interfaces/keystore'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
@@ -11,18 +12,25 @@ import { AccountKeyType } from '@common/components/AccountKey/AccountKey'
 import spacings from '@common/styles/spacings'
 
 import Row from './Row'
+import useSafeOwnerRows from './useSafeOwnerRows'
 
 interface Props {
   details: AccountKeyType
+  /** The Safe the key is an owner of, to show the details of the owner too */
+  safeAccount?: Account
 }
 
-const AccountKeyDetails: FC<Props> = ({ details }) => {
+const AccountKeyDetails: FC<Props> = ({ details, safeAccount }) => {
   const { t } = useTranslation()
-  const { type, addr, dedicatedToOneSA } = details
+  const { type, addr, dedicatedToOneSA, isImported } = details
+  const safeOwnerRows = useSafeOwnerRows(details, safeAccount)
 
   // Ideally, the meta should be all in there for external keys,
   // but just in case, add fallbacks (that should never happen)
   const metaDetails = useMemo(() => {
+    // Only an imported key has details in the keystore
+    if (!isImported) return []
+
     if (type === 'internal') {
       const meta = details.meta as InternalKey['meta']
       const internalKeyDetails: {
@@ -66,7 +74,13 @@ const AccountKeyDetails: FC<Props> = ({ details }) => {
       },
       {
         key: t('HD Path'),
-        value: meta?.hdPathTemplate ? getHdPathFromTemplate(meta.hdPathTemplate, meta.index) : '-',
+        // PQ1 keys have no HD path: their `index` is the account number on the
+        // device, shown below. Checked by type too, as PQ1 keys added by early
+        // builds still store a placeholder `hdPathTemplate`.
+        value:
+          type !== 'pq1' && meta && 'hdPathTemplate' in meta && meta.hdPathTemplate
+            ? getHdPathFromTemplate(meta.hdPathTemplate, meta.index)
+            : '-',
         tooltip: dedicatedToOneSA
           ? t(
               'Ambire derives a different key on your hardware wallet with an offset of {{offset}}, for security and privacy reasons. You may see {{addr}} when signing on your hardware device.',
@@ -82,6 +96,10 @@ const AccountKeyDetails: FC<Props> = ({ details }) => {
       }
     ]
 
+    if (type === 'pq1' && Number.isInteger(meta?.index)) {
+      externalKeyDetails.push({ key: t('Account on device'), value: String(meta.index) })
+    }
+
     if (details.meta?.createdAt && new Date(details.meta.createdAt).toString() !== 'Invalid Date') {
       externalKeyDetails.push({
         key: t('Added on'),
@@ -92,11 +110,11 @@ const AccountKeyDetails: FC<Props> = ({ details }) => {
     }
 
     return externalKeyDetails
-  }, [type, details.meta, t, dedicatedToOneSA, addr])
+  }, [isImported, type, details.meta, t, dedicatedToOneSA, addr])
 
   return (
     <View style={[spacings.phSm, spacings.pvSm, spacings.mtMi]}>
-      {metaDetails.map(({ key, value, tooltip, suffix }) => (
+      {[...safeOwnerRows, ...metaDetails].map(({ key, value, tooltip, suffix }) => (
         <Row key={key} rowKey={key} value={value} tooltip={tooltip} suffix={suffix} />
       ))}
     </View>

@@ -56,7 +56,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
   const isErc4337Enabled = flags.erc4337
   const isEip7702Enabled = flags.eip7702
   const isGasTankEnabled =
-    isErc4337Enabled && flags.gasTank && flags.tokenPrices && (!requiresEip7702 || isEip7702Enabled)
+    isErc4337Enabled && flags.gasTank && (!requiresEip7702 || isEip7702Enabled)
 
   // Note: total balance Gas Tank details
   const { token, balanceFormatted } = useMemo(
@@ -72,13 +72,15 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
     }
   }, [addToast])
 
+  // Token prices are left as they are: the Gas Tank works with the prices read from the network
+  // too, when the user opted out of Ambire's price API
   const handleEnableGasTankFeatures = useCallback(() => {
-    if (!isErc4337Enabled) {
+    if (!isErc4337Enabled || !flags.gasTank) {
       featureFlagsDispatch({
         type: 'method',
         params: {
           method: 'setFeatureFlags',
-          args: [{ erc4337: true, gasTank: true, tokenPrices: true }]
+          args: [{ erc4337: true, gasTank: true }]
         }
       })
     }
@@ -88,11 +90,11 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
         type: 'method',
         params: {
           method: 'setFeatureFlags',
-          args: [{ eip7702: true, erc4337: true, gasTank: true, tokenPrices: true }]
+          args: [{ eip7702: true, erc4337: true, gasTank: true }]
         }
       })
     }
-  }, [featureFlagsDispatch, isEip7702Enabled, isErc4337Enabled, requiresEip7702])
+  }, [featureFlagsDispatch, flags.gasTank, isEip7702Enabled, isErc4337Enabled, requiresEip7702])
 
   const enableGasTankText = useMemo(() => {
     if (!requiresEip7702 || isEip7702Enabled) {

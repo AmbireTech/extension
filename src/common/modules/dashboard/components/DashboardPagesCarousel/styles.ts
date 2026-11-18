@@ -28,7 +28,7 @@ const getStyles = (theme: ThemeProps) =>
       ...flexbox.flex1
     },
     slider: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       ...WEB_MOVING_LAYER,
       // Clips the banners once they are scrolled past the top of the pages
       overflow: 'hidden',
@@ -44,7 +44,7 @@ const getStyles = (theme: ThemeProps) =>
     },
     // Moves the floating bar, which positions itself against the bottom of it
     floatingBar: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       ...WEB_MOVING_LAYER
     },
     header: {

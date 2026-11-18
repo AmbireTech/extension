@@ -8,6 +8,7 @@ import React, {
   useState
 } from 'react'
 
+import { Hex } from '@ambire-common/interfaces/hex'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
@@ -33,6 +34,22 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 export type OnboardingRoute = (typeof ONBOARDING_WEB_ROUTES)[number]
 
+/**
+ * What the user entered on Safe create, kept while the flow goes on to personalize, which
+ * shows it, so going back to Safe create finds it as it was
+ */
+export type SafeCreateDraft = {
+  ownerAddresses: Hex[]
+  requiredConfirmations: number
+  /** The address of the Safe these owners and required confirmations lead to */
+  safeAddress: Hex
+  /**
+   * The Safe is in the wallet already (the same owners and required confirmations always
+   * lead to the same Safe), so personalize only shows it instead of adding it
+   */
+  isAlreadyInWallet: boolean
+}
+
 const OnboardingNavigationContext = createContext<{
   isOnboardingRoute: boolean
   goToNextRoute: (routeName?: OnboardingRoute | '/', routeState?: Record<string, unknown>) => void
@@ -40,10 +57,14 @@ const OnboardingNavigationContext = createContext<{
   /** Accounts a sync added already, which the personalize step shows for naming */
   syncedAccountAddrs: string[]
   setSyncedAccountAddrs: (addrs: string[]) => void
+  safeCreateDraft: SafeCreateDraft | null
+  setSafeCreateDraft: (draft: SafeCreateDraft | null) => void
 }>({
   isOnboardingRoute: false,
   syncedAccountAddrs: [],
   setSyncedAccountAddrs: () => {},
+  safeCreateDraft: null,
+  setSafeCreateDraft: () => {},
   goToNextRoute: () => {},
   goToPrevRoute: () => {}
 })
@@ -120,6 +141,9 @@ const ACCOUNT_ADDING_FLOW_ROUTES: string[] = [
   WEB_ROUTES.accountPersonalize
 ]
 
+/** Safe create and the steps after it - the Safe create draft is dropped on leaving them. */
+const SAFE_CREATE_FLOW_ROUTES: string[] = [WEB_ROUTES.safeCreate, ...ACCOUNT_ADDING_FLOW_ROUTES]
+
 /** The steps of an account adding flow that come after the password is set. */
 const ACCOUNT_ADDING_STEPS_AFTER_PASSWORD: string[] = [
   WEB_ROUTES.accountPicker,
@@ -132,13 +156,18 @@ const selectRecoverKeyStoreStatus = (state: AllControllersMappingType['EmailVaul
   state.statuses?.recoverKeyStore
 const selectPickerSubType = (state: AllControllersMappingType['AccountPickerController']) =>
   state.subType
-// A flow is under way - set up (personalize prepares its accounts) or prepared already, which
-// can be removals only (e.g. Safes deselected on import by owner)
-const selectHasAccountAddingFlow = (state: AllControllersMappingType['AccountPickerController']) =>
+/**
+ * A flow is under way - set up (personalize prepares its accounts) or prepared already, which
+ * can be removals only (e.g. Safes deselected on import by owner), or a Privacy Pools account
+ */
+export const selectHasAccountAddingFlow = (
+  state: AllControllersMappingType['AccountPickerController']
+) =>
   !!state.isInitialized ||
   !!state.initParams ||
   !!state.readyToAddAccounts?.length ||
-  !!state.readyToRemoveAccounts?.length
+  !!state.readyToRemoveAccounts?.length ||
+  !!state.privacyPoolsInitParams
 
 const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode }) => {
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
@@ -167,6 +196,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
   const [syncedAccountAddrs, setSyncedAccountAddrs] = useState<string[]>([])
   const hasSyncedAccounts = !!syncedAccountAddrs.length
+  const [safeCreateDraft, setSafeCreateDraft] = useState<SafeCreateDraft | null>(null)
+  const isSafeAlreadyInWallet = !!safeCreateDraft?.isAlreadyInWallet
 
   const onboardingRoutesTree = useMemo(() => {
     // on mobile, we skip onboardingCompleted and go straight to the dashboard ('/')
@@ -178,7 +209,8 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           route('/')
         ]
     // Nothing to add or name, so the flow skips it
-    const isPersonalizeDisabled = !hasAccountAddingFlow && !hasSyncedAccounts
+    const isPersonalizeDisabled =
+      !hasAccountAddingFlow && !hasSyncedAccounts && !isSafeAlreadyInWallet
 
     const accountPickerRoutes =
       subType === 'hw'
@@ -214,11 +246,11 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           importMethod(WEB_ROUTES.ledgerConnect),
           importMethod(WEB_ROUTES.trezorConnect),
           importMethod(WEB_ROUTES.oneKeyConnect),
-          route(WEB_ROUTES.safeImport, [
-            importMethod(WEB_ROUTES.safeImportAddress),
-            importMethod(WEB_ROUTES.safeImportByOwner)
-          ]),
+          importMethod(WEB_ROUTES.safeImportAddress),
+          importMethod(WEB_ROUTES.safeImportByOwner),
+          importMethod(WEB_ROUTES.safeCreate),
           importMethod(WEB_ROUTES.qrConnect),
+          importMethod(WEB_ROUTES.pq1Connect),
           importMethod(WEB_ROUTES.importSmartAccountJson),
           // "Already an Ambire user" - a sync from the other app
           importMethod(WEB_ROUTES.importFromMobile),
@@ -228,7 +260,14 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       ],
       { disabled: authStatus !== AUTH_STATUS.NOT_AUTHENTICATED }
     )
-  }, [hasPasswordSecret, authStatus, subType, hasAccountAddingFlow, hasSyncedAccounts])
+  }, [
+    hasPasswordSecret,
+    authStatus,
+    subType,
+    hasAccountAddingFlow,
+    hasSyncedAccounts,
+    isSafeAlreadyInWallet
+  ])
 
   const [history, setHistory] = useState<string[]>(loadHistory)
 
@@ -410,6 +449,16 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     setSyncedAccountAddrs(dropSyncedAccountAddrs)
   }, [path, prevPath, accountPickerDispatch, hasSyncedAccounts])
 
+  // Leaving Safe create and the steps after it (e.g. once the Safe is added) ends what was
+  // entered there, so the next Safe create starts empty
+  useEffect(() => {
+    const currentRoute = path?.substring(1)
+    if (!currentRoute || SAFE_CREATE_FLOW_ROUTES.includes(currentRoute)) return
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSafeCreateDraft(null)
+  }, [path])
+
   // Some routes are protected and should only be accessed through internal navigation.
   // If a user attempts to access one of these routes directly via the URL bar,
   // this hook should block the navigation and redirect them back to the previous route.
@@ -479,9 +528,11 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       goToNextRoute,
       goToPrevRoute,
       syncedAccountAddrs,
-      setSyncedAccountAddrs
+      setSyncedAccountAddrs,
+      safeCreateDraft,
+      setSafeCreateDraft
     }),
-    [isOnboardingRoute, goToPrevRoute, goToNextRoute, syncedAccountAddrs]
+    [isOnboardingRoute, goToPrevRoute, goToNextRoute, syncedAccountAddrs, safeCreateDraft]
   )
   return (
     <OnboardingNavigationContext.Provider value={value}>

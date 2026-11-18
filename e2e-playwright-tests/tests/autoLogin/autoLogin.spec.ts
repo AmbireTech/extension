@@ -232,7 +232,7 @@ test.describe('auto-login', { tag: '@autoLogin' }, () => {
       // wait for new window
       await appConnectWindow.waitForLoadState()
       // confirm connect request
-      await expect(appConnectWindow.locator(selectors.sigtool.signRequestForEVMText)).toBeVisible()
+      await expect(appConnectWindow.getByTestId(selectors.dappConnectButton)).toBeVisible()
       await appConnectWindow.getByTestId(selectors.dappConnectButton).click()
     })
 

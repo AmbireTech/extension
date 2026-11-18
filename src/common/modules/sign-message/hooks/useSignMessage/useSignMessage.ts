@@ -382,9 +382,10 @@ const useSignMessage = () => {
   const holdToProceedCompleteText = useMemo(() => {
     if (signStatus === 'LOADING') return t('Signing...')
     if (signMessageState.status === SignMessageStatus.Partial) return t('Close')
+    if (isSiwe) return t('Sign in')
 
-    return t('Signing...')
-  }, [signStatus, signMessageState.status, t])
+    return t('Sign')
+  }, [signStatus, signMessageState.status, isSiwe, t])
 
   const handleDismissLedgerConnectModal = useCallback(() => {
     setShouldDisplayLedgerConnectModal(false)

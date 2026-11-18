@@ -361,6 +361,7 @@ const selectors = {
     copyRecoveryPhraseButton: 'copy-recovery-phrase-button',
     keyOptionsButton: (addr: string, type: string) => `key-options-${addr}-${type}`,
     privateKeyValue: 'private-key-value',
+    privateKeyBlurContainer: 'private-key-blur-container',
     revealPrivateKeyButton: 'reveal-private-key-button',
     copyPrivateKeyButton: 'copy-private-key-button'
   }

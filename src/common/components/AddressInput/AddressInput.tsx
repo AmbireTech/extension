@@ -16,7 +16,7 @@ import AddressBookContact from '@common/components/AddressBookContact'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import Input, { InputProps } from '@common/components/Input'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
+import { isMobile, isWeb } from '@common/config/env'
 import { NO_AUTOFILL_PROPS } from '@common/constants/textInput'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -37,6 +37,7 @@ interface Props extends InputProps {
     prefix: number
     suffix: number
     color: 'errorText'
+    differingFrom?: string
   }
   isRecipientDomainResolving: boolean
   validation: Validation
@@ -48,6 +49,12 @@ interface Props extends InputProps {
   onScanAddress?: (address: string) => void
   // Shortens the address of the entered contact, for a container too narrow to fit a full one.
   plainAddressMaxLength?: number
+  /**
+   * Shows a valid address like any other value: no "Valid address" label and no success
+   * border. The validation still runs and its errors and other messages still show. As that
+   * leaves the line under the input empty most of the time, it isn't kept for a message either.
+   */
+  isSuccessHidden?: boolean
 }
 
 const selectContacts = (state: AllControllersMappingType['AddressBookController']) => state.contacts
@@ -70,6 +77,7 @@ const AddressInput: React.FC<Props> = ({
   renderConfirmAddress,
   onScanAddress,
   plainAddressMaxLength,
+  isSuccessHidden = false,
   ...rest
 }) => {
   const { t } = useTranslation()
@@ -79,6 +87,7 @@ const AddressInput: React.FC<Props> = ({
   const { state: domains } = useController('DomainsController', selectDomains)
   const { message, severity } = validation
   const isError = severity === 'error'
+  const isSuccessShown = !(isSuccessHidden && severity === 'success')
 
   const isValidationInDomainResolvingState = message === 'Resolving domain...'
   const inputRef = useRef<TextInput | null>(null)
@@ -128,6 +137,9 @@ const AddressInput: React.FC<Props> = ({
       )}
       <Input
         {...NO_AUTOFILL_PROPS}
+        // Stops the keyboard from adding a space after the dot when typing a domain, like name.eth.
+        // Mobile only, because on web it sets `type="url"` on the input.
+        keyboardType={isMobile ? 'url' : undefined}
         // Purposefully spread props here, so that we don't override AddressInput's props
         {...rest}
         value={value}
@@ -136,11 +148,13 @@ const AddressInput: React.FC<Props> = ({
         testID={rest.testID || 'address-ens-field'}
         containerStyle={containerStyle}
         validLabel={
-          !isError && severity !== 'info' && !isValidationInDomainResolvingState ? message : ''
+          !isError && severity !== 'info' && !isValidationInDomainResolvingState && isSuccessShown
+            ? message
+            : ''
         }
         validLabelAppearance={severity ? `${severity}Text` : undefined}
         error={isError ? message : ''}
-        isValid={!isError && !isValidationInDomainResolvingState}
+        isValid={!isError && !isValidationInDomainResolvingState && isSuccessShown}
         placeholder={placeholder || t('Address / ENS / GNS / Namoshi')}
         bottomLabelStyle={styles.bottomLabel}
         info={
@@ -151,7 +165,8 @@ const AddressInput: React.FC<Props> = ({
               : ''
         }
         renderConfirmAddress={renderConfirmAddress}
-        preventJumpOnValidationChange
+        // Without the success label, the line kept for messages would be empty most of the time
+        preventJumpOnValidationChange={!isSuccessHidden}
         childrenBeforeButtons={
           <>
             {childrenBeforeButtons ||

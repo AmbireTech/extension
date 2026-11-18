@@ -18,9 +18,9 @@ permissions:
 
 jobs:
   ios-tests:
-    # NOTE: macos-15 runners are Apple Silicon (arm64) — must match the runner
+    # NOTE: macos-26 runners are Apple Silicon (arm64) — must match the runner
     # build-ios-simulator.yml used, since the .app is built arm64 and only boots there.
-    runs-on: macos-15
+    runs-on: macos-26
     environment: testing
     env:
       # `vars.*`/`secrets.*` referencing the "testing" environment only resolve inside a job

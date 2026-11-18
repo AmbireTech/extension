@@ -23,7 +23,11 @@ import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAcco
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
 import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
+import SafeOwnerApprovalSheet, {
+  useSafeOwnerApproval
+} from '@common/modules/sign-account-op/components/SafeOwnerApproval'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
+import SafeSignatureAdded from '@common/modules/sign-account-op/components/SafeSignatureAdded'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import SpeedUpNotNeededFee from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpNotNeededFee'
@@ -145,7 +149,9 @@ const SignAccountOpScreen = () => {
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners
+    showSafeSigners,
+    safeSignatureAdded,
+    handleSafeSignatureAddedExitEnd
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -153,6 +159,8 @@ const SignAccountOpScreen = () => {
     hasReachedBottom,
     onSafeSignComplete: handleAddToCart
   })
+  const { approvingOwnerAddr, approvalToReview, startApproval, closeApproval } =
+    useSafeOwnerApproval(signAccountOpState)
 
   const accountOpRequest = useMemo(() => {
     if (currentUserRequest?.kind !== 'calls') return undefined
@@ -295,6 +303,19 @@ const SignAccountOpScreen = () => {
     signAccountOpState?.account.safeCreation
   ])
 
+  if (safeSignatureAdded) {
+    return (
+      <SmallNotificationWindowWrapper>
+        <SafeSignatureAdded
+          signedCount={safeSignatureAdded.signedCount}
+          threshold={safeSignatureAdded.threshold}
+          closesAt={safeSignatureAdded.closesAt}
+          onExitEnd={handleSafeSignatureAddedExitEnd}
+        />
+      </SmallNotificationWindowWrapper>
+    )
+  }
+
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
 
   const footerContent = (
@@ -340,6 +361,10 @@ const SignAccountOpScreen = () => {
             chainId={signAccountOpState.accountOp.chainId.toString()}
             signed={signAccountOpState.accountOp.signed || []}
             importedKeys={signAccountOpState.accountKeyStoreKeys}
+            smartAccountOwners={signAccountOpState.safeSmartAccountOwners}
+            pendingApprovalOwners={signAccountOpState.pendingSafeOwnerApprovals}
+            approvingOwnerAddr={approvingOwnerAddr}
+            onApprove={startApproval}
             threshold={signAccountOpState.threshold}
             style={isNarrowWebLayout ? spacings.mbXl : spacings.mb}
           />
@@ -410,6 +435,13 @@ const SignAccountOpScreen = () => {
             : undefined
         }
       />
+      {!!approvalToReview && (
+        <SafeOwnerApprovalSheet
+          approval={approvalToReview}
+          onClose={closeApproval}
+          Modals={Modals}
+        />
+      )}
       <TabLayoutContainer
         width="full"
         backgroundColor={theme.primaryBackground}

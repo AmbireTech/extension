@@ -82,6 +82,7 @@ const SafeImportScreen = () => {
                     backgroundColor={theme.secondaryBackground}
                     error={value.length ? errors?.safeAddress?.message : ''}
                     autoCorrect={false}
+                    keyboardType="url"
                     onSubmitEditing={handleFormSubmit}
                     button={!isAddressValid ? <AddressScanButton onScanned={onChange} /> : null}
                   />

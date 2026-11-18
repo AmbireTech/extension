@@ -59,6 +59,7 @@ type CrashReportRule = {
 
 const PROVIDER_ERROR_NAME = 'ProviderError'
 const SWAP_AND_BRIDGE_PROVIDER_API_ERROR_NAME = 'SwapAndBridgeProviderApiError'
+const ABI_DECODING_DATA_SIZE_TOO_SMALL_ERROR_NAME = 'AbiDecodingDataSizeTooSmallError'
 /** What `fetchWithTimeout` rejects with. The whole message, nothing appended. */
 const RPC_REQUEST_TIMEOUT_MESSAGE = 'request-timeout'
 /** The `DOMException` React Native's fetch rejects with when its signal aborts. Browsers word theirs differently. */
@@ -121,6 +122,13 @@ const isProviderError = (details: CrashReportErrorDetails) => details.name === P
  * rule was calibrated against.
  */
 const CRASH_REPORT_RULES: CrashReportRule[] = [
+  {
+    // Must stay first: the message ends with whatever the relayer reported, which could
+    // match a later rule and split one relayer outage across several issues.
+    id: 'defi-discovery-failed',
+    matches: ({ message }) => startsWith(message, 'Defi discovery failed'),
+    severity: CRASH_REPORT_SEVERITY.WARNING
+  },
   {
     id: 'malformed-value-sent-to-rpc',
     matches: ({ message }) => includes(message, 'invalid BytesLike value'),
@@ -208,6 +216,16 @@ const CRASH_REPORT_RULES: CrashReportRule[] = [
         'response body is not valid JSON'
       ]),
     severity: CRASH_REPORT_SEVERITY.WARNING
+  },
+  {
+    // The RPC answered a contract call with "0x0", which breaks the JSON-RPC spec, so only a
+    // broken RPC sends it. A contract with no result gives "0x", which is a different error.
+    // Other sizes stay unclassified, as they can mean our ABI does not match the contract.
+    id: 'rpc-returned-empty-data',
+    matches: ({ name, message }) =>
+      name === ABI_DECODING_DATA_SIZE_TOO_SMALL_ERROR_NAME &&
+      includes(message, 'Data size of 1 bytes'),
+    severity: CRASH_REPORT_SEVERITY.DROP
   },
   {
     // Must stay before tx-simulation-failed: the undecodable message starts with the same

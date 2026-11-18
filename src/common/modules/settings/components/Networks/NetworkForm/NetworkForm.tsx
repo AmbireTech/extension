@@ -38,6 +38,7 @@ import {
   getEmptyRequiredNetworkFields,
   handleErrors
 } from '@common/modules/settings/components/Networks/NetworkForm/helpers'
+import { selectIsTokenPricesEnabled } from '@common/selectors/featureFlags'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
@@ -213,6 +214,10 @@ const NetworkForm = ({
     state: { allNetworks, networkToAddOrUpdate, statuses },
     dispatch: networksDispatch
   } = useController('NetworksController')
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsTokenPricesEnabled
+  )
   // Which kind of RPC check is running, if any. A 'change' run is about to replace the
   // rendered network info, an 'add' run only validates a URL and leaves it alone.
   const [pendingRpcCheckType, setPendingRpcCheckType] = useState<'add' | 'change' | null>(null)
@@ -298,13 +303,14 @@ const NetworkForm = ({
       return RPC_CHECK_IN_PROGRESS_FEATURES
 
     return networkToAddOrUpdate?.info
-      ? getFeatures(networkToAddOrUpdate?.info, selectedNetwork)
+      ? getFeatures(networkToAddOrUpdate?.info, selectedNetwork, isTokenPricesEnabled)
       : errors.chainId
-        ? getFeatures(undefined, selectedNetwork)
-        : selectedNetwork?.features || getFeatures(undefined, selectedNetwork)
+        ? getFeatures(undefined, selectedNetwork, isTokenPricesEnabled)
+        : selectedNetwork?.features || getFeatures(undefined, selectedNetwork, isTokenPricesEnabled)
   }, [
     errors.chainId,
     isAwaitingNetworkInfo,
+    isTokenPricesEnabled,
     pendingRpcCheckType,
     networkToAddOrUpdate?.info,
     selectedNetwork

@@ -108,12 +108,14 @@ const AmountInput = ({
           {value || '0'}
         </RNText>
       </View>
+      {/* Centred as is - the web's 1px lift (styles.fiatSign) puts it 1pt high. Above the input (whose
+          container is at zIndex 10), on the panel's background, to cover a too long value's digits */}
       {type === 'fiat' && (
         <Text
           fontSize={fontSize}
           weight="medium"
           appearance="secondaryText"
-          style={styles.fiatSign}
+          style={{ zIndex: 11, backgroundColor: theme.secondaryBackground }}
         >
           $
         </Text>
@@ -129,14 +131,23 @@ const AmountInput = ({
           ...fontStyle,
           color: theme.primaryText,
           // A width-constrained input wraps a long value onto a second row on iOS, so it gets room
-          // for any amount instead, and the box around it clips whatever runs past the space left
-          textAlign: 'left',
-          width: SINGLE_ROW_AMOUNT_WIDTH
+          // for any amount. While typing it grows leftwards, so a new digit lands in place at once
+          textAlign: isFocused ? 'right' : 'left',
+          width: SINGLE_ROW_AMOUNT_WIDTH,
+          paddingRight: isFocused ? CARET_ROOM : 0
         }}
         disabled={disabled}
-        containerStyle={[styles.inputContainer, { width: valueWidth + CARET_ROOM }]}
-        inputStyle={spacings.ph0}
-        onBlur={onBlurProp}
+        // Unclipped, so a digit typed before the box is re-measured still shows; the field clips
+        containerStyle={[
+          styles.inputContainer,
+          { width: valueWidth + CARET_ROOM, overflow: 'visible' }
+        ]}
+        inputStyle={{ paddingHorizontal: 0, alignItems: isFocused ? 'flex-end' : 'flex-start' }}
+        onFocus={() => setIsFocused(true)}
+        onBlur={(e) => {
+          setIsFocused(false)
+          onBlurProp?.(e)
+        }}
         testID={inputTestId}
         {...rest}
       />

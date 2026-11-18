@@ -128,9 +128,14 @@ const useSafeImport = () => {
       return
     }
 
-    if (safeAddr !== safe) setSafe(getAddress(safeAddr))
-    if (safeAddr !== safe && safeAddr !== safeInfo?.address) {
-      safeDispatch({ type: 'method', params: { method: 'findSafe', args: [safeAddr] } })
+    // checksum before both storing and searching so the controller's importError.address
+    // matches `safe` - otherwise a lowercase input hides the error while disabling the button
+    const checksummedSafeAddr = getAddress(safeAddr)
+    if (checksummedSafeAddr === safe) return
+
+    setSafe(checksummedSafeAddr)
+    if (checksummedSafeAddr !== safeInfo?.address) {
+      safeDispatch({ type: 'method', params: { method: 'findSafe', args: [checksummedSafeAddr] } })
     }
   }, [safeDispatch, safeAddressValue, safeInfo?.address, safe])
 

@@ -4,9 +4,7 @@ import { StyleSheet, View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
-import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import CopyIcon from '@common/assets/svg/CopyIcon'
-import WalletIcon from '@common/assets/svg/WalletIcon'
 import AccountAddress from '@common/components/AccountAddress'
 import { ReceiveButton } from '@common/components/AccountAddress/AccountAddress'
 import AccountBadges from '@common/components/AccountBadges'
@@ -29,10 +27,11 @@ import useReverseLookup from '@common/hooks/useReverseLookup'
 import useSafeDeployedChainIds from '@common/hooks/useSafeDeployedChainIds'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import measureLayoutSync from '@common/utils/measureLayoutSync'
 
+import { BalanceBadge, SelectedAccountBalanceBadge } from './AccountBalanceBadge'
 import getStyles, { ACCOUNT_AVATAR_SIZE, ACCOUNT_SELECT_ACCOUNT_HEIGHT } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -61,6 +60,7 @@ const Account = ({
   withKeyType = true,
   renderLeftChildren,
   renderRightChildren,
+  renderExtraBadges,
   inverseInteractionColors = false,
   options = {
     withOptionsButton: false
@@ -73,6 +73,7 @@ const Account = ({
   withSafeSignerBadges = false,
   isOnSecondaryBackground = false,
   withBadges = true,
+  withAccountStatus = true,
   onExtraHeightChange
 }: {
   account: AccountInterface
@@ -85,6 +86,8 @@ const Account = ({
   /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
   renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
+  /** Rendered after the other badges, e.g. the networks a key is a Safe owner on */
+  renderExtraBadges?: () => React.ReactNode
   options?: {
     withOptionsButton?: boolean
     markSelected?: boolean
@@ -107,6 +110,11 @@ const Account = ({
   isOnSecondaryBackground?: boolean
   /** Set to false to show only the avatar, the label and the address, without the badges row */
   withBadges?: boolean
+  /**
+   * Set to false where the row stands for a key of another account, e.g. an owner of a Safe, so
+   * it leaves out this account's own pending requests and the chains its Safe is deployed on
+   */
+  withAccountStatus?: boolean
   /**
    * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is, mostly because
    * its badges wrapped, so a list that lays its rows out by height can make room for it. Such a
@@ -132,6 +140,7 @@ const Account = ({
     [addr]
   )
   const { state: balance } = useController('SelectedAccountController', selectBalance)
+  const isSelectedAccount = selectedAccount?.addr === addr
   const { state: isPrivacyModeEnabled } = useController(
     'WalletStateController',
     selectIsPrivacyModeEnabled
@@ -317,12 +326,16 @@ const Account = ({
     </View>
   )
 
+  // With no label, e.g. a key that is not an account of the wallet, the address is the title
+  const hasLabel = !!preferences.label
+
   const address = (
     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
       <AccountAddress
         {...reverseLookup}
         containerStyle={spacings.pb0}
         address={addr}
+        fontSize={hasLabel ? undefined : 14}
         plainAddressMaxLength={maxAccountAddrLength}
         // On web the copy button fits next to the address, unlike on mobile, where it
         // sits next to the account to keep the touch targets apart
@@ -344,27 +357,18 @@ const Account = ({
         { columnGap: SPACING_MI, rowGap: SPACING_MI }
       ]}
     >
-      {balance !== null && withBalance && !isPrivacyModeEnabled && (
-        <Badge
-          style={{
-            columnGap: SPACING_MI,
-            // The icon leads, like the avatar on the Safe signer badges
-            paddingLeft: SPACING_MI,
-            // The badge leaves room only for a trailing info icon when it has children
-            paddingRight: SPACING_TY,
-            // Stands out from the card in either theme, as the card is in the secondary one
-            backgroundColor: theme.primaryBackground
-          }}
-        >
-          <WalletIcon width={14} height={14} color={theme.secondaryText} />
-          <Text fontSize={12} weight="semiBold" color={theme.primaryText}>
-            {formatDecimals(balance, 'value')}
-          </Text>
-        </Badge>
+      {withBalance &&
+        !isPrivacyModeEnabled &&
+        (isSelectedAccount ? (
+          <SelectedAccountBalanceBadge />
+        ) : (
+          balance !== null && <BalanceBadge balance={balance} />
+        ))}
+      {withAccountStatus && !!pendingRequestsCount && (
+        <PendingRequestsBadge count={pendingRequestsCount} />
       )}
-      {!!pendingRequestsCount && <PendingRequestsBadge count={pendingRequestsCount} />}
       {!!withKeyType &&
-        (safeDeployedChainIds.length ? (
+        (withAccountStatus && safeDeployedChainIds.length ? (
           // The Safe key badge, telling also which chains the Safe is deployed on
           <Badge
             type="secondaryAccent"
@@ -415,6 +419,7 @@ const Account = ({
         withViewOnly={!withKeyType}
       />
       {withSafeSignerBadges && <SafeSignerBadges account={account} />}
+      {renderExtraBadges && renderExtraBadges()}
     </View>
   )
 
@@ -500,7 +505,7 @@ const Account = ({
               showTooltip
             />
             <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-              {label}
+              {hasLabel && label}
               {address}
             </View>
             {actions}

@@ -7,8 +7,8 @@ import BottomSheet from '@common/components/BottomSheet'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import { getUiType } from '@common/utils/uiType'
 import spacings from '@common/styles/spacings'
+import { getUiType } from '@common/utils/uiType'
 
 interface Props {
   sheetRef: React.RefObject<Modalize>
@@ -19,6 +19,20 @@ interface Props {
   /** Lets the user remove imported keys, see `AccountKeys` */
   canRemoveKeys?: boolean
   chainId?: bigint
+}
+
+const { isPopup } = getUiType()
+
+// The width cap fits only a centered modal. In the popup this sheet is a bottom sheet, which the
+// cap would leave narrower than the popup and pinned to its left edge
+const WIDE_LAYOUT_SHEET_STYLE = { maxWidth: 432, minHeight: 432, ...spacings.pvLg }
+
+// A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
+// The popup has no minimum either, so that a single key doesn't leave the sheet mostly empty
+const getSheetStyle = (isCompactLayout: boolean) => {
+  if (isCompactLayout) return undefined
+  if (isPopup) return spacings.pvLg
+  return WIDE_LAYOUT_SHEET_STYLE
 }
 
 const AccountKeysBottomSheet: FC<Props> = ({
@@ -37,8 +51,8 @@ const AccountKeysBottomSheet: FC<Props> = ({
   const { theme } = useTheme()
   // Full width in the popup and in a narrow window (e.g. a request window), which are only a
   // little wider than the sheet, so it would be left hanging off one side
-  const { isNarrowWebLayout } = useCompactLayout()
-  const isFullWidth = getUiType().isPopup || isNarrowWebLayout
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
+  const isFullWidth = isPopup || isNarrowWebLayout
   return (
     <BottomSheet
       id="account-keys-bottom-sheet"
@@ -50,13 +64,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
       scrollViewProps={isWeb && !isFullWidth ? { contentContainerStyle: { flex: 1 } } : undefined}
       isScrollEnabled={false}
       containerInnerWrapperStyles={isWeb && isFullWidth ? undefined : { flex: 1 }}
-      style={
-        isWeb
-          ? isFullWidth
-            ? spacings.pvLg
-            : { maxWidth: 432, minHeight: 432, ...spacings.pvLg }
-          : undefined
-      }
+      style={getSheetStyle(isCompactLayout)}
       shouldBeClosableOnDrag={isMobile}
     >
       {!!account && (

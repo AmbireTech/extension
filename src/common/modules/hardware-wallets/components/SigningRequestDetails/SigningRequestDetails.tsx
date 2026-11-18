@@ -105,7 +105,8 @@ const CheckRow = React.memo(function CheckRow({ check }: { check: SafeTransactio
 
 /**
  * Everything a user needs to verify a hardware wallet signing request on
- * their own: the hashes to compare with the device, the request exactly as
+ * their own: the hashes to compare with the device (with the ERC-8213
+ * digests right below them), the request exactly as
  * sent (ready to paste into a hashing tool), and, for Safe transactions,
  * the checks that can be confirmed by reading the request.
  */
@@ -125,6 +126,7 @@ const SigningRequestDetailsContent = ({
   const {
     requestKind,
     hashes,
+    erc8213Digests,
     missingHashReason,
     safeHashFormula,
     safeTransactionChecks,
@@ -166,6 +168,16 @@ const SigningRequestDetailsContent = ({
     </>
   )
 
+  // Right below the hashes, as they're compared with the device the same way
+  const erc8213Section = !!erc8213Digests.length && (
+    <>
+      <SectionHeader title={t('ERC-8213 digests')} />
+      {erc8213Digests.map((digest) => (
+        <HashBlock key={digest.id} hash={digest} />
+      ))}
+    </>
+  )
+
   const requestSection = (
     <>
       <SectionHeader title={requestTitle} copyText={requestJson} />
@@ -185,17 +197,20 @@ const SigningRequestDetailsContent = ({
   )
 
   // A transaction reads in the order its hash is built: the fields, then
-  // the hash of the unsigned transaction serialized from them
+  // the hash of the unsigned transaction serialized from them, then the
+  // ERC-8213 digest of its calldata
   const details =
     requestKind === 'transaction' ? (
       <>
         {requestSection}
         {hashesSection}
+        {erc8213Section}
         <DecodedRequest requestCalls={requestCalls} humanization={humanization} />
       </>
     ) : (
       <>
         {hashesSection}
+        {erc8213Section}
         {checksSection}
         {requestSection}
         <DecodedRequest requestCalls={requestCalls} humanization={humanization} />

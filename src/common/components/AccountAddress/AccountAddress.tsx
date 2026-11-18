@@ -31,6 +31,7 @@ interface Props extends Omit<ReturnType<typeof useReverseLookup>, 'updatedAt' | 
     prefix: number
     suffix: number
     color: 'errorText'
+    differingFrom?: string
   }
   withCopy?: boolean
   fontSize?: number
