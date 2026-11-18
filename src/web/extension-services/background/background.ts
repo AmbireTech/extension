@@ -39,7 +39,8 @@ import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import {
   CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS,
-  CULTURE_CONTEXT_INTEGRATION_NAME
+  CULTURE_CONTEXT_INTEGRATION_NAME,
+  PRIVACY_POOLS_CONTROLLER_NAME
 } from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
@@ -529,7 +530,12 @@ const init = async () => {
   const privacyPoolsOffscreen = canUseOffscreenProver()
     ? createOffscreenPrivacyPools({
         fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
-        onError: (error) => captureBackgroundException(error)
+        // Tagged as the controller's, so the Privacy Pools strip applies even when a regular
+        // account builds trees for a deposit
+        onError: (error) =>
+          captureBackgroundException(error, {
+            extra: { controllerName: PRIVACY_POOLS_CONTROLLER_NAME }
+          })
       })
     : undefined
 
