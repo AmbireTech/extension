@@ -35,7 +35,7 @@ const BorrowedFundsControlOption = () => {
       style={spacings.mbTy}
       title={t('Subtract loans from balance')}
       description={t(
-        'Your total balance will not include money you borrowed in apps like Aave, Morpho or Compound.'
+        'Your total balance will subtract the money you owe to apps like Aave, Morpho or Compound.'
       )}
       renderIcon={<WalletIcon />}
     >
