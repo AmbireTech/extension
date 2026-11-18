@@ -5,6 +5,7 @@ import { useModalize } from 'react-native-modalize'
 
 import {
   getPrivacyPoolsAsset,
+  getPrivacyPoolsTokenId,
   PRIVACY_POOLS_AMOUNT_LEAK_IDS,
   PRIVACY_POOLS_RECIPIENT_LEAK_IDS
 } from '@ambire-common/consts/privacyPools'
@@ -83,7 +84,9 @@ const findPickedTokenOption = (
   if (pickedOption) return pickedOption
 
   const fullestOfToken = options
-    .filter(({ value }) => !!pickedValue && String(value).startsWith(`${pickedValue}:`))
+    .filter(
+      ({ chainId, tokenAddress }) => getPrivacyPoolsTokenId(chainId, tokenAddress) === pickedValue
+    )
     .reduce<PrivacyPoolsTokenOption | null>(
       (fullest, option) =>
         !fullest || option.availableAmount > fullest.availableAmount ? option : fullest,

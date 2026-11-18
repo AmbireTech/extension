@@ -2,7 +2,10 @@ import { formatUnits } from 'ethers'
 import React, { memo, useMemo } from 'react'
 import { SectionListData, View } from 'react-native'
 
-import { getPrivacyPoolsDepositId } from '@ambire-common/consts/privacyPools'
+import {
+  getPrivacyPoolsDepositId,
+  getPrivacyPoolsTokenId
+} from '@ambire-common/consts/privacyPools'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { SelectValue } from '@common/components/Select/types'
 import Text from '@common/components/Text'
@@ -153,7 +156,7 @@ const usePrivacyPoolsTokens = ({
         const totalsByToken = new Map<string, bigint>()
 
         deposits.forEach((deposit) => {
-          const key = `${chainId}:${deposit.tokenAddress}`
+          const key = getPrivacyPoolsTokenId(chainId, deposit.tokenAddress)
           const section = sectionsByToken.get(key) ?? {
             key,
             chainId,
