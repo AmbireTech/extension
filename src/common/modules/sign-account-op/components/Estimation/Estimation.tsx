@@ -9,12 +9,7 @@ import {
   EstimationStatus
 } from '@ambire-common/controllers/estimation/types'
 import { getFeeSpeedIdentifier } from '@ambire-common/controllers/signAccountOp/helper'
-import {
-  FeeSpeed,
-  SigningStatus,
-  SpeedCalc,
-  Warning
-} from '@ambire-common/interfaces/signAccountOp'
+import { FeeSpeed, SigningStatus, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
 import { findPendingAccountOpById } from '@ambire-common/libs/accountOp/earlierPendingAccountOp'
@@ -87,11 +82,11 @@ const getFeeSpeedLabelText = (speed: SpeedCalc) =>
 
 const FeeSpeedLabel = ({
   speed,
-  feeTokenPriceUnavailableWarning,
+  isFeeTokenPriceUnavailable,
   payValue
 }: {
   speed: SpeedCalc
-  feeTokenPriceUnavailableWarning?: Warning
+  isFeeTokenPriceUnavailable: boolean
   payValue?: SelectValue
 }) => {
   const { t } = useTranslation()
@@ -112,13 +107,13 @@ const FeeSpeedLabel = ({
         {t(getFeeSpeedLabelText(speed))}
       </Text>
       <Text
-        fontSize={!feeTokenPriceUnavailableWarning ? 14 : 12}
+        fontSize={!isFeeTokenPriceUnavailable ? 14 : 12}
         style={spacings.mlMi}
         numberOfLines={1}
-        weight={!feeTokenPriceUnavailableWarning ? 'regular' : 'medium'}
+        weight={!isFeeTokenPriceUnavailable ? 'regular' : 'medium'}
         appearance="secondaryText"
       >
-        {!feeTokenPriceUnavailableWarning
+        {!isFeeTokenPriceUnavailable
           ? formatDecimals(Number(speed.amountUsd), 'value')
           : `${formatDecimals(Number(speed.amountFormatted), 'precise')} ${payValue?.token.symbol}`}
       </Text>
@@ -304,6 +299,14 @@ const Estimation = ({
     return signAccountOpState?.networkFeeSpeeds[selectedOptionIdentifier] || []
   }, [signAccountOpState?.networkFeeSpeeds, selectedOptionIdentifier])
 
+  // The speeds show the fee in the token instead of USD when it has no price. The warning says so
+  // with token prices on; with them off (prices read from the network) it's left out, so a speed
+  // without a USD amount tells it then
+  const isFeeTokenPriceUnavailable = useMemo(
+    () => !!feeTokenPriceUnavailableWarning || networkFeeSpeeds.some((speed) => !speed.amountUsd),
+    [feeTokenPriceUnavailableWarning, networkFeeSpeeds]
+  )
+
   const isGaslessTransaction = useMemo(() => {
     return (
       feeSpeeds.every((speed) => !speed.amount) &&
@@ -360,7 +363,7 @@ const Estimation = ({
       label: (
         <FeeSpeedLabel
           speed={speed}
-          feeTokenPriceUnavailableWarning={feeTokenPriceUnavailableWarning}
+          isFeeTokenPriceUnavailable={isFeeTokenPriceUnavailable}
           payValue={payValue}
         />
       ),
@@ -368,7 +371,7 @@ const Estimation = ({
       speed,
       disabled: speed.disabled
     }))
-  }, [networkFeeSpeeds, feeTokenPriceUnavailableWarning, payValue])
+  }, [networkFeeSpeeds, isFeeTokenPriceUnavailable, payValue])
 
   const selectedFee = useMemo(
     () =>
@@ -822,7 +825,7 @@ const Estimation = ({
         // Grows the menu to the left, as the select sits at the right of the row.
         // Wider still if the fee token price is unavailable as the token amount takes up more space
         menuLeftHorizontalOffset={
-          FEE_SPEED_MENU_EXTRA_WIDTH + (feeTokenPriceUnavailableWarning ? 60 : 0)
+          FEE_SPEED_MENU_EXTRA_WIDTH + (isFeeTokenPriceUnavailable ? 60 : 0)
         }
         menuPosition="top"
         bottomSheetTitle={t('Transaction speed')}
@@ -836,7 +839,7 @@ const Estimation = ({
     customFeeSpeedOption,
     disabled,
     feeSpeedOptions,
-    feeTokenPriceUnavailableWarning,
+    isFeeTokenPriceUnavailable,
     isCustomFeeSpeedSelected,
     onFeeSelect,
     renderFeeSpeedSelectedOption,

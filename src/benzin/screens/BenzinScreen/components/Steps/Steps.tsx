@@ -2,10 +2,6 @@ import React, { FC } from 'react'
 import { useWindowDimensions, View } from 'react-native'
 
 import { EIP7702Auth } from '@ambire-common/consts/7702'
-import type {
-  BalanceChange,
-  NftBalanceChange
-} from '@ambire-common/libs/accountOp/submittedAccountOp'
 import { ZERO_ADDRESS } from '@ambire-common/services/socket/constants'
 import { StepsData } from '@benzin/screens/BenzinScreen/hooks/useSteps'
 import { ActiveStepType } from '@benzin/screens/BenzinScreen/interfaces/steps'
@@ -27,12 +23,17 @@ import DelegationHumanization from '@web/components/DelegationHumanization'
 import Step from './components/Step'
 import {
   getFee,
+  getFeeUsdValueLabel,
   getFinalizedRows,
   getTimestamp,
   hasBalanceChangesSettled,
   shouldShowTxnProgress
 } from './utils/rows'
 
+import type {
+  BalanceChange,
+  NftBalanceChange
+} from '@ambire-common/libs/accountOp/submittedAccountOp'
 interface Props {
   activeStep: ActiveStepType
   txnId: string | null
@@ -54,6 +55,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
   const { blockData, finalizedStatus, feePaidWith, tokenPricesEnabled, from, originatedFrom } =
     stepsState
   const finalStepRows: any = getFinalizedRows(blockData, finalizedStatus)
+  const feeUsdValueLabel = feePaidWith ? getFeeUsdValueLabel(feePaidWith, tokenPricesEnabled) : null
   const balanceChanges: DisplayBalanceChange[] = [
     ...(stepsState.submittedAccountOp?.balanceChanges ?? stepsState.balanceChanges ?? []),
     ...(stepsState.submittedAccountOp?.nftBalanceChanges ?? stepsState.nftBalanceChanges ?? [])
@@ -86,7 +88,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
               spacings.pvMi,
               spacings.phSm,
               { backgroundColor: '#6000FF14', borderRadius: 20 },
-              // @ts-ignore value missing in the props, but it's available on web
+              // @ts-expect-error value missing in the props, but it's available on web
               { width: 'fit-content' }
             ]}
           >
@@ -112,7 +114,7 @@ const Steps: FC<Props> = ({ activeStep, txnId, userOpHash, stepsState, summary, 
                 />
                 <Text style={spacings.mlMi} appearance="primary" weight="medium" fontSize={12}>
                   {feePaidWith.symbol}
-                  {tokenPricesEnabled ? ` (${feePaidWith.usdValue})` : null}
+                  {feeUsdValueLabel ? ` (${feeUsdValueLabel})` : null}
                 </Text>
               </>
             )}

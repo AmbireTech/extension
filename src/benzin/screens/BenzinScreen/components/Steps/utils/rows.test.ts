@@ -19,19 +19,27 @@ const FEE_PAID_WITH: FeePaidWith = {
   address: '0x0000000000000000000000000000000000000000',
   amount: '0.001',
   symbol: 'ETH',
-  usdValue: '-$',
+  usdValue: null,
   isErc20: false,
   isSponsored: false,
   chainId: 1n
 }
 
 describe('getFee', () => {
-  it('shows the fiat value when token prices are enabled', () => {
+  it('shows -$ for a fee without a price when token prices are enabled', () => {
     expect(getFee(FEE_PAID_WITH, null, true)).toBe('0.001 ETH (-$)')
   })
 
-  it('hides the fiat value when token prices are disabled', () => {
+  it('hides the fiat value of a fee without a price when token prices are disabled', () => {
     expect(getFee(FEE_PAID_WITH, null, false)).toBe('0.001 ETH')
+  })
+
+  it('shows the fiat value of a fee priced from the network when token prices are disabled', () => {
+    expect(getFee({ ...FEE_PAID_WITH, usdValue: '$2.07' }, null, false)).toBe('0.001 ETH ($2.07)')
+  })
+
+  it('shows the fiat value of a priced fee when token prices are enabled', () => {
+    expect(getFee({ ...FEE_PAID_WITH, usdValue: '$2.07' }, null, true)).toBe('0.001 ETH ($2.07)')
   })
 })
 
