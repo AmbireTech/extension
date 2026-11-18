@@ -172,10 +172,17 @@ const AccountKey: React.FC<Props> = ({
   // The owners of a Safe have details even when they are not imported, e.g. its networks
   const safeAccount = account.safeCreation ? account : undefined
   const hasDetails = !!canExportOrImportKey && (isImported || !!safeAccount)
+  // On mobile the account row shows its copy button next to the actions, so the arrow goes to the
+  // end of the badges row, below the copy button, not next to it, where the two icons crowd
+  const isDetailsToggleWithBadges = withNameAndAddress && !isWeb
   const detailsToggle = (
     <AnimatedPressable
       onPress={handleToggleDetails}
-      style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        !isDetailsToggleWithBadges && spacings.mlSm
+      ]}
       {...bindKeyDetailsAnim}
     >
       <Animated.View style={keyDetailsAnimStyles}>
@@ -228,7 +235,7 @@ const AccountKey: React.FC<Props> = ({
               </Button>
             </View>
           </View>
-          {detailsToggle}
+          {!isDetailsToggleWithBadges && detailsToggle}
         </View>
       ) : (
         <View style={[flexbox.directionRow, flexbox.alignCenter]}>
@@ -242,7 +249,7 @@ const AccountKey: React.FC<Props> = ({
           >
             <ImportArrowIcon style={spacings.mlTy} color={theme.primary} width={16} height={16} />
           </Button>
-          {hasDetails && detailsToggle}
+          {!isDetailsToggleWithBadges && hasDetails && detailsToggle}
         </View>
       )}
     </View>
@@ -266,6 +273,7 @@ const AccountKey: React.FC<Props> = ({
     }
   }, [addr, dedicatedToOneSA, name, ownerAccount, t])
   const renderKeyActions = () => keyActions
+  const renderDetailsToggleWithBadges = () => hasDetails && detailsToggle
   // Labeled, as the owner may be a Safe of the wallet, deployed on other chains than these
   const renderOwnerNetworksBadge = () =>
     !!onChains?.length && (
@@ -308,6 +316,9 @@ const AccountKey: React.FC<Props> = ({
           withBalance={false}
           maxAccountAddrLength={KEY_ADDRESS_MAX_LENGTH}
           renderRightChildren={renderKeyActions}
+          renderBadgesEndChildren={
+            isDetailsToggleWithBadges ? renderDetailsToggleWithBadges : undefined
+          }
           renderExtraBadges={renderOwnerNetworksBadge}
           withAccountStatus={false}
           containerStyle={spacings.mb0}
