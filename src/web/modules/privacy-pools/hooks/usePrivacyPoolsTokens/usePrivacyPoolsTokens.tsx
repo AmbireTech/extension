@@ -131,8 +131,8 @@ export const getPrivacyPoolsTokenSectionHeaderHeight = (section: SectionListData
  * Send form token options: one per deposit, as a send spends exactly one, and only approved ones,
  * as pending ones cannot be sent.
  *
- * - `withdrawTokens` is what the select shows once one is picked: the token, the deposit and the
- *   network.
+ * - `withdrawTokens` is what the select shows once one is picked: the token with the deposit beside
+ *   it, like "ETH #7", and the network, like "on Ethereum".
  * - `withdrawTokenSections` is the list to pick from: each token once, with what it can send in
  *   total, and its deposits under it. Its options share their `value` with `withdrawTokens`.
  */
@@ -222,26 +222,16 @@ const usePrivacyPoolsTokens = ({
           icon: (
             <TokenIconWithNetwork chainId={option.chainId} tokenAddress={option.tokenAddress} />
           ),
+          // No amount here, as the field already shows what the deposit can send beside Max
           label: (
-            <>
-              <View style={flexbox.flex1}>
-                <Text fontSize={16} weight="medium" numberOfLines={1}>
-                  {option.symbol}
-                </Text>
-                <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-                  {`${t('Deposit #{{number}}', { number: option.depositNumber })} · ${networkName}`}
-                </Text>
-              </View>
-              <Text
-                fontSize={14}
-                weight="number_regular"
-                appearance="secondaryText"
-                numberOfLines={1}
-                style={spacings.mlSm}
-              >
-                {formatAmount(option.availableAmount, option.decimals)}
+            <View style={flexbox.flex1}>
+              <Text fontSize={16} weight="medium" numberOfLines={1}>
+                {`${option.symbol} #${option.depositNumber}`}
               </Text>
-            </>
+              <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
+                {t('on {{networkName}}', { networkName })}
+              </Text>
+            </View>
           )
         }))
       ),
