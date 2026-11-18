@@ -36,7 +36,10 @@ import useEdgeSwipeBackGesture from '@mobile/hooks/useEdgeSwipeBackGesture'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
 import useWalletConnect from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
 import { markWcLinkFromInAppBrowser } from '@mobile/modules/wallet-connect/services/walletConnectService'
-import { getWcPairingUriFromLink } from '@mobile/modules/wallet-connect/utils'
+import {
+  getWcPairingUriFromLink,
+  isWcRequestRedirectLink
+} from '@mobile/modules/wallet-connect/utils'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
 
 // Every in-app browser page shares one tab for now, so its sessions are keyed by this tab id
@@ -453,6 +456,9 @@ const DappWebViewScreen = () => {
         return false
       }
 
+      // The request itself arrives through the relay, and the user is already in Ambire
+      if (isWcRequestRedirectLink(url)) return false
+
       try {
         const parsed = new URL(url)
         const protocol = parsed.protocol.replace(':', '')
@@ -465,8 +471,9 @@ const DappWebViewScreen = () => {
           return true
         }
 
-        // Hand off wallet deep links to the OS (WalletConnect ones are paired above)
-        if (protocol === 'metamask' || protocol === 'ethereum') {
+        // Hand off wallet deep links to the OS (WalletConnect ones are handled above).
+        // Other Ambire links reach our own deep link handler through it.
+        if (protocol === 'ambire' || protocol === 'metamask' || protocol === 'ethereum') {
           console.log('[DappWebView] Handing off wallet deep link to OS:', url)
           Linking.openURL(url).catch((err) => {
             console.warn('[DappWebView] Failed to open wallet deep link:', err)

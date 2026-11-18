@@ -486,11 +486,7 @@ export const initWalletConnect = async (
         return sessionInfo
       }
 
-      // WalletKit doesn't type it, but its sign client emits it when a session runs out
-      walletKit.engine.signClient.events.on('session_expire', ({ topic }: { topic: string }) => {
-        forgetEndedSession(topic)
-      })
-
+      // Also covers expiry: the sign client emits `session_delete` before `session_expire`
       walletKit.on('session_delete', (event: WalletKitTypes.SessionDelete) => {
         const sessionInfo = forgetEndedSession(event.topic)
         addToast(

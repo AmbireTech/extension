@@ -1,4 +1,4 @@
-import { getWcPairingUriFromLink } from '.'
+import { getWcPairingUriFromLink, isWcRequestRedirectLink } from '.'
 
 const TOPIC = '7f6e504bfad60b485450578e05678ed3e8e8c4751d3c6160be17160d63ec90f9'
 const SYM_KEY = '587d5484ce2a2a6ee3ba1962fdd7e8588e06200c46823bd18fbd67def96ad303'
@@ -47,5 +47,32 @@ describe('getWcPairingUriFromLink', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
 
     expect(getWcPairingUriFromLink('ambire://wc?uri=%E0%A4%A')).toBeNull()
+  })
+})
+
+describe('isWcRequestRedirectLink', () => {
+  it('matches the request redirect of an Android pairing', () => {
+    expect(
+      isWcRequestRedirectLink(`wc:${TOPIC}@2/wc?requestId=1794221776204141&sessionTopic=${TOPIC}`)
+    ).toBe(true)
+  })
+
+  it('matches request redirects to Ambire links', () => {
+    expect(isWcRequestRedirectLink('ambire://wc')).toBe(true)
+    expect(isWcRequestRedirectLink(`ambire://wc?requestId=1&sessionTopic=${TOPIC}`)).toBe(true)
+  })
+
+  it('does not match pairing links', () => {
+    expect(isWcRequestRedirectLink(PAIRING_URI)).toBe(false)
+    expect(isWcRequestRedirectLink(`ambire://wc?uri=${encodeURIComponent(PAIRING_URI)}`)).toBe(
+      false
+    )
+  })
+
+  it('does not match other links', () => {
+    expect(isWcRequestRedirectLink('ambire://wcfoo')).toBe(false)
+    expect(isWcRequestRedirectLink('ambire://dashboard')).toBe(false)
+    expect(isWcRequestRedirectLink('https://ambire.com/wc')).toBe(false)
+    expect(isWcRequestRedirectLink('https://app.safe.global')).toBe(false)
   })
 })

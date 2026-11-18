@@ -12,7 +12,10 @@ import {
   isWalletConnectInitialized,
   reconnectWalletConnectIfNeeded
 } from '@mobile/modules/wallet-connect/services/walletConnectService'
-import { getWcPairingUriFromLink } from '@mobile/modules/wallet-connect/utils'
+import {
+  getWcPairingUriFromLink,
+  isWcRequestRedirectLink
+} from '@mobile/modules/wallet-connect/utils'
 
 const PAIR_TIMEOUT = 15000
 
@@ -136,11 +139,9 @@ export const WalletConnectProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Redirect-back from dapp — active session exists, dapp hands control back for pending
       // signing request. Android "Open with" pairings come back as `wc:<topic>@2/wc?requestId=…`
-      const isWcRequestRedirect =
-        event.url.startsWith('wc:') ||
-        event.url === 'ambire://wc' ||
-        event.url.startsWith('ambire://wc?')
-      if (isWcRequestRedirect) addToast('Opening WalletConnect request…', { timeout: 2500 })
+      if (isWcRequestRedirectLink(event.url)) {
+        addToast('Opening WalletConnect request…', { timeout: 2500 })
+      }
     }
 
     const subscription = Linking.addEventListener('url', handleDeepLink)

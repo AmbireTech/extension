@@ -49,6 +49,21 @@ const syncWcDappChainId = (mainCtrl: MainController, dappId: string, chainId: nu
   mainCtrl.dapps.updateDapp(dappId, { chainId })
 }
 
+let autoLoginRevokeQueue: Promise<void> = Promise.resolve()
+
+/**
+ * Revokes an app's auto-login policies once every earlier revoke has finished. Their `withStatus`
+ * lock drops a call made while another runs, so of two apps disconnected at once one kept them.
+ */
+const revokeAutoLoginPolicies = (mainCtrl: MainController, dappId: string, dappUrl: string) => {
+  const revoke = autoLoginRevokeQueue.then(() =>
+    mainCtrl.autoLogin.revokeAllPoliciesForDomain(dappId, dappUrl)
+  )
+  // The caller gets the error through `revoke`; the queue itself must keep going
+  autoLoginRevokeQueue = revoke.catch(() => {})
+  return revoke
+}
+
 /**
  * Drops an ended WalletConnect session and, once the app has no connection left, its auto-login
  * policies - the same as disconnecting the app.
@@ -58,7 +73,7 @@ const forgetWcSession = async (mainCtrl: MainController, wcTopic: string) => {
   mainCtrl.dapps.disconnectWcSessionByTopic(wcTopic)
 
   if (session && !mainCtrl.dapps.hasPermission(session.id)) {
-    await mainCtrl.autoLogin.revokeAllPoliciesForDomain(session.id, session.origin)
+    await revokeAutoLoginPolicies(mainCtrl, session.id, session.origin)
   }
 }
 
@@ -212,7 +227,7 @@ export const handleActions = async (
       // every source is gone — otherwise the surviving channel loses its SIWE state.
       const stillConnected = mainCtrl.dapps.hasPermission(params.id)
       if (!stillConnected) {
-        await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+        await revokeAutoLoginPolicies(mainCtrl, params.id, params.url)
       }
 
       break
@@ -245,12 +260,12 @@ export const handleActions = async (
         await terminateWcSession(topic)
       }
 
-      // Process sequentially: each disconnect may call `revokeAllPoliciesForDomain`, which
-      // is guarded by a status lock that throws if a previous call hasn't finished yet.
+      // Each disconnect may revoke auto-login policies, which are guarded by a status lock
+      // that drops a call while another runs - `revokeAutoLoginPolicies` queues them behind it.
       for (const dapp of disconnectedDapps) {
         const stillConnected = mainCtrl.dapps.hasPermission(dapp.id)
         if (!stillConnected) {
-          await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dapp.id, dapp.url)
+          await revokeAutoLoginPolicies(mainCtrl, dapp.id, dapp.url)
         }
       }
 
@@ -503,7 +518,11 @@ export const handleActions = async (
           console.error('[Worker] Failed to restore WC session for topic:', topic, e)
         }
       }
-      await mainCtrl.dapps.dropWcSourcesWithoutSessions()
+      // A session that ended while the app was closed is a disconnect, so revoke the auto-login too
+      const disconnectedDapps = await mainCtrl.dapps.dropWcSourcesWithoutSessions()
+      for (const dapp of disconnectedDapps) {
+        await revokeAutoLoginPolicies(mainCtrl, dapp.id, dapp.url)
+      }
       break
     }
 

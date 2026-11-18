@@ -32,3 +32,15 @@ export const getWcPairingUriFromLink = (url: string): string | null => {
 
   return parseUri(uri).symKey ? uri : null
 }
+
+/**
+ * Whether a link is the redirect a dapp opens to bring the wallet forward for a request on an
+ * existing session (`wc:<topic>@2/wc?requestId=…`, `ambire://wc?requestId=…`): a WalletConnect
+ * link without a pairing key. The request itself arrives through the relay.
+ */
+export const isWcRequestRedirectLink = (url: string): boolean => {
+  const isWcLink = url.startsWith('wc:') || url === 'ambire://wc' || url.startsWith('ambire://wc?')
+  if (!isWcLink) return false
+
+  return !getWcPairingUriFromLink(url)
+}
