@@ -107,6 +107,17 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace 'com.ambire.wallet'
+
+    // Token and network icons (@ambire/token-and-network-icons, whose `assets` folder holds only the
+    // tokenIcons and networkIcons folders) ship inside the native app, not the JS bundle, so OTA
+    // updates don't carry them again each time.
+    // Loaded as `asset:/tokenIcons/...` and `asset:/networkIcons/...`
+    sourceSets {
+        main {
+            assets.srcDirs += ["$rootDir/../node_modules/@ambire/token-and-network-icons/assets"]
+        }
+    }
+
     defaultConfig {
         applicationId 'com.ambire.wallet'
         // minSdkVersion is provided by the React Native Gradle plugin; for React Native 0.81.x the default is 24 (API 24+).
