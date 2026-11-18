@@ -190,6 +190,14 @@ const OneClickEstimation = ({
     hasFreshActionPressRef.current = false
   }, [hasProceeded, signAccountOpController?.fromRequestId])
 
+  // Like the disabled Back button on web, closing while signing would show the form until the
+  // success screen replaces it, so the sheet loses its X, drag and Android back until then
+  const closeBottomSheet = useMemo(() => {
+    if (isWeb || isSignLoading) return undefined
+
+    return closeEstimationModal
+  }, [closeEstimationModal, isSignLoading])
+
   const markFreshActionPress = useCallback(() => {
     hasFreshActionPressRef.current = true
   }, [])
@@ -426,13 +434,13 @@ const OneClickEstimation = ({
         // NOTE: This must be lower than SigningKeySelect's z-index
         customZIndex={5}
         style={spacings.pb}
-        closeBottomSheet={isWeb ? undefined : closeEstimationModal}
+        closeBottomSheet={closeBottomSheet}
         // Dragging the sheet down closes it without calling closeBottomSheet, which would leave the
         // flow marked as proceeded and the Proceed button disabled. Every other close already resets it
         onClosed={isMobile ? onEstimationModalClosed : undefined}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile || shouldShowTxnDetails}
-        shouldBeClosableOnDrag={isMobile}
+        shouldBeClosableOnDrag={isMobile && !isSignLoading}
         FooterComponent={footerComponent}
       >
         {/* The title with the sheet's X, which closes it like Back does on web */}
