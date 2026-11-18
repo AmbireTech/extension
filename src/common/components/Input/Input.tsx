@@ -187,7 +187,8 @@ const Input = ({
               style={[
                 styles.nativeInput,
                 !!customInputContent && { position: 'absolute', zIndex: -1, opacity: 0 },
-                disabled && { pointerEvents: 'none' },
+                // Always set, as dropping the key once enabled resets the `pointerEvents` prop on native
+                { pointerEvents: disabled ? 'none' : (rest.pointerEvents ?? 'auto') },
                 nativeInputStyle
               ]}
             />
