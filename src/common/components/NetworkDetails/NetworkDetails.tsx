@@ -34,7 +34,6 @@ const EDIT_NETWORK_FOOTER_HOST_NAME = 'edit-network-footer'
 
 type Props = {
   name: string
-  iconUrls?: string[]
   batchMaxCount?: number | '-'
   selectedRpcUrl: string
   rpcUrls: string[]
@@ -50,7 +49,6 @@ type Props = {
 
 const NetworkDetails = ({
   name,
-  iconUrls = [],
   selectedRpcUrl,
   rpcUrls,
   chainId,
@@ -194,7 +192,6 @@ const NetworkDetails = ({
                   key={name.toLowerCase() as any}
                   id={chainId.toString()}
                   name={name}
-                  uris={iconUrls.length ? iconUrls : undefined}
                   size={24 * responsiveSizeMultiplier}
                 />
               </View>
@@ -216,7 +213,7 @@ const NetworkDetails = ({
         </View>
       )
     },
-    [type, responsiveSizeMultiplier, name, chainId, iconUrls]
+    [type, responsiveSizeMultiplier, name, chainId]
   )
 
   const sortedRpcUrls = useMemo(

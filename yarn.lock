@@ -34,6 +34,11 @@
     tap-spec "^5.0.0"
     tape "^5.5.3"
 
+"@ambire/token-and-network-icons@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@ambire/token-and-network-icons/-/token-and-network-icons-1.0.0.tgz#ee9ec373d7e3b8cd6c435f7765da81faf6ce7dd2"
+  integrity sha512-iHXV/acwvd2h5KxZEn9H9hz7sMX2V+eHFkNawKa19WdlDKWj7TldQJ0XHF2cFoCrKcBjMyQje0bgIWlxTMfZLg==
+
 "@anon-rpc/browser-harness@^0.3.0":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@anon-rpc/browser-harness/-/browser-harness-0.3.2.tgz#2d29b4440ef4fb8fb15d2afd40f3dcf537562dcf"
