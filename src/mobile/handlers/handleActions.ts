@@ -1,4 +1,4 @@
-import { getSessionId, Session } from '@ambire-common/classes/session'
+import { getSessionConnectionSource, getSessionId, Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { IEventEmitterRegistryController } from '@ambire-common/interfaces/eventEmitter'
 import { getDappIdFromUrl, getNormalizedHostnameFromUrl } from '@ambire-common/libs/dapps/helpers'
@@ -47,6 +47,34 @@ const syncWcDappChainId = (mainCtrl: MainController, dappId: string, chainId: nu
   }
 
   mainCtrl.dapps.updateDapp(dappId, { chainId })
+}
+
+let autoLoginRevokeQueue: Promise<void> = Promise.resolve()
+
+/**
+ * Revokes an app's auto-login policies once every earlier revoke has finished. Their `withStatus`
+ * lock drops a call made while another runs, so of two apps disconnected at once one kept them.
+ */
+const revokeAutoLoginPolicies = (mainCtrl: MainController, dappId: string, dappUrl: string) => {
+  const revoke = autoLoginRevokeQueue.then(() =>
+    mainCtrl.autoLogin.revokeAllPoliciesForDomain(dappId, dappUrl)
+  )
+  // The caller gets the error through `revoke`; the queue itself must keep going
+  autoLoginRevokeQueue = revoke.catch(() => {})
+  return revoke
+}
+
+/**
+ * Drops an ended WalletConnect session and, once the app has no connection left, its auto-login
+ * policies - the same as disconnecting the app.
+ */
+const forgetWcSession = async (mainCtrl: MainController, wcTopic: string) => {
+  const session = mainCtrl.dapps.getDappSessionByWcTopic(wcTopic)
+  mainCtrl.dapps.disconnectWcSessionByTopic(wcTopic)
+
+  if (session && !mainCtrl.dapps.hasPermission(session.id)) {
+    await revokeAutoLoginPolicies(mainCtrl, session.id, session.origin)
+  }
 }
 
 export const handleActions = async (
@@ -172,12 +200,14 @@ export const handleActions = async (
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_DAPP': {
-      const wcTopicsToTerminate =
-        params.source === 'injected'
-          ? []
-          : (Object.values(mainCtrl.dapps.dappSessions) as Session[])
-              .filter((s) => s.id === params.id && !!s.wcTopic)
-              .map((s) => s.wcTopic as string)
+      const wcTopicsToTerminate = (Object.values(mainCtrl.dapps.dappSessions) as Session[])
+        .filter(
+          (s) =>
+            s.id === params.id &&
+            !!s.wcTopic &&
+            (!params.source || getSessionConnectionSource(s) === params.source)
+        )
+        .map((s) => s.wcTopic as string)
 
       if (params.source) {
         await mainCtrl.dapps.disconnectDappSource(params.id, params.source)
@@ -197,21 +227,32 @@ export const handleActions = async (
       // every source is gone — otherwise the surviving channel loses its SIWE state.
       const stillConnected = mainCtrl.dapps.hasPermission(params.id)
       if (!stillConnected) {
-        await mainCtrl.autoLogin.revokeAllPoliciesForDomain(params.id, params.url)
+        await revokeAutoLoginPolicies(mainCtrl, params.id, params.url)
       }
 
+      break
+    }
+
+    case 'DISCONNECT_WC_SESSION': {
+      // The wallet ending a session gets no `session_delete` back, so drop it here
+      await forgetWcSession(mainCtrl, params.topic)
+      await terminateWcSession(params.topic)
+      break
+    }
+
+    case 'WC_SESSION_ENDED': {
+      await forgetWcSession(mainCtrl, params.topic)
       break
     }
 
     case 'DAPPS_CONTROLLER_DISCONNECT_ALL_DAPPS': {
       // Capture the WC topics up front — broadcasting `disconnect` tears down the WC sessions,
       // so they'd be gone by the time `disconnectAllDapps` returns.
-      const wcTopicsToTerminate =
-        params.source === 'injected'
-          ? []
-          : (Object.values(mainCtrl.dapps.dappSessions) as Session[])
-              .filter((s) => !!s.wcTopic)
-              .map((s) => s.wcTopic as string)
+      const wcTopicsToTerminate = (Object.values(mainCtrl.dapps.dappSessions) as Session[])
+        .filter(
+          (s) => !!s.wcTopic && (!params.source || getSessionConnectionSource(s) === params.source)
+        )
+        .map((s) => s.wcTopic as string)
 
       const disconnectedDapps = await mainCtrl.dapps.disconnectAllDapps(params.source)
 
@@ -219,12 +260,12 @@ export const handleActions = async (
         await terminateWcSession(topic)
       }
 
-      // Process sequentially: each disconnect may call `revokeAllPoliciesForDomain`, which
-      // is guarded by a status lock that throws if a previous call hasn't finished yet.
+      // Each disconnect may revoke auto-login policies, which are guarded by a status lock
+      // that drops a call while another runs - `revokeAutoLoginPolicies` queues them behind it.
       for (const dapp of disconnectedDapps) {
         const stillConnected = mainCtrl.dapps.hasPermission(dapp.id)
         if (!stillConnected) {
-          await mainCtrl.autoLogin.revokeAllPoliciesForDomain(dapp.id, dapp.url)
+          await revokeAutoLoginPolicies(mainCtrl, dapp.id, dapp.url)
         }
       }
 
@@ -295,7 +336,8 @@ export const handleActions = async (
         .values()
         .find((c: any) => c.name === 'WalletStateController') as any
       const notificationManager = mainCtrl.ui.notification
-      const { tabId, isWalletConnect, isWcAuthenticate, request, topic } = params
+      const { tabId, isWalletConnect, isWcAuthenticate, isWcFromInAppBrowser, request, topic } =
+        params
       // temp_wc_auth_ is reused for both account-selection (eth_requestAccounts) and
       // the subsequent personal_sign. Only treat it as a temp/handshake session for
       // the account-selection step — personal_sign must go through the signing path.
@@ -307,7 +349,8 @@ export const handleActions = async (
         const session = await mainCtrl.dapps.getOrCreateDappSession({
           url: request.origin,
           tabId,
-          wcTopic: isWalletConnect ? topic : undefined
+          wcTopic: isWalletConnect ? topic : undefined,
+          isWcFromInAppBrowser
         })
 
         if (!isWalletConnect) {
@@ -413,7 +456,8 @@ export const handleActions = async (
       const session = await mainCtrl.dapps.getOrCreateDappSession({
         url: params.url,
         tabId: params.tabId,
-        wcTopic: params.topic
+        wcTopic: params.topic,
+        isWcFromInAppBrowser: params.isWcFromInAppBrowser
       })
       const resolvedChainId =
         mainCtrl.dapps.pickWalletConnectChainId(params.candidateChainIds) ?? params.chainId
@@ -431,7 +475,7 @@ export const handleActions = async (
           chainId: params.chainId,
           candidateChainIds: params.candidateChainIds
         },
-        'wc'
+        params.isWcFromInAppBrowser ? 'wc-in-app' : 'wc'
       )
 
       break
@@ -442,13 +486,15 @@ export const handleActions = async (
       // can land first - and `addDappFromIdentity` below no-ops until it is. Idempotent.
       await mainCtrl.dapps.init()
       for (const wcSession of params.sessions) {
-        const { topic, name, icon, url, chainId, candidateChainIds } = wcSession
+        const { topic, name, icon, url, chainId, candidateChainIds, isWcFromInAppBrowser } =
+          wcSession
         try {
           const wcTabId = getWcTabIdFromTopic(topic)
           const session = await mainCtrl.dapps.getOrCreateDappSession({
             url,
             tabId: wcTabId,
-            wcTopic: topic
+            wcTopic: topic,
+            isWcFromInAppBrowser
           })
           const resolvedChainId =
             mainCtrl.dapps.pickWalletConnectChainId(candidateChainIds) ?? chainId
@@ -466,11 +512,16 @@ export const handleActions = async (
               chainId,
               candidateChainIds
             },
-            'wc'
+            isWcFromInAppBrowser ? 'wc-in-app' : 'wc'
           )
         } catch (e) {
           console.error('[Worker] Failed to restore WC session for topic:', topic, e)
         }
+      }
+      // A session that ended while the app was closed is a disconnect, so revoke the auto-login too
+      const disconnectedDapps = await mainCtrl.dapps.dropWcSourcesWithoutSessions()
+      for (const dapp of disconnectedDapps) {
+        await revokeAutoLoginPolicies(mainCtrl, dapp.id, dapp.url)
       }
       break
     }
