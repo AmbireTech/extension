@@ -34,6 +34,7 @@ const SignMessageScreen = () => {
     account,
     selectedAccountKeyStoreKeys,
     isViewOnly,
+    hasOnlyUnsupportedKeys,
     userRequest,
     isLedgerConnected,
     isChooseSignerShown,
@@ -80,18 +81,29 @@ const SignMessageScreen = () => {
         renderDirectChildren={() => {
           if (account.safeCreation) {
             return (
-              <SafeFooter
-                account={account}
-                isSignLoading={signStatus === 'LOADING'}
-                onSign={setSigner}
-                chainId={userRequest.meta.chainId.toString()}
-                signed={signMessageState.signed || []}
-                importedKeys={selectedAccountKeyStoreKeys}
-                threshold={threshold}
-                // the first signer from the array is the current one
-                signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
-                onReject={handleReject}
-              />
+              <>
+                {hasOnlyUnsupportedKeys && (
+                  <View style={isWideFooterLayout ? spacings.ph : [spacings.phSm, spacings.ptSm]}>
+                    <NoKeysToSignAlert
+                      type="long"
+                      isTransaction={false}
+                      chainId={signMessageState.network?.chainId}
+                    />
+                  </View>
+                )}
+                <SafeFooter
+                  account={account}
+                  isSignLoading={signStatus === 'LOADING'}
+                  onSign={setSigner}
+                  chainId={userRequest.meta.chainId.toString()}
+                  signed={signMessageState.signed || []}
+                  importedKeys={selectedAccountKeyStoreKeys}
+                  threshold={threshold}
+                  // the first signer from the array is the current one
+                  signingKeyAddr={signMessageState.signers?.[0]?.addr || ''}
+                  onReject={handleReject}
+                />
+              </>
             )
           }
 
@@ -131,7 +143,7 @@ const SignMessageScreen = () => {
                     )
                   }
                 : {})}
-              {...(isViewOnly && isWideFooterLayout
+              {...(isViewOnly && isWideFooterLayout && !hasOnlyUnsupportedKeys
                 ? {
                     resolveNode: (
                       <View style={[{ flex: 3 }, flexbox.directionRow, flexbox.justifyEnd]}>
@@ -145,10 +157,11 @@ const SignMessageScreen = () => {
                   }
                 : {})}
             >
-              {isViewOnly && !isWideFooterLayout ? (
-                <View style={spacings.mbSm}>
+              {/* In full above the buttons, like on the sign transaction screen, to explain what to do */}
+              {isViewOnly && (!isWideFooterLayout || hasOnlyUnsupportedKeys) ? (
+                <View style={[spacings.mbSm, { width: '100%' }]}>
                   <NoKeysToSignAlert
-                    type="short"
+                    type={hasOnlyUnsupportedKeys ? 'long' : 'short'}
                     isTransaction={false}
                     chainId={signMessageState.network?.chainId}
                   />

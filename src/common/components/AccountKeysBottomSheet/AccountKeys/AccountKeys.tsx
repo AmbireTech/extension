@@ -32,8 +32,11 @@ interface Props {
   closeBottomSheet: () => void
   keyIconColor?: string
   showExportImport?: boolean
-  /** Lets the user remove imported keys. Left off while signing, so a key can't vanish mid-flow */
-  canRemoveKeys?: boolean
+  /**
+   * Which imported keys the user can remove: all of them, or only the ones this device can't sign
+   * with (while signing, so a key that can sign never vanishes mid-flow). None when left out
+   */
+  removableKeys?: RemovableKeys
   chainId?: bigint
   /** The sheet takes the full width, see `AccountKeysBottomSheet` */
   isFullWidthSheet: boolean
@@ -56,6 +59,18 @@ const REMOVE_KEY_SHEET_STYLE = {
   ...(isPopup ? {} : { maxWidth: 432 })
 }
 
+/** Which imported keys can be removed from the keys list, see `AccountKeys` */
+export type RemovableKeys = 'all' | 'unsupported'
+
+const isKeyRemovable = (
+  { isImported, isSupported }: AccountKeyType,
+  removableKeys: RemovableKeys | undefined
+) => {
+  if (!isImported) return false
+  if (removableKeys === 'all') return true
+  return removableKeys === 'unsupported' && isSupported === false
+}
+
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) =>
   state.networks || []
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) =>
@@ -69,7 +84,7 @@ const AccountKeys: FC<Props> = ({
   closeBottomSheet,
   keyIconColor,
   showExportImport,
-  canRemoveKeys = false,
+  removableKeys,
   chainId,
   isFullWidthSheet
 }) => {
@@ -308,7 +323,9 @@ const AccountKeys: FC<Props> = ({
               keyIconColor={keyIconColor}
               showExportImport={showExportImport}
               onExportKeyPress={handleExportKeyPress}
-              onRemoveKeyPress={canRemoveKeys && isImported ? handleRemoveKeyPress : undefined}
+              onRemoveKeyPress={
+                isKeyRemovable(accountKey, removableKeys) ? handleRemoveKeyPress : undefined
+              }
               isSupported={accountKey.isSupported}
               onChains={safeOwnersByNetwork[addr]}
               withNameAndAddress

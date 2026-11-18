@@ -496,7 +496,7 @@ const AccountsSettingsScreen = () => {
         }}
         openAddAccountBottomSheet={openBottomSheet}
         showExportImport
-        canRemoveKeys
+        removableKeys="all"
       />
       <BottomSheet
         id="remove-account-seed-sheet"

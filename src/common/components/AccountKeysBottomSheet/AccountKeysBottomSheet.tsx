@@ -3,6 +3,7 @@ import { Modalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
 import AccountKeys from '@common/components/AccountKeysBottomSheet/AccountKeys'
+import type { RemovableKeys } from '@common/components/AccountKeysBottomSheet/AccountKeys/AccountKeys'
 import BottomSheet from '@common/components/BottomSheet'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -16,8 +17,8 @@ interface Props {
   account: Account | null
   openAddAccountBottomSheet?: () => void
   showExportImport?: boolean
-  /** Lets the user remove imported keys, see `AccountKeys` */
-  canRemoveKeys?: boolean
+  /** Which imported keys the user can remove, see `AccountKeys` */
+  removableKeys?: RemovableKeys
   chainId?: bigint
 }
 
@@ -41,7 +42,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
   account,
   openAddAccountBottomSheet,
   showExportImport = false,
-  canRemoveKeys = false,
+  removableKeys,
   chainId
 }) => {
   const handleOpenAccountBottomSheet = useCallback(() => {
@@ -74,7 +75,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
           closeBottomSheet={closeBottomSheet}
           keyIconColor={theme.iconPrimary as string}
           showExportImport={showExportImport}
-          canRemoveKeys={canRemoveKeys}
+          removableKeys={removableKeys}
           chainId={chainId}
           isFullWidthSheet={isFullWidth}
         />
