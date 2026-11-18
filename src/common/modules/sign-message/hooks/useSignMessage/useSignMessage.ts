@@ -13,6 +13,7 @@ import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
 import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 import useSigningAuth from '@common/hooks/useSigningAuth'
 import useToast from '@common/hooks/useToast'
+import useUnsupportedAccountKeys from '@common/hooks/useUnsupportedAccountKeys'
 import useLedger from '@common/modules/hardware-wallets/hooks/useLedger'
 import useOneKey from '@common/modules/hardware-wallets/hooks/useOneKey'
 import useQrSigningFlow from '@common/modules/hardware-wallets/hooks/useQrSigningFlow'
@@ -123,9 +124,16 @@ const useSignMessage = () => {
     [accountState]
   )
 
+  const unsupportedAccountKeys = useUnsupportedAccountKeys(account, network?.chainId)
+  // The only keys the account (a Safe too) has here were synced from a device that supports them
+  const hasOnlyUnsupportedKeys =
+    !selectedAccountKeyStoreKeys.length && !!unsupportedAccountKeys.length
+
   const isViewOnly = useMemo(
-    () => !account?.safeCreation && selectedAccountKeyStoreKeys.length === 0,
-    [account?.safeCreation, selectedAccountKeyStoreKeys.length]
+    () =>
+      (!account?.safeCreation && selectedAccountKeyStoreKeys.length === 0) ||
+      hasOnlyUnsupportedKeys,
+    [account?.safeCreation, hasOnlyUnsupportedKeys, selectedAccountKeyStoreKeys.length]
   )
   const humanizedMessage = useMemo(() => {
     if (signMessageState.humanizedMessage) return signMessageState.humanizedMessage
@@ -444,6 +452,7 @@ const useSignMessage = () => {
     account,
     selectedAccountKeyStoreKeys,
     isViewOnly,
+    hasOnlyUnsupportedKeys,
     humanizedMessage,
     isHumanizing: signMessageState.isHumanizing,
     humanizationHasBlockingWarnings,

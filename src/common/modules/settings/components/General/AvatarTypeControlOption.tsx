@@ -78,6 +78,7 @@ const AvatarTypeControlOption = () => {
         'Choose from three unique icon styles to help you identify accounts at a glance.'
       )}
       renderIcon={<AvatarIcon />}
+      style={spacings.mbTy}
     >
       {AVATAR_TYPES.map((type) => (
         <AvatarOption key={type} type={type} />

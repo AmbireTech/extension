@@ -142,13 +142,12 @@ const AddChain = ({
             style={[
               styles.boxWrapper,
               isTwoColumnLayout ? { width: '50%', maxHeight: '100%' } : { width: '100%' },
-              // @ts-ignore value missing in the props, but it's available on web
+              // `fit-content` is a web (CSS) value
               { height: 'fit-content' }
             ]}
           >
             <NetworkDetails
               name={networkDetails.name || userRequest?.meta?.params?.[0]?.chainName}
-              iconUrls={networkDetails?.iconUrls || []}
               chainId={networkDetails.chainId}
               rpcUrls={networkDetails.rpcUrls}
               selectedRpcUrl={rpcUrls[rpcUrlIndex] as any}
