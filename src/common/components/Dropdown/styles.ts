@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
+import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
@@ -24,6 +25,8 @@ const getStyles = (theme: ThemeProps) =>
     },
     dropdown: {
       position: 'absolute',
+      // Above the sheets, as the menu portals to the global host next to them
+      zIndex: BOTTOM_SHEET_Z_INDEX + 1,
       backgroundColor: theme.secondaryBackground,
       minWidth: 160,
       ...common.shadowSecondary,

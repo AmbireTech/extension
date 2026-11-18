@@ -3,6 +3,7 @@ import { FlatList, ListRenderItemInfo, Pressable, TextStyle, View } from 'react-
 import { SvgProps } from 'react-native-svg'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
+import AboveSheetsOverlay from '@common/components/AboveSheetsOverlay'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
@@ -163,25 +164,28 @@ const Dropdown: FC<Props> = ({
       </View>
       {isOpen && (
         <Portal hostName="global">
-          <View
-            onTouchStart={flagTouchStartedInside}
-            style={[
-              styles.dropdown,
-              {
-                right: windowWidth - position.x,
-                top: dropdownTop,
-                maxHeight: dropdownHeight
-              }
-            ]}
-            ref={modalRef}
-          >
-            <FlatList
-              data={data}
-              renderItem={renderItem}
-              keyExtractor={(_, index) => index.toString()}
-              style={{ maxHeight: dropdownHeight }}
-            />
-          </View>
+          {/* Native sheets present in their own window, which a z-index can't draw above */}
+          <AboveSheetsOverlay>
+            <View
+              onTouchStart={flagTouchStartedInside}
+              style={[
+                styles.dropdown,
+                {
+                  right: windowWidth - position.x,
+                  top: dropdownTop,
+                  maxHeight: dropdownHeight
+                }
+              ]}
+              ref={modalRef}
+            >
+              <FlatList
+                data={data}
+                renderItem={renderItem}
+                keyExtractor={(_, index) => index.toString()}
+                style={{ maxHeight: dropdownHeight }}
+              />
+            </View>
+          </AboveSheetsOverlay>
         </Portal>
       )}
     </>
