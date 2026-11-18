@@ -3,7 +3,7 @@ import React, { createContext, useCallback, useEffect, useMemo, useRef, useState
 
 import { STK_WALLET, UNI_V3_WALLET_WETH_POOL } from '@ambire-common/consts/addresses'
 import { networks } from '@ambire-common/consts/networks'
-import { getUniV3Positions } from '@ambire-common/libs/defiPositions/providers'
+import { getUniV3Positions } from '@ambire-common/libs/defiPositions/rpc/uniswapV3/uniswapV3'
 import {
   PortfolioProjectedRewardsResult,
   PortfolioRewardsResult,

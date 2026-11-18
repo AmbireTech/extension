@@ -379,7 +379,7 @@ const Main = ({
               humanizedMessage?.warnings?.map((warning) => {
                 return (
                   <Label
-                    size="lg"
+                    size="md"
                     key={warning.content}
                     text={warning.content}
                     type="warning"

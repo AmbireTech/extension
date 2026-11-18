@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { PrivacyPoolsWithdrawalPrivacy } from '@ambire-common/interfaces/privacyPools'
 import useController from '@common/hooks/useController'
@@ -13,6 +13,9 @@ const selectWithdrawalPrivacy = (state: AllControllersMappingType['PrivacyPoolsC
 
 const selectPoolStats = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.poolStats
+
+const selectHasPrivacyDataFailed = (state: AllControllersMappingType['PrivacyPoolsController']) =>
+  state.hasPrivacyDataFailed
 
 type Params = {
   chainId: string
@@ -35,9 +38,17 @@ type Result = {
    * recipient is checked.
    */
   recipientPrivacy: PrivacyPoolsWithdrawalPrivacy | null
+  /**
+   * Whether reading what the check needs failed, so an `unchecked` privacy is final until
+   * `retryCheck`. Otherwise an `unchecked` one is still loading.
+   */
+  hasCheckFailed: boolean
+  retryCheck: () => void
 }
 
-const NOT_CHECKED: Result = { privacy: null, recipientPrivacy: null }
+type CheckResult = Pick<Result, 'privacy' | 'recipientPrivacy'>
+
+const NOT_CHECKED: CheckResult = { privacy: null, recipientPrivacy: null }
 
 /**
  * Checks what the Send form's transfer gives away, once the user stops typing, and again once the
@@ -49,6 +60,10 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
     selectWithdrawalPrivacy
   )
   const { state: poolStats } = useController('PrivacyPoolsController', selectPoolStats)
+  const { state: hasPrivacyDataFailed } = useController(
+    'PrivacyPoolsController',
+    selectHasPrivacyDataFailed
+  )
   const chainId = params?.chainId
   const tokenAddress = params?.tokenAddress
   const amount = params?.amount
@@ -73,7 +88,14 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
     return () => clearTimeout(timeout)
   }, [amount, chainId, dispatch, isPoolRead, recipient, tokenAddress])
 
-  return useMemo(() => {
+  const hasCheckFailed = !!chainId && !!hasPrivacyDataFailed?.[chainId]
+  const retryCheck = useCallback(() => {
+    if (!chainId) return
+
+    dispatch({ type: 'method', params: { method: 'readPrivacyData', args: [chainId] } })
+  }, [chainId, dispatch])
+
+  const checkResult = useMemo((): CheckResult => {
     const isSameToken =
       !!check &&
       check.chainId === chainId &&
@@ -89,6 +111,11 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
       recipientPrivacy: isSameRecipient ? check.privacy : null
     }
   }, [amount, chainId, check, recipient, tokenAddress])
+
+  return useMemo(
+    () => ({ ...checkResult, hasCheckFailed, retryCheck }),
+    [checkResult, hasCheckFailed, retryCheck]
+  )
 }
 
 export default usePrivacyPoolsSendCheck

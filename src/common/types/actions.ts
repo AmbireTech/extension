@@ -106,8 +106,7 @@ type DappsControllerRemoveConnectedSiteAction = {
     id: Dapp['id']
     url: Dapp['url']
     // Optional: when set, only the matching connection channel is torn down. Omitting
-    // it disconnects every active source (backwards-compatible with web/extension and
-    // with the "Disconnect both" choice on mobile).
+    // it disconnects every active source (web/extension, and ManageApp's Disconnect on mobile).
     source?: ConnectionSource
   }
 }
@@ -196,6 +195,8 @@ type HandleProviderRequestAction = {
     tabId?: number
     /** The chain a WalletConnect request targets - WC dapps switch chains without telling the wallet */
     chainId?: number
+    /** Whether the WalletConnect session was paired by an app opened in the in-app browser */
+    isWcFromInAppBrowser?: boolean
   }
 }
 
@@ -210,6 +211,8 @@ type SetupWcSessionMessengerAction = {
     name?: string
     icon?: string
     tempSessionTopic?: string
+    /** Whether the WalletConnect session was paired by an app opened in the in-app browser */
+    isWcFromInAppBrowser?: boolean
   }
 }
 
@@ -223,12 +226,22 @@ type RestoreWcSessionsAction = {
       candidateChainIds?: number[]
       name?: string
       icon?: string
+      /** Whether the WalletConnect session was paired by an app opened in the in-app browser */
+      isWcFromInAppBrowser?: boolean
     }[]
   }
 }
 
 type DisconnectWcSessionAction = {
   type: 'DISCONNECT_WC_SESSION'
+  params: {
+    topic: string
+  }
+}
+
+/** A WalletConnect session that ended on its own: deleted by the app or expired */
+type WcSessionEndedAction = {
+  type: 'WC_SESSION_ENDED'
   params: {
     topic: string
   }
@@ -304,6 +317,7 @@ export type Action =
   | SetupWcSessionMessengerAction
   | RestoreWcSessionsAction
   | DisconnectWcSessionAction
+  | WcSessionEndedAction
   | DispatchDappTabFocusAction
   | SetBootPhaseAction
   | SetSubscribedControllersAction

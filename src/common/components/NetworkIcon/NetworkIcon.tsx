@@ -12,6 +12,7 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getBundledNetworkIconUri } from '@common/utils/getBundledNetworkIconUri'
 
 import type { NetworksController } from '@ambire-common/controllers/networks/networks'
 
@@ -21,7 +22,6 @@ export type NetworkIconIdType = string | 'gasTank' | 'rewards'
 
 type Props = {
   id: NetworkIconIdType
-  uris?: string[]
   size?: number
   scale?: number
   style?: ViewStyle
@@ -38,7 +38,6 @@ const icons: { [key: string]: any } = {
 
 const NetworkIcon = ({
   id,
-  uris,
   size = 32,
   scale,
   withTooltip = true,
@@ -57,16 +56,10 @@ const NetworkIcon = ({
     return network?.name || name || `Chain with id ${id}`
   }, [id, name, network?.name])
 
-  const iconUrls = useMemo(
-    () => [
-      ...((network as Network)?.iconUrls || []),
-      `https://icons.llamao.fi/icons/chains/rsz_${networkName.split(/\s+/)[0]?.toLowerCase()}.jpg`,
-      `https://icons.llamao.fi/icons/chains/rsz_${network?.nativeAssetSymbol?.toLowerCase()}.jpg`,
-      `https://raw.githubusercontent.com/ErikThiart/cryptocurrency-icons/master/64/${networkName.toLowerCase()}.png`,
-      `https://github.com/ErikThiart/cryptocurrency-icons/tree/master/64/${networkName.toLowerCase()}.png`
-    ],
-    [networkName, network]
-  )
+  // Network icons are only ever the ones shipped with the app, so showing a network makes no
+  // request to anyone. Networks that aren't bundled (like custom ones), or an OTA update running on
+  // an older app build without the bundled icons, get the first-letter icon instead
+  const bundledIconUri = useMemo(() => getBundledNetworkIconUri(id) ?? undefined, [id])
 
   const iconScale = useMemo(() => scale || 0.8, [scale])
 
@@ -138,7 +131,7 @@ const NetworkIcon = ({
         <Icon width={size} height={size} {...rest} />
       ) : (
         <ManifestImage
-          uris={uris || iconUrls}
+          uri={bundledIconUri}
           size={size}
           iconScale={iconScale}
           isRound
