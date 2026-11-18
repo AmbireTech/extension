@@ -80,10 +80,16 @@ const SignMessageScreen = () => {
         header={<ActionHeader />}
         renderDirectChildren={() => {
           if (account.safeCreation) {
-            return (
+            const safeFooter = (
               <>
                 {hasOnlyUnsupportedKeys && (
-                  <View style={isWideFooterLayout ? spacings.ph : [spacings.phSm, spacings.ptSm]}>
+                  <View
+                    style={
+                      isWideFooterLayout
+                        ? [spacings.ph, spacings.mbSm]
+                        : [spacings.phSm, spacings.ptSm]
+                    }
+                  >
                     <NoKeysToSignAlert
                       type="long"
                       isTransaction={false}
@@ -105,6 +111,11 @@ const SignMessageScreen = () => {
                 />
               </>
             )
+
+            if (isWideFooterLayout) return safeFooter
+
+            // The same panel as the footer of any other account below
+            return <View style={styles.compactFooterContainer}>{safeFooter}</View>
           }
 
           const actionFooter = (
