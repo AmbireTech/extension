@@ -34,8 +34,8 @@ export type PrivacyPoolsTokenOption = SelectValue & {
   // The deposit it sends from, as a send spends exactly one - see
   // `PrivacyPoolsSendableDeposit.number`
   depositNumber: number
-  // What can be sent now in raw units - what is left in the deposit less what transfers on their
-  // way take out - for validating the typed amount
+  // What is left in the deposit in raw units, all of which can be sent now, for validating the
+  // typed amount. A deposit with a send on its way is left out of the list instead
   availableAmount: bigint
 }
 
