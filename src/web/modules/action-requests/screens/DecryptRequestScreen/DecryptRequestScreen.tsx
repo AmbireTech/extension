@@ -9,6 +9,7 @@ import useTheme from '@common/hooks/useTheme'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import DappSafetyBanners from '@common/modules/action-requests/components/DappSafetyBanners'
 import useDecryptRequest from '@common/modules/action-requests/hooks/useDecryptRequest'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -28,7 +29,9 @@ const DecryptRequestScreen = () => {
     isDisabled,
     handleDecryptForPreview,
     handleDecrypt,
-    handleDeny
+    handleDeny,
+    dappSafetyBanners,
+    holdToProceed
   } = useDecryptRequest()
   const { isNarrowWebLayout } = useCompactLayout()
 
@@ -41,6 +44,7 @@ const DecryptRequestScreen = () => {
           <ActionFooter
             onReject={handleDeny}
             onResolve={handleDecrypt}
+            holdToProceed={holdToProceed}
             resolveButtonText={t('Decrypt')}
             resolveDisabled={isDisabled}
             resolveButtonTestID="button-decrypt"
@@ -56,6 +60,7 @@ const DecryptRequestScreen = () => {
             icon={icon}
             intentText={t('wants you to decrypt a message')}
           />
+          <DappSafetyBanners banners={dappSafetyBanners} style={spacings.mtLg} />
 
           <View style={spacings.mtLg}>
             {errorNode || (
