@@ -3,6 +3,7 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from '
 import { StyleSheet, View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import AccountAddress from '@common/components/AccountAddress'
@@ -74,6 +75,7 @@ const Account = ({
   isOnSecondaryBackground = false,
   withBadges = true,
   withAccountStatus = true,
+  badgeKeys,
   onExtraHeightChange
 }: {
   account: AccountInterface
@@ -115,6 +117,11 @@ const Account = ({
    * it leaves out this account's own pending requests and the chains its Safe is deployed on
    */
   withAccountStatus?: boolean
+  /**
+   * The keys the key badge names, in place of the account's own, e.g. the one key a row of the
+   * keys list stands for, as other kinds of keys can share its address
+   */
+  badgeKeys?: Pick<Key, 'type'>[]
   /**
    * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is, mostly because
    * its badges wrapped, so a list that lays its rows out by height can make room for it. Such a
@@ -410,7 +417,7 @@ const Account = ({
             </View>
           </Badge>
         ) : (
-          <AccountKeysBadge account={account} accountKeys={accountKeys} />
+          <AccountKeysBadge account={account} accountKeys={badgeKeys || accountKeys} />
         ))}
       <AccountBadges
         accountData={account}

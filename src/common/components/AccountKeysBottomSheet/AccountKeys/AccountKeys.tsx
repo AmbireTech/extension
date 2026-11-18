@@ -328,7 +328,9 @@ const AccountKeys: FC<Props> = ({
               }
               isSupported={accountKey.isSupported}
               onChains={safeOwnersByNetwork[addr]}
-              withNameAndAddress
+              // The owners of a Safe are often accounts of their own, so they are shown like
+              // the account list. Any other account's keys keep the compact rows
+              withNameAndAddress={!!account.safeCreation}
               name={name}
               ownerAccount={ownerAccount}
             />
