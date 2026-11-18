@@ -24,6 +24,8 @@ type PrivacyStatusProps = {
   symbol: string
   /** Fixes a leak with another amount. Without it, no fix is offered, as on a proved transfer. */
   onSetAmount?: (amount: bigint) => void
+  /** Checks an `unchecked` transfer again. Without it, no retry is offered. */
+  onRetry?: () => void
   style?: ViewStyle
 }
 
