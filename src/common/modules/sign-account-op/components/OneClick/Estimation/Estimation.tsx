@@ -187,6 +187,14 @@ const OneClickEstimation = ({
     hasFreshActionPressRef.current = false
   }, [hasProceeded, signAccountOpController?.fromRequestId])
 
+  // Closing while signing would show the form until the success screen replaces it, so the
+  // sheet loses its X, drag and Android back until then, as the old Back button was disabled
+  const closeBottomSheet = useMemo(() => {
+    if (isSignLoading) return undefined
+
+    return closeEstimationModal
+  }, [closeEstimationModal, isSignLoading])
+
   const markFreshActionPress = useCallback(() => {
     hasFreshActionPressRef.current = true
   }, [])
@@ -389,13 +397,13 @@ const OneClickEstimation = ({
         sheetRef={estimationModalRef}
         type={isEstimationSheetModal ? 'modal' : 'bottom-sheet'}
         style={spacings.pb}
-        closeBottomSheet={closeEstimationModal}
+        closeBottomSheet={closeBottomSheet}
         // Dragging the sheet down closes it without calling closeBottomSheet, which would leave the
         // flow marked as proceeded and the Proceed button disabled. Every other close already resets it
         onClosed={isMobile ? onEstimationModalClosed : undefined}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile || shouldShowTxnDetails}
-        shouldBeClosableOnDrag={isMobile}
+        shouldBeClosableOnDrag={isMobile && !isSignLoading}
         FooterComponent={footerComponent}
       >
         {/* The title with the sheet's X, which closes it */}
