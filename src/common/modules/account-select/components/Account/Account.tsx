@@ -60,6 +60,7 @@ const Account = ({
   withKeyType = true,
   renderLeftChildren,
   renderRightChildren,
+  renderBadgesEndChildren,
   renderExtraBadges,
   inverseInteractionColors = false,
   options = {
@@ -86,6 +87,11 @@ const Account = ({
   /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
   renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
+  /**
+   * Rendered at the end of the badges row, centered under the last action, e.g. the arrow that
+   * opens the details of a key, so it does not crowd the copy button on mobile
+   */
+  renderBadgesEndChildren?: () => React.ReactNode
   /** Rendered after the other badges, e.g. the networks a key is a Safe owner on */
   renderExtraBadges?: () => React.ReactNode
   options?: {
@@ -514,7 +520,16 @@ const Account = ({
             <>
               {/* A view rather than a border, as per-side borders can leave stray lines on native */}
               <View style={styles.separator} />
-              {badges}
+              {renderBadgesEndChildren ? (
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <View style={flexbox.flex1}>{badges}</View>
+                  <View style={[flexbox.alignCenter, { width: ACTION_ICON_SIZE }]}>
+                    {renderBadgesEndChildren()}
+                  </View>
+                </View>
+              ) : (
+                badges
+              )}
             </>
           )}
         </View>
