@@ -20,6 +20,13 @@ const useManageApp = (dapp: Dapp) => {
     [dispatch, dapp.id, dapp.url]
   )
 
+  const onDisconnectWcSession = useCallback(
+    (topic: string) => {
+      dispatch({ type: 'DISCONNECT_WC_SESSION', params: { topic } })
+    },
+    [dispatch]
+  )
+
   const onToggleTrust = useCallback(() => {
     if (dapp.isTrustedByUser) {
       untrustDapp(dapp.id)
@@ -45,6 +52,7 @@ const useManageApp = (dapp: Dapp) => {
   return {
     networks,
     onDisconnect,
+    onDisconnectWcSession,
     onSelectNetwork,
     onToggleTrust
   }
