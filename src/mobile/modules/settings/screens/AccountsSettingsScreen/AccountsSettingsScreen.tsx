@@ -11,7 +11,7 @@ import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import Search from '@common/components/Search'
@@ -344,15 +344,6 @@ const AccountsSettingsScreen = () => {
                 isWeb && spacings.mbLg
               ]}
             >
-              {!isMobile && (
-                <PanelBackButton
-                  onPress={() => {
-                    setAccountToRemove(null)
-                    closeRemoveAccount()
-                  }}
-                  style={spacings.mrSm}
-                />
-              )}
               <PanelTitle
                 title={t('Remove {{ label }}', {
                   label: accountToRemove?.preferences?.label || 'account'
