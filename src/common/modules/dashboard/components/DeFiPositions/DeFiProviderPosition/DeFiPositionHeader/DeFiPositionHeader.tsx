@@ -27,7 +27,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 type Props = Omit<PositionsByProvider, 'type' | 'positionInUSD' | 'positions' | 'source'> & {
   toggleExpanded: () => void
   isExpanded: boolean
-  positionInUSD?: string
+  formattedBalance?: string
   healthRate?: number | null
 }
 
@@ -55,7 +55,7 @@ const DeFiPositionHeader: FC<Props> = ({
   providerName,
   toggleExpanded,
   chainId,
-  positionInUSD,
+  formattedBalance,
   isExpanded,
   healthRate,
   iconUrl,
@@ -174,7 +174,7 @@ const DeFiPositionHeader: FC<Props> = ({
           ellipsizeMode="tail"
           style={spacings.mrSm}
         >
-          {positionInUSD}
+          {formattedBalance}
         </Text>
         <Animated.View style={{ transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }}>
           <DownArrowIcon color={theme.secondaryText} />
