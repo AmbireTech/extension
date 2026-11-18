@@ -131,21 +131,10 @@ const useDecryptRequest = () => {
     })
   }, [userRequest, t, requestsDispatch])
 
-  const {
-    banners: dappSafetyBanners,
-    hasSafetyBanners,
-    holdToProceedButtonType
-  } = useCurrentRequestDappSafety()
-
-  const holdToProceed = useMemo(() => {
-    if (!hasSafetyBanners) return undefined
-
-    return {
-      text: t('Hold to decrypt'),
-      completeText: t('Decrypt'),
-      buttonType: holdToProceedButtonType
-    }
-  }, [hasSafetyBanners, holdToProceedButtonType, t])
+  const { banners: dappSafetyBanners, holdToProceed } = useCurrentRequestDappSafety({
+    text: t('Hold to decrypt'),
+    completeText: t('Decrypt')
+  })
 
   return {
     t,

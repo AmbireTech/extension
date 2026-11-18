@@ -259,21 +259,10 @@ const useWatchToken = () => {
     return token && token?.flags && getAndFormatTokenDetails(token, networks)
   }, [temporaryToken, portfolioToken, networks])
 
-  const {
-    banners: dappSafetyBanners,
-    hasSafetyBanners,
-    holdToProceedButtonType
-  } = useCurrentRequestDappSafety()
-
-  const holdToProceed = useMemo(() => {
-    if (!hasSafetyBanners) return undefined
-
-    return {
-      text: t('Hold to add token'),
-      completeText: isLoading ? t('Adding token...') : t('Add token'),
-      buttonType: holdToProceedButtonType
-    }
-  }, [hasSafetyBanners, holdToProceedButtonType, isLoading, t])
+  const { banners: dappSafetyBanners, holdToProceed } = useCurrentRequestDappSafety({
+    text: t('Hold to add token'),
+    completeText: isLoading ? t('Adding token...') : t('Add token')
+  })
 
   return {
     userRequest,

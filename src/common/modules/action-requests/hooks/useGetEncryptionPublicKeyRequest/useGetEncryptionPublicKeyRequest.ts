@@ -77,21 +77,10 @@ const useGetEncryptionPublicKeyRequest = () => {
     })
   }, [userRequest, t, requestsDispatch])
 
-  const {
-    banners: dappSafetyBanners,
-    hasSafetyBanners,
-    holdToProceedButtonType
-  } = useCurrentRequestDappSafety()
-
-  const holdToProceed = useMemo(() => {
-    if (!hasSafetyBanners) return undefined
-
-    return {
-      text: t('Hold to provide'),
-      completeText: t('Provide'),
-      buttonType: holdToProceedButtonType
-    }
-  }, [hasSafetyBanners, holdToProceedButtonType, t])
+  const { banners: dappSafetyBanners, holdToProceed } = useCurrentRequestDappSafety({
+    text: t('Hold to provide'),
+    completeText: t('Provide')
+  })
 
   return {
     t,

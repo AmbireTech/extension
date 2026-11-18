@@ -35,11 +35,7 @@ type Props = {
    * Replaces the resolve button with a hold-to-proceed one, so the request can't be approved by
    * accident - e.g. when the scam checker flags the app behind it
    */
-  holdToProceed?: {
-    text: string
-    completeText?: string
-    buttonType: HoldToProceedButtonProps['buttonType']
-  }
+  holdToProceed?: Pick<HoldToProceedButtonProps, 'text' | 'completeText' | 'buttonType'>
   /** Optional content rendered above the footer buttons (e.g. view-only alert) */
   children?: React.ReactNode
 }

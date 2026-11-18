@@ -328,28 +328,19 @@ const useAddOrUpdateNetwork = () => {
     return 'add'
   }, [isRpcUpdateRequested, networkAlreadyAdded, userRequest])
 
-  const {
-    banners: dappSafetyBanners,
-    hasSafetyBanners,
-    holdToProceedButtonType
-  } = useCurrentRequestDappSafety()
-
-  const holdToProceed = useMemo(() => {
-    if (!hasSafetyBanners) return undefined
+  const holdToProceedTexts = useMemo(() => {
     if (view === 'update') {
-      return {
-        text: t('Hold to update network'),
-        completeText: t('Update network'),
-        buttonType: holdToProceedButtonType
-      }
+      return { text: t('Hold to update network'), completeText: t('Update network') }
     }
 
     return {
       text: existingNetwork ? t('Hold to enable network') : t('Hold to add network'),
-      completeText: resolveButtonText,
-      buttonType: holdToProceedButtonType
+      completeText: resolveButtonText
     }
-  }, [hasSafetyBanners, view, existingNetwork, resolveButtonText, holdToProceedButtonType, t])
+  }, [view, existingNetwork, resolveButtonText, t])
+
+  const { banners: dappSafetyBanners, holdToProceed } =
+    useCurrentRequestDappSafety(holdToProceedTexts)
 
   return {
     t,

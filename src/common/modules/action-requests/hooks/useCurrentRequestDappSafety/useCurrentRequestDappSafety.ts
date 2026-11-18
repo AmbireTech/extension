@@ -1,3 +1,6 @@
+import { useMemo } from 'react'
+
+import { HoldToProceedButtonProps } from '@common/components/HoldToProceedButton'
 import useController from '@common/hooks/useController'
 import useDappVerificationHoldButtonType from '@common/hooks/useDappVerificationHoldButtonType'
 
@@ -9,19 +12,29 @@ const selectCurrentRequestDappVerificationBanners = (
 
 /**
  * Scam checker warnings for the app behind the current add network, add token, get encryption
- * public key or decrypt request, and the hold-to-proceed button type that goes with them.
+ * public key or decrypt request, and the hold-to-proceed button that goes with them.
+ * `holdToProceed` is set only when there are warnings, so the request can't be approved by accident.
  */
-const useCurrentRequestDappSafety = () => {
+const useCurrentRequestDappSafety = ({
+  text,
+  completeText
+}: Pick<HoldToProceedButtonProps, 'text' | 'completeText'>) => {
   const { state: banners } = useController(
     'RequestsController',
     selectCurrentRequestDappVerificationBanners
   )
   const holdToProceedButtonType = useDappVerificationHoldButtonType(banners)
+  const hasSafetyBanners = !!banners?.length
+
+  const holdToProceed = useMemo(() => {
+    if (!hasSafetyBanners) return undefined
+
+    return { text, completeText, buttonType: holdToProceedButtonType }
+  }, [hasSafetyBanners, text, completeText, holdToProceedButtonType])
 
   return {
     banners: banners || [],
-    hasSafetyBanners: !!banners?.length,
-    holdToProceedButtonType
+    holdToProceed
   }
 }
 
