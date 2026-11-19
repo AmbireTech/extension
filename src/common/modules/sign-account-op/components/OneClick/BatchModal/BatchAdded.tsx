@@ -68,7 +68,8 @@ const BatchAdded: FC<Props> = ({
     <Button
       onPress={onPrimaryButtonPress}
       hasBottomSpacing={false}
-      textStyle={spacings.phTy}
+      // Only where the button is as wide as its label, as it shrinks the label in a 50:50 row
+      textStyle={isWideWebLayout ? spacings.phTy : undefined}
       text={primaryButtonText}
       size={buttonSize}
       style={isWideWebLayout ? {} : flexbox.flex1}
