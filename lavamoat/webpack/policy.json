@@ -615,14 +615,29 @@
         "tslib": true
       }
     },
-    "@kohaku-eth/privacy-pools": {
+    "@kohaku-eth/poseidon-lean-imt": {
       "globals": {
         "URL": true,
+        "Worker": true,
+        "navigator.hardwareConcurrency": true
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>@kohaku-eth/poseidon": true
+      }
+    },
+    "@kohaku-eth/privacy-pools": {
+      "globals": {
+        "AbortController": true,
+        "URL": true,
+        "Worker": true,
+        "clearTimeout": true,
         "console.error": true,
         "console.group": true,
         "console.groupEnd": true,
         "console.log": true,
-        "console.warn": true
+        "console.warn": true,
+        "crypto.getRandomValues": true,
+        "setTimeout": true
       },
       "meta": {
         "webpack-optimization": [
@@ -633,11 +648,11 @@
       "packages": {
         "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits": true,
         "@kohaku-eth/privacy-pools>@kohaku-eth/plugins": true,
+        "@kohaku-eth/poseidon-lean-imt": true,
         "@kohaku-eth/privacy-pools>@kohaku-eth/poseidon": true,
         "@kohaku-eth/privacy-pools>@kohaku-eth/provider": true,
         "@kohaku-eth/privacy-pools>@reduxjs/toolkit": true,
         "@kohaku-eth/privacy-pools>@saga-sync/client": true,
-        "@kohaku-eth/privacy-pools>@zk-kit/lean-imt": true,
         "ox>abitype": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "ethers": true,
@@ -1195,22 +1210,12 @@
         "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub>@zk-kit/utils": true
       }
     },
-    "@kohaku-eth/privacy-pools>@zk-kit/lean-imt": {
-      "packages": {
-        "@kohaku-eth/privacy-pools>@zk-kit/lean-imt>@zk-kit/utils": true
-      }
-    },
     "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/poseidon-cipher": {
       "packages": {
         "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub": true
       }
     },
     "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub>@zk-kit/utils": {
-      "packages": {
-        "buffer": true
-      }
-    },
-    "@kohaku-eth/privacy-pools>@zk-kit/lean-imt>@zk-kit/utils": {
       "packages": {
         "buffer": true
       }

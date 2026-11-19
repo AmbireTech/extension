@@ -20,6 +20,8 @@ const selectHasPrivacyDataFailed = (state: AllControllersMappingType['PrivacyPoo
 type Params = {
   chainId: string
   tokenAddress: string
+  /** The deposit the send spends - see `PrivacyPoolsSendableDeposit.number`. */
+  depositNumber: number
   /** 0 before the user enters a valid amount, which still checks the recipient. */
   amount: bigint
   /** Null before the user enters a valid one. */
@@ -66,6 +68,7 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
   )
   const chainId = params?.chainId
   const tokenAddress = params?.tokenAddress
+  const depositNumber = params?.depositNumber
   const amount = params?.amount
   const recipient = params?.recipient ?? null
   // Pool numbers come with the deposits the check needs
@@ -73,20 +76,20 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
     !!chainId && !!tokenAddress && !!poolStats?.[chainId]?.byToken[tokenAddress.toLowerCase()]
 
   useEffect(() => {
-    if (!chainId || !tokenAddress || amount === undefined) return
+    if (!chainId || !tokenAddress || depositNumber === undefined || amount === undefined) return
 
     const timeout = setTimeout(() => {
       dispatch({
         type: 'method',
         params: {
           method: 'checkWithdrawalPrivacy',
-          args: [{ chainId, tokenAddress, amount, recipient }]
+          args: [{ chainId, tokenAddress, depositNumber, amount, recipient }]
         }
       })
     }, CHECK_DEBOUNCE_MS)
 
     return () => clearTimeout(timeout)
-  }, [amount, chainId, dispatch, isPoolRead, recipient, tokenAddress])
+  }, [amount, chainId, depositNumber, dispatch, isPoolRead, recipient, tokenAddress])
 
   const hasCheckFailed = !!chainId && !!hasPrivacyDataFailed?.[chainId]
   const retryCheck = useCallback(() => {
@@ -96,12 +99,14 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
   }, [chainId, dispatch])
 
   const checkResult = useMemo((): CheckResult => {
-    const isSameToken =
+    // The deposit too: whom a send gives away depends on who made its deposit
+    const isSameDeposit =
       !!check &&
       check.chainId === chainId &&
       !!tokenAddress &&
-      isSameAddress(check.tokenAddress, tokenAddress)
-    if (!isSameToken) return NOT_CHECKED
+      isSameAddress(check.tokenAddress, tokenAddress) &&
+      check.depositNumber === depositNumber
+    if (!isSameDeposit) return NOT_CHECKED
 
     const isSameRecipient = isSameAddress(check.recipient, recipient)
     const isSameSend = isSameRecipient && check.amount === amount
@@ -110,7 +115,7 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
       privacy: isSameSend ? check.privacy : null,
       recipientPrivacy: isSameRecipient ? check.privacy : null
     }
-  }, [amount, chainId, check, recipient, tokenAddress])
+  }, [amount, chainId, check, depositNumber, recipient, tokenAddress])
 
   return useMemo(
     () => ({ ...checkResult, hasCheckFailed, retryCheck }),

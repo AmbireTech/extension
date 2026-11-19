@@ -43,7 +43,8 @@ import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import {
   CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS,
-  CULTURE_CONTEXT_INTEGRATION_NAME
+  CULTURE_CONTEXT_INTEGRATION_NAME,
+  PRIVACY_POOLS_CONTROLLER_NAME
 } from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
@@ -102,8 +103,8 @@ import {
 } from '@web/extension-services/messengers'
 import {
   canUseOffscreenProver,
-  createOffscreenProverFactory
-} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
+  createOffscreenPrivacyPools
+} from '@web/extension-services/privacy-pools-prover/offscreenPrivacyPools'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
 import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
@@ -569,6 +570,19 @@ const init = async () => {
 
   // Copied at build time and served same-origin - see webpack/extension.js
   const privacyPoolsCircuitsBaseUrl = browser.runtime.getURL('privacy-pools-circuits/')
+  // On Chrome, proofs and large trees go to an offscreen document using every core; elsewhere or if
+  // it fails, they stay right here
+  const privacyPoolsOffscreen = canUseOffscreenProver()
+    ? createOffscreenPrivacyPools({
+        fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
+        // Tagged as the controller's, so the Privacy Pools strip applies even when a regular
+        // account builds trees for a deposit
+        onError: (error) =>
+          captureBackgroundException(error, {
+            extra: { controllerName: PRIVACY_POOLS_CONTROLLER_NAME }
+          })
+      })
+    : undefined
 
   mainCtrl = new MainController({
     eventEmitterRegistry,
@@ -577,13 +591,8 @@ const init = async () => {
     storageAPI: storage,
     fetch: fetchWithAnalytics,
     privacyPoolsCircuitsBaseUrl,
-    // On Chrome, in an offscreen document using every core; elsewhere or if it fails, right here
-    privacyPoolsProverFactory: canUseOffscreenProver()
-      ? createOffscreenProverFactory({
-          fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
-          onError: (error) => captureBackgroundException(error)
-        })
-      : undefined,
+    privacyPoolsProverFactory: privacyPoolsOffscreen?.proverFactory,
+    privacyPoolsMerkleTreeBuilder: privacyPoolsOffscreen?.merkleTreeBuilder,
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
