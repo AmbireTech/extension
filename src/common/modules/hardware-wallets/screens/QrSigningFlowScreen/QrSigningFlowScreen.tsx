@@ -66,6 +66,9 @@ const QrSigningFlowScreen = ({
     else close()
   }, [open, close, isVisible])
 
+  // Before a step starts there is nothing to act on, so the sheet itself is the way out
+  const isClosable = !request || step === 'idle'
+
   const title = step === 'scan-response' ? t('Scan QR response') : t('Sign with QR wallet')
 
   const handleOnRejectPressed = useCallback(() => {
@@ -125,7 +128,8 @@ const QrSigningFlowScreen = ({
       autoOpen={isVisible}
       type={!isTab ? 'bottom-sheet' : 'modal'}
       withBackdropBlur={false}
-      shouldBeClosableOnDrag={false}
+      shouldBeClosableOnDrag={isClosable}
+      closeBottomSheet={isClosable ? close : undefined}
       FooterComponent={footerComponent}
       containerInnerWrapperStyles={isWeb && !withMobileLayout ? flexbox.flex1 : undefined}
       scrollViewProps={
