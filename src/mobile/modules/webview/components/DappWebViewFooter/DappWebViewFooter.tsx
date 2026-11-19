@@ -51,10 +51,11 @@ const DappWebViewFooter: React.FC<Props> = ({
 
   const url = useWatch({ control: headerControl, name: 'search' })
 
-  // The footer belongs to the in-app browser, so "connected" must mean connected via the
-  // injected channel specifically - not `isConnected`, which is true for any source (e.g. a
-  // dapp connected only through WalletConnect should still show as not connected here).
-  const isConnectedViaInjected = !!currentDapp?.connectedSources?.includes('injected')
+  // Only the in-app browser's own channels count: the injected provider and WalletConnect paired
+  // from here. A session paired elsewhere (e.g. a computer) is invisible to this page.
+  const isConnectedInInAppBrowser =
+    !!currentDapp?.connectedSources?.includes('injected') ||
+    !!currentDapp?.connectedSources?.includes('wc-in-app')
 
   const handleNavigateToApps = useCallback(() => {
     // If we navigated here straight from the apps catalog (the typical flow),
@@ -148,7 +149,7 @@ const DappWebViewFooter: React.FC<Props> = ({
                       : theme.primaryBackground
                 }}
               >
-                {!isConnectedViaInjected && (
+                {!isConnectedInInAppBrowser && (
                   <NotConnected
                     width={12}
                     height={12}
@@ -157,7 +158,7 @@ const DappWebViewFooter: React.FC<Props> = ({
                 )}
               </View>
 
-              {isConnectedViaInjected && currentDapp.chainId && (
+              {isConnectedInInAppBrowser && currentDapp.chainId && (
                 <View
                   style={{
                     position: 'absolute',

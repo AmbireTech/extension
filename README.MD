@@ -459,6 +459,10 @@ OTA bundles are signed (RS256), so a tampered bundle cannot reach a device: the 
 
 Once an OTA is downloaded, the app shows an "Update Available" banner. The active OTA version and build are listed in Settings - About.
 
+Images `require`-d from JS travel with every OTA. That's why the bundled token and network icons are part of the native app instead: Xcode and Gradle package the icon folders of the [`@ambire/token-and-network-icons`](https://github.com/AmbireTech/token-and-network-icons) package directly, and the JS only references the files by path. New or updated icons therefore reach mobile users with the next native build, not with an OTA. To update them, refresh and publish the icons in that repo, then bump the package's version here.
+
+**Don't promote an OTA to app versions released before the bundled icons.** Those builds don't have the icon files, so every network icon falls back to its first letter, and token icons load from the internet again. Release a native build for every update that changes the icons package, and only target OTAs at app versions that include it.
+
 #### Two copies of the webview worker bundle
 
 Every build has the webview worker bundle (the `background`) baked into the app binary. An OTA can only replace JS, never a file inside the binary, so that copy on its own would keep the wallet's core logic frozen at whatever the store build shipped.

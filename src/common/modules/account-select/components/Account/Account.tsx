@@ -3,6 +3,7 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from '
 import { StyleSheet, View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import AccountAddress from '@common/components/AccountAddress'
@@ -60,6 +61,7 @@ const Account = ({
   withKeyType = true,
   renderLeftChildren,
   renderRightChildren,
+  renderBadgesEndChildren,
   renderExtraBadges,
   inverseInteractionColors = false,
   options = {
@@ -74,6 +76,7 @@ const Account = ({
   isOnSecondaryBackground = false,
   withBadges = true,
   withAccountStatus = true,
+  badgeKeys,
   onExtraHeightChange
 }: {
   account: AccountInterface
@@ -86,6 +89,11 @@ const Account = ({
   /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
   renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
+  /**
+   * Rendered at the end of the badges row, centered under the last action, e.g. the arrow that
+   * opens the details of a key, so it does not crowd the copy button on mobile
+   */
+  renderBadgesEndChildren?: () => React.ReactNode
   /** Rendered after the other badges, e.g. the networks a key is a Safe owner on */
   renderExtraBadges?: () => React.ReactNode
   options?: {
@@ -115,6 +123,11 @@ const Account = ({
    * it leaves out this account's own pending requests and the chains its Safe is deployed on
    */
   withAccountStatus?: boolean
+  /**
+   * The keys the key badge names, in place of the account's own, e.g. the one key a row of the
+   * keys list stands for, as other kinds of keys can share its address
+   */
+  badgeKeys?: Pick<Key, 'type'>[]
   /**
    * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is, mostly because
    * its badges wrapped, so a list that lays its rows out by height can make room for it. Such a
@@ -410,7 +423,7 @@ const Account = ({
             </View>
           </Badge>
         ) : (
-          <AccountKeysBadge account={account} accountKeys={accountKeys} />
+          <AccountKeysBadge account={account} accountKeys={badgeKeys || accountKeys} />
         ))}
       <AccountBadges
         accountData={account}
@@ -514,7 +527,16 @@ const Account = ({
             <>
               {/* A view rather than a border, as per-side borders can leave stray lines on native */}
               <View style={styles.separator} />
-              {badges}
+              {renderBadgesEndChildren ? (
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <View style={flexbox.flex1}>{badges}</View>
+                  <View style={[flexbox.alignCenter, { width: ACTION_ICON_SIZE }]}>
+                    {renderBadgesEndChildren()}
+                  </View>
+                </View>
+              ) : (
+                badges
+              )}
             </>
           )}
         </View>
