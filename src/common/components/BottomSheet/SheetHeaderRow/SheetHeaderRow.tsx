@@ -1,13 +1,12 @@
 import { Portal } from '@gorhom/portal'
-import React, { FC, useCallback, useLayoutEffect, useMemo, useState } from 'react'
-import { LayoutChangeEvent, StyleProp, View, ViewStyle } from 'react-native'
+import React, { FC, useLayoutEffect, useMemo, useState } from 'react'
+import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { useBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import { bottomSheetCloseEventStream } from '@common/components/BottomSheet/bottomSheetEventStream'
 import SheetHeaderButton, {
   SHEET_HEADER_BUTTON_SIZE
 } from '@common/components/BottomSheet/SheetHeaderButton'
-import { isWeb } from '@common/config/env'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -28,10 +27,10 @@ const closeAllSheets = () => bottomSheetCloseEventStream.next()
 const SIDE_SLOT_STYLE = { minWidth: SHEET_HEADER_BUTTON_SIZE, flexShrink: 0 }
 
 /**
- * The header row of a native bottom sheet: ‹ back on the left when there is somewhere to
+ * The header row of a bottom sheet: ‹ back on the left when there is somewhere to
  * go back to, the X on the right and the title centered between them. The X of a nested
  * sheet closes every sheet. It renders in the sheet's fixed header, above the scrolling
- * content. On web, and outside a sheet, only the title is rendered, in place.
+ * content. Outside a sheet only the title is rendered, in place.
  */
 const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) => {
   const {
@@ -42,12 +41,6 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
     isHeaderFloating,
     setIsHeaderRowTitleless
   } = useBottomSheet()
-  // The left side is as wide as the right one, so the title stays centered
-  const [rightSideWidth, setRightSideWidth] = useState(SHEET_HEADER_BUTTON_SIZE)
-  const handleRightSideLayout = useCallback(
-    (e: LayoutChangeEvent) => setRightSideWidth(e.nativeEvent.layout.width),
-    []
-  )
   const hasTitle = !!children
   const handleBack = onBack || (isNested ? close : undefined)
   // A title that wraps while centered moves left over the space the centering kept free,
@@ -76,7 +69,7 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
     return () => setIsHeaderRowTitleless(false)
   }, [hasTitle, headerHostName, setIsHeaderRowTitleless])
 
-  if (isWeb || !isInsideBottomSheet) return <>{children}</>
+  if (!isInsideBottomSheet) return <>{children}</>
 
   // A sheet the user can't close gets no X, nested or not
   const handleClose = close && (isNested ? closeAllSheets : close)
@@ -97,8 +90,10 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
         isHeaderFloating && spacings.mb0
       ]}
     >
+      {/* As wide as the X, which centers the title. Not as wide as the X with `rightContent`, */}
+      {/* as mirroring a wide action would leave the title no room on a narrow sheet */}
       {hasSides && !isTitleOnLeft && (
-        <View pointerEvents="box-none" style={[SIDE_SLOT_STYLE, { minWidth: rightSideWidth }]}>
+        <View pointerEvents="box-none" style={SIDE_SLOT_STYLE}>
           {!!handleBack && <SheetHeaderButton type="back" onPress={handleBack} />}
         </View>
       )}
@@ -126,7 +121,6 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
             flexbox.alignCenter,
             { columnGap: SPACING_TY }
           ]}
-          onLayout={handleRightSideLayout}
         >
           {rightContent}
           {!!handleClose && <SheetHeaderButton type="close" onPress={handleClose} />}

@@ -177,7 +177,29 @@ function debounceFrontEndEventUpdatesOnSameTick(
   return 'EMITTED'
 }
 
+/** The names of the registered controllers, as of the last registry change. */
+let registeredCtrlNames = new Set<string>()
+
+/**
+ * Tells the UI that the controllers removed from the registry are gone, so it doesn't keep
+ * their last state: a removed controller's pending update is dropped (see `sendUpdate`), and
+ * a new one with the same name would show it until it streams its own, e.g. the previous
+ * transaction's signing state on the next sign screen. Checked on the next tick, as a
+ * controller replaced by a new one is removed before the new one is added.
+ */
+const clearRemovedCtrlStatesOnNextTick = () => {
+  setTimeout(() => {
+    const currentNames = new Set(eventEmitterRegistry.values().map((ctrl) => ctrl.name))
+    registeredCtrlNames.forEach((ctrlName) => {
+      if (!currentNames.has(ctrlName)) emitCtrlUpdate(ctrlName, null)
+    })
+    registeredCtrlNames = currentNames
+  }, 0)
+}
+
 const eventEmitterRegistry = new EventEmitterRegistryController(() => {
+  clearRemovedCtrlStatesOnNextTick()
+
   eventEmitterRegistry.values().forEach((ctrl: any) => {
     const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('mobile')
     if (!hasOnUpdateInitialized) {

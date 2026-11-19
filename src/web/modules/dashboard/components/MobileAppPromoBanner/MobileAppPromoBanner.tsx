@@ -1,9 +1,8 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import { useModalize } from 'react-native-modalize'
-
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { isMobile } from '@common/config/env'
 import { AnimatedPressable, DURATIONS, useMultiHover } from '@common/hooks/useHover'
 import useController from '@common/hooks/useController'
@@ -22,7 +21,7 @@ const MobileAppPromoBanner = () => {
     'SelectedAccountController',
     selectMobileInviteKey
   )
-  const { ref: sheetRef, open: openInfoSheet, close: closeInfoSheet } = useModalize()
+  const { ref: sheetRef, open: openInfoSheet, close: closeInfoSheet } = useSheetRef()
 
   // `container` itself is the hover box, and its `width` is what's animated (not an inner
   // layer) - collapsed, it's exactly PEEK_WIDTH, so only the actually visible sliver is

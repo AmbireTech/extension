@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Linking, Platform, RefreshControl, ScrollView, View } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
-import { useModalize } from 'react-native-modalize'
 import { WebView, WebViewNavigation } from 'react-native-webview'
 import { useLocation } from 'react-router-native'
 
@@ -17,6 +16,7 @@ import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import { isAndroid, isiOS } from '@common/config/env'
@@ -354,7 +354,7 @@ const DappWebViewScreen = () => {
   }, [initialUrl])
 
   // Bottom Sheet & Search Form State
-  const { ref: searchModalRef, open: openSearchModal, close: closeSearchModal } = useModalize()
+  const { ref: searchModalRef, open: openSearchModal, close: closeSearchModal } = useSheetRef()
   const { control: headerControl, setValue: setHeaderValue } = useForm({
     defaultValues: { search: initialUrl }
   })

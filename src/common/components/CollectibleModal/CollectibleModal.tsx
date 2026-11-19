@@ -10,7 +10,6 @@ import Button from '@common/components/Button'
 import NftImage from '@common/components/NftImage'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
-import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -56,7 +55,6 @@ const CollectibleModal = ({
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
-  const { isNarrowWebLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { navigate } = useNavigation()
   // No actions on a collectible that is only being previewed (in a simulation)
@@ -149,13 +147,7 @@ const CollectibleModal = ({
     return (
       <>
         <SheetHeaderRow>
-          <Text
-            fontSize={isTab ? 20 : 18}
-            weight="semiBold"
-            numberOfLines={2}
-            selectable
-            style={isWeb && spacings.mbMd}
-          >
+          <Text fontSize={isTab ? 20 : 18} weight="semiBold" numberOfLines={2} selectable>
             {name || t('Unknown NFT')}
           </Text>
         </SheetHeaderRow>
@@ -174,12 +166,9 @@ const CollectibleModal = ({
           <Row title={t('Chain')} text={networkData?.name || t('Unknown network')} />
           <Row title={t('Last price')} text={lastPrice || '$-'} noMb />
         </View>
-        {/* Natively they're the sheet's footer, always in view */}
-        {isWeb && actions}
       </>
     )
   }, [
-    actions,
     networks,
     selectedCollectible,
     styles.details,
@@ -189,40 +178,23 @@ const CollectibleModal = ({
     theme.secondaryBackground
   ])
 
+  // The actions are the sheet's footer, always in view
   const footer = useMemo(
-    () => (!isWeb && !!actions ? <View style={spacings.ptSm}>{actions}</View> : undefined),
+    () => (actions ? <View style={spacings.ptSm}>{actions}</View> : undefined),
     [actions]
   )
-
-  if (!isWeb) {
-    return (
-      <BottomSheet
-        id="collectible-modal"
-        sheetRef={modalRef}
-        closeBottomSheet={handleClose}
-        adjustToContentHeight
-        FooterComponent={footer}
-      >
-        {modalContent}
-      </BottomSheet>
-    )
-  }
 
   return (
     <BottomSheet
       id="collectible-modal"
-      type="modal"
       sheetRef={modalRef}
       closeBottomSheet={handleClose}
-      style={isNarrowWebLayout ? styles.sidePanelSheet : styles.modal}
-      autoWidth={!isNarrowWebLayout}
-      containerInnerWrapperStyles={isNarrowWebLayout ? flexbox.alignCenter : undefined}
+      adjustToContentHeight
+      FooterComponent={footer}
+      // As wide as the image in a centered card on web
+      style={isWeb ? styles.card : undefined}
     >
-      {isNarrowWebLayout ? (
-        <View style={styles.sidePanelContent}>{modalContent}</View>
-      ) : (
-        modalContent
-      )}
+      {modalContent}
     </BottomSheet>
   )
 }

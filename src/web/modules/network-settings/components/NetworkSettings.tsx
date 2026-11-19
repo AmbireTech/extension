@@ -1,11 +1,11 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import AddIcon from '@common/assets/svg/AddIcon'
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import NetworkDetails from '@common/components/NetworkDetails'
@@ -23,11 +23,14 @@ import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { openInTab } from '@common/utils/links'
+import { PortalHost } from '@gorhom/portal'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
 
 import BatchingControlOption from './BatchingControlOption'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
+
+const FOOTER_HOST_NAME = 'add-network-footer'
 
 const selectAllNetworks = (state: AllControllersMappingType['NetworksController']) =>
   state.allNetworks
@@ -36,7 +39,7 @@ const NetworksSettings = () => {
   const { t } = useTranslation()
   const { search: searchParams, pathname } = useRoute()
   const { control, watch } = useForm({ defaultValues: { search: '' } })
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { state: allNetworks } = useController('NetworksController', selectAllNetworks)
   const {
     state: { providers }
@@ -225,8 +228,14 @@ const NetworksSettings = () => {
         containerInnerWrapperStyles={{ flex: 1 }}
         style={{ ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 }}
         autoOpen={shouldOpenBottomSheet}
+        // The form's buttons portal into it, so they stay in view while the form scrolls
+        FooterComponent={<PortalHost name={FOOTER_HOST_NAME} />}
       >
-        <NetworkForm onCancel={closeBottomSheet} onSaved={closeBottomSheet} />
+        <NetworkForm
+          onCancel={closeBottomSheet}
+          onSaved={closeBottomSheet}
+          footerHostName={FOOTER_HOST_NAME}
+        />
       </BottomSheet>
     </>
   )

@@ -2,7 +2,6 @@ import type { FC } from 'react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { SwapAndBridgeFormStatus } from '@ambire-common/libs/swapAndBridge/constants'
@@ -10,6 +9,7 @@ import { getIsBridgeRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridg
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
@@ -60,7 +60,7 @@ const RouteInfo: FC<Props> = ({
     ref: feeInfoSheetRef,
     open: openFeeInfoBottomSheet,
     close: closeFeeInfoBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const proceededRouteIdRef = useRef<string | null>(null)
   const selectedRouteId = quote?.selectedRoute?.routeId
   const displayedFeePercent =

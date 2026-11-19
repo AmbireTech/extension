@@ -86,8 +86,6 @@ const ScrollableWrapper = ({
   const insets = useSafeAreaInsets()
   const internalRef = useRef<any>(null)
   const [isAtScreenBottom, setIsAtScreenBottom] = useState<boolean>(isMobile)
-  const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [contentHeight, setContentHeight] = useState(0)
 
   const setRefs = useCallback(
     (node: any) => {
@@ -98,60 +96,41 @@ const ScrollableWrapper = ({
     [wrapperRef]
   )
 
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      if (isWeb) setWrapperHeight(event.nativeEvent.layout.height)
-      if (!isMobile) return
-      const node = internalRef.current
-      const measurable =
-        node && typeof node.measureInWindow === 'function'
-          ? node
-          : node && typeof node.getNativeScrollRef === 'function'
-            ? node.getNativeScrollRef()
-            : node && typeof node.getScrollResponder === 'function'
-              ? node.getScrollResponder()
-              : null
+  const handleLayout = useCallback(() => {
+    if (!isMobile) return
+    const node = internalRef.current
+    const measurable =
+      node && typeof node.measureInWindow === 'function'
+        ? node
+        : node && typeof node.getNativeScrollRef === 'function'
+          ? node.getNativeScrollRef()
+          : node && typeof node.getScrollResponder === 'function'
+            ? node.getScrollResponder()
+            : null
 
-      if (!measurable || typeof measurable.measureInWindow !== 'function') return
+    if (!measurable || typeof measurable.measureInWindow !== 'function') return
 
-      measurable.measureInWindow((_x: number, y: number, _w: number, height: number) => {
-        const windowHeight = Dimensions.get('window').height
-        const atBottom = y + height >= windowHeight - insets.bottom - 1
-        setIsAtScreenBottom(atBottom)
-      })
-    },
-    [insets.bottom]
-  )
+    measurable.measureInWindow((_x: number, y: number, _w: number, height: number) => {
+      const windowHeight = Dimensions.get('window').height
+      const atBottom = y + height >= windowHeight - insets.bottom - 1
+      setIsAtScreenBottom(atBottom)
+    })
+  }, [insets.bottom])
 
-  // The 1px tolerance ignores sub-pixel differences when the content only fills the wrapper
-  const hasVerticalScrollbar =
-    isWeb &&
-    !!showsVerticalScrollIndicator &&
-    !(rest as ScrollViewProps).horizontal &&
-    contentHeight - wrapperHeight > 1
   const shouldApplyBottomInset = isMobile && isAtScreenBottom
   const bottomInsetValue = insets.bottom === 0 ? SPACING_SM : insets.bottom
   const scrollableWrapperStyles = [styles.wrapper, ...(Array.isArray(style) ? style : [style])]
   const scrollableWrapperContentContainerStyles: StyleProp<ViewStyle> = [
     { paddingBottom: shouldApplyBottomInset ? bottomInsetValue : 0 },
     styles.contentContainerStyle,
-    hasVerticalScrollbar && styles.contentContainerWithScrollbar,
     ...(Array.isArray(contentContainerStyle) ? contentContainerStyle : [contentContainerStyle]),
     isWeb ? ({ overflowY: 'auto' } as any) : null
   ]
 
-  const {
-    onLayout: consumerOnLayout,
-    onContentSizeChange: consumerOnContentSizeChange,
-    ...restWithoutOnLayout
-  } = rest as any
+  const { onLayout: consumerOnLayout, ...restWithoutOnLayout } = rest as any
   const composedOnLayout = (event: LayoutChangeEvent) => {
-    handleLayout(event)
+    handleLayout()
     if (consumerOnLayout) consumerOnLayout(event)
-  }
-  const composedOnContentSizeChange = (width: number, height: number) => {
-    if (isWeb) setContentHeight(height)
-    if (consumerOnContentSizeChange) consumerOnContentSizeChange(width, height)
   }
 
   if (type === WRAPPER_TYPES.DRAGGABLE_FLAT_LIST) {
@@ -171,7 +150,6 @@ const ScrollableWrapper = ({
         keyboardShouldPersistTaps={keyboardShouldPersistTaps || 'handled'}
         keyboardDismissMode={keyboardDismissMode || 'none'}
         onLayout={composedOnLayout}
-        onContentSizeChange={composedOnContentSizeChange}
         {...restWithoutOnLayout}
       />
     )
@@ -192,7 +170,6 @@ const ScrollableWrapper = ({
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
         onLayout={composedOnLayout}
-        onContentSizeChange={composedOnContentSizeChange}
         {...restWithoutOnLayout}
       />
     )
@@ -213,7 +190,6 @@ const ScrollableWrapper = ({
         keyboardDismissMode={keyboardDismissMode || 'none'}
         alwaysBounceVertical={false}
         onLayout={composedOnLayout}
-        onContentSizeChange={composedOnContentSizeChange}
         {...restWithoutOnLayout}
       />
     )
@@ -234,7 +210,6 @@ const ScrollableWrapper = ({
       keyboardDismissMode={keyboardDismissMode || 'none'}
       alwaysBounceVertical={false}
       onLayout={composedOnLayout}
-      onContentSizeChange={composedOnContentSizeChange}
       {...restWithoutOnLayout}
     >
       {children}

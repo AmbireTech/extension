@@ -1,6 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { Image, StyleSheet, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import QRCode from 'react-native-qrcode-svg'
 
 import { APP_DATA_SYNC_UR_TYPE } from '@ambire-common/libs/appDataSync/appDataSync'
@@ -9,6 +8,7 @@ import AppStoreBadgeIcon from '@common/assets/svg/AppStoreBadgeIcon'
 import GooglePlayBadgeIcon from '@common/assets/svg/GooglePlayBadgeIcon'
 import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Panel from '@common/components/Panel'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
@@ -75,7 +75,7 @@ const ExportToMobileScreen = () => {
     isPreparing,
     qrCbor
   } = useAppDataSyncExport()
-  const { ref: sheetRef, open: openSelectSheet, close: closeSelectSheet } = useModalize()
+  const { ref: sheetRef, open: openSelectSheet, close: closeSelectSheet } = useSheetRef()
   const [qrSize, setQrSize] = useState(0)
 
   // The QR code is square, so it takes the smaller of the two sides its container got. The

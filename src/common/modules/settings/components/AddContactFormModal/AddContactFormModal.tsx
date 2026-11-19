@@ -2,7 +2,6 @@ import React, { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
@@ -10,8 +9,8 @@ import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddressInput from '@common/components/AddressInput'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
-import DualChoiceModal from '@common/components/DualChoiceModal'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -28,7 +27,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 type Props = {
   id: string
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
 }
 
@@ -202,49 +201,32 @@ const AddContactFormModal = ({ id, sheetRef, closeBottomSheet }: Props) => {
     <BottomSheet
       id={id}
       sheetRef={sheetRef}
-      closeBottomSheet={closeBottomSheet}
+      closeBottomSheet={handleClose}
       type={isWeb ? 'modal' : 'bottom-sheet'}
-      style={isWeb ? { ...spacings.ph0, ...spacings.pv0 } : {}}
     >
-      {isWeb ? (
-        <DualChoiceModal
-          title={t('Add new contact')}
-          style={flexbox.flex1}
-          description={formFields}
-          primaryButtonText={t('+ Add to Address Book')}
-          primaryButtonTestID="add-to-address-book-button"
-          onPrimaryButtonPress={submitForm}
-          secondaryButtonTestID="cancel-add-to-address-book-button"
-          secondaryButtonText={t('Cancel')}
-          onSecondaryButtonPress={handleClose}
-          buttonsContainerStyle={flexbox.justifySpaceBetween}
-          primaryButtonDisabled={!isValid || isSubmitting}
-        />
-      ) : (
-        <View>
-          <SheetHeaderRow style={spacings.mbLg}>
-            <Text weight="medium" fontSize={20} style={text.center}>
-              {t('Add new contact')}
-            </Text>
-          </SheetHeaderRow>
-          {formFields}
-          {/* The sheet's X closes it, so the only button is the full width primary */}
-          <View style={flexbox.directionRow}>
-            <Button
-              testID="add-to-address-book-button"
-              text={t('Add to Address Book')}
-              onPress={submitForm}
-              size="large"
-              childrenPosition="left"
-              hasBottomSpacing={false}
-              disabled={!isValid || isSubmitting}
-              style={{ flexGrow: 1, ...spacings.phSm }}
-            >
-              <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
-            </Button>
-          </View>
+      <View>
+        <SheetHeaderRow style={spacings.mbLg}>
+          <Text weight="medium" fontSize={20} style={text.center}>
+            {t('Add new contact')}
+          </Text>
+        </SheetHeaderRow>
+        {formFields}
+        {/* The sheet's X closes it, so the only button is the full width primary */}
+        <View style={flexbox.directionRow}>
+          <Button
+            testID="add-to-address-book-button"
+            text={t('Add to Address Book')}
+            onPress={submitForm}
+            size="large"
+            childrenPosition="left"
+            hasBottomSpacing={false}
+            disabled={!isValid || isSubmitting}
+            style={{ flexGrow: 1, ...spacings.phSm }}
+          >
+            <AddCircularIcon width={24} height={24} color="#fff" style={spacings.mrTy} />
+          </Button>
         </View>
-      )}
+      </View>
     </BottomSheet>
   )
 }

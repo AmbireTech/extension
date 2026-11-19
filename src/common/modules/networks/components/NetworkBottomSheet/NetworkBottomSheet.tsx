@@ -1,15 +1,14 @@
 import React, { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import i18n from '@common/config/localization/localization'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -28,7 +27,7 @@ export const NO_BLOCK_EXPLORER_AVAILABLE_TOOLTIP = i18n.t(
 )
 
 interface Props {
-  sheetRef: ReturnType<typeof useModalize>['ref']
+  sheetRef: ReturnType<typeof useSheetRef>['ref']
   chainId: bigint | string | null
   closeBottomSheet: () => void
   openBlockExplorer: (url?: string) => void
@@ -58,7 +57,7 @@ const NetworkBottomSheet = ({ sheetRef, chainId, closeBottomSheet, openBlockExpl
       closeBottomSheet={closeBottomSheet}
     >
       <SheetHeaderRow style={spacings.mbLg}>
-        <View style={[styles.item, spacings.pvSm, isWeb ? spacings.mbLg : spacings.mb0]}>
+        <View style={[styles.item, spacings.pvSm, spacings.mb0]}>
           {!!chainId && <NetworkIcon size={28} id={chainId.toString()} />}
           <Text fontSize={16} weight="medium" style={spacings.mlTy}>
             {networkData?.name || t('Unknown Network')}

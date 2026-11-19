@@ -7,7 +7,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import ActiveRouteCard from '@common/modules/swap-and-bridge/components/ActiveRouteCard'
 import spacings from '@common/styles/spacings'
@@ -93,18 +93,12 @@ const DashboardBannerBottomSheet: FC<Props> = ({
               }
             })
           }
-          secondaryButtonText={t('Cancel')}
-          onSecondaryButtonPress={closeBottomSheet}
         />
       )}
       {sheetKind === BRIDGE_IN_PROGRESS && (
         <View style={[flexbox.flex1, spacings.ptSm]}>
           <SheetHeaderRow style={spacings.mbLg}>
-            <Text
-              fontSize={isMobile ? 20 : 16}
-              weight="medium"
-              style={[isWeb && spacings.mbLg, isMobile && text.center]}
-            >
+            <Text fontSize={isMobile ? 20 : 16} weight="medium" style={text.center}>
               {t('Pending transactions')}
             </Text>
           </SheetHeaderRow>

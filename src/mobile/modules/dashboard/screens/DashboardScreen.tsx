@@ -1,8 +1,8 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import GasTankModal from '@common/components/GasTankModal'
 import { ControllersStateLoadedContext } from '@common/contexts/controllersStateLoadedContext'
 import { useIsScreenSettled } from '@common/contexts/screenFocusContext'
@@ -22,7 +22,7 @@ import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 
 const DashboardScreen = () => {
   const { styles } = useTheme(getStyles)
-  const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useModalize()
+  const { ref: gasTankModalRef, open: openGasTankModal, close: closeGasTankModal } = useSheetRef()
   // The pager starts where the collapsed overview ends and slides over the part that
   // collapses, so a collapse never resizes or redraws anything. Both heights are static.
   const [overviewHeight, setOverviewHeight] = useState(0)

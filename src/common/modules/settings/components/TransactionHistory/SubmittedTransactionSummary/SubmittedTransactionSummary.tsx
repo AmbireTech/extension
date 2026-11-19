@@ -1,8 +1,8 @@
 import React, { Suspense, useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useMultiHover } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
@@ -37,7 +37,7 @@ const SubmittedTransactionSummaryInner = ({
 }: Props) => {
   const { styles, theme } = useTheme(getStyles)
   const { state: networks } = useController('NetworksController', selectNetworks)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
 
   const network: Network | undefined = useMemo(
     () => networks.find((n) => n.chainId === submittedAccountOp.chainId),

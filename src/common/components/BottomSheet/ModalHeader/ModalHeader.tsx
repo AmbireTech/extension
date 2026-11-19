@@ -4,7 +4,7 @@ import { View, ViewStyle } from 'react-native'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import Header from '@common/modules/header/components/Header'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
@@ -33,19 +33,18 @@ const ModalHeader: FC<Props> = ({
   headerTestID
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
-  const isInsideBottomSheet = useIsInsideBottomSheet()
-  // A native sheet already spaces its content below the grabber, the same for every sheet
-  const isInNativeSheet = isInsideBottomSheet && !isWeb
+  // A sheet already spaces its content below the grabber, the same for every sheet
+  const isInSheet = useIsInsideBottomSheet()
   const containerStyle = {
-    ...(isInNativeSheet ? spacings.pt0 : spacings.ptTy),
+    ...(isInSheet ? spacings.pt0 : spacings.ptTy),
     ...spacings.pb0,
     ...spacings.ph0,
     ...spacings.mb0
   }
   const withSideContainers = !!handleClose || !!children
   const showBackButton = ((handleClose && !isMobile) || forceBackButtonOnMobile) && !!handleClose
-  // On web the title sits next to the back arrow instead of being centered
-  const isWebTitleNextToBackButton = showBackButton && !isMobile
+  // On web the title sits next to the back arrow instead of being centered (a sheet draws its own)
+  const isWebTitleNextToBackButton = showBackButton && !isMobile && !isInSheet
   const titlePosition = isWebTitleNextToBackButton ? 'left' : titlePositionProp
   const shouldBalanceCenteredTitle = titlePosition === 'center' && showBackButton && !children
 
@@ -55,9 +54,9 @@ const ModalHeader: FC<Props> = ({
     minHeight: 28
   }
 
-  // Native sheets draw the X (and ‹ back) of the design around a centered title,
+  // Sheets draw the X (and ‹ back) of the design around a centered title,
   // with `children` (right side actions) left of the X
-  if (isInNativeSheet) {
+  if (isInSheet) {
     return (
       <SheetHeaderRow
         onBack={forceBackButtonOnMobile ? handleClose : undefined}

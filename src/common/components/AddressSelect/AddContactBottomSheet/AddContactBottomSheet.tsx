@@ -1,10 +1,10 @@
 import React, { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Modalize } from 'react-native-modalize'
 
 import AddressBookContact from '@common/components/AddressBookContact'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Input from '@common/components/Input'
@@ -17,7 +17,7 @@ import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
   address: string
 }

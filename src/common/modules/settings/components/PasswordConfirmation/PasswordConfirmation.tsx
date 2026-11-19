@@ -11,7 +11,7 @@ import {
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import { DEV_PREFILLED_PASSWORD, isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { CURRENT_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
@@ -27,7 +27,6 @@ import textStyles from '@common/styles/utils/text'
 
 interface Props {
   onPasswordConfirmed: (password: string) => void
-  onBackButtonPress: () => void
   text: string
   title?: string
   onCustomSubmit?: (password: string) => void
@@ -58,7 +57,6 @@ const FOCUS_DELAY = 600
 
 const PasswordConfirmation: React.FC<Props> = ({
   onPasswordConfirmed,
-  onBackButtonPress,
   text,
   title = isMobile ? 'Confirm app password' : 'Confirm extension password',
   onCustomSubmit,
@@ -238,18 +236,17 @@ const PasswordConfirmation: React.FC<Props> = ({
 
   return (
     <View style={flexbox.flex1}>
-      {/* In a native sheet the header row adds the X and spaces the title itself */}
+      {/* In a sheet the header row adds the X and spaces the title itself */}
       <SheetHeaderRow style={spacings.mbLg}>
         <View
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
             common.fullWidth,
-            !(isInsideBottomSheet && !isWeb) && spacings.mbLg
+            !isInsideBottomSheet && spacings.mbLg
           ]}
         >
-          {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
-          <PanelTitle title={panelTitle} style={isWeb ? textStyles.left : textStyles.center} />
+          <PanelTitle title={panelTitle} style={textStyles.center} />
         </View>
       </SheetHeaderRow>
       {isOfferingBiometrics && isUsingBiometrics ? (

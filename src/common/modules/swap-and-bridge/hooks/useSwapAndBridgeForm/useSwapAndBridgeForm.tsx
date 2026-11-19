@@ -1,7 +1,6 @@
 import { getAddress } from 'ethers'
 import { nanoid } from 'nanoid'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useModalize } from 'react-native-modalize'
 import { useLocation } from 'react-router-dom'
 
 import { SwapAmountWarning } from '@ambire-common/consts/safeguards/swapAmountWarnings'
@@ -13,6 +12,7 @@ import {
   getIsTokenEligibleForSwapAndBridge
 } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useGetTokenSelectProps from '@common/hooks/useGetTokenSelectProps'
@@ -110,22 +110,22 @@ const useSwapAndBridgeForm = () => {
   })
   const currentRoute = useLocation()
   const { setSearchParams, navigate } = useNavigation()
-  const { ref: routesModalRef, open: openRoutesModal, close: closeRoutesModal } = useModalize()
+  const { ref: routesModalRef, open: openRoutesModal, close: closeRoutesModal } = useSheetRef()
   const {
     ref: estimationModalRef,
     open: openEstimationModal,
     close: closeEstimationModal
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: priceImpactModalRef,
     open: openPriceImpactModal,
     close: closePriceImpactModal
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: providerSettingsModalRef,
     open: openProviderSettingsModal,
     close: closeProviderSettingsModal
-  } = useModalize()
+  } = useSheetRef()
 
   const closePriceImpactModalWrapped = useCallback(() => {
     setFrozenPriceImpactWarning(null)

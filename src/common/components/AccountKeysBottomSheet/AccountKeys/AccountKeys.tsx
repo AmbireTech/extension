@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
 import { Account } from '@ambire-common/interfaces/account'
@@ -16,8 +15,9 @@ import RemoveKey from '@common/components/AccountKeysBottomSheet/RemoveKey'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ExportKey from '@common/components/ExportKey'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -33,7 +33,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 interface Props {
   account: Account
   openAddAccountBottomSheet?: () => void
-  closeBottomSheet: () => void
   keyIconColor?: string
   showExportImport?: boolean
   /**
@@ -85,7 +84,6 @@ const selectContacts = (state: AllControllersMappingType['AddressBookController'
 const AccountKeys: FC<Props> = ({
   account,
   openAddAccountBottomSheet,
-  closeBottomSheet,
   keyIconColor,
   showExportImport,
   removableKeys,
@@ -116,9 +114,9 @@ const AccountKeys: FC<Props> = ({
     addr: string
     label?: string
   } | null>(null)
-  const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useModalize()
+  const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useSheetRef()
   const [keyToRemove, setKeyToRemove] = useState<{ addr: string; type: Key['type'] } | null>(null)
-  const { ref: sheetRefRemoveKey, open: openRemoveKey, close: closeRemoveKey } = useModalize()
+  const { ref: sheetRefRemoveKey, open: openRemoveKey, close: closeRemoveKey } = useSheetRef()
 
   const usedNetworks = useMemo(() => {
     return account.safeCreation && chainId
@@ -297,21 +295,14 @@ const AccountKeys: FC<Props> = ({
     // a fixed one, see `AccountKeysBottomSheet`
     <View style={isWeb ? { maxHeight: 384, ...(!isFullWidthSheet && flexbox.flex1) } : undefined}>
       <SheetHeaderRow style={spacings.mbLg}>
-        <View
-          style={[
-            flexbox.directionRow,
-            flexbox.alignCenter,
-            isWeb ? spacings.mbLg : common.fullWidth
-          ]}
-        >
-          {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
+        <View style={[flexbox.directionRow, flexbox.alignCenter, common.fullWidth]}>
           <PanelTitle
             title={
               account.safeCreation
                 ? t('{{accName}} owners', { accName: account.preferences.label })
                 : t('{{accName}} keys', { accName: account.preferences.label })
             }
-            style={isWeb ? text.left : text.center}
+            style={text.center}
           />
         </View>
       </SheetHeaderRow>

@@ -1,17 +1,14 @@
 import React, { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
 import NetworkStatusesHeader from './NetworkStatusesHeader'
 import NetworkStatusRow from './NetworkStatusRow'
@@ -20,7 +17,7 @@ import PrivacyPoolsNetworkStatuses from './PrivacyPoolsNetworkStatuses'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
-  sheetRef: ReturnType<typeof useModalize>['ref']
+  sheetRef: ReturnType<typeof useSheetRef>['ref']
   closeBottomSheet: () => void
 }
 
@@ -129,46 +126,21 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     ))
   )
 
-  const title = (
-    <SheetHeaderRow style={spacings.mbLg}>
-      <Text fontSize={20} weight="semiBold" style={isWeb ? spacings.mbLg : undefined}>
-        {t('Network Statuses')}
-      </Text>
-    </SheetHeaderRow>
-  )
-
-  // A native sheet scrolls the rows itself, under its fixed header with the table header
-  if (!isWeb) {
-    return (
-      <BottomSheet
-        id="network-statuses"
-        sheetRef={sheetRef}
-        closeBottomSheet={closeBottomSheet}
-        backgroundColor="primaryBackground"
-        HeaderComponent={tableHeader}
-      >
-        {title}
-        {tableRows}
-      </BottomSheet>
-    )
-  }
-
+  // The sheet scrolls the rows itself, under its fixed header with the table header
   return (
     <BottomSheet
       id="network-statuses"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       backgroundColor="primaryBackground"
-      isScrollEnabled={false}
-      containerInnerWrapperStyles={flexbox.flex1}
+      HeaderComponent={tableHeader}
     >
-      {title}
-      {/* Table Header */}
-      {tableHeader}
-      <ScrollView style={flexbox.flex1} contentContainerStyle={spacings.ptTy}>
-        {/* Table Rows */}
-        {tableRows}
-      </ScrollView>
+      <SheetHeaderRow style={spacings.mbLg}>
+        <Text fontSize={20} weight="semiBold">
+          {t('Network Statuses')}
+        </Text>
+      </SheetHeaderRow>
+      {tableRows}
     </BottomSheet>
   )
 }

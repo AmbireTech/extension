@@ -7,7 +7,6 @@ import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomShe
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -50,20 +49,20 @@ const DualChoiceModal: FC<Props> = ({
 }) => {
   const { styles, theme } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
-  const isInNativeSheet = useIsInsideBottomSheet() && !isWeb
+  const isInSheet = useIsInsideBottomSheet()
 
   return (
     <View>
-      {/* In a native sheet the title goes to the sheet's fixed header row, whose X replaces
+      {/* In a sheet the title goes to the sheet's fixed header row, whose X replaces
       the close icon */}
-      {!hideHeader && isInNativeSheet && (
+      {!hideHeader && isInSheet && (
         <SheetHeaderRow>
           <Text weight="medium" fontSize={20} style={text.center}>
             {title}
           </Text>
         </SheetHeaderRow>
       )}
-      {!hideHeader && !isInNativeSheet && (
+      {!hideHeader && !isInSheet && (
         <View style={styles.modalHeader}>
           <Text weight="medium" fontSize={20}>
             {title}

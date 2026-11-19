@@ -182,11 +182,11 @@ export class SettingsPage extends BasePage {
       network.explorerUrl
     )
 
-    // Select Edit, change 'Block Explorer URL' and 'Cancel'
+    // Select Edit, change 'Block Explorer URL' and close the sheet
     await this.page.locator(selectors.networkDetailEditButton).click()
     await expect(this.page.locator(selectors.editNetworkModalTitle)).toBeVisible()
     await this.typeNetworkField('Block Explorer URL', '/')
-    await this.page.locator(selectors.editNetworkCancelButton).click()
+    await this.page.locator(selectors.editNetworkCloseButton).click()
     await expect(this.page.locator(selectors.blockExplorerURL(network.explorerUrl))).toContainText(
       network.explorerUrl
     )

@@ -27,9 +27,7 @@ const RecoveryPhraseWords = ({ words }: { words: string[] }) => {
         ...common.borderRadiusPrimary,
         // The grid never sits at the screen bottom, so the wrapper's safe area inset would
         // only add dead space between the last row and the border
-        paddingBottom: 0,
-        // The wrapper's scrollbar padding would keep the row separators short of the right border
-        paddingRight: 0
+        paddingBottom: 0
       }}
     >
       {words.map((word, index) => (

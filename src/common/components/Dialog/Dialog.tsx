@@ -2,7 +2,6 @@ import React, { FC } from 'react'
 
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
-import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -34,10 +33,9 @@ const Dialog: FC<Props> = ({ id, dialogRef, closeDialog, title, text, children }
             }
           : {}
       }
-      customZIndex={BOTTOM_SHEET_Z_INDEX + 1}
     >
       <SheetHeaderRow style={spacings.mbMi}>
-        <Text fontSize={18} weight="semiBold" style={isWeb ? spacings.mbMi : textStyles.center}>
+        <Text fontSize={18} weight="semiBold" style={textStyles.center}>
           {title}
         </Text>
       </SheetHeaderRow>

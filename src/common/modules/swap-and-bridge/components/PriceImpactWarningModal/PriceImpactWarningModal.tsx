@@ -8,7 +8,6 @@ import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import BottomSheet from '@common/components/BottomSheet'
 import Checkbox from '@common/components/Checkbox'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
-import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -140,8 +139,6 @@ const PriceImpactWarningModal: FC<Props> = ({
         type="error"
         description={description}
         primaryButtonText={t('Continue anyway')}
-        // On mobile the sheet's X closes it
-        secondaryButtonText={isWeb ? t('Cancel') : undefined}
         primaryButtonProps={primaryButtonProps}
         onPrimaryButtonPress={acknowledgeWarningWrapped}
         onSecondaryButtonPress={closeBottomSheetWrapped}

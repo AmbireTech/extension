@@ -1,7 +1,6 @@
 import { formatUnits } from 'ethers'
 import React, { FC, useCallback, useMemo } from 'react'
 import { View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
 import {
@@ -11,6 +10,7 @@ import {
 import { AccountOpStatus } from '@ambire-common/libs/accountOp/types'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Badge from '@common/components/Badge'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
 import Text from '@common/components/Text'
@@ -62,7 +62,7 @@ const PrivacyPoolsHistoryItem: FC<Props> = ({ entry, style }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getSummaryStyles)
   const { state: networks } = useController('NetworksController', selectNetworks)
-  const { ref: sheetRef, open: openSheet, close: closeDetails } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeDetails } = useSheetRef()
   // Not passed as is: the press event would be read as where to open the sheet
   const openDetails = useCallback(() => openSheet(), [openSheet])
 

@@ -1,5 +1,4 @@
 import React, {
-  createContext,
   forwardRef,
   useCallback,
   useContext,
@@ -14,21 +13,7 @@ import ScrollViewStickyHeader from 'react-native/Libraries/Components/ScrollView
 
 import SheetHeaderBlur from '../SheetHeaderBlur/SheetHeaderBlur'
 import { useIsSheetSectionHeaderGlass } from './SheetSectionHeaderGlassContext'
-
-/** Where a sheet's sticky section headers pin and how far their glass reaches. */
-type SheetStickyHeaderLayout = {
-  /** The height of a sheet header over the list: the headers pin right below it */
-  offset: number
-  /** How far the list's padding keeps its headers from the sheet's sides */
-  sidePadding: number
-  /** Receives the list's scroll value, which the headers follow */
-  scrollValueRef?: { current: Animated.Value | null }
-}
-
-const SheetStickyHeaderLayoutContext = createContext<SheetStickyHeaderLayout>({
-  offset: 0,
-  sidePadding: 0
-})
+import { SheetStickyHeaderLayoutContext } from './SheetStickyHeaderLayoutContext'
 
 /** What the ScrollView calls on a sticky header, set by React Native's own one */
 type StickyHeaderInstance = { setNextHeaderY?: (y: number | undefined) => void }
@@ -134,6 +119,4 @@ const SheetStickyHeader = forwardRef<StickyHeaderInstance, Props>(
   }
 )
 
-export { SheetStickyHeaderLayoutContext }
-export type { SheetStickyHeaderLayout }
 export default SheetStickyHeader

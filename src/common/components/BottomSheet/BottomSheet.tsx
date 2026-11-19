@@ -10,53 +10,45 @@ import {
   SectionListProps,
   View
 } from 'react-native'
-import { isLiquidGlassAvailable } from 'expo-glass-effect'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { KeyboardController } from 'react-native-keyboard-controller'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { captureException } from '@common/config/analytics/CrashAnalytics'
-import { isiOS } from '@common/config/env'
+import { isiOS, isWeb } from '@common/config/env'
 import useLatestCallback from '@common/hooks/useLatestCallback'
 import useTheme from '@common/hooks/useTheme'
-import { DEVICE_HEIGHT, SPACING_MD, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
-import { THEME_TYPES } from '@common/styles/themeConfig'
+import { DEVICE_HEIGHT, SPACING_LG, SPACING_SM } from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import { Portal, PortalHost } from '@gorhom/portal'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
 
-import { BottomSheetProps } from './BottomSheet'
 import { BottomSheetContext, useBottomSheetContextValue } from './BottomSheetContext'
 import IS_SHEET_HEADER_FLOATING from './isSheetHeaderFloating'
 import SheetHeaderBlur from './SheetHeaderBlur/SheetHeaderBlur'
 import { SheetSectionHeaderGlassContext } from './SheetStickyHeader/SheetSectionHeaderGlassContext'
-import SheetStickyHeader, {
+import SheetStickyHeader from './SheetStickyHeader/SheetStickyHeader'
+import {
   SheetStickyHeaderLayout,
   SheetStickyHeaderLayoutContext
-} from './SheetStickyHeader/SheetStickyHeader'
+} from './SheetStickyHeader/SheetStickyHeaderLayoutContext'
+import {
+  BELOW_GRABBER_PADDING,
+  dismissKeyboard,
+  getSheetContentStyle,
+  IS_PRESENTED_ONCE_MOUNTED,
+  SHOWS_SCROLL_INDICATOR,
+  useSheetPlatformProps
+} from './sheetPlatform'
+import { BottomSheetProps } from './types'
 import useBottomSheetInternal from './useBottomSheetInternal'
-
-/**
- * The subset of the Modalize ref API that callers use (via `useModalize`), so the
- * call sites keep working unchanged on top of TrueSheet.
- */
-type SheetRefAdapter = {
-  open: () => void
-  close: () => void
-}
+import type { SheetRef } from './useSheetRef'
 
 const AUTO_DETENTS: SheetDetent[] = ['auto']
-const IOS_DIM_COLOR = '#0D0E0F'
-const IOS_DIM_OPACITY = { [THEME_TYPES.LIGHT]: 0.52, [THEME_TYPES.DARK]: 0.65 }
 const FULL_HEIGHT_DETENTS: SheetDetent[] = [1]
 const ABSOLUTE_HEADER_OPTIONS = { position: 'absolute' as const }
 const HEADER_COMPONENT_GAP_STYLE = { marginTop: SPACING_SM }
 const FLEX_STYLE = { flex: 1 }
-/**
- * Where the content starts below the native grabber, which overlays the top of the sheet:
- * it ends ~10pt down on iOS (5pt margin + 5pt pill) and ~20dp on Android (16dp + 4dp)
- */
-const BELOW_GRABBER_PADDING = isiOS ? SPACING_MD : SPACING_XL
+const HIDDEN_STYLE = { display: 'none' as const }
 // Shared defaults, as a new `{}` per render would defeat the memoization below
 const EMPTY_STYLE = {}
 // Content sized to fit may still shrink: under a header that isn't floating, a list taller than
@@ -69,12 +61,11 @@ const FLEX_SHRINK_STYLE = { flexShrink: 1 }
  * (`TrueSheetFloatingDetentMaxHeight` in TrueSheet)
  */
 const IOS_FLOATING_SHEET_MAX_HEIGHT = 100
-// On the content's child: TrueSheet measures the fit height with the content view's own min
-// and max height replaced by its constraints
-const FIT_CONTENT_ROOT_STYLE =
-  isiOS && isLiquidGlassAvailable()
-    ? { ...FLEX_GROW_STYLE, minHeight: IOS_FLOATING_SHEET_MAX_HEIGHT + 1 }
-    : FLEX_GROW_STYLE
+// On the content's child, from iOS 26 (as the floating header): TrueSheet measures the fit height
+// with the content view's own min and max height replaced by its constraints
+const FIT_CONTENT_ROOT_STYLE = IS_SHEET_HEADER_FLOATING
+  ? { ...FLEX_GROW_STYLE, minHeight: IOS_FLOATING_SHEET_MAX_HEIGHT + 1 }
+  : FLEX_GROW_STYLE
 
 const noop = () => {}
 
@@ -135,10 +126,11 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     shouldBeClosableOnDrag = true,
     withHandle = true,
     isScrollEnabled = true,
-    customRenderer
+    customRenderer,
+    withBackdropBlur = true
   } = props
 
-  const { theme, themeType } = useTheme()
+  const { theme } = useTheme()
   const { bottom } = useSafeAreaInsets()
   // Callers mostly pass inline callbacks; stable ones keep the sheet and its list from
   // re-rendering for them, while the latest one still runs
@@ -153,18 +145,30 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const [isHeaderRowTitleless, setIsHeaderRowTitleless] = useState(false)
   const isHeaderButtonsOnly = isHeaderRowTitleless && !HeaderComponent
   const isHeaderOverContent = isHeaderFloating || isHeaderButtonsOnly
-  const isHeaderFrosted = isHeaderFloating && !isHeaderButtonsOnly
+  // A `customRenderer` scrolls in its own views below the header, so nothing passes under it to frost
+  const isHeaderFrosted = isHeaderFloating && !isHeaderButtonsOnly && !customRenderer
   // Below a frosted header, a list's sticky section headers are glass: the pinned one frosts
   // the header's area too, so both read as one glass (iOS sticks them unless told not to)
   const isSectionHeaderGlass =
     isHeaderFrosted &&
     !!sectionListProps &&
     (sectionListProps as SectionListProps<unknown>).stickySectionHeadersEnabled !== false
-  // `type` is ignored: native sheets are always bottom sheets, as TrueSheet can't center a modal
-  const { setRef, isOpen, setIsOpen, isNested, id } = useBottomSheetInternal({
+  const {
+    setRef,
+    isModal: isModalType,
+    isOpen,
+    setIsOpen,
+    isNested,
+    id,
+    modalTopOffset
+  } = useBottomSheetInternal({
     ...props,
     closeBottomSheet
   })
+  // `type` is web only: native sheets are always bottom sheets, as TrueSheet can't center a
+  // modal there
+  const isModal = isWeb && isModalType
+  const platformSheetProps = useSheetPlatformProps({ isModal, modalTopOffset, style })
   // The header row (title, ‹ back and X) portals into the sheet's fixed header, so it
   // stays in place while the content scrolls
   const headerHostName = `${id}-header`
@@ -176,13 +180,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       screenOffsetRef.current = { x: 0, y: nativeEvent.position }
     },
     []
-  )
-  const handleDidPresent = useCallback(
-    (event: { nativeEvent: { position: number } }) => {
-      handleSheetPositionChange(event)
-      onOpened()
-    },
-    [handleSheetPositionChange, onOpened]
   )
   // A sheet without `closeBottomSheet` is one the user can't close, so it gets no X
   const bottomSheetContextValue = useBottomSheetContextValue(
@@ -222,10 +219,15 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const trueSheetRef = useCallback(
     (sheet: TrueSheet | null) => {
       sheetInstanceRef.current = sheet
-      const adapter: SheetRefAdapter | null = sheet && {
+      const handle: SheetRef | null = sheet && {
         open: () => {
           isPresentedRef.current = true
-          setIsMountRequested(true)
+          if (IS_PRESENTED_ONCE_MOUNTED) {
+            setIsMountRequested(true)
+            return
+          }
+          hasCalledPresentRef.current = true
+          sheet.present().catch(reportSheetError)
         },
         close: () => {
           if (!isPresentedRef.current) return
@@ -241,8 +243,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           sheet.dismiss().catch(reportSheetError)
         }
       }
-      // setRef is shared with web, where it receives the Modalize ref
-      setRef(adapter as unknown as HTMLElement | null)
+      setRef(handle)
     },
     [setRef]
   )
@@ -257,16 +258,20 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   }, [adjustToContentHeight, customRenderer, modalHeight])
   const isFixedHeight = detents !== AUTO_DETENTS
 
-  const horizontalPadding = SPACING_SM
-  const hasGrabber = withHandle
+  const horizontalPadding = isModal ? SPACING_LG : SPACING_SM
+  const hasGrabber = withHandle && !isModal
   const topPadding = hasGrabber ? BELOW_GRABBER_PADDING : SPACING_SM
 
   // The bottom spacing works like it did with Modalize, so TrueSheet's safe-area insets are
   // off (`insetAdjustment` "never") and the footer, or the content without one, pads by it.
   // A `customRenderer` controls its own layout, so it gets no content padding.
   const bottomInset = bottom || SPACING_SM
-  const contentBottomPadding = FooterComponent ? 0 : bottomInset
-  const footerBottomPadding = bottomInset
+  const safeAreaContentBottomPadding = FooterComponent ? 0 : bottomInset
+  // A centered card pads its content's end like its sides, instead of ending the scroll view
+  // short of its bottom edge, so the content still scrolls all the way down to it
+  const contentBottomPadding = isModal ? SPACING_LG : safeAreaContentBottomPadding
+  // A centered card's footer keeps the spacing of its sides from the bottom edge
+  const footerBottomPadding = isModal ? SPACING_LG : bottomInset
 
   // The keyboard is handled natively: the sheet keeps its size and slides up with it, and the
   // list is inset by it. TrueSheet only lifts an absolute footer above the keyboard, so the
@@ -329,10 +334,25 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   }, [])
 
   const handleWillPresent = useCallback(() => {
-    KeyboardController.dismiss().catch(reportSheetError)
+    dismissKeyboard().catch(reportSheetError)
     setIsOpen(true)
     onOpen()
   }, [onOpen, setIsOpen])
+
+  const handleDidPresent = useCallback(
+    (event: { nativeEvent: { position: number } }) => {
+      // Closed while its present waited (e.g. for the sheet below to finish presenting):
+      // TrueSheet ignored that dismiss and presented anyway, so it's dismissed now
+      if (!isPresentedRef.current) {
+        isClosingProgrammaticallyRef.current = true
+        sheetInstanceRef.current?.dismiss().catch(reportSheetError)
+        return
+      }
+      handleSheetPositionChange(event)
+      onOpened()
+    },
+    [handleSheetPositionChange, onOpened]
+  )
 
   const handleWillDismiss = useCallback(() => {
     const isUserDismissal = !isClosingProgrammaticallyRef.current
@@ -384,7 +404,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     () => ({
       bounces: false,
       keyboardShouldPersistTaps: 'handled' as const,
-      showsVerticalScrollIndicator: false,
+      showsVerticalScrollIndicator: SHOWS_SCROLL_INDICATOR,
       contentContainerStyle: { paddingBottom: contentBottomPadding }
     }),
     [contentBottomPadding]
@@ -410,10 +430,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     // don't clip there; their virtualization still bounds what they render
     if (flatListProps) {
       const listProps = flatListProps as FlatListProps<unknown>
-      // Typed by Modalize as Animated props, which the plain lists accept
       return (
         <FlatList
           ref={scrollableRef}
+          testID={testID}
           {...sharedScrollProps}
           {...listProps}
           removeClippedSubviews={isiOS ? false : listProps.removeClippedSubviews}
@@ -443,6 +463,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           <SheetSectionHeaderGlassContext.Provider value={isSectionHeaderGlass}>
             <SectionList
               ref={scrollableRef}
+              testID={testID}
               {...sharedScrollProps}
               StickyHeaderComponent={SheetStickyHeader}
               {...listProps}
@@ -564,7 +585,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     () => [
       { paddingHorizontal: horizontalPadding },
       isFixedHeight ? FLEX_STYLE : FLEX_SHRINK_STYLE,
-      style
+      getSheetContentStyle(style)
     ],
     [horizontalPadding, isFixedHeight, style]
   )
@@ -598,14 +619,14 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           scrollableRef={scrollableRef}
           scrollableOptions={scrollableOptions}
           // The system sheet shape (floating on iOS, Material on Android) in our solid surface color,
-          // with TrueSheet's default corner radius: the system one on iOS, which follows the screen's
-          // rounded corners, and 16dp on Android
+          // with TrueSheet's default corner radius on native: the system one on iOS, which follows
+          // the screen's rounded corners, and 16dp on Android (web sets its own)
           backgroundColor={theme[backgroundColor]}
           grabber={hasGrabber}
-          // The design's iOS backdrop (a plain dark tint, no blur outside the sheet), a bit darker
-          dimColor={isiOS ? IOS_DIM_COLOR : undefined}
-          dimOpacity={isiOS ? IOS_DIM_OPACITY[themeType] : undefined}
-          dismissible={shouldBeClosableOnDrag}
+          {...platformSheetProps}
+          // A sheet without `closeBottomSheet` can't be closed by a swipe, a tap outside or Esc
+          // either, as Modalize's backdrop ran a no-op close and kept it open
+          dismissible={shouldBeClosableOnDrag && !!props.closeBottomSheet}
           header={visibleHeader}
           headerStyle={headerStyle}
           headerOptions={isHeaderOverContent ? ABSOLUTE_HEADER_OPTIONS : undefined}
@@ -626,6 +647,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           {visibleSheetChildren}
         </TrueSheet>
         <SheetPresentTrigger requestId={presentRequestId} onRequest={presentSheet} />
+        {/* Blurs the page behind the sheet on web (backdrop-style.css), until it starts closing */}
+        {isWeb && isOpen && withBackdropBlur && (
+          <View nativeID="modalBackdrop" style={HIDDEN_STYLE} />
+        )}
       </BottomSheetContext.Provider>
     </Portal>
   )

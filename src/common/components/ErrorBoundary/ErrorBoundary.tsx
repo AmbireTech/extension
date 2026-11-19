@@ -1,15 +1,14 @@
 import React, { ReactNode, useCallback, useState } from 'react'
 import { Trans } from 'react-i18next'
-import { Pressable, TouchableOpacity, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
+import { Pressable, TouchableOpacity } from 'react-native'
 
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import FullScreenMessage from '@common/components/FullScreenMessage'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SupportLink from '@common/components/SupportLink'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { LeanThemeProvider } from '@common/contexts/themeContext/context'
 import useTheme from '@common/hooks/useTheme'
@@ -42,7 +41,7 @@ interface Props {
 const ErrorBoundaryInner = ({ error, title, description, logo }: Props) => {
   const { theme, themeType } = useTheme()
   const { t } = useTranslation()
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { addToast } = useToast()
 
   const handleCopyError = useCallback(async () => {
@@ -79,12 +78,7 @@ const ErrorBoundaryInner = ({ error, title, description, logo }: Props) => {
         containerInnerWrapperStyles={flexbox.flex1}
       >
         <SheetHeaderRow style={spacings.mbLg}>
-          <Text
-            fontSize={20}
-            weight="semiBold"
-            numberOfLines={1}
-            style={{ ...(isWeb && spacings.mbLg), textAlign: 'center' }}
-          >
+          <Text fontSize={20} weight="semiBold" numberOfLines={1} style={{ textAlign: 'center' }}>
             {t('Error Details')}
           </Text>
         </SheetHeaderRow>
@@ -137,16 +131,6 @@ const ErrorBoundaryInner = ({ error, title, description, logo }: Props) => {
             {error.stack}
           </Text>
         </ScrollableWrapper>
-
-        <View style={[spacings.ptMd, flexbox.alignCenter]}>
-          <Button
-            text={t('Close')}
-            type="secondary"
-            size="small"
-            onPress={() => closeBottomSheet()}
-            hasBottomSpacing={false}
-          />
-        </View>
       </BottomSheet>
 
       <FullScreenMessage

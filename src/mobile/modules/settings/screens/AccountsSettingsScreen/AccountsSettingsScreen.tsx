@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
@@ -10,6 +9,7 @@ import SyncIcon from '@common/assets/svg/SyncIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import { PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
@@ -51,7 +51,7 @@ const AccountsSettingsScreen = () => {
     getAccountItemHeight,
     onAccountExtraHeightChange
   } = useAccountsList()
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { navigate } = useNavigation()
@@ -62,23 +62,23 @@ const AccountsSettingsScreen = () => {
     ref: sheetRefExportImportKey,
     open: openExportImportKey,
     close: closeExportImportKey
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefRemoveAccount,
     open: openRemoveAccount,
     close: closeRemoveAccount
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
-  } = useModalize()
-  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
+  } = useSheetRef()
+  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useSheetRef()
   const {
     ref: sheetRefAccountDeploySettings,
     open: openAccountDeploySettings,
     close: closeAccountDeploySettings
-  } = useModalize()
+  } = useSheetRef()
 
   const [exportImportAccount, setExportImportAccount] = useState<AccountInterface | null>(null)
   const [accountToRemove, setAccountToRemove] = useState<AccountInterface | null>(null)

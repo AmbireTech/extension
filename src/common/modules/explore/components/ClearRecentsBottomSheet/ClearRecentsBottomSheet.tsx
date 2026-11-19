@@ -1,10 +1,10 @@
 import React, { forwardRef, useCallback, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
@@ -20,7 +20,7 @@ export type ClearRecentsBottomSheetHandle = {
 
 const ClearRecentsBottomSheet = forwardRef<ClearRecentsBottomSheetHandle>((_, ref) => {
   const { t } = useTranslation()
-  const { ref: sheetRef, open, close } = useModalize()
+  const { ref: sheetRef, open, close } = useSheetRef()
   const { dispatch } = useController('DappsController')
 
   useImperativeHandle(ref, () => ({ open, close }), [open, close])
@@ -29,8 +29,6 @@ const ClearRecentsBottomSheet = forwardRef<ClearRecentsBottomSheetHandle>((_, re
     dispatch({ type: 'method', params: { method: 'clearRecentDapps', args: [] } })
     close()
   }, [dispatch, close])
-
-  const handleCancel = useCallback(() => close(), [close])
 
   return (
     <BottomSheet
@@ -41,7 +39,7 @@ const ClearRecentsBottomSheet = forwardRef<ClearRecentsBottomSheetHandle>((_, re
       type={isWeb ? 'modal' : undefined}
     >
       <SheetHeaderRow style={spacings.mbSm}>
-        <Text weight="semiBold" fontSize={18} style={isWeb ? spacings.mbSm : text.center}>
+        <Text weight="semiBold" fontSize={18} style={text.center}>
           {t('Clear recent apps?')}
         </Text>
       </SheetHeaderRow>
@@ -58,16 +56,6 @@ const ClearRecentsBottomSheet = forwardRef<ClearRecentsBottomSheetHandle>((_, re
           { columnGap: SPACING_SM }
         ]}
       >
-        {/* On mobile the sheet's X closes it */}
-        {isWeb && (
-          <Button
-            type="secondary"
-            text={t('Cancel')}
-            onPress={handleCancel}
-            hasBottomSpacing={false}
-            style={{ flex: 1 }}
-          />
-        )}
         <Button
           type="danger"
           text={t('Clear')}
