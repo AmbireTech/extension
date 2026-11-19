@@ -398,8 +398,8 @@ const OneClickEstimation = ({
         type={isEstimationSheetModal ? 'modal' : 'bottom-sheet'}
         style={spacings.pb}
         closeBottomSheet={closeBottomSheet}
-        // Dragging the sheet down closes it without calling closeBottomSheet, which would leave the
-        // flow marked as proceeded and the Proceed button disabled. Every other close already resets it
+        // On mobile SafeOwnerApprovalSheet ends its flow from here, as its closeEstimationModal only
+        // closes the sheet. Transfer and Swap reset in both, which is harmless
         onClosed={isMobile ? onEstimationModalClosed : undefined}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile || shouldShowTxnDetails}

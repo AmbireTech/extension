@@ -54,6 +54,17 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
 - The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:web:webkit:generate-policy` and review the changes
 
+### Public code:
+
+The `main` branch and the release tags are mirrored to a public repository. Anyone can read the code comments, test names, log messages, commit messages, branch names and PR titles (merge commits include the branch name and the PR title). Only PR descriptions, PR comments and issues stay private. Follow responsible disclosure and keep it professional:
+
+- Security fixes: in the public places above, describe **what** the change does (e.g. "Validate `chainId` before signing"). Describe how the old code could be exploited only in the PR description, PR comments or an issue
+- No secrets, API keys, private endpoints or links to internal tools (error tracking like Sentry, staging, dashboards, private docs) in public places
+- No data that can identify real users: blockchain addresses, emails, usernames (Discord, Telegram, X) or other details from support chats, tickets or logs. Test addresses and addresses of public contracts are fine
+- Keep the tone factual. Don't blame people, partners or other projects
+- Put the detailed context (exploit steps, impact, Sentry links, user reports) in the PR description, PR comments or an issue
+- `src/ambire-common` is fully public, including its PR descriptions. Follow the "Public repository" rules in `src/ambire-common/AGENTS.md` when you work there
+
 ### Code quality:
 
 - Ensure that list keys are unique and stable (NEVER use the array index)

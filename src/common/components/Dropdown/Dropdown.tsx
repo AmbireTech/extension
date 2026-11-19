@@ -4,6 +4,8 @@ import { SvgProps } from 'react-native-svg'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import AboveSheetsOverlay from '@common/components/AboveSheetsOverlay'
+import { openBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
+import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
@@ -63,6 +65,17 @@ const Dropdown: FC<Props> = ({
 
   const isOpen = useMemo(() => position.x !== 0 || position.y !== 0, [position.x, position.y])
 
+  // Bottom sheets are portalled into the same "global" host with a zIndex of their own, so a
+  // dropdown opened from a sheet sits one step above the topmost sheet open at that time.
+  // Read non-reactively, or a sheet opened later would move the dropdown above it too.
+  const zIndex = useMemo(
+    () =>
+      isOpen && openBottomSheetsCount.value > 0
+        ? BOTTOM_SHEET_Z_INDEX + (openBottomSheetsCount.value - 1) * 2 + 1
+        : undefined,
+    [isOpen]
+  )
+
   const dropdownTop = useMemo(
     () =>
       Math.min(
@@ -77,6 +90,8 @@ const Dropdown: FC<Props> = ({
     if (!isWeb) return
     function handleClickOutside(event: MouseEvent) {
       if (position.x === 0 && position.y === 0) return
+      // A press on the button toggles the menu itself, or this would close it and the press reopen it
+      if ((DropdownButton.current as HTMLElement | null)?.contains?.(event.target as Node)) return
 
       if (modalRef.current && !modalRef.current?.contains(event.target)) {
         setPosition({ x: 0, y: 0 })
@@ -173,7 +188,8 @@ const Dropdown: FC<Props> = ({
                 {
                   right: windowWidth - position.x,
                   top: dropdownTop,
-                  maxHeight: dropdownHeight
+                  maxHeight: dropdownHeight,
+                  zIndex
                 }
               ]}
               ref={modalRef}

@@ -5,6 +5,7 @@ import { StyleSheet, useWindowDimensions, ViewStyle } from 'react-native'
 
 import useTheme from '@common/hooks/useTheme'
 import { SPACING_MD } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
 import { SHEET_TOP_GAP, SheetPlatformOptions } from './sheetPlatform.types'
 
@@ -65,6 +66,8 @@ export const useSheetPlatformProps = ({ isModal, modalTopOffset, style }: SheetP
       maxContentWidth: isModal ? modalMaxWidth : undefined,
       // A full height sheet stops below the app's header, as it did with Modalize, with a gap
       maxContentHeight: isModal ? undefined : height - modalTopOffset - SHEET_TOP_GAP,
+      // The corner radius the sheets had before
+      cornerRadius: BORDER_RADIUS_PRIMARY,
       // The app's backdrop color, which carries its own opacity
       dimColor: theme.backdrop,
       dimOpacity: 1,

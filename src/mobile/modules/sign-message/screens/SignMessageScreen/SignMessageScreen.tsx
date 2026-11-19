@@ -31,6 +31,7 @@ const SignMessageScreen = () => {
     account,
     selectedAccountKeyStoreKeys,
     isViewOnly,
+    hasOnlyUnsupportedKeys,
     userRequest,
     isLedgerConnected,
     isChooseSignerShown,
@@ -78,6 +79,15 @@ const SignMessageScreen = () => {
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <View style={styles.footerContainer}>
+          {!!account.safeCreation && hasOnlyUnsupportedKeys && (
+            <View style={[spacings.phSm, spacings.ptSm]}>
+              <NoKeysToSignAlert
+                type="long"
+                isTransaction={false}
+                chainId={signMessageState.network?.chainId}
+              />
+            </View>
+          )}
           {!!account.safeCreation ? (
             <SafeFooter
               account={account}
@@ -121,7 +131,8 @@ const SignMessageScreen = () => {
               {isViewOnly && (
                 <View style={[spacings.mbSm]}>
                   <NoKeysToSignAlert
-                    type="short"
+                    // In full, like on the sign transaction screen, to explain what to do
+                    type={hasOnlyUnsupportedKeys ? 'long' : 'short'}
                     isTransaction={false}
                     chainId={signMessageState.network?.chainId}
                   />

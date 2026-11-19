@@ -18,7 +18,7 @@ import { isiOS, isWeb } from '@common/config/env'
 import useLatestCallback from '@common/hooks/useLatestCallback'
 import useTheme from '@common/hooks/useTheme'
 import { DEVICE_HEIGHT, SPACING_LG, SPACING_SM } from '@common/styles/spacings'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import { Portal, PortalHost } from '@gorhom/portal'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
 
@@ -152,15 +152,34 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     isHeaderFrosted &&
     !!sectionListProps &&
     (sectionListProps as SectionListProps<unknown>).stickySectionHeadersEnabled !== false
-  const { setRef, isModal, isOpen, setIsOpen, isNested, id, modalTopOffset } =
-    useBottomSheetInternal({
-      ...props,
-      closeBottomSheet
-    })
+  const {
+    setRef,
+    isModal: isModalType,
+    isOpen,
+    setIsOpen,
+    isNested,
+    id,
+    modalTopOffset
+  } = useBottomSheetInternal({
+    ...props,
+    closeBottomSheet
+  })
+  // `type` is web only: native sheets are always bottom sheets, as TrueSheet can't center a
+  // modal there
+  const isModal = isWeb && isModalType
   const platformSheetProps = useSheetPlatformProps({ isModal, modalTopOffset, style })
   // The header row (title, ‹ back and X) portals into the sheet's fixed header, so it
   // stays in place while the content scrolls
   const headerHostName = `${id}-header`
+  // Where the sheet is on screen, which TrueSheet reports as it moves. Sheets are full width,
+  // so only the top changes
+  const screenOffsetRef = useRef({ x: 0, y: 0 })
+  const handleSheetPositionChange = useCallback(
+    ({ nativeEvent }: { nativeEvent: { position: number } }) => {
+      screenOffsetRef.current = { x: 0, y: nativeEvent.position }
+    },
+    []
+  )
   // A sheet without `closeBottomSheet` is one the user can't close, so it gets no X
   const bottomSheetContextValue = useBottomSheetContextValue(
     isOpen,
@@ -168,7 +187,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     props.closeBottomSheet ? closeBottomSheet : undefined,
     headerHostName,
     isHeaderFloating,
-    setIsHeaderRowTitleless
+    setIsHeaderRowTitleless,
+    screenOffsetRef
   )
 
   const internalScrollableRef = useRef<any>(null)
@@ -322,10 +342,14 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     onOpen()
   }, [onOpen, setIsOpen])
 
-  const handleDidPresent = useCallback(() => {
-    setHasPresented(true)
-    onOpened()
-  }, [onOpened])
+  const handleDidPresent = useCallback(
+    (event: { nativeEvent: { position: number } }) => {
+      setHasPresented(true)
+      handleSheetPositionChange(event)
+      onOpened()
+    },
+    [handleSheetPositionChange, onOpened]
+  )
 
   const handleWillDismiss = useCallback(() => {
     const isUserDismissal = !isClosingProgrammaticallyRef.current
@@ -593,9 +617,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           scrollableRef={scrollableRef}
           scrollableOptions={scrollableOptions}
           // The system sheet shape (floating on iOS, Material on Android) in our solid surface color,
-          // with the corner radius the sheets had before
+          // with TrueSheet's default corner radius on native: the system one on iOS, which follows
+          // the screen's rounded corners, and 16dp on Android (web sets its own)
           backgroundColor={theme[backgroundColor]}
-          cornerRadius={BORDER_RADIUS_PRIMARY}
           grabber={hasGrabber}
           {...platformSheetProps}
           dismissible={shouldBeClosableOnDrag}
@@ -610,6 +634,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           onMount={handleMount}
           onWillPresent={handleWillPresent}
           onDidPresent={handleDidPresent}
+          onDetentChange={handleSheetPositionChange}
+          onPositionChange={handleSheetPositionChange}
           onWillDismiss={handleWillDismiss}
           onDidDismiss={handleDidDismiss}
           onBackPress={handleBackPress}

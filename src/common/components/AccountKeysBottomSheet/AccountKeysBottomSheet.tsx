@@ -2,6 +2,7 @@ import React, { FC, useCallback } from 'react'
 
 import { Account } from '@ambire-common/interfaces/account'
 import AccountKeys from '@common/components/AccountKeysBottomSheet/AccountKeys'
+import type { RemovableKeys } from '@common/components/AccountKeysBottomSheet/AccountKeys/AccountKeys'
 import BottomSheet from '@common/components/BottomSheet'
 import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import { isMobile, isWeb } from '@common/config/env'
@@ -16,18 +17,23 @@ interface Props {
   account: Account | null
   openAddAccountBottomSheet?: () => void
   showExportImport?: boolean
+  /** Which imported keys the user can remove, see `AccountKeys` */
+  removableKeys?: RemovableKeys
   chainId?: bigint
 }
 
 const { isPopup } = getUiType()
 
-// A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
 // The width cap fits only a centered modal. In the popup this sheet is a bottom sheet, which the
 // cap would leave narrower than the popup and pinned to its left edge
-const WIDE_LAYOUT_SHEET_STYLE = {
-  minHeight: 432,
-  ...spacings.pvLg,
-  ...(isPopup ? {} : { maxWidth: 432 })
+const WIDE_LAYOUT_SHEET_STYLE = { maxWidth: 432, minHeight: 432, ...spacings.pvLg }
+
+// A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
+// The popup has no minimum either, so that a single key doesn't leave the sheet mostly empty
+const getSheetStyle = (isCompactLayout: boolean) => {
+  if (isCompactLayout) return undefined
+  if (isPopup) return spacings.pvLg
+  return WIDE_LAYOUT_SHEET_STYLE
 }
 
 const AccountKeysBottomSheet: FC<Props> = ({
@@ -36,6 +42,7 @@ const AccountKeysBottomSheet: FC<Props> = ({
   account,
   openAddAccountBottomSheet,
   showExportImport = false,
+  removableKeys,
   chainId
 }) => {
   const handleOpenAccountBottomSheet = useCallback(() => {
@@ -43,16 +50,21 @@ const AccountKeysBottomSheet: FC<Props> = ({
     openAddAccountBottomSheet && openAddAccountBottomSheet()
   }, [closeBottomSheet, openAddAccountBottomSheet])
   const { theme } = useTheme()
-  const { isCompactLayout } = useCompactLayout()
+  // Full width in the popup and in a narrow window (e.g. a request window), which are only a
+  // little wider than the sheet, so it would be left hanging off one side
+  const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
+  const isFullWidth = isPopup || isNarrowWebLayout
   return (
     <BottomSheet
       id="account-keys-bottom-sheet"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
-      scrollViewProps={isWeb ? { contentContainerStyle: { flex: 1 } } : undefined}
+      // A sheet as tall as its keys in the popup and narrow windows, so a single key doesn't
+      // leave it mostly empty. In a wide tab it keeps a fixed minimum height
+      scrollViewProps={isWeb && !isFullWidth ? { contentContainerStyle: { flex: 1 } } : undefined}
       isScrollEnabled={false}
-      containerInnerWrapperStyles={{ flex: 1 }}
-      style={isCompactLayout ? undefined : WIDE_LAYOUT_SHEET_STYLE}
+      containerInnerWrapperStyles={isWeb && isFullWidth ? undefined : { flex: 1 }}
+      style={getSheetStyle(isCompactLayout)}
       shouldBeClosableOnDrag={isMobile}
     >
       {!!account && (
@@ -61,7 +73,9 @@ const AccountKeysBottomSheet: FC<Props> = ({
           openAddAccountBottomSheet={handleOpenAccountBottomSheet}
           keyIconColor={theme.iconPrimary as string}
           showExportImport={showExportImport}
+          removableKeys={removableKeys}
           chainId={chainId}
+          isFullWidthSheet={isFullWidth}
         />
       )}
     </BottomSheet>

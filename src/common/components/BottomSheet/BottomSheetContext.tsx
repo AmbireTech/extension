@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from 'react'
+import { createContext, RefObject, useContext, useMemo } from 'react'
 
 type BottomSheetContextValue = {
   isInsideBottomSheet: boolean
@@ -14,6 +14,11 @@ type BottomSheetContextValue = {
   isHeaderFloating?: boolean
   /** Tells the sheet its header row has no title, so only the row's buttons float over the content. */
   setIsHeaderRowTitleless?: (isTitleless: boolean) => void
+  /**
+   * Where the sheet's top-left corner is on screen. Touches in a native sheet are reported
+   * relative to the sheet, so this turns them into screen coordinates.
+   */
+  screenOffsetRef?: RefObject<{ x: number; y: number }>
 }
 
 export const BottomSheetContext = createContext<BottomSheetContextValue>({
@@ -40,7 +45,8 @@ export const useBottomSheetContextValue = (
   close?: () => void,
   headerHostName?: string,
   isHeaderFloating?: boolean,
-  setIsHeaderRowTitleless?: (isTitleless: boolean) => void
+  setIsHeaderRowTitleless?: (isTitleless: boolean) => void,
+  screenOffsetRef?: RefObject<{ x: number; y: number }>
 ): BottomSheetContextValue =>
   useMemo(
     () => ({
@@ -50,7 +56,16 @@ export const useBottomSheetContextValue = (
       close,
       headerHostName,
       isHeaderFloating,
-      setIsHeaderRowTitleless
+      setIsHeaderRowTitleless,
+      screenOffsetRef
     }),
-    [isOpen, isNested, close, headerHostName, isHeaderFloating, setIsHeaderRowTitleless]
+    [
+      isOpen,
+      isNested,
+      close,
+      headerHostName,
+      isHeaderFloating,
+      setIsHeaderRowTitleless,
+      screenOffsetRef
+    ]
   )
