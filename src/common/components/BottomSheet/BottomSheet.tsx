@@ -344,6 +344,13 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
 
   const handleDidPresent = useCallback(
     (event: { nativeEvent: { position: number } }) => {
+      // Closed while its present waited (e.g. for the sheet below to finish presenting):
+      // TrueSheet ignored that dismiss and presented anyway, so it's dismissed now
+      if (!isPresentedRef.current) {
+        isClosingProgrammaticallyRef.current = true
+        sheetInstanceRef.current?.dismiss().catch(reportSheetError)
+        return
+      }
       setHasPresented(true)
       handleSheetPositionChange(event)
       onOpened()
