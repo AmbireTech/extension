@@ -9,6 +9,7 @@ import {
   isNetworkInfoPending
 } from '@ambire-common/libs/networks/networks'
 import useController from '@common/hooks/useController'
+import useCurrentRequestDappSafety from '@common/modules/action-requests/hooks/useCurrentRequestDappSafety'
 import validateRequestParams from '@common/modules/action-requests/utils/validateRequestParams'
 import { selectIsTokenPricesEnabled } from '@common/selectors/featureFlags'
 
@@ -327,6 +328,20 @@ const useAddOrUpdateNetwork = () => {
     return 'add'
   }, [isRpcUpdateRequested, networkAlreadyAdded, userRequest])
 
+  const holdToProceedTexts = useMemo(() => {
+    if (view === 'update') {
+      return { text: t('Hold to update network'), completeText: t('Update network') }
+    }
+
+    return {
+      text: existingNetwork ? t('Hold to enable network') : t('Hold to add network'),
+      completeText: resolveButtonText
+    }
+  }, [view, existingNetwork, resolveButtonText, t])
+
+  const { banners: dappSafetyBanners, holdToProceed } =
+    useCurrentRequestDappSafety(holdToProceedTexts)
+
   return {
     t,
     userRequest,
@@ -351,6 +366,8 @@ const useAddOrUpdateNetwork = () => {
     resolveButtonText,
     closeButtonText,
     isCloseButtonPressed,
+    dappSafetyBanners,
+    holdToProceed,
     view
   }
 }
