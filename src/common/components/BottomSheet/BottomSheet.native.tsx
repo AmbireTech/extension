@@ -21,7 +21,7 @@ import useLatestCallback from '@common/hooks/useLatestCallback'
 import useTheme from '@common/hooks/useTheme'
 import { DEVICE_HEIGHT, SPACING_MD, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
-import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import { Portal, PortalHost } from '@gorhom/portal'
 import { SheetDetent, TrueSheet } from '@lodev09/react-native-true-sheet'
 
@@ -598,9 +598,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           scrollableRef={scrollableRef}
           scrollableOptions={scrollableOptions}
           // The system sheet shape (floating on iOS, Material on Android) in our solid surface color,
-          // with the corner radius the sheets had before
+          // with TrueSheet's default corner radius: the system one on iOS, which follows the screen's
+          // rounded corners, and 16dp on Android
           backgroundColor={theme[backgroundColor]}
-          cornerRadius={BORDER_RADIUS_PRIMARY}
           grabber={hasGrabber}
           // The design's iOS backdrop (a plain dark tint, no blur outside the sheet), a bit darker
           dimColor={isiOS ? IOS_DIM_COLOR : undefined}
