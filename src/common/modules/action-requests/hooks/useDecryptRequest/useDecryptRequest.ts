@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
+import useCurrentRequestDappSafety from '@common/modules/action-requests/hooks/useCurrentRequestDappSafety'
 import useDappInfo from '@common/hooks/useDappInfo'
 import useToast from '@common/hooks/useToast'
 import eventBus from '@common/services/event/eventBus'
@@ -130,6 +131,11 @@ const useDecryptRequest = () => {
     })
   }, [userRequest, t, requestsDispatch])
 
+  const { banners: dappSafetyBanners, holdToProceed } = useCurrentRequestDappSafety({
+    text: t('Hold to decrypt'),
+    completeText: t('Decrypt')
+  })
+
   return {
     t,
     userRequest,
@@ -144,7 +150,9 @@ const useDecryptRequest = () => {
     isDisabled,
     handleDecryptForPreview,
     handleDecrypt,
-    handleDeny
+    handleDeny,
+    dappSafetyBanners,
+    holdToProceed
   }
 }
 

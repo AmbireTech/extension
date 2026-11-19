@@ -6,6 +6,7 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useResponsiveActionWindow from '@common/hooks/useResponsiveActionWindow'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import DappSafetyBanners from '@common/modules/action-requests/components/DappSafetyBanners'
 import AddChain from '@common/modules/action-requests/components/AddOrUpdateChain/AddChain'
 import AlreadyAddedChain from '@common/modules/action-requests/components/AddOrUpdateChain/AlreadyAddedChain'
 import UpdateChain from '@common/modules/action-requests/components/AddOrUpdateChain/UpdateChain'
@@ -51,6 +52,8 @@ const AddOrUpdateNetworkScreen = () => {
     handlePrimaryButtonPress,
     handleRetryWithDifferentRpcUrl,
     resolveButtonText,
+    dappSafetyBanners,
+    holdToProceed,
     view
   } = useAddOrUpdateNetwork()
   const { responsiveSizeMultiplier } = useResponsiveActionWindow({ maxBreakpoints: 2 })
@@ -73,6 +76,7 @@ const AddOrUpdateNetworkScreen = () => {
           <ActionFooter
             onReject={handleDenyButtonPress}
             onResolve={handleUpdateNetwork}
+            holdToProceed={holdToProceed}
             resolveButtonText={t('Update network')}
             rejectButtonText={t('Reject')}
             resolveDisabled={
@@ -93,6 +97,7 @@ const AddOrUpdateNetworkScreen = () => {
           withScroll={isCompactLayout}
           contentContainerStyle={isNarrowWebLayout ? [spacings.mt0, spacings.pbSm] : undefined}
         >
+          <DappSafetyBanners banners={dappSafetyBanners} style={spacings.mbLg} />
           <UpdateChain
             handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
             areParamsValid={areParamsValid}
@@ -150,6 +155,7 @@ const AddOrUpdateNetworkScreen = () => {
         <ActionFooter
           onReject={handleDenyButtonPress}
           onResolve={handlePrimaryButtonPress}
+          holdToProceed={holdToProceed}
           resolveButtonText={resolveButtonText}
           resolveDisabled={
             !areParamsValid ||
@@ -173,6 +179,7 @@ const AddOrUpdateNetworkScreen = () => {
             : undefined
         }
       >
+        <DappSafetyBanners banners={dappSafetyBanners} style={spacings.mbLg} />
         <AddChain
           handleRetryWithDifferentRpcUrl={handleRetryWithDifferentRpcUrl}
           areParamsValid={areParamsValid}

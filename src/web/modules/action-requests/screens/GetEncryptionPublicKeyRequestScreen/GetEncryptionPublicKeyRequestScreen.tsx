@@ -6,6 +6,7 @@ import RequestingDappInfo from '@common/components/RequestingDappInfo'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import DappSafetyBanners from '@common/modules/action-requests/components/DappSafetyBanners'
 import useGetEncryptionPublicKeyRequest from '@common/modules/action-requests/hooks/useGetEncryptionPublicKeyRequest'
 import spacings from '@common/styles/spacings'
 import SmallNotificationWindowWrapper from '@web/components/SmallNotificationWindowWrapper'
@@ -20,7 +21,9 @@ const GetEncryptionPublicKeyRequestScreen = () => {
     actionFooterResolveNode,
     isDisabled,
     handleAccept,
-    handleDeny
+    handleDeny,
+    dappSafetyBanners,
+    holdToProceed
   } = useGetEncryptionPublicKeyRequest()
   const { isNarrowWebLayout } = useCompactLayout()
 
@@ -33,6 +36,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
           <ActionFooter
             onReject={handleDeny}
             onResolve={handleAccept}
+            holdToProceed={holdToProceed}
             resolveButtonText={t('Provide')}
             resolveDisabled={isDisabled}
             resolveButtonTestID="button-provide"
@@ -48,6 +52,7 @@ const GetEncryptionPublicKeyRequestScreen = () => {
             icon={icon}
             intentText={t('wants to get your public encryption key')}
           />
+          <DappSafetyBanners banners={dappSafetyBanners} style={spacings.mtLg} />
 
           <View style={spacings.mtLg}>
             {errorNode || (

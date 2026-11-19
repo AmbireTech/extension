@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState } from 'react'
 import { View } from 'react-native'
 
-import { PositionsByProvider } from '@ambire-common/libs/defiPositions/types'
+import { SelectedAccountPositionsByProvider } from '@ambire-common/interfaces/selectedAccount'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -10,9 +10,9 @@ import DeFiPosition from './DeFiPosition'
 import DeFiPositionHeader from './DeFiPositionHeader'
 import getStyles from './styles'
 
-const DeFiProviderPosition: FC<PositionsByProvider> = ({
+const DeFiProviderPosition: FC<SelectedAccountPositionsByProvider> = ({
   providerName,
-  positionInUSD,
+  balanceInUSD,
   type,
   chainId,
   iconUrl,
@@ -21,8 +21,6 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const { styles, theme } = useTheme(getStyles)
-
-  const positionInUSDFormatted = formatDecimals(positionInUSD, 'value')
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded((prev) => !prev)
@@ -42,7 +40,7 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
         chainId={chainId}
         toggleExpanded={toggleExpanded}
         isExpanded={isExpanded}
-        positionInUSD={positionInUSDFormatted}
+        formattedBalance={formatDecimals(balanceInUSD, 'value')}
         healthRate={
           positions.length === 1 && positions[0]
             ? positions[0].additionalData.healthRate
@@ -53,7 +51,7 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
       />
       {isExpanded && (
         <View style={spacings.mvMi}>
-          {positions.map(({ id, assets, additionalData }) => (
+          {positions.map(({ id, assets, additionalData, balanceInUSD: positionBalanceInUSD }) => (
             <DeFiPosition
               key={id}
               id={id}
@@ -63,7 +61,7 @@ const DeFiProviderPosition: FC<PositionsByProvider> = ({
               chainId={chainId}
               additionalData={additionalData}
               siteUrl={siteUrl}
-              positionInUSD={formatDecimals(additionalData.positionInUSD || 0, 'value')}
+              formattedBalance={formatDecimals(positionBalanceInUSD, 'value')}
             />
           ))}
         </View>
