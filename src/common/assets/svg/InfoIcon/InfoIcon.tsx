@@ -1,17 +1,16 @@
 import React from 'react'
-import { GestureResponderEvent, Pressable } from 'react-native'
+import { Pressable } from 'react-native'
 import Svg, { Circle, Path } from 'react-native-svg'
 
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
-import { useBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
-import { TooltipAnchor, tooltipManager } from '@common/components/Tooltip/TooltipManager'
+import useShowTooltipAtPress from '@common/components/Tooltip/useShowTooltipAtPress'
 
 const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
-  const { screenOffsetRef } = useBottomSheet()
+  const showTooltipAtPress = useShowTooltipAtPress()
 
   const tooltipData = React.useMemo(() => {
     if (rest['data-tooltip-id']) return { id: rest['data-tooltip-id'] }
@@ -41,18 +40,9 @@ const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, .
   if (isMobile && tooltipData?.id) {
     return (
       <Pressable
-        onPress={({ nativeEvent }: GestureResponderEvent) => {
-          // From the touch rather than `measure`, which can't tell where a native sheet is on
-          // screen. In a sheet the touch is relative to the sheet, so its position is added
-          const sheetOffset = screenOffsetRef?.current
-          const anchor: TooltipAnchor = {
-            x: nativeEvent.pageX - nativeEvent.locationX + (sheetOffset?.x ?? 0),
-            y: nativeEvent.pageY - nativeEvent.locationY + (sheetOffset?.y ?? 0),
-            width: Number(width),
-            height: Number(height)
-          }
-          tooltipManager.show(tooltipData.id, tooltipData.content, tooltipData.title, anchor)
-        }}
+        onPress={(event) =>
+          showTooltipAtPress(event, tooltipData, { width: Number(width), height: Number(height) })
+        }
       >
         {icon}
       </Pressable>
