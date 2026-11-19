@@ -16,7 +16,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import usePrevious from '@common/hooks/usePrevious'
 import useRoute from '@common/hooks/useRoute'
@@ -294,9 +294,6 @@ const NetworkAvailableFeatures = ({
                             // @ts-ignore web style
                             verticalAlign: 'middle',
                             paddingBottom: 3
-                          },
-                          isMobile && {
-                            transform: [{ translateY: 4 }]
                           }
                         ]}
                       >

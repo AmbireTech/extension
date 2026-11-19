@@ -1,12 +1,12 @@
 import React from 'react'
-import { Pressable } from 'react-native'
+import { GestureResponderEvent, Pressable } from 'react-native'
 import Svg, { Circle, Path } from 'react-native-svg'
 
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
-import { tooltipManager } from '@common/components/Tooltip/TooltipManager'
+import { TooltipAnchor, tooltipManager } from '@common/components/Tooltip/TooltipManager'
 
 const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
@@ -39,7 +39,16 @@ const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, .
   if (isMobile && tooltipData?.id) {
     return (
       <Pressable
-        onPress={() => tooltipManager.show(tooltipData.id, tooltipData.content, tooltipData.title)}
+        onPress={({ nativeEvent }: GestureResponderEvent) => {
+          // From the touch rather than `measure`, which can't tell where a native sheet is on screen
+          const anchor: TooltipAnchor = {
+            x: nativeEvent.pageX - nativeEvent.locationX,
+            y: nativeEvent.pageY - nativeEvent.locationY,
+            width: Number(width),
+            height: Number(height)
+          }
+          tooltipManager.show(tooltipData.id, tooltipData.content, tooltipData.title, anchor)
+        }}
       >
         {icon}
       </Pressable>
