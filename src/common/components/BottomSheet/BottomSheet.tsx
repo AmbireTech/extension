@@ -622,7 +622,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           backgroundColor={theme[backgroundColor]}
           grabber={hasGrabber}
           {...platformSheetProps}
-          dismissible={shouldBeClosableOnDrag}
+          // A sheet without `closeBottomSheet` can't be closed by a swipe, a tap outside or Esc
+          // either, as Modalize's backdrop ran a no-op close and kept it open
+          dismissible={shouldBeClosableOnDrag && !!props.closeBottomSheet}
           header={visibleHeader}
           headerStyle={headerStyle}
           headerOptions={isHeaderOverContent ? ABSOLUTE_HEADER_OPTIONS : undefined}
