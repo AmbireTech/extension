@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
@@ -13,7 +13,6 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
-import { getLoadableDappIcon } from '@common/utils/dappIcon'
 import { openInTab } from '@common/utils/links/links'
 
 export const HORIZONTAL_ITEM_ICON_SIZE = 50
@@ -38,11 +37,6 @@ const HorizontalDappItem = ({
   const { theme } = useTheme()
   const navigation = useNavigation()
   const { dispatch: dappsDispatch } = useController('DappsController')
-  const icon = useMemo(
-    () =>
-      getLoadableDappIcon({ icon: dapp.icon, siteUrl: dapp.url, isInAppCatalog: !dapp.isCustom }),
-    [dapp.icon, dapp.url, dapp.isCustom]
-  )
 
   const [bindAnim, animStyle] = useCustomHover({
     property: 'opacity',
@@ -97,7 +91,7 @@ const HorizontalDappItem = ({
       ]}
     >
       <ManifestImage
-        uri={icon}
+        uri={dapp.icon || ''}
         size={HORIZONTAL_ITEM_ICON_SIZE}
         fallback={fallback}
         containerStyle={{

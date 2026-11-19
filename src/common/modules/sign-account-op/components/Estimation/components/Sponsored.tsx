@@ -7,7 +7,6 @@ import ManifestFallbackIcon from '@common/assets/svg/ManifestFallbackIcon'
 import ManifestImage from '@common/components/ManifestImage'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
-import useLoadableDappIcon from '@common/hooks/useLoadableDappIcon'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -24,8 +23,6 @@ const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: bo
     selectCurrentUserRequest
   )
   const { theme } = useTheme()
-  const session = currentUserRequest?.dappPromises?.[0]?.session
-  const dappIcon = useLoadableDappIcon({ icon: session?.icon, siteUrl: session?.origin })
 
   return (
     <View
@@ -35,7 +32,7 @@ const Sponsored = ({ sponsor, isOneClick }: { sponsor?: Sponsor; isOneClick?: bo
       ]}
     >
       <ManifestImage
-        uri={sponsor?.icon || dappIcon}
+        uri={sponsor?.icon || currentUserRequest?.dappPromises?.[0]?.session.icon || ''}
         size={64}
         isRound
         containerStyle={[
