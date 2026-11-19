@@ -168,8 +168,6 @@ const MandatoryOtaUpdateModal = () => {
       sheetRef={ref}
       autoOpen
       shouldBeClosableOnDrag={false}
-      // Above any other sheet (nested ones stack 2 apart from the base), so nothing else
-      // can be used until the update is applied. Still below the global tooltip.
     >
       <ModalHeader title={t('Update required')} style={spacings.mbLg} />
       <Text fontSize={14} style={[spacings.mbLg, text.center]}>
