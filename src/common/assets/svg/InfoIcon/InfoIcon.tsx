@@ -6,10 +6,12 @@ import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
+import { useBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import { TooltipAnchor, tooltipManager } from '@common/components/Tooltip/TooltipManager'
 
 const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
+  const { screenOffsetRef } = useBottomSheet()
 
   const tooltipData = React.useMemo(() => {
     if (rest['data-tooltip-id']) return { id: rest['data-tooltip-id'] }
@@ -40,10 +42,12 @@ const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, .
     return (
       <Pressable
         onPress={({ nativeEvent }: GestureResponderEvent) => {
-          // From the touch rather than `measure`, which can't tell where a native sheet is on screen
+          // From the touch rather than `measure`, which can't tell where a native sheet is on
+          // screen. In a sheet the touch is relative to the sheet, so its position is added
+          const sheetOffset = screenOffsetRef?.current
           const anchor: TooltipAnchor = {
-            x: nativeEvent.pageX - nativeEvent.locationX,
-            y: nativeEvent.pageY - nativeEvent.locationY,
+            x: nativeEvent.pageX - nativeEvent.locationX + (sheetOffset?.x ?? 0),
+            y: nativeEvent.pageY - nativeEvent.locationY + (sheetOffset?.y ?? 0),
             width: Number(width),
             height: Number(height)
           }

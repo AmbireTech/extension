@@ -168,6 +168,22 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   // The header row (title, ‹ back and X) portals into the sheet's fixed header, so it
   // stays in place while the content scrolls
   const headerHostName = `${id}-header`
+  // Where the sheet is on screen, which TrueSheet reports as it moves. Sheets are full width,
+  // so only the top changes
+  const screenOffsetRef = useRef({ x: 0, y: 0 })
+  const handleSheetPositionChange = useCallback(
+    ({ nativeEvent }: { nativeEvent: { position: number } }) => {
+      screenOffsetRef.current = { x: 0, y: nativeEvent.position }
+    },
+    []
+  )
+  const handleDidPresent = useCallback(
+    (event: { nativeEvent: { position: number } }) => {
+      handleSheetPositionChange(event)
+      onOpened()
+    },
+    [handleSheetPositionChange, onOpened]
+  )
   // A sheet without `closeBottomSheet` is one the user can't close, so it gets no X
   const bottomSheetContextValue = useBottomSheetContextValue(
     isOpen,
@@ -175,7 +191,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     props.closeBottomSheet ? closeBottomSheet : undefined,
     headerHostName,
     isHeaderFloating,
-    setIsHeaderRowTitleless
+    setIsHeaderRowTitleless,
+    screenOffsetRef
   )
 
   const internalScrollableRef = useRef<any>(null)
@@ -599,7 +616,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           style={sheetStyle}
           onMount={handleMount}
           onWillPresent={handleWillPresent}
-          onDidPresent={onOpened}
+          onDidPresent={handleDidPresent}
+          onDetentChange={handleSheetPositionChange}
+          onPositionChange={handleSheetPositionChange}
           onWillDismiss={handleWillDismiss}
           onDidDismiss={handleDidDismiss}
           onBackPress={handleBackPress}
