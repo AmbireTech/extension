@@ -333,10 +333,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     sheet.present().catch(reportSheetError)
   }, [])
 
-  // The scroll view overflows while the sheet sizes itself, which flashes its scrollbar on web
-  const [hasPresented, setHasPresented] = useState(false)
-  const showsScrollIndicator = SHOWS_SCROLL_INDICATOR && hasPresented
-
   const handleWillPresent = useCallback(() => {
     dismissKeyboard().catch(reportSheetError)
     setIsOpen(true)
@@ -352,7 +348,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
         sheetInstanceRef.current?.dismiss().catch(reportSheetError)
         return
       }
-      setHasPresented(true)
       handleSheetPositionChange(event)
       onOpened()
     },
@@ -367,7 +362,6 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     hasUserScrolledListRef.current = false
     // Lazy again by the time it's dismissed, so TrueSheet unmounts the content
     setIsMountRequested(false)
-    setHasPresented(false)
     setIsDismissing(true)
     setIsOpen(false)
     // TrueSheet doesn't say whether a swipe or a tap outside closed it, so both run
@@ -410,10 +404,10 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     () => ({
       bounces: false,
       keyboardShouldPersistTaps: 'handled' as const,
-      showsVerticalScrollIndicator: showsScrollIndicator,
+      showsVerticalScrollIndicator: SHOWS_SCROLL_INDICATOR,
       contentContainerStyle: { paddingBottom: contentBottomPadding }
     }),
-    [contentBottomPadding, showsScrollIndicator]
+    [contentBottomPadding]
   )
 
   // Memoized with the sheet's other props, so TrueSheet (a PureComponent) skips re-renders

@@ -1,17 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { LayoutChangeEvent } from 'react-native'
-
-import { isWeb } from '@common/config/env'
-import { SPACING_MI } from '@common/styles/spacings'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import EmptyListPlaceholder from './components/EmptyListPlaceholder'
 import SelectContainer from './components/SelectContainer'
 import { DEFAULT_SELECT_SIZE, SELECT_LIST_VIRTUALIZATION, SELECT_SIZE_TO_HEIGHT } from './styles'
 import { SectionedSelectProps } from './types'
 import useSelectInternal from './useSelectInternal'
-
-// Keeps the rows off the scrollbar on web, like ScrollableWrapper does
-const CONTENT_WITH_SCROLLBAR_STYLE = { paddingRight: SPACING_MI / 2 }
 
 const SectionedSelect = ({
   setValue,
@@ -34,7 +27,6 @@ const SectionedSelect = ({
   scrollToSelectedOnOpen,
   isMenuOpen: controlledIsMenuOpen,
   setIsMenuOpen,
-  withScrollbarPadding,
   listRef: externalListRef,
   ...props
 }: SectionedSelectProps) => {
@@ -63,36 +55,6 @@ const SectionedSelect = ({
     handleLayout,
     isMenuOpen
   } = selectData
-  const isScrollbarPaddingEnabled = isWeb && !!withScrollbarPadding
-  // Refs, so a size change re-renders the list only when the scrollbar appears or disappears
-  const listHeightRef = useRef(0)
-  const contentHeightRef = useRef(0)
-  const [hasVerticalScrollbar, setHasVerticalScrollbar] = useState(false)
-
-  const updateHasVerticalScrollbar = useCallback(() => {
-    // The 1px tolerance ignores sub-pixel differences when the content only fills the list
-    setHasVerticalScrollbar(contentHeightRef.current - listHeightRef.current > 1)
-  }, [])
-
-  const handleListLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      handleLayout(event)
-      if (!isScrollbarPaddingEnabled) return
-
-      listHeightRef.current = event.nativeEvent.layout.height
-      updateHasVerticalScrollbar()
-    },
-    [handleLayout, isScrollbarPaddingEnabled, updateHasVerticalScrollbar]
-  )
-
-  const handleContentSizeChange = useCallback(
-    (_: number, height: number) => {
-      contentHeightRef.current = height
-      updateHasVerticalScrollbar()
-    },
-    [updateHasVerticalScrollbar]
-  )
-
   const optionHeight = menuOptionHeight || SELECT_SIZE_TO_HEIGHT[props.size || DEFAULT_SELECT_SIZE]
 
   // A SectionList counts each section's header and (empty) footer as items too, so the
@@ -170,8 +132,7 @@ const SectionedSelect = ({
 
   // On the content size, which grows as the rows render, rather than the list's own layout
   const handleContentSizeChangeAndScrollToSelected = useCallback(
-    (width: number, height: number) => {
-      if (isScrollbarPaddingEnabled) handleContentSizeChange(width, height)
+    (_: number, height: number) => {
       // A closing sheet keeps the list mounted, and clearing the search on close resizes it
       if (!isMenuOpen || hasScrolledToSelectedRef.current || height <= 0) return
 
@@ -182,14 +143,7 @@ const SectionedSelect = ({
         ?.getScrollResponder()
         ?.scrollTo({ y: getItemLayout(null, selectedScrollIndex).offset, animated: false })
     },
-    [
-      isMenuOpen,
-      isScrollbarPaddingEnabled,
-      handleContentSizeChange,
-      selectedScrollIndex,
-      getItemLayout,
-      listRef
-    ]
+    [isMenuOpen, selectedScrollIndex, getItemLayout, listRef]
   )
 
   // Memoized for the same reason `Select` memoizes its `flatListProps`: a new object
@@ -200,10 +154,8 @@ const SectionedSelect = ({
       ref: listRef,
       sections: filteredData as SectionedSelectProps['sections'],
       renderItem: renderItem as any,
-      onLayout: handleListLayout,
+      onLayout: handleLayout,
       onContentSizeChange: handleContentSizeChangeAndScrollToSelected,
-      // Left out unless needed, as an undefined one would wipe the bottom sheet's own padding
-      ...(hasVerticalScrollbar && { contentContainerStyle: CONTENT_WITH_SCROLLBAR_STYLE }),
       renderSectionHeader,
       keyExtractor,
       ...SELECT_LIST_VIRTUALIZATION,
@@ -222,9 +174,8 @@ const SectionedSelect = ({
       listRef,
       filteredData,
       renderItem,
-      handleListLayout,
+      handleLayout,
       handleContentSizeChangeAndScrollToSelected,
-      hasVerticalScrollbar,
       renderSectionHeader,
       keyExtractor,
       SectionSeparatorComponent,

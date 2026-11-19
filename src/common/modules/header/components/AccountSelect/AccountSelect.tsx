@@ -480,7 +480,6 @@ const AccountSelect = ({ dappToConnect, dappToManage, isOpen, setIsOpen }: Props
       isMenuOpen={isOpen}
       setIsMenuOpen={setIsOpen}
       isBottomSheetFullHeight
-      withScrollbarPadding
       bottomSheetTitle={dapp ? t('Manage accounts') : t('Select account')}
       withBottomSheetBackButton={false}
       menuOptionHeight={ACCOUNT_SELECT_OPTION_HEIGHT}

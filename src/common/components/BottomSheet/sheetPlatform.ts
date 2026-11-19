@@ -18,7 +18,7 @@ export const BELOW_GRABBER_PADDING = SPACING_MD
 /** On web TrueSheet mounts the content only as it presents, so the sheet presents right away. */
 export const IS_PRESENTED_ONCE_MOUNTED = false
 
-/** A mouse user scrolls with the scrollbar too, so web keeps it. */
+/** Web draws its floating scrollbar while the sheet scrolls, see `floatingScrollbar.ts`. */
 export const SHOWS_SCROLL_INDICATOR = true
 
 /** The keyboard on web belongs to the focused field, which the sheet doesn't take focus from. */
