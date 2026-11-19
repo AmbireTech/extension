@@ -1,4 +1,4 @@
-import { Session } from '@ambire-common/classes/session'
+import { getSessionConnectionSource, Session } from '@ambire-common/classes/session'
 import { MainController } from '@ambire-common/controllers/main/main'
 import { ConnectionSource } from '@ambire-common/interfaces/dapp'
 import { browser } from '@web/constants/browserapi'
@@ -46,8 +46,7 @@ export const getDappTabTargetsFromDappId = (
   sessions.forEach((session) => {
     if (session.id !== dappId) return
 
-    if (source === 'wc' && !session.wcTopic) return
-    if (source === 'injected' && session.wcTopic) return
+    if (source && getSessionConnectionSource(session) !== source) return
 
     targets.push({
       tabId: session.tabId,

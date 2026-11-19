@@ -34,7 +34,16 @@ import { WEBVIEW_DEV_HOST } from '@env'
 import { MobileLayoutContainer } from '@mobile/components/MobileLayoutWrapper'
 import useEdgeSwipeBackGesture from '@mobile/hooks/useEdgeSwipeBackGesture'
 import DappProgressBar from '@mobile/modules/webview/components/DappProgressBar'
+import useWalletConnect from '@mobile/modules/wallet-connect/hooks/useWalletConnect'
+import { markWcLinkFromInAppBrowser } from '@mobile/modules/wallet-connect/services/walletConnectService'
+import {
+  getWcPairingUriFromLink,
+  isWcRequestRedirectLink
+} from '@mobile/modules/wallet-connect/utils'
 import DappWebViewFooter from '@mobile/modules/webview/components/DappWebViewFooter'
+
+// Every in-app browser page shares one tab for now, so its sessions are keyed by this tab id
+const IN_APP_BROWSER_TAB_ID = 1
 
 // SECURITY: Generate a 256-bit random token used to gate the RN <-> WebView bridge.
 // Cross-origin iframes cannot read main-frame globals (Same-Origin Policy), so they
@@ -285,6 +294,20 @@ const DappWebViewScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // The page lives only as long as this WebView, so its session goes with it, like a closed tab
+  // in the extension. The app stays connected and gets a new session on its next request.
+  useEffect(
+    () => () => {
+      dappsDispatch({
+        type: 'method',
+        params: { method: 'deleteDappSessionsForTab', args: [IN_APP_BROWSER_TAB_ID] }
+      })
+    },
+    // Only on unmount - a cleanup that reran on a dependency change would end a live page's session
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
   // WebView Refs & State
   const webviewRef = useRef<WebView>(null)
   const [currentUrl, setCurrentUrl] = useState<string>(initialUrl)
@@ -418,9 +441,24 @@ const DappWebViewScreen = () => {
     setHeaderValue('search', hostname)
   }, [hostname, setHeaderValue])
 
+  const { pair: pairWalletConnect } = useWalletConnect()
+
   const handleShouldStartLoadWithRequest = useCallback(
     (event: { url: string; navigationType: string }) => {
       const { url } = event
+
+      // Paired here rather than handed to the OS, so the session is known to come from this
+      // browser - including Ambire links (`ambire://wc?uri=`) that wallet pickers open.
+      const wcPairingUri = getWcPairingUriFromLink(url)
+      if (wcPairingUri) {
+        markWcLinkFromInAppBrowser(wcPairingUri)
+        void pairWalletConnect(wcPairingUri)
+        return false
+      }
+
+      // The request itself arrives through the relay, and the user is already in Ambire
+      if (isWcRequestRedirectLink(url)) return false
+
       try {
         const parsed = new URL(url)
         const protocol = parsed.protocol.replace(':', '')
@@ -433,10 +471,9 @@ const DappWebViewScreen = () => {
           return true
         }
 
-        // Hand off wallet deep links to the OS
-        // Note: wc protocol is now intercepted by WalletConnectProvider, but we still openURL
-        // to trigger the Linking event within the app.
-        if (protocol === 'wc' || protocol === 'metamask' || protocol === 'ethereum') {
+        // Hand off wallet deep links to the OS (WalletConnect ones are handled above).
+        // Other Ambire links reach our own deep link handler through it.
+        if (protocol === 'ambire' || protocol === 'metamask' || protocol === 'ethereum') {
           console.log('[DappWebView] Handing off wallet deep link to OS:', url)
           Linking.openURL(url).catch((err) => {
             console.warn('[DappWebView] Failed to open wallet deep link:', err)
@@ -463,7 +500,7 @@ const DappWebViewScreen = () => {
         return true
       }
     },
-    []
+    [pairWalletConnect]
   )
 
   const updateCurrentOriginRef = useCallback(
@@ -894,7 +931,7 @@ const DappWebViewScreen = () => {
               requestId: data.id,
               providerId: 1,
               topic,
-              tabId: 1
+              tabId: IN_APP_BROWSER_TAB_ID
             }
           })
         }
@@ -1177,9 +1214,9 @@ const DappWebViewScreen = () => {
         domStorageEnabled={true}
         allowFileAccessFromFileURLs={false}
         allowUniversalAccessFromFileURLs={false}
-        // On iOS every frame's navigation is checked against this list, and Cloudflare
-        // Turnstile renders its widget inside about:srcdoc iframes.
-        originWhitelist={['https://*', 'blob:*', 'about:srcdoc']}
+        // On iOS every frame's navigation is checked against this list (Turnstile uses about:srcdoc
+        // iframes). WalletConnect links must pass, or the WebView opens them itself, unseen by us.
+        originWhitelist={['https://*', 'blob:*', 'about:srcdoc', 'wc:*', 'ambire:*']}
         setSupportMultipleWindows={false}
         onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
         onLoadStart={handleLoadStart}

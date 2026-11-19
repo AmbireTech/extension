@@ -28,7 +28,9 @@ jobs:
   build-android:
     name: Build Android artifact and upload
     environment: extension-production
-    runs-on: ubuntu-latest
+    # Pinned because on the Ubuntu 26 image (the new ubuntu-latest) the "Free disk space" step
+    # no longer removes the large packages and the build gets killed mid-way.
+    runs-on: ubuntu-24.04
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
 
@@ -46,7 +48,7 @@ jobs:
           haskell: true
           large-packages: true
           docker-images: true
-          swap-storage: true
+          swap-storage: false # Keep swap as a memory buffer for the parallel native (C++) builds
 
       - name: Checkout code 🛎️
         uses: actions/checkout@v6

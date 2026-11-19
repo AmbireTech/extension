@@ -15,7 +15,7 @@ export const networks: Networks = {
     networkName: 'Flare network',
     ccySymbol: 'FLR',
     ccyName: 'Flare',
-    rpcUrl: 'https://rpc.au.cc/flare',
+    rpcUrl: 'https://flare-api.flare.network/ext/C/rpc',
     explorerUrl: 'https://flarescan.com'
   },
   FLOW: {

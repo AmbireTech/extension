@@ -29,11 +29,12 @@ import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
 import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
@@ -95,6 +96,10 @@ const findPickedTokenOption = (
 
   return fullestOfToken || options[0] || null
 }
+
+/** As tall as the privacy line, so the form does not move once it loads */
+const PRIVACY_SKELETON_HEIGHT = 16
+const PRIVACY_SKELETON_WIDTH = 160
 
 const selectSendForm = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.sendForm
@@ -337,7 +342,7 @@ const PrivacyPoolsSendScreen = () => {
     return { success: true }
   }, [maxAmount, parsedAmount, selectedToken, t])
 
-  const { privacy, recipientPrivacy } = usePrivacyPoolsSendCheck(
+  const { privacy, recipientPrivacy, hasCheckFailed, retryCheck } = usePrivacyPoolsSendCheck(
     selectedToken
       ? {
           chainId: selectedToken.chainId,
@@ -353,6 +358,7 @@ const PrivacyPoolsSendScreen = () => {
   const isTransferInFlight = operation?.status === 'pending'
   // Checked with the amount, so it shows only where the privacy line below does too
   const isPrivacyShown = !!selectedToken && !!privacy && amountValidation.success
+  const isPrivacyLoading = isPrivacyShown && privacy.rating === 'unchecked' && !hasCheckFailed
   const recipientLeakPrivacy =
     !!selectedToken &&
     !!recipientPrivacy &&
@@ -415,7 +421,8 @@ const PrivacyPoolsSendScreen = () => {
     addressInputState.validation.severity !== 'error' &&
     isAddress(recipient) &&
     !addressState.isDomainResolving &&
-    !isTransferInFlight
+    !isTransferInFlight &&
+    !isPrivacyLoading
 
   const handleSend = useCallback(() => {
     if (!canSend || !selectedToken || parsedAmount === null) return
@@ -593,7 +600,14 @@ const PrivacyPoolsSendScreen = () => {
             inputTestId="privacy-pools-amount-field"
             selectTestId="privacy-pools-tokens-select"
           />
-          {isPrivacyShown && (
+          {isPrivacyLoading && (
+            <SkeletonLoader
+              width={PRIVACY_SKELETON_WIDTH}
+              height={PRIVACY_SKELETON_HEIGHT}
+              style={{ ...spacings.mtSm, ...spacings.mlSm }}
+            />
+          )}
+          {isPrivacyShown && !isPrivacyLoading && (
             <PrivacySendStatus
               rating={privacy.rating}
               leaks={privacy.leaks}
@@ -601,6 +615,7 @@ const PrivacyPoolsSendScreen = () => {
               decimals={selectedToken.decimals}
               symbol={selectedToken.symbol}
               onSetAmount={isTransferInFlight ? undefined : setRawAmount}
+              onRetry={retryCheck}
               style={{ ...spacings.mtSm, ...spacings.phSm }}
             />
           )}
