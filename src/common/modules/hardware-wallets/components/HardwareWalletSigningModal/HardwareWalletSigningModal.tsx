@@ -20,6 +20,7 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
 import spacings from '@common/styles/spacings'
@@ -60,6 +61,7 @@ const HardwareWalletSigningModal = ({
   const { t } = useTranslation()
   const { ref, open, close } = useSheetRef()
   const { theme } = useTheme()
+  const { isCompactLayout } = useCompactLayout()
 
   useEffect(() => {
     if (isVisible) open()
@@ -88,11 +90,18 @@ const HardwareWalletSigningModal = ({
     )
   }, [keyType, t])
 
-  const isTrezor = useMemo(() => {
-    return HARDWARE_WALLET_DEVICE_NAMES[keyType] === 'Trezor'
-  }, [keyType])
-
   const deviceName = HARDWARE_WALLET_DEVICE_NAMES[keyType]
+
+  // The sheet can't be swiped away, so this is the way out when the device never answers
+  const cancelButton = !!cancelReq && (
+    <Button
+      type="danger"
+      text={t('Cancel request')}
+      onPress={cancelReq}
+      hasBottomSpacing={false}
+      style={isCompactLayout ? undefined : spacings.mtLg}
+    />
+  )
 
   return (
     <BottomSheet
@@ -104,6 +113,10 @@ const HardwareWalletSigningModal = ({
       autoOpen={isVisible}
       withBackdropBlur={false}
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
+      // On narrow screens the button is pinned to the bottom of the sheet, full width
+      FooterComponent={
+        isCompactLayout && !!cancelButton && <View style={spacings.ptSm}>{cancelButton}</View>
+      }
     >
       <ModalHeader title={title} style={flexbox.justifyCenter} />
       <View
@@ -141,15 +154,7 @@ const HardwareWalletSigningModal = ({
             humanization={humanization}
           />
         )}
-        {isTrezor && !!cancelReq && (
-          <Button
-            type="danger"
-            text={t('Cancel request')}
-            onPress={cancelReq}
-            hasBottomSpacing={false}
-            style={spacings.mtLg}
-          />
-        )}
+        {!isCompactLayout && cancelButton}
       </View>
     </BottomSheet>
   )
