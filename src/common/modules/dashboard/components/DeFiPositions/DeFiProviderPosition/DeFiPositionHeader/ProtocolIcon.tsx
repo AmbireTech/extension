@@ -22,6 +22,7 @@ const POSITION_TO_ICON: {
   'AAVE v2': AaveIcon,
   'AAVE v1': AaveIcon,
   // For the positions read on-chain (auto discovery off), which have no icon URL
+  'AAVE v4': AaveIcon,
   Morpho: MorphoIcon
 }
 
