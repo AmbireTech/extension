@@ -145,7 +145,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   const [isHeaderRowTitleless, setIsHeaderRowTitleless] = useState(false)
   const isHeaderButtonsOnly = isHeaderRowTitleless && !HeaderComponent
   const isHeaderOverContent = isHeaderFloating || isHeaderButtonsOnly
-  const isHeaderFrosted = isHeaderFloating && !isHeaderButtonsOnly
+  // A `customRenderer` scrolls in its own views below the header, so nothing passes under it to frost
+  const isHeaderFrosted = isHeaderFloating && !isHeaderButtonsOnly && !customRenderer
   // Below a frosted header, a list's sticky section headers are glass: the pinned one frosts
   // the header's area too, so both read as one glass (iOS sticks them unless told not to)
   const isSectionHeaderGlass =
