@@ -19,13 +19,7 @@ import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isiOS } from '@common/config/env'
 import useLatestCallback from '@common/hooks/useLatestCallback'
 import useTheme from '@common/hooks/useTheme'
-import {
-  DEVICE_HEIGHT,
-  SPACING_LG,
-  SPACING_MD,
-  SPACING_SM,
-  SPACING_XL
-} from '@common/styles/spacings'
+import { DEVICE_HEIGHT, SPACING_MD, SPACING_SM, SPACING_XL } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { Portal, PortalHost } from '@gorhom/portal'
@@ -166,7 +160,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
     isHeaderFrosted &&
     !!sectionListProps &&
     (sectionListProps as SectionListProps<unknown>).stickySectionHeadersEnabled !== false
-  const { setRef, isModal, isOpen, setIsOpen, isNested, id } = useBottomSheetInternal({
+  // `type` is ignored: native sheets are always bottom sheets, as TrueSheet can't center a modal
+  const { setRef, isOpen, setIsOpen, isNested, id } = useBottomSheetInternal({
     ...props,
     closeBottomSheet
   })
@@ -245,16 +240,16 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
   }, [adjustToContentHeight, customRenderer, modalHeight])
   const isFixedHeight = detents !== AUTO_DETENTS
 
-  const horizontalPadding = isModal ? SPACING_LG : SPACING_SM
-  const hasGrabber = withHandle && !isModal
+  const horizontalPadding = SPACING_SM
+  const hasGrabber = withHandle
   const topPadding = hasGrabber ? BELOW_GRABBER_PADDING : SPACING_SM
 
   // The bottom spacing works like it did with Modalize, so TrueSheet's safe-area insets are
   // off (`insetAdjustment` "never") and the footer, or the content without one, pads by it.
   // A `customRenderer` controls its own layout, so it gets no content padding.
   const bottomInset = bottom || SPACING_SM
-  const contentBottomPadding = isModal || FooterComponent ? 0 : bottomInset
-  const footerBottomPadding = isModal ? 0 : bottomInset
+  const contentBottomPadding = FooterComponent ? 0 : bottomInset
+  const footerBottomPadding = bottomInset
 
   // The keyboard is handled natively: the sheet keeps its size and slides up with it, and the
   // list is inset by it. TrueSheet only lifts an absolute footer above the keyboard, so the
@@ -373,10 +368,9 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       bounces: false,
       keyboardShouldPersistTaps: 'handled' as const,
       showsVerticalScrollIndicator: false,
-      contentContainerStyle: { paddingBottom: contentBottomPadding },
-      style: { marginBottom: isModal ? SPACING_LG : 0 }
+      contentContainerStyle: { paddingBottom: contentBottomPadding }
     }),
-    [contentBottomPadding, isModal]
+    [contentBottomPadding]
   )
 
   // Memoized with the sheet's other props, so TrueSheet (a PureComponent) skips re-renders
@@ -439,7 +433,7 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
               onScrollBeginDrag={handleListScrollBeginDrag}
               removeClippedSubviews={isiOS ? false : listProps.removeClippedSubviews}
               style={[
-                listProps.style ?? sharedScrollProps.style,
+                listProps.style,
                 isSectionHeaderGlass && { marginHorizontal: -horizontalPadding }
               ]}
               contentContainerStyle={[

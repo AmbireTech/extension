@@ -46,7 +46,8 @@ export function GlobalTooltip() {
     <BottomSheet
       id="global-tooltip-sheet"
       sheetRef={sheetRef}
-      type="modal"
+      // No grabber, so it reads as a modal rather than a sheet
+      withHandle={false}
       customZIndex={BOTTOM_SHEET_Z_INDEX + 10}
       onClosed={() => {
         // Guard: only call hide() once per close to prevent infinite loop

@@ -18,6 +18,7 @@ export interface BottomSheetProps {
   animationDuration?: number
   children?: React.ReactNode
   // Preferences
+  /** Web only. On native every sheet is a bottom sheet. */
   type?: 'modal' | 'bottom-sheet'
   adjustToContentHeight?: boolean
   modalHeight?: ModalizeProps['modalHeight']
