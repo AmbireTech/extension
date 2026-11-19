@@ -81,10 +81,11 @@ const PrivacySendStatus: FC<Props> = (props) => {
         <HoverablePressable testID="privacy-pools-send-privacy-suggestions" onPress={handleOpen}>
           <Badge
             type={worstLeak.type}
+            // Without "privacy", which the whole line is about, so the deposit count fits beside it
             text={
               leaks.length === 1
-                ? t('1 privacy suggestion')
-                : t('{{count}} privacy suggestions', { count: leaks.length })
+                ? t('1 suggestion')
+                : t('{{count}} suggestions', { count: leaks.length })
             }
             isIconLeading
           >

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
+import { getRpcTokenPriceConfig } from '@ambire-common/consts/rpcTokenPrices'
 import { Network } from '@ambire-common/interfaces/network'
 import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { PORTFOLIO_LIB_ERROR_NAMES } from '@ambire-common/libs/portfolio/errorNames'
@@ -12,6 +13,10 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
+import {
+  selectIsAutoDiscoveryEnabled,
+  selectIsTokenPricesEnabled
+} from '@common/selectors/featureFlags'
 import spacings from '@common/styles/spacings'
 import { tokenOrCollectionSearch } from '@common/utils/search'
 import { getTokenId } from '@common/utils/token'
@@ -72,11 +77,38 @@ const PINNED_TOKEN_KEYS = new Set(
   PINNED_TOKENS.map(({ address, chainId }) => getTokenId({ address, chainId }))
 )
 
+/**
+ * Whether the network's RPC can price every token and not only the native one: it has both the
+ * native token's USD feed (Chainlink's) and 1inch's spot price aggregator
+ */
+const canRpcPriceEveryToken = (chainId: bigint): boolean =>
+  !!getRpcTokenPriceConfig(chainId)?.spotPrices
+
+/** Whether a token without a USD price can be classified as lower-value */
+const isTokenWithoutPriceCollapsible = (
+  chainId: bigint,
+  isTokenPricesEnabled: boolean,
+  isAutoDiscoveryEnabled: boolean
+): boolean => {
+  if (isTokenPricesEnabled) return true
+
+  // When token prices are disabled the prices come from the network's RPC. With auto discovery
+  // enabled, tokens without a price cannot be classified as lower-value
+  if (isAutoDiscoveryEnabled) return false
+
+  // Without auto discovery the tokens the account receives are learned without checking that they
+  // have a price, so scam tokens show up too. When the network has both price oracles and the
+  // token still has no price, it has no pool with enough liquidity. Otherwise the missing price
+  // says nothing about the token, so it isn't classified as lower-value.
+  return canRpcPriceEveryToken(chainId)
+}
+
 const isCollapsibleToken = (
   token: TokenResult,
   balanceUSD: number,
   isLargePortfolio: boolean,
-  isTokenPricesEnabled: boolean
+  isTokenPricesEnabled: boolean,
+  isAutoDiscoveryEnabled: boolean
 ): boolean => {
   // Rewards and vesting tokens should never be hidden as lower-value tokens
   if (
@@ -100,9 +132,12 @@ const isCollapsibleToken = (
     return false
   }
 
-  // When token prices are disabled, tokens without a price cannot be classified as lower-value
   if (!tokenHasUSDPrice) {
-    return isTokenPricesEnabled
+    return isTokenWithoutPriceCollapsible(
+      token.chainId,
+      isTokenPricesEnabled,
+      isAutoDiscoveryEnabled
+    )
   }
 
   if (isLargePortfolio) {
@@ -117,9 +152,14 @@ const { isPopup } = getUiType()
 const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
   const { t } = useTranslation()
   const { state: networks } = useController('NetworksController', selectNetworks)
-  const {
-    state: { flags }
-  } = useController('FeatureFlagsController')
+  const { state: isTokenPricesEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsTokenPricesEnabled
+  )
+  const { state: isAutoDiscoveryEnabled } = useController(
+    'FeatureFlagsController',
+    selectIsAutoDiscoveryEnabled
+  )
   const { state: customTokens } = useController('PortfolioController', selectCustomTokens)
   const { state: portfolioTokens } = useController(
     'SelectedAccountController',
@@ -271,7 +311,8 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
             token,
             balancesInUSD.get(token) ?? 0,
             isLargePortfolio,
-            flags.tokenPrices
+            isTokenPricesEnabled,
+            isAutoDiscoveryEnabled
           ) &&
           !networkIdsWithPriceError.has(token.chainId.toString())
         ) {
@@ -284,7 +325,8 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
       { visibleTokens: [] as TokenResult[], dustTokens: [] as TokenResult[] }
     )
   }, [
-    flags.tokenPrices,
+    isTokenPricesEnabled,
+    isAutoDiscoveryEnabled,
     networkIdsWithPriceError,
     sortedTokens,
     userHasNoBalance,
