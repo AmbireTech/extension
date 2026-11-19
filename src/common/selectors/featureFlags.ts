@@ -14,5 +14,10 @@ const createSelectIsFeatureEnabled =
 /** Whether the user hasn't opted out of token prices */
 export const selectIsTokenPricesEnabled = createSelectIsFeatureEnabled('tokenPrices')
 
+/** Whether the user hasn't opted out of the token and DeFi positions auto discovery */
+export const selectIsAutoDiscoveryEnabled = createSelectIsFeatureEnabled(
+  'tokenAndDefiAutoDiscovery'
+)
+
 /** Whether the user hasn't opted out of the Email Vault */
 export const selectIsEmailVaultEnabled = createSelectIsFeatureEnabled('emailVault')
