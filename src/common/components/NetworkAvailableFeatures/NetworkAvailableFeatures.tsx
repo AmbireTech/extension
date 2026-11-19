@@ -289,7 +289,7 @@ const NetworkAvailableFeatures = ({
                     {!!feature.msg && (
                       <View
                         style={[
-                          isWeb && spacings.plMi,
+                          spacings.plMi,
                           isWeb && {
                             // @ts-ignore web style
                             verticalAlign: 'middle',
