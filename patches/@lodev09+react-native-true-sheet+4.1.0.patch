@@ -36,6 +36,25 @@ index 8eb7036..96014bb 100644
      const needsMargins = maxWidth != null || effectiveDetached;
      if (!needsMargins && !dropShadow) return undefined;
      const next = {};
+diff --git a/node_modules/@lodev09/react-native-true-sheet/lib/module/web/layout.js b/node_modules/@lodev09/react-native-true-sheet/lib/module/web/layout.js
+index b227994..1294a2d 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/lib/module/web/layout.js
++++ b/node_modules/@lodev09/react-native-true-sheet/lib/module/web/layout.js
+@@ -122,7 +122,13 @@ export function observeSheetLayout({
+     if (measurement && content) {
+       width = layout.clientWidth;
+       measurement.style.width = `${width}px`;
+-      measurement.replaceChildren(content.cloneNode(true));
++      // Without the test ids and ids of the live content, so queries find only that
++      const clone = content.cloneNode(true);
++      for (const node of [clone, ...clone.querySelectorAll('[data-testid], [id]')]) {
++        node.removeAttribute('data-testid');
++        node.removeAttribute('id');
++      }
++      measurement.replaceChildren(clone);
+     }
+     updateInset();
+     measure();
 diff --git a/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx b/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx
 index ee26704..d6ee769 100644
 --- a/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx
@@ -49,3 +68,22 @@ index ee26704..d6ee769 100644
          : (maxContentWidth ?? DEFAULT_MAX_WIDTH)
        : undefined;
  
+diff --git a/node_modules/@lodev09/react-native-true-sheet/src/web/layout.ts b/node_modules/@lodev09/react-native-true-sheet/src/web/layout.ts
+index 5be61e3..0a18d27 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/src/web/layout.ts
++++ b/node_modules/@lodev09/react-native-true-sheet/src/web/layout.ts
+@@ -150,7 +150,13 @@ export function observeSheetLayout({
+     if (measurement && content) {
+       width = layout.clientWidth;
+       measurement.style.width = `${width}px`;
+-      measurement.replaceChildren(content.cloneNode(true));
++      // Without the test ids and ids of the live content, so queries find only that
++      const clone = content.cloneNode(true) as HTMLElement;
++      for (const node of [clone, ...clone.querySelectorAll('[data-testid], [id]')]) {
++        node.removeAttribute('data-testid');
++        node.removeAttribute('id');
++      }
++      measurement.replaceChildren(clone);
+     }
+     updateInset();
+     measure();
