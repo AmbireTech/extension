@@ -9,7 +9,6 @@ import { ProvidersController } from '@ambire-common/controllers/providers/provid
 import { StorageController } from '@ambire-common/controllers/storage/storage'
 import { TokenPricesController } from '@ambire-common/controllers/tokenPrices/tokenPrices'
 import { UiController } from '@ambire-common/controllers/ui/ui'
-import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { buildTimeNetworks } from '@benzin/constants/networks'
 import { benzinUiManager } from '@benzin/contexts/controllersMiddlewareContext/uiManager'
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext'
@@ -18,7 +17,6 @@ import eventBus from '@common/services/event/eventBus'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
 import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
-import { RELAYER_URL } from '@env'
 
 import type { ExplorerBaseControllersMappingType } from '@benzin/constants/controllersMapping'
 export const ControllersMiddlewareProvider: React.FC<{
@@ -104,13 +102,7 @@ export const ControllersMiddlewareProvider: React.FC<{
 
       ctrls.Erc7730Controller = new Erc7730Controller({
         eventEmitterRegistry: eventEmitterRegistry.current,
-        storage: ctrls.StorageController,
-        featureFlags: ctrls.FeatureFlagsController,
         providers: ctrls.ProvidersController,
-        callRelayer: relayerCall.bind({
-          url: RELAYER_URL,
-          fetch: fetchWithRelayerCustomHeaders as any
-        }),
         ui: uiCtrl
       })
 
