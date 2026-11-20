@@ -23,14 +23,7 @@ import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Option from '@common/components/Option'
-import SoonBadge from '@common/components/SoonBadge'
-import {
-  isMobile,
-  isPrivacyPoolsComingSoon,
-  isPrivacyPoolsEnabled,
-  isPrivacyPoolsSupported,
-  isWeb
-} from '@common/config/env'
+import { isMobile, isPrivacyPoolsSupported, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
@@ -312,21 +305,14 @@ const AddAccount = ({
             disabled={isCreatingNewSeedAccount}
           />
         )}
-        {/* Extension only for now. Where not released yet, only a teaser that cannot be opened */}
+        {/* Extension only for now */}
         {isPrivacyPoolsSupported && !showImportOnly && (
           <Option
-            // The teaser doesn't say which privacy provider is coming
-            text={
-              isPrivacyPoolsComingSoon
-                ? t('Add a private account')
-                : t('Add a Privacy Pools account')
-            }
+            text={t('Add a Privacy Pools account')}
             icon={PrivacyPoolsIcon}
             onPress={openPrivacyPoolsBottomSheet as any}
             testID="add-privacy-pools-account"
             status="none"
-            disabled={isPrivacyPoolsComingSoon}
-            badge={isPrivacyPoolsComingSoon ? <SoonBadge /> : undefined}
           />
         )}
         <ExpandableOptionSection
@@ -382,7 +368,7 @@ const AddAccount = ({
         )}
       </View>
 
-      {isPrivacyPoolsEnabled && !showImportOnly && (
+      {isPrivacyPoolsSupported && !showImportOnly && (
         <AddPrivacyPoolsAccountBottomSheet
           sheetRef={privacyPoolsSheetRef}
           closeBottomSheet={closePrivacyPoolsBottomSheet}

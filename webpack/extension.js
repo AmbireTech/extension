@@ -352,8 +352,8 @@ module.exports = async function buildExtension(
     // Privacy Pools proving keys and witness generators (~23 MB), served same-origin instead of the
     // SDK's default raw.githubusercontent.com (a third party in the withdrawal path, needing a CSP
     // entry, re-downloaded per prover). Also works offline. Filenames must match
-    // PRIVACY_POOLS_CIRCUIT_PATHS. Left out of the builds that hide the feature, so they don't
-    // grow by the artifacts' size. The prover itself stays, as nothing can reach it there.
+    // PRIVACY_POOLS_CIRCUIT_PATHS. Left out of the builds without Privacy Pools (Firefox), so they
+    // don't grow by the artifacts' size. The prover itself stays, as nothing can reach it there.
     ...(isPrivacyPoolsBundled
       ? [
           {
