@@ -356,7 +356,7 @@ const BaseTokenItem = ({
                   amount={pendingDeliveryAmount}
                   amountFormatted={pendingDeliveryFormatted}
                   // Only CoW Swap orders take the sold tokens after the transaction, when they're filled
-                  label={pendingDeliveryAmount > 0n ? 'on its way' : 'being swapped'}
+                  label={pendingDeliveryAmount > 0n ? t('on its way') : t('being swapped')}
                   backgroundColor={theme.infoBackground}
                   textColor={theme.infoText}
                   Icon={SwapAndBridgeIcon}
