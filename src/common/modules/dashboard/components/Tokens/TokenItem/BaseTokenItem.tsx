@@ -40,6 +40,10 @@ import type { WalletStateController } from '@common/controllers/wallet-state'
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
 const selectVisibleUserRequests = (state: RequestsController) => state.visibleUserRequests
 
+/** Whether two lists of route ids hold the same ids, in the same order */
+const getIsSameRouteIds = (one: string[] | undefined, two: string[]) =>
+  !!one && one.length === two.length && one.every((id, index) => id === two[index])
+
 type Props = {
   token: TokenResult
   extraActions?: React.ReactNode
@@ -102,7 +106,14 @@ const BaseTokenItem = ({
   const [sheetActiveRouteIds, setSheetActiveRouteIds] = useState<string[]>()
 
   useEffect(() => {
-    if (pendingDelivery) setSheetActiveRouteIds(pendingDelivery.activeRouteIds)
+    if (!pendingDelivery) return
+
+    // The delivery is a new object on every update of the routes (e.g. a status poll), so the
+    // ids are kept as they are when they didn't change, to not re-render the row for nothing
+    const { activeRouteIds } = pendingDelivery
+    setSheetActiveRouteIds((prevIds) =>
+      getIsSameRouteIds(prevIds, activeRouteIds) ? prevIds : activeRouteIds
+    )
   }, [pendingDelivery])
 
   const [bindAnim, animStyle, isHovered] = useCustomHover({
@@ -361,7 +372,9 @@ const BaseTokenItem = ({
                   textColor={theme.infoText}
                   Icon={SwapAndBridgeIcon}
                   hoverBorderColor={theme.info400}
-                  onPress={openPendingDeliverySheet}
+                  // The token can be on its way a moment before its routes reach the UI, and the
+                  // badge only opens something once their sheet is there
+                  onPress={sheetActiveRouteIds ? openPendingDeliverySheet : undefined}
                 />
               )}
             </View>
