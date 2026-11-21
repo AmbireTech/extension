@@ -3,12 +3,12 @@ import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
-import { getRpcTokenPriceConfig } from '@ambire-common/consts/rpcTokenPrices'
 import { Network } from '@ambire-common/interfaces/network'
 import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { PORTFOLIO_LIB_ERROR_NAMES } from '@ambire-common/libs/portfolio/errorNames'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import { isMissingPriceMeaningful } from '@ambire-common/libs/tokenPrices/canPriceNetwork'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -77,32 +77,6 @@ const PINNED_TOKEN_KEYS = new Set(
   PINNED_TOKENS.map(({ address, chainId }) => getTokenId({ address, chainId }))
 )
 
-/**
- * Whether the network's RPC can price every token and not only the native one: it has both the
- * native token's USD feed (Chainlink's) and 1inch's spot price aggregator
- */
-const canRpcPriceEveryToken = (chainId: bigint): boolean =>
-  !!getRpcTokenPriceConfig(chainId)?.spotPrices
-
-/** Whether a token without a USD price can be classified as lower-value */
-const isTokenWithoutPriceCollapsible = (
-  chainId: bigint,
-  isTokenPricesEnabled: boolean,
-  isAutoDiscoveryEnabled: boolean
-): boolean => {
-  if (isTokenPricesEnabled) return true
-
-  // When token prices are disabled the prices come from the network's RPC. With auto discovery
-  // enabled, tokens without a price cannot be classified as lower-value
-  if (isAutoDiscoveryEnabled) return false
-
-  // Without auto discovery the tokens the account receives are learned without checking that they
-  // have a price, so scam tokens show up too. When the network has both price oracles and the
-  // token still has no price, it has no pool with enough liquidity. Otherwise the missing price
-  // says nothing about the token, so it isn't classified as lower-value.
-  return canRpcPriceEveryToken(chainId)
-}
-
 const isCollapsibleToken = (
   token: TokenResult,
   balanceUSD: number,
@@ -133,11 +107,8 @@ const isCollapsibleToken = (
   }
 
   if (!tokenHasUSDPrice) {
-    return isTokenWithoutPriceCollapsible(
-      token.chainId,
-      isTokenPricesEnabled,
-      isAutoDiscoveryEnabled
-    )
+    // A token without a price is lower-value only if the missing price means it has no market
+    return isMissingPriceMeaningful(token.chainId, isTokenPricesEnabled, isAutoDiscoveryEnabled)
   }
 
   if (isLargePortfolio) {
