@@ -1,10 +1,12 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, View } from 'react-native'
+import { useModalize } from 'react-native-modalize'
 
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
+import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -16,6 +18,7 @@ import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
+import DashboardBannerBottomSheet from '@common/modules/dashboard/components/DashboardBanners/DashboardBannerBottomSheet'
 import getAndFormatTokenDetails from '@common/modules/dashboard/helpers/getTokenDetails'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_2XL, SPACING_TY } from '@common/styles/spacings'
@@ -27,10 +30,11 @@ import { privateValue } from '@common/utils/ui'
 import PendingBadge from './PendingBadge'
 import getStyles from './styles'
 
-import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
 import type { RequestsController } from '@ambire-common/controllers/requests/requests'
+import type { SelectedAccountController } from '@ambire-common/controllers/selectedAccount/selectedAccount'
 import type { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+import type { PendingDelivery } from '@ambire-common/libs/swapAndBridge/pendingDeliveries'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
@@ -45,6 +49,8 @@ type Props = {
   hasBottomSpacing?: boolean
   onPress?: () => void
   wrapperTestID?: string
+  /** What in-progress swaps and bridges will still move of the token (see `usePendingDeliveries`) */
+  pendingDelivery?: PendingDelivery
 }
 
 const BaseTokenItem = ({
@@ -55,7 +61,8 @@ const BaseTokenItem = ({
   decimalRulesType = 'amount',
   hasBottomSpacing = false,
   onPress,
-  wrapperTestID
+  wrapperTestID,
+  pendingDelivery
 }: Props) => {
   const {
     symbol,
@@ -85,6 +92,18 @@ const BaseTokenItem = ({
   const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
   const { navigate } = useNavigation()
+  const {
+    ref: pendingDeliverySheetRef,
+    open: openPendingDeliverySheet,
+    close: closePendingDeliverySheet
+  } = useModalize()
+  // The routes stay in the sheet after they finish, so it doesn't disappear while the user
+  // is looking at it, but shows how the swap or bridge ended, like the banner's sheet does
+  const [sheetActiveRouteIds, setSheetActiveRouteIds] = useState<string[]>()
+
+  useEffect(() => {
+    if (pendingDelivery) setSheetActiveRouteIds(pendingDelivery.activeRouteIds)
+  }, [pendingDelivery])
 
   const [bindAnim, animStyle, isHovered] = useCustomHover({
     property: 'backgroundColor',
@@ -105,10 +124,16 @@ const BaseTokenItem = ({
     pendingToBeSigned,
     pendingToBeSignedFormatted,
     pendingToBeConfirmed,
-    pendingToBeConfirmedFormatted
+    pendingToBeConfirmedFormatted,
+    pendingDelivery: pendingDeliveryAmount,
+    pendingDeliveryFormatted
   } = useMemo(
-    () => getAndFormatTokenDetails(token, undefined, simulatedAccountOp, { decimalRulesType }),
-    [token, simulatedAccountOp, decimalRulesType]
+    () =>
+      getAndFormatTokenDetails(token, undefined, simulatedAccountOp, {
+        decimalRulesType,
+        pendingDelivery: pendingDelivery?.amount
+      }),
+    [token, simulatedAccountOp, decimalRulesType, pendingDelivery?.amount]
   )
 
   const isPending = !!hasPendingBadges
@@ -325,6 +350,20 @@ const BaseTokenItem = ({
                   Icon={PendingToBeConfirmedIcon}
                 />
               )}
+
+              {!!pendingDeliveryAmount && !!pendingDeliveryFormatted && (
+                <PendingBadge
+                  amount={pendingDeliveryAmount}
+                  amountFormatted={pendingDeliveryFormatted}
+                  // Only CoW Swap orders take the sold tokens after the transaction, when they're filled
+                  label={pendingDeliveryAmount > 0n ? 'on its way' : 'being swapped'}
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
+                  Icon={SwapAndBridgeIcon}
+                  hoverBorderColor={theme.info400}
+                  onPress={openPendingDeliverySheet}
+                />
+              )}
             </View>
 
             {!!pendingToBeSigned && !!pendingToBeSignedFormatted && isPending && (
@@ -352,6 +391,14 @@ const BaseTokenItem = ({
           </View>
         )}
       </View>
+      {!!sheetActiveRouteIds && (
+        <DashboardBannerBottomSheet
+          id={`pending-delivery-${tokenId}`}
+          activeRouteIds={sheetActiveRouteIds}
+          sheetRef={pendingDeliverySheetRef}
+          closeBottomSheet={closePendingDeliverySheet}
+        />
+      )}
     </AnimatedPressable>
   )
 }
