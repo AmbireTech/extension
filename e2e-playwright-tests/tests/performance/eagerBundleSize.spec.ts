@@ -27,7 +27,11 @@ import { bootstrapWithStorage } from '../../common-helpers/bootstrap'
 // Raised again from 11.5MB for the Privacy Pools privacy UI on the Send forms (~66KB), which loads
 // with the dashboard because the Send screens are not lazy routes and because the Expo SDK 58 upgrade
 // added ~236KB (gesture-handler 3, reanimated 4.7, react-dom 19.3).
-const EAGER_JS_BUDGET_BYTES = 12 * 1024 * 1024
+// Raised again from 12MB for the "on its way" pending balances of in-progress swaps and bridges on
+// the dashboard tokens and for confirming sign message warnings one by one, which brought the
+// dashboard just over 12MB once merged into v2. No background-only code was added to the UI with
+// them.
+const EAGER_JS_BUDGET_BYTES = 13 * 1024 * 1024
 
 test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
   test.setTimeout(120000)
