@@ -31,7 +31,7 @@ import { bootstrapWithStorage } from '../../common-helpers/bootstrap'
 // the dashboard tokens and for confirming sign message warnings one by one, which brought the
 // dashboard just over 12MB once merged into v2. No background-only code was added to the UI with
 // them.
-const EAGER_JS_BUDGET_BYTES = 13 * 1024 * 1024
+const EAGER_JS_BUDGET_BYTES = 12.5 * 1024 * 1024
 
 test.describe('performance: UI bundle size', { tag: '@performance' }, () => {
   test.setTimeout(120000)
