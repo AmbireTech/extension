@@ -13,6 +13,7 @@ import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
+import usePendingDeliveries from '@common/modules/dashboard/hooks/usePendingDeliveries'
 import {
   selectIsAutoDiscoveryEnabled,
   selectIsTokenPricesEnabled
@@ -82,7 +83,8 @@ const isCollapsibleToken = (
   balanceUSD: number,
   isLargePortfolio: boolean,
   isTokenPricesEnabled: boolean,
-  isAutoDiscoveryEnabled: boolean
+  isAutoDiscoveryEnabled: boolean,
+  hasPendingDelivery: boolean
 ): boolean => {
   // Rewards and vesting tokens should never be hidden as lower-value tokens
   if (
@@ -95,6 +97,12 @@ const isCollapsibleToken = (
   // Simulated tokens should never be hidden as well, because the user may be
   // sending the entire amount, which will make the post-simulation balance 0
   if (typeof token.amountPostSimulation === 'bigint') {
+    return false
+  }
+
+  // Tokens that in-progress swaps and bridges will move shouldn't be hidden either,
+  // e.g. the user may be receiving a token they don't hold yet
+  if (hasPendingDelivery) {
     return false
   }
 
@@ -148,6 +156,7 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
     'SelectedAccountController',
     selectDashboardNetworkFilter
   )
+  const { getTokenPendingDelivery } = usePendingDeliveries()
   const { control, watch, setValue } = useForm({
     mode: 'all',
     defaultValues: {
@@ -224,6 +233,7 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
 
       return (
         hasAmount(token) ||
+        !!token.pendingDeliveryAmount ||
         isCustom ||
         // Don't display pinned tokens until we are sure the user has no balance
         (isPinned && userHasNoBalance && isPortfolioAllReady)
@@ -234,16 +244,17 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
       token,
       balanceUSD: balancesInUSD.get(token) ?? 0,
       amount: Number(getTokenAmount(token)),
-      isSimulated:
-        typeof token.amountPostSimulation === 'bigint' &&
-        token.amountPostSimulation !== BigInt(token.amount),
+      isPending:
+        (typeof token.amountPostSimulation === 'bigint' &&
+          token.amountPostSimulation !== BigInt(token.amount)) ||
+        !!token.pendingDeliveryAmount,
       rewardsType: token.flags.rewardsType,
       onGasTank: token.flags.onGasTank
     }))
 
     decorated.sort((a, b) => {
       // pending tokens go on top
-      if (a.isSimulated !== b.isSimulated) return a.isSimulated ? -1 : 1
+      if (a.isPending !== b.isPending) return a.isPending ? -1 : 1
 
       // rewards tokens come before regular ones
       if (!a.rewardsType !== !b.rewardsType) return a.rewardsType ? -1 : 1
@@ -260,7 +271,14 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
     })
 
     return decorated.map(({ token }) => token)
-  }, [tokens, networks, customTokenKeys, userHasNoBalance, isPortfolioAllReady, balancesInUSD])
+  }, [
+    tokens,
+    networks,
+    customTokenKeys,
+    userHasNoBalance,
+    isPortfolioAllReady,
+    balancesInUSD
+  ])
 
   const { visibleTokens, dustTokens } = useMemo(() => {
     if (userHasNoBalance || searchValue.length > 0) {
@@ -283,7 +301,8 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
             balancesInUSD.get(token) ?? 0,
             isLargePortfolio,
             isTokenPricesEnabled,
-            isAutoDiscoveryEnabled
+            isAutoDiscoveryEnabled,
+            !!token.pendingDeliveryAmount
           ) &&
           !networkIdsWithPriceError.has(token.chainId.toString())
         ) {
@@ -407,7 +426,13 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
 
       if (!initTab?.tokens || !item) return null
 
-      return <TokenItem token={item} />
+      // The token's own `pendingDeliveryAmount` skips its Gas Tank and rewards copies
+      return (
+        <TokenItem
+          token={item}
+          pendingDelivery={item.pendingDeliveryAmount ? getTokenPendingDelivery(item) : undefined}
+        />
+      )
     },
     [
       initTab?.tokens,
@@ -418,7 +443,8 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
       dustTokens.length,
       dustTotalUSD,
       expandDust,
-      collapseDust
+      collapseDust,
+      getTokenPendingDelivery
     ]
   )
 

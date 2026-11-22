@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useModalize } from 'react-native-modalize'
 
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SignMessageStatus } from '@ambire-common/interfaces/signMessage'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { getDappIconFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
+import { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
 import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/libs/signMessage/utils'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
@@ -25,6 +27,27 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 const selectAccountStates = (state: AllControllersMappingType['AccountsController']) =>
   state.accountStates
+
+/**
+ * Identifies a warning the user confirmed on a specific request, so that confirming it never
+ * carries over to another request that has the same warning
+ */
+const getConfirmedWarningKey = (
+  requestId: string | number | undefined,
+  warning: HumanizerWarning
+) => `${requestId}:${warning.code}`
+
+/** The first warning of the request that has to be confirmed before signing and isn't yet */
+const getWarningToConfirm = (
+  warnings: HumanizerWarning[] | undefined,
+  requestId: string | number | undefined,
+  confirmedWarningKeys: string[]
+) =>
+  warnings?.find(
+    (warning) =>
+      warning.promptBefore?.includes('sign') &&
+      !confirmedWarningKeys.includes(getConfirmedWarningKey(requestId, warning))
+  )
 
 const useSignMessage = () => {
   const { t } = useTranslation()
@@ -46,6 +69,15 @@ const useSignMessage = () => {
   const { ensureOneKeyAccess } = useOneKey()
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
+  const [confirmedWarningKeys, setConfirmedWarningKeys] = useState<string[]>([])
+  const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useModalize()
+  // The signers Sign was pressed with while the warning was shown, to sign with once it's confirmed
+  const signersPendingWarningRef = useRef<{ addr: Key['addr']; type: Key['type'] }[] | undefined>(
+    undefined
+  )
+  // Whether signing waits for the warning to be confirmed, so that pressing Proceed again while
+  // the confirmation closes doesn't continue the signing a second time
+  const isSigningPendingWarningRef = useRef(false)
   const {
     state: { currentUserRequest },
     dispatch: requestsDispatch
@@ -151,6 +183,21 @@ const useSignMessage = () => {
     [humanizedMessage?.warnings]
   )
 
+  // A warning that has to be confirmed before signing and isn't confirmed yet for this request
+  const warningToConfirmBeforeSign = useMemo(
+    () =>
+      getWarningToConfirm(
+        humanizedMessage?.warnings,
+        signMessageState.messageToSign?.fromRequestId,
+        confirmedWarningKeys
+      ),
+    [
+      humanizedMessage?.warnings,
+      confirmedWarningKeys,
+      signMessageState.messageToSign?.fromRequestId
+    ]
+  )
+
   const visualizeHumanized = useMemo(
     () =>
       humanizedMessage?.fullVisualization &&
@@ -240,7 +287,24 @@ const useSignMessage = () => {
   >(null)
 
   const handleSign = useCallback(
-    (signers?: { addr: Key['addr']; type: Key['type'] }[]) => {
+    (signers?: { addr: Key['addr']; type: Key['type'] }[], justConfirmedWarningKeys?: string[]) => {
+      // A warning that has to be confirmed comes before everything else, even choosing the key.
+      // `justConfirmedWarningKeys` is passed only right after confirming one, while the state
+      // that records it hasn't updated yet, so that only the confirmed ones are skipped
+      const warningToConfirm = justConfirmedWarningKeys
+        ? getWarningToConfirm(
+            humanizedMessage?.warnings,
+            signMessageState.messageToSign?.fromRequestId,
+            justConfirmedWarningKeys
+          )
+        : warningToConfirmBeforeSign
+      if (warningToConfirm) {
+        signersPendingWarningRef.current = signers
+        isSigningPendingWarningRef.current = true
+        openWarningModal()
+        return
+      }
+
       // Has more than one key, should first choose the key to sign with
       const hasChosenSigningKey = signers && signers.length
       if (!hasChosenSigningKey) {
@@ -298,13 +362,52 @@ const useSignMessage = () => {
       addToast,
       t,
       signMessageState.signers,
-      requestSigningAuth
+      requestSigningAuth,
+      warningToConfirmBeforeSign,
+      openWarningModal,
+      humanizedMessage?.warnings,
+      signMessageState.messageToSign?.fromRequestId
     ]
   )
 
   useEffect(() => {
     handleSignRef.current = handleSign
   }, [handleSign])
+
+  const confirmWarning = useCallback(() => {
+    if (!warningToConfirmBeforeSign || !isSigningPendingWarningRef.current) return
+
+    const requestId = signMessageState.messageToSign?.fromRequestId
+    const nextConfirmedWarningKeys = [
+      ...confirmedWarningKeys,
+      getConfirmedWarningKey(requestId, warningToConfirmBeforeSign)
+    ]
+    setConfirmedWarningKeys(nextConfirmedWarningKeys)
+
+    // Another warning has to be confirmed too. The open confirmation shows it next, once the
+    // state that records this one updates
+    if (getWarningToConfirm(humanizedMessage?.warnings, requestId, nextConfirmedWarningKeys)) return
+
+    const signers = signersPendingWarningRef.current
+    signersPendingWarningRef.current = undefined
+    isSigningPendingWarningRef.current = false
+    closeWarningModal()
+    // Continues the signing the warning stopped, with the signers Sign was pressed with
+    handleSign(signers, nextConfirmedWarningKeys)
+  }, [
+    warningToConfirmBeforeSign,
+    confirmedWarningKeys,
+    humanizedMessage?.warnings,
+    signMessageState.messageToSign?.fromRequestId,
+    closeWarningModal,
+    handleSign
+  ])
+
+  const dismissWarning = useCallback(() => {
+    signersPendingWarningRef.current = undefined
+    isSigningPendingWarningRef.current = false
+    closeWarningModal()
+  }, [closeWarningModal])
 
   const cancelQrSigningFlow = useCallback(() => {
     signingCleanup()
@@ -477,6 +580,10 @@ const useSignMessage = () => {
     signingCleanup,
     handleReject,
     handleSign,
+    warningToConfirmBeforeSign,
+    warningModalRef,
+    confirmWarning,
+    dismissWarning,
     cancelQrSigningFlow,
     handleQrSigningFlowOnBackPressed,
     handleQrSigningFlowOnRejectPressed,
