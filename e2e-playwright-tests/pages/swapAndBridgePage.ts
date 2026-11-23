@@ -377,6 +377,10 @@ export class SwapAndBridgePage extends BasePage {
     const kyberRoute = this.page.locator(selectors.swapAndBridge.kyberSwapRoute)
 
     await this.click(selectors.selectRouteButton)
+    // The sheet renders its routes only as it opens, so they are counted once one is shown
+    await expect(oneInchRoute.or(kyberRoute).first())
+      .toBeVisible()
+      .catch(() => {})
 
     if ((await oneInchRoute.count()) > 0) {
       await this.page.locator(selectors.swapAndBridge.oneInchSwapRoute).first().click()
