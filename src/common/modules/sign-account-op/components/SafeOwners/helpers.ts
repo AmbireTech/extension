@@ -15,4 +15,15 @@ const getSignAndCloseOwnerAddr = (owners: SafeOwnerSigningState[], threshold: nu
   return signedOwnersCount + 1 < threshold ? unsignedImportedOwner.addr : null
 }
 
-export { getSignAndCloseOwnerAddr }
+/**
+ * Whether the owners that signed already, together with the ones that can sign here, reach the
+ * threshold. If not, owners elsewhere have to sign too. True while the threshold isn't loaded
+ * (0), so nothing is blocked until it's known
+ */
+const canOwnersHereMeetThreshold = (owners: SafeOwnerSigningState[], threshold: number) => {
+  if (!threshold) return true
+
+  return owners.filter((owner) => owner.isImported || owner.hasSigned).length >= threshold
+}
+
+export { canOwnersHereMeetThreshold, getSignAndCloseOwnerAddr }
