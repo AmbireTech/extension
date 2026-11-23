@@ -6,15 +6,15 @@ import useTheme from '@common/hooks/useTheme'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import flexbox from '@common/styles/utils/flexbox'
 
-import { SHEET_HEADER_BUTTON_SIZE } from './constants'
-import SolidSurface from './SheetHeaderButtonSurface'
+import { HEADER_BUTTON_SIZE } from './constants'
+import SolidSurface from './HeaderButtonSurface'
 
 type Props = { children: React.ReactNode }
 
 // A runtime constant: Liquid Glass exists from iOS 26 on
 const liquidGlassAvailable = isLiquidGlassAvailable()
 
-// The glass draws its rim and shadow past the circle, and the sheet's scroll view clips
+// The glass draws its rim and shadow past the circle, and a sheet's scroll view clips
 // whatever reaches its edges, so the circle keeps this much room around it
 const GLASS_OUTSET = 1
 const GLASS_ROOM_STYLE = { padding: GLASS_OUTSET }
@@ -22,9 +22,9 @@ const GLASS_ROOM_STYLE = { padding: GLASS_OUTSET }
 const GLASS_STYLE = [
   flexbox.center,
   {
-    width: SHEET_HEADER_BUTTON_SIZE,
-    height: SHEET_HEADER_BUTTON_SIZE,
-    borderRadius: SHEET_HEADER_BUTTON_SIZE / 2
+    width: HEADER_BUTTON_SIZE,
+    height: HEADER_BUTTON_SIZE,
+    borderRadius: HEADER_BUTTON_SIZE / 2
   }
 ]
 
@@ -32,7 +32,7 @@ const GLASS_STYLE = [
  * The Liquid Glass circle of the system's sheet buttons, in the app's theme rather than the
  * system's. Older iOS, which has no Liquid Glass, gets the solid circle.
  */
-const SheetHeaderButtonSurface: FC<Props> = ({ children }) => {
+const HeaderButtonSurface: FC<Props> = ({ children }) => {
   const { themeType } = useTheme()
 
   if (!liquidGlassAvailable) return <SolidSurface>{children}</SolidSurface>
@@ -51,4 +51,4 @@ const SheetHeaderButtonSurface: FC<Props> = ({ children }) => {
   )
 }
 
-export default React.memo(SheetHeaderButtonSurface)
+export default React.memo(HeaderButtonSurface)

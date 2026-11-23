@@ -1,11 +1,8 @@
 import React, { useCallback, useMemo } from 'react'
-import { ColorValue, Pressable } from 'react-native'
 
-import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
+import HeaderButton from '@common/components/HeaderButton'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
-import useTheme from '@common/hooks/useTheme'
-import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
 const { isPopup, isTab, isRequestWindow } = getUiType()
@@ -15,15 +12,12 @@ export type DisplayIn = 'popup' | 'tab' | 'request-window' | 'always' | 'never'
 const HeaderBackButton = ({
   displayIn = 'always',
   onGoBackPress,
-  forceBack,
-  color
+  forceBack
 }: {
   displayIn?: DisplayIn | DisplayIn[]
   onGoBackPress?: () => void
   forceBack?: boolean
-  color?: string | ColorValue
 }) => {
-  const { theme } = useTheme()
   const { path, params } = useRoute()
   const { navigate } = useNavigation()
 
@@ -54,25 +48,7 @@ const HeaderBackButton = ({
   if (!shouldBeDisplayed || (!canGoBack && !forceBack)) return null
 
   return (
-    <Pressable
-      style={[
-        flexbox.directionRow,
-        flexbox.alignCenter,
-        flexbox.justifyCenter,
-        {
-          width: 28,
-          height: 28
-        }
-      ]}
-      onPress={onGoBackPress || handleGoBack}
-      testID="back-arrow-button"
-    >
-      {({ hovered }: any) => (
-        <>
-          <LeftArrowIcon color={color || (hovered ? theme.primaryText : theme.iconPrimary)} />
-        </>
-      )}
-    </Pressable>
+    <HeaderButton type="back" onPress={onGoBackPress || handleGoBack} testID="back-arrow-button" />
   )
 }
 

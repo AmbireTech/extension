@@ -9,7 +9,7 @@ import SyncIcon from '@common/assets/svg/SyncIcon'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
-import HoverablePressable from '@common/components/HoverablePressable'
+import HeaderButton from '@common/components/HeaderButton'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -249,9 +249,11 @@ const AccountSelectScreen = () => {
   return !pendingToBeSetSelectedAccount && !pendingToBeSetSelectedPrivacyPoolsAccount ? (
     <LayoutWrapper>
       <HeaderWithTitle>
-        <HoverablePressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
-          <SettingsIcon width={28} height={28} />
-        </HoverablePressable>
+        <HeaderButton
+          icon={<SettingsIcon width={20} height={20} />}
+          accessibilityLabel={t('Accounts settings')}
+          onPress={() => navigate(WEB_ROUTES.accountsSettings)}
+        />
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />

@@ -9,6 +9,7 @@ import { IAccountPickerController } from '@ambire-common/interfaces/accountPicke
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
+import HeaderButton from '@common/components/HeaderButton'
 import { SelectValue } from '@common/components/Select/types'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -69,20 +70,30 @@ const ChangeHdPath: React.FC<Props> = ({ disabled, type }) => {
 
   return (
     <>
-      <Button
-        testID="change-hd-path-btn"
-        size="small"
-        type="ghost2"
-        onPress={() => openBottomSheet()}
-        hasBottomSpacing={false}
-        disabled={disabled}
-        text={isWeb ? t('Advanced mode') : undefined}
-        childrenPosition="left"
-        textStyle={{ fontSize: 14, fontFamily: FONT_FAMILIES.REGULAR }}
-        style={isWeb ? undefined : { paddingHorizontal: 0 }}
-      >
-        <SettingsIcon width={20} style={isWeb ? spacings.mrTy : undefined} />
-      </Button>
+      {isWeb ? (
+        <Button
+          testID="change-hd-path-btn"
+          size="small"
+          type="ghost2"
+          onPress={() => openBottomSheet()}
+          hasBottomSpacing={false}
+          disabled={disabled}
+          text={t('Advanced mode')}
+          childrenPosition="left"
+          textStyle={{ fontSize: 14, fontFamily: FONT_FAMILIES.REGULAR }}
+        >
+          <SettingsIcon width={20} style={spacings.mrTy} />
+        </Button>
+      ) : (
+        // Icon only on mobile, where it sits in the screen header
+        <HeaderButton
+          testID="change-hd-path-btn"
+          icon={<SettingsIcon width={20} />}
+          accessibilityLabel={t('Advanced mode')}
+          onPress={openBottomSheet}
+          disabled={disabled}
+        />
+      )}
 
       <AdvancedModeBottomSheet
         sheetRef={sheetRef}

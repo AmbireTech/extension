@@ -3,13 +3,10 @@ import { View } from 'react-native'
 
 import CowSwapIcon from '@common/assets/svg/CowSwapIcon'
 import Button from '@common/components/Button'
+import { HEADER_BUTTON_SIZE } from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import {
-  COMPACT_SETTINGS_BUTTON_SIZE,
-  SETTINGS_BUTTON_SIZE
-} from '@common/modules/swap-and-bridge/components/ProviderSettingsBottomSheet'
 import useCowSwapAnnouncement from '@common/modules/swap-and-bridge/hooks/useCowSwapAnnouncement'
 import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
@@ -27,15 +24,14 @@ const CARD_POSITION_STYLE = {
   right: 0,
   zIndex: 10
 }
-// The compact settings button is used on mobile, where the card is rendered as the
-// layout's `headerOverlay`, which starts right at the header's bottom edge. Pushed down
+// On mobile the card is rendered as the layout's `headerOverlay`, which starts right at the header's bottom edge. Pushed down
 // by the caret's overhang, so the caret tip sits right under the header (same as web).
-const COMPACT_CARD_POSITION_STYLE = { ...CARD_POSITION_STYLE, top: CARET_OVERHANG }
+const HEADER_OVERLAY_CARD_POSITION_STYLE = { ...CARD_POSITION_STYLE, top: CARET_OVERHANG }
 
 type Props = {
   openProviderSettingsModal: () => void
-  /** Whether the settings (gear) button the card points to is the compact one. */
-  isSettingsButtonCompact?: boolean
+  /** Whether the card is rendered as the layout's `headerOverlay`, as on mobile. */
+  isHeaderOverlay?: boolean
 }
 
 /**
@@ -51,7 +47,7 @@ type Props = {
  */
 const CowSwapAnnouncement = ({
   openProviderSettingsModal,
-  isSettingsButtonCompact = false
+  isHeaderOverlay = false
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -64,11 +60,8 @@ const CowSwapAnnouncement = ({
 
   if (!isCowSwapAnnouncementVisible) return null
 
-  const settingsButtonSize = isSettingsButtonCompact
-    ? COMPACT_SETTINGS_BUTTON_SIZE
-    : SETTINGS_BUTTON_SIZE
   // The card is aligned to the right edge of the header, same as the settings button
-  const caretCenterFromRight = settingsButtonSize / 2
+  const caretCenterFromRight = HEADER_BUTTON_SIZE / 2
   // Keeps the caret on the straight part of the top border instead of the rounded corner
   const topRightRadius = Math.min(
     BORDER_RADIUS_PRIMARY,
@@ -83,7 +76,7 @@ const CowSwapAnnouncement = ({
         common.shadowPrimary,
         spacings.ph,
         spacings.pv,
-        isSettingsButtonCompact ? COMPACT_CARD_POSITION_STYLE : CARD_POSITION_STYLE,
+        isHeaderOverlay ? HEADER_OVERLAY_CARD_POSITION_STYLE : CARD_POSITION_STYLE,
         {
           backgroundColor: theme.secondaryBackground,
           borderWidth: 1,

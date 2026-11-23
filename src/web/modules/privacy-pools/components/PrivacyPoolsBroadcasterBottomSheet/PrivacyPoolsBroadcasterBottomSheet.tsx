@@ -9,7 +9,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
-import HoverablePressable from '@common/components/HoverablePressable'
+import HeaderButton from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -23,8 +23,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const LOGO_SIZE = 32
-const SETTINGS_BUTTON_SIZE = 40
-const SETTINGS_BUTTON_STYLE = { width: SETTINGS_BUTTON_SIZE, height: SETTINGS_BUTTON_SIZE }
 const SHEET_STYLE = isWeb ? { width: '100%' as const, maxWidth: 480 } : undefined
 const RADIO_SIZE = 20
 const RADIO_DOT_SIZE = 10
@@ -159,17 +157,12 @@ const PrivacyPoolsBroadcasterButtonComponent = ({ onPress }: { onPress: () => vo
   const { theme } = useTheme()
 
   return (
-    <HoverablePressable
+    <HeaderButton
+      icon={<SettingsIcon width={20} height={20} color={theme.iconPrimary} />}
       accessibilityLabel={t('Send settings')}
-      accessibilityRole="button"
-      hitSlop={8}
       onPress={onPress}
       testID="privacy-pools-broadcaster-settings-button"
-    >
-      <View style={[SETTINGS_BUTTON_STYLE, flexbox.center]}>
-        <SettingsIcon width={24} height={24} color={theme.iconPrimary} />
-      </View>
-    </HoverablePressable>
+    />
   )
 }
 

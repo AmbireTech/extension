@@ -2,13 +2,14 @@ import Fuse from 'fuse.js'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Dapp, TrendingToken } from '@ambire-common/interfaces/dapp'
 import { isValidHostname, isValidURL } from '@ambire-common/services/validations'
 import GlobeIcon from '@common/assets/svg/GlobeIcon'
 import GoogleIcon from '@common/assets/svg/GoogleIcon'
 import ScanIcon from '@common/assets/svg/ScanIcon'
+import HeaderButton from '@common/components/HeaderButton'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -263,9 +264,11 @@ const ExploreScreen = () => {
         title={t('Explore')}
         onBackButtonPress={() => navigate(ROUTES.dashboard)}
         rightIcon={
-          <Pressable onPress={handleQrPress}>
-            <ScanIcon width={24} height={24} />
-          </Pressable>
+          <HeaderButton
+            icon={<ScanIcon width={20} height={20} />}
+            accessibilityLabel={t('Scan QR code')}
+            onPress={handleQrPress}
+          />
         }
         withScroll={false}
       >

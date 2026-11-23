@@ -13,8 +13,8 @@ import StarFilledIcon from '@common/assets/svg/StarFilledIcon'
 import TelegramIcon from '@common/assets/svg/TelegramIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import BackButton from '@common/components/BackButton'
-import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HeaderButton from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import { AUTO_LOCK_OPTIONS } from '@common/constants/autoLock'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@common/constants/social'
@@ -136,27 +136,26 @@ const NavMenu = () => {
       header={
         <HeaderWithTitle title={t('Menu')}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-            <Button
-              type="ghost2"
-              size="small"
-              hasBottomSpacing={false}
+            <HeaderButton
+              icon={
+                <MaximizeIcon
+                  color={theme.iconPrimary}
+                  dataSet={createGlobalTooltipDataSet({
+                    id: expandViewTooltipId,
+                    content: t('Expand view')
+                  })}
+                  width={20}
+                  height={20}
+                />
+              }
+              accessibilityLabel={t('Expand view')}
               onPress={() =>
                 openInTab({
                   url: `tab.html#/${WEB_ROUTES.dashboard}`,
                   shouldCloseCurrentWindow: true
                 })
               }
-            >
-              <MaximizeIcon
-                color={theme.iconPrimary}
-                dataSet={createGlobalTooltipDataSet({
-                  id: expandViewTooltipId,
-                  content: t('Expand view')
-                })}
-                width={24}
-                height={24}
-              />
-            </Button>
+            />
           </View>
         </HeaderWithTitle>
       }

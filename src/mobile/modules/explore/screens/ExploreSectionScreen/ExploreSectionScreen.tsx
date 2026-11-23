@@ -1,13 +1,14 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import HeaderButton from '@common/components/HeaderButton'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -196,13 +197,17 @@ const ExploreSectionScreen = () => {
         withScroll={false}
         rightIcon={
           !hasSectionItems ? undefined : sectionType === 'recent' ? (
-            <Pressable onPress={handleClearRecentPress} hitSlop={8}>
-              <DeleteIcon width={24} height={24} strokeWidth="1.75" />
-            </Pressable>
+            <HeaderButton
+              icon={<DeleteIcon width={20} height={20} strokeWidth="1.75" />}
+              accessibilityLabel={t('Clear recent apps')}
+              onPress={handleClearRecentPress}
+            />
           ) : sectionType === 'connected' ? (
-            <Pressable onPress={handleDisconnectAllPress} hitSlop={8}>
-              <ConnectedIcon width={20} height={20} color={theme.errorDecorative} />
-            </Pressable>
+            <HeaderButton
+              icon={<ConnectedIcon width={20} height={20} color={theme.errorDecorative} />}
+              accessibilityLabel={t('Disconnect all apps')}
+              onPress={handleDisconnectAllPress}
+            />
           ) : undefined
         }
       >
