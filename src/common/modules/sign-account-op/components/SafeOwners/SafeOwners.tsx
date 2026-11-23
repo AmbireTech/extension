@@ -14,8 +14,8 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
+import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
 import SafeApiDisabledAlert from '@common/modules/auth/components/SafeApiDisabledAlert'
@@ -244,16 +244,17 @@ const SafeOwners = ({
     [owners, threshold]
   )
 
-  // Opted out of the Safe API while owners elsewhere have to sign too: they'd never see it, so
-  // signing here can't get it sent. Allowed again once the user turns sync back on. Only when
-  // an owner here can still sign, as there's nothing to block otherwise
+  // Opted out of the Safe API while owners elsewhere have to sign too: they'd never see it, and
+  // their signatures would never reach here, so signing here can't get it sent. Allowed again
+  // once the user turns sync back on
   const isSigningBlockedBySyncOff = useMemo(
-    () =>
-      !isSafeApiEnabled &&
-      owners.some((owner) => owner.isImported && !owner.hasSigned) &&
-      !canOwnersHereMeetThreshold(owners, threshold),
+    () => !isSafeApiEnabled && !canOwnersHereMeetThreshold(owners, threshold),
     [isSafeApiEnabled, owners, threshold]
   )
+  // Also once the owners here have signed, as the request still waits for the others. Not for a
+  // Safe none of whose owners are in this wallet, which already says there are no keys to sign
+  const shouldShowSyncOffAlert =
+    isSigningBlockedBySyncOff && owners.some((owner) => owner.isImported)
 
   const ownerToChooseKeyFor = useMemo(
     () => owners.find((o) => o.addr === ownerAddrToChooseKeyFor) || null,
@@ -334,11 +335,11 @@ const SafeOwners = ({
           </SafeKeyWrapper>
         ))}
       </ScrollableWrapper>
-      {isSigningBlockedBySyncOff && (
+      {shouldShowSyncOffAlert && (
         <SafeApiDisabledAlert
           style={spacings.mt}
           text={t(
-            "Owners on other devices or in the Safe app also need to sign, but with sync turned off they won't see this request or your signature, so it can't be completed. Turn on sync to sign it and share it with them."
+            "Other owners need to sign this too. With sync off, you can't send it to them or get their signatures back. Turn it on to continue."
           )}
         />
       )}
