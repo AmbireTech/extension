@@ -24,6 +24,7 @@ import { SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const ADDING_SECTION_KEY = 'adding'
+const UPDATING_KEYS_SECTION_KEY = 'updatingKeys'
 const ALREADY_ADDED_SECTION_KEY = 'alreadyAdded'
 const REMOVING_SECTION_KEY = 'removing'
 
@@ -54,7 +55,9 @@ const keyExtractor = (item: Item) => (item.kind === 'adding' ? item.field.id : i
 
 type Props = {
   fields: Field[]
-  /** The fields of accounts the wallet has already, listed apart from the new ones */
+  /** The fields of accounts the wallet has already that get a new key, listed apart */
+  updatingKeysAddrs: Account['addr'][]
+  /** The fields of accounts the wallet has already, with nothing new, listed apart */
   alreadyAddedAddrs: Account['addr'][]
   control: Control<{ accounts: Account[] }>
   accountsToRemove: Account[]
@@ -68,13 +71,14 @@ type Props = {
 }
 
 /**
- * The accounts of the personalize step: the ones being added and the ones the wallet has
- * already, both named here, and the ones being removed. With more than one, each list gets a
+ * The accounts of the personalize step: the ones being added, the ones the wallet has already
+ * (getting new keys or not), all named here, and the ones being removed. With more than one, each list gets a
  * title that sticks to the top while it scrolls, and the removing title sticks to the bottom
  * until it scrolls into view - a long list of accounts to add would hide that some are removed.
  */
 const PersonalizeAccountsList = ({
   fields,
+  updatingKeysAddrs,
   alreadyAddedAddrs,
   control,
   accountsToRemove,
@@ -88,14 +92,20 @@ const PersonalizeAccountsList = ({
   const { t } = useTranslation()
 
   const sections = useMemo((): Section[] => {
+    const updatingKeys = new Set(updatingKeysAddrs)
     const alreadyAdded = new Set(alreadyAddedAddrs)
     // Named through the form, so each keeps the index of its field
     const fieldItems = fields.map((field, index) => ({ kind: 'adding' as const, field, index }))
-    const newItems = fieldItems.filter(({ field }) => !alreadyAdded.has(field.addr))
+    const newItems = fieldItems.filter(
+      ({ field }) => !updatingKeys.has(field.addr) && !alreadyAdded.has(field.addr)
+    )
+    const updatingKeysItems = fieldItems.filter(({ field }) => updatingKeys.has(field.addr))
     const alreadyAddedItems = fieldItems.filter(({ field }) => alreadyAdded.has(field.addr))
 
     const result: Section[] = []
     if (newItems.length) result.push({ key: ADDING_SECTION_KEY, data: newItems })
+    if (updatingKeysItems.length)
+      result.push({ key: UPDATING_KEYS_SECTION_KEY, data: updatingKeysItems })
     if (alreadyAddedItems.length)
       result.push({ key: ALREADY_ADDED_SECTION_KEY, data: alreadyAddedItems })
     if (accountsToRemove.length) {
@@ -106,7 +116,7 @@ const PersonalizeAccountsList = ({
     }
 
     return result
-  }, [fields, alreadyAddedAddrs, accountsToRemove])
+  }, [fields, updatingKeysAddrs, alreadyAddedAddrs, accountsToRemove])
 
   const hasMultipleSections = sections.length > 1
 
@@ -253,13 +263,14 @@ const PersonalizeAccountsList = ({
       // A single list of accounts to add or name needs no title
       if (!hasMultipleSections) return null
 
-      return (
-        <AccountsSectionTitle
-          title={section.key === ALREADY_ADDED_SECTION_KEY ? t('Already added') : t('Adding')}
-          count={section.data.length}
-          style={style}
-        />
-      )
+      const getTitle = () => {
+        if (section.key === UPDATING_KEYS_SECTION_KEY) return t('Updating keys')
+        if (section.key === ALREADY_ADDED_SECTION_KEY) return t('Already added')
+
+        return t('Adding')
+      }
+
+      return <AccountsSectionTitle title={getTitle()} count={section.data.length} style={style} />
     },
     [sections, accountsToRemove.length, hasMultipleSections, t]
   )

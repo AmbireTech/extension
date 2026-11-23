@@ -29,6 +29,9 @@ const selectReadyToRemoveAccounts = (state: AllControllersMappingType['AccountPi
 const selectSubType = (state: AllControllersMappingType['AccountPickerController']) => state.subType
 const selectIsFromNewSeed = (state: AllControllersMappingType['AccountPickerController']) =>
   state.isFromNewSeed
+const selectReadyToUpdateKeysAccountAddrs = (
+  state: AllControllersMappingType['AccountPickerController']
+) => state.readyToUpdateKeysAccountAddrs
 // Set up by a flow that only sets the picker up, and not started yet
 const selectIsWaitingToStart = (state: AllControllersMappingType['AccountPickerController']) =>
   (!!state.initParams && !state.isInitialized && !state.readyToAddAccounts.length) ||
@@ -42,6 +45,8 @@ const selectAddAccountsStatus = (state: AllControllersMappingType['AccountPicker
  * the wallet's first accounts, the rest go on to the dashboard. Told by the wallet before adding,
  * as the accounts state lags behind the reply.
  */
+const splitAddrs = (joinedAddrs: string) => (joinedAddrs ? joinedAddrs.split(',') : [])
+
 const getNextRoute = (walletAccounts: Account[], namedAccounts: Account[]) => {
   const namedAddrs = new Set(namedAccounts.map(({ addr }) => addr))
   const hadAccounts = walletAccounts.some(({ addr }) => !namedAddrs.has(addr))
@@ -72,6 +77,10 @@ export default function useAccountPersonalize() {
   )
   const { state: subType } = useController('AccountPickerController', selectSubType)
   const { state: isFromNewSeed } = useController('AccountPickerController', selectIsFromNewSeed)
+  const { state: readyToUpdateKeysAccountAddrs } = useController(
+    'AccountPickerController',
+    selectReadyToUpdateKeysAccountAddrs
+  )
   const { state: isWaitingToStart } = useController(
     'AccountPickerController',
     selectIsWaitingToStart
@@ -180,21 +189,33 @@ export default function useAccountPersonalize() {
     accountsToNameRef.current = accountsToName
   }, [accountsToName])
 
-  // The prepared accounts the wallet has already (e.g. a sync of accounts this device has too).
-  // Kept from before adding, which puts all of them in the wallet while the screen is still up.
-  const alreadyAddedKey = isExistingSafeMode
-    ? ''
+  // The prepared accounts the wallet has already (e.g. a sync of accounts this device has too),
+  // apart by whether they get a new key. Kept from before adding, which puts all of them in the
+  // wallet (and the picker resets) while the screen is still up.
+  const inWalletAddrs = isExistingSafeMode
+    ? []
     : accountsToName
         .filter(({ addr }) => accounts.some((account) => account.addr === addr))
         .map(({ addr }) => addr)
-        .join(',')
-  const [keptAlreadyAddedKey, setKeptAlreadyAddedKey] = useState(alreadyAddedKey)
-  if (!isAdding && !addedAccounts && keptAlreadyAddedKey !== alreadyAddedKey) {
-    setKeptAlreadyAddedKey(alreadyAddedKey)
+  const updatingKeysKey = inWalletAddrs
+    .filter((addr) => readyToUpdateKeysAccountAddrs.includes(addr))
+    .join(',')
+  const alreadyAddedKey = inWalletAddrs
+    .filter((addr) => !readyToUpdateKeysAccountAddrs.includes(addr))
+    .join(',')
+  const [keptKeys, setKeptKeys] = useState({ updatingKeysKey, alreadyAddedKey })
+  const haveKeysChanged =
+    keptKeys.updatingKeysKey !== updatingKeysKey || keptKeys.alreadyAddedKey !== alreadyAddedKey
+  if (!isAdding && !addedAccounts && haveKeysChanged) {
+    setKeptKeys({ updatingKeysKey, alreadyAddedKey })
   }
+  const updatingKeysAddrs = useMemo(
+    () => splitAddrs(keptKeys.updatingKeysKey),
+    [keptKeys.updatingKeysKey]
+  )
   const alreadyAddedAddrs = useMemo(
-    () => (keptAlreadyAddedKey ? keptAlreadyAddedKey.split(',') : []),
-    [keptAlreadyAddedKey]
+    () => splitAddrs(keptKeys.alreadyAddedKey),
+    [keptKeys.alreadyAddedKey]
   )
 
   // The prepared accounts change when more are added from the picker. The names the
@@ -354,9 +375,15 @@ export default function useAccountPersonalize() {
   ])
 
   const isRemovalOnly = !fields.length && !!accountsToRemove.length
-  const newAccountsCount = fields.filter(({ addr }) => !alreadyAddedAddrs.includes(addr)).length
-  // Nothing new, only names and keys of accounts the wallet has to update
-  const isAlreadyAddedOnly = !!fields.length && !newAccountsCount && !accountsToRemove.length
+  const updatingKeysCount = fields.filter(({ addr }) => updatingKeysAddrs.includes(addr)).length
+  const newAccountsCount = fields.filter(
+    ({ addr }) => !alreadyAddedAddrs.includes(addr) && !updatingKeysAddrs.includes(addr)
+  ).length
+  // Nothing new, only names of accounts the wallet has to update
+  const isAlreadyAddedOnly =
+    !!fields.length && !newAccountsCount && !updatingKeysCount && !accountsToRemove.length
+  // No new accounts, but new keys for some the wallet has
+  const isUpdatingKeysOnly = !newAccountsCount && !!updatingKeysCount && !accountsToRemove.length
   // Removing only changes what was picked already, so there is nothing more to pick
   const canAddMore = !isExistingSafeMode && !addedAccounts && !isLoading && !isRemovalOnly
 
@@ -367,7 +394,7 @@ export default function useAccountPersonalize() {
     if (isExistingSafeMode) return t('Already in your wallet')
     if (isRemovalOnly)
       return accountsToRemove.length > 1 ? t('Remove accounts') : t('Remove account')
-    if (accountsToRemove.length) return t('Review changes')
+    if (accountsToRemove.length || isUpdatingKeysOnly) return t('Review changes')
     if (privacyPoolsAccount) return t('Personalize account')
     if (!fields.length) return t('No new accounts added')
     if (isAlreadyAddedOnly) return t('Already in your wallet')
@@ -391,12 +418,19 @@ export default function useAccountPersonalize() {
     if (accountsToRemove.length) {
       if (isAdding) return t('Updating...')
 
-      const updateCount = newAccountsCount + accountsToRemove.length
+      const updateCount = newAccountsCount + updatingKeysCount + accountsToRemove.length
       return updateCount === 1
         ? t('Update 1 account')
         : t('Update {{count}} accounts', { count: updateCount })
     }
     if (isAlreadyAddedOnly) return isAdding ? t('Saving...') : t('Done')
+    if (isUpdatingKeysOnly) {
+      if (isAdding) return t('Updating...')
+
+      return updatingKeysCount === 1
+        ? t('Update 1 account')
+        : t('Update {{count}} accounts', { count: updatingKeysCount })
+    }
     if (isNewAccount) {
       if (isAdding || privacyPools.isAdding) return t('Creating...')
 
@@ -417,6 +451,7 @@ export default function useAccountPersonalize() {
     control,
     fields,
     // Listed apart from the new accounts
+    updatingKeysAddrs,
     alreadyAddedAddrs,
     isLoading,
     // No way back while loading

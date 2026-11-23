@@ -54,6 +54,7 @@ const AccountPersonalizeScreen = () => {
   const {
     control,
     fields,
+    updatingKeysAddrs,
     alreadyAddedAddrs,
     isLoading,
     hasBackButton,
@@ -84,21 +85,33 @@ const AccountPersonalizeScreen = () => {
   const [walletOpenedFor, setWalletOpenedFor] = useState<typeof added>(null)
   if (added && isWalletOpen && walletOpenedFor !== added) setWalletOpenedFor(added)
   const hasWalletOpened = !!added && walletOpenedFor === added
-  // Nothing new came, the accounts the wallet has were only named again (e.g. a repeated sync)
-  const isAlreadyAddedOnly =
-    !!addedAccounts?.length && addedAccounts.every(({ addr }) => alreadyAddedAddrs.includes(addr))
   // Listed apart like on the personalize step, each keeping the index of its field
-  const { newlyAddedItems, alreadyAddedItems } = useMemo(() => {
+  const addedGroups = useMemo(() => {
     const items = (addedAccounts || []).map((account, index) => ({ account, index }))
+    const isInWallet = (addr: string) =>
+      updatingKeysAddrs.includes(addr) || alreadyAddedAddrs.includes(addr)
 
-    return {
-      newlyAddedItems: items.filter(({ account }) => !alreadyAddedAddrs.includes(account.addr)),
-      alreadyAddedItems: items.filter(({ account }) => alreadyAddedAddrs.includes(account.addr))
-    }
-  }, [addedAccounts, alreadyAddedAddrs])
-  const hasMultipleGroups =
-    [newlyAddedItems.length, alreadyAddedItems.length, removedAccounts.length].filter(Boolean)
-      .length > 1
+    return [
+      {
+        key: 'added',
+        title: t('Added'),
+        items: items.filter(({ account }) => !isInWallet(account.addr))
+      },
+      {
+        key: 'keysUpdated',
+        title: t('Keys updated'),
+        items: items.filter(({ account }) => updatingKeysAddrs.includes(account.addr))
+      },
+      {
+        key: 'alreadyAdded',
+        title: t('Already added'),
+        items: items.filter(({ account }) => alreadyAddedAddrs.includes(account.addr))
+      }
+    ].filter(({ items: groupItems }) => groupItems.length)
+  }, [addedAccounts, updatingKeysAddrs, alreadyAddedAddrs, t])
+  // Nothing new came, the accounts the wallet has got new keys or were only named again
+  const hasNoNewAccounts = !addedGroups.some(({ key }) => key === 'added')
+  const hasMultipleGroups = addedGroups.length + (removedAccounts.length ? 1 : 0) > 1
 
   const listEmpty = useMemo(
     () => (
@@ -127,7 +140,7 @@ const AccountPersonalizeScreen = () => {
                 fontSize={20}
                 style={{ alignSelf: 'center', ...spacings.mbXl }}
               >
-                {removedAccounts.length || isAlreadyAddedOnly
+                {removedAccounts.length || (!!addedAccounts?.length && hasNoNewAccounts)
                   ? t('Accounts updated')
                   : t('Added successfully')}
               </Text>
@@ -140,37 +153,27 @@ const AccountPersonalizeScreen = () => {
                     onSaveName={handleSavePrivacyPoolsAccountName}
                   />
                 )}
-                {!!newlyAddedItems.length && hasMultipleGroups && (
-                  <AccountsSectionTitle title={t('Added')} count={newlyAddedItems.length} />
-                )}
-                {newlyAddedItems.map(({ account, index }, i) => (
-                  <AccountPersonalizeCard
-                    key={account.addr}
-                    control={control}
-                    index={index}
-                    account={account}
-                    hasBottomSpacing={i !== newlyAddedItems.length - 1}
-                    disableEdit
-                    onSaveName={handleSaveAccountName}
-                  />
-                ))}
-                {!!alreadyAddedItems.length && hasMultipleGroups && (
-                  <AccountsSectionTitle
-                    title={t('Already added')}
-                    count={alreadyAddedItems.length}
-                    style={newlyAddedItems.length ? spacings.mtXl : undefined}
-                  />
-                )}
-                {alreadyAddedItems.map(({ account, index }, i) => (
-                  <AccountPersonalizeCard
-                    key={account.addr}
-                    control={control}
-                    index={index}
-                    account={account}
-                    hasBottomSpacing={i !== alreadyAddedItems.length - 1}
-                    disableEdit
-                    onSaveName={handleSaveAccountName}
-                  />
+                {addedGroups.map(({ key, title, items }, groupIndex) => (
+                  <React.Fragment key={key}>
+                    {hasMultipleGroups && (
+                      <AccountsSectionTitle
+                        title={title}
+                        count={items.length}
+                        style={groupIndex ? spacings.mtXl : undefined}
+                      />
+                    )}
+                    {items.map(({ account, index }, i) => (
+                      <AccountPersonalizeCard
+                        key={account.addr}
+                        control={control}
+                        index={index}
+                        account={account}
+                        hasBottomSpacing={i !== items.length - 1}
+                        disableEdit
+                        onSaveName={handleSaveAccountName}
+                      />
+                    ))}
+                  </React.Fragment>
                 ))}
                 {!!removedAccounts.length && (
                   <View style={!!addedAccounts?.length && spacings.mtXl}>
@@ -240,6 +243,7 @@ const AccountPersonalizeScreen = () => {
               ) : (
                 <PersonalizeAccountsList
                   fields={fields}
+                  updatingKeysAddrs={updatingKeysAddrs}
                   alreadyAddedAddrs={alreadyAddedAddrs}
                   control={control}
                   accountsToRemove={accountsToRemove}
