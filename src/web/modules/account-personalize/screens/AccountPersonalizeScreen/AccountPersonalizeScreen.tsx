@@ -87,6 +87,18 @@ const AccountPersonalizeScreen = () => {
   // Nothing new came, the accounts the wallet has were only named again (e.g. a repeated sync)
   const isAlreadyAddedOnly =
     !!addedAccounts?.length && addedAccounts.every(({ addr }) => alreadyAddedAddrs.includes(addr))
+  // Listed apart like on the personalize step, each keeping the index of its field
+  const { newlyAddedItems, alreadyAddedItems } = useMemo(() => {
+    const items = (addedAccounts || []).map((account, index) => ({ account, index }))
+
+    return {
+      newlyAddedItems: items.filter(({ account }) => !alreadyAddedAddrs.includes(account.addr)),
+      alreadyAddedItems: items.filter(({ account }) => alreadyAddedAddrs.includes(account.addr))
+    }
+  }, [addedAccounts, alreadyAddedAddrs])
+  const hasMultipleGroups =
+    [newlyAddedItems.length, alreadyAddedItems.length, removedAccounts.length].filter(Boolean)
+      .length > 1
 
   const listEmpty = useMemo(
     () => (
@@ -128,16 +140,34 @@ const AccountPersonalizeScreen = () => {
                     onSaveName={handleSavePrivacyPoolsAccountName}
                   />
                 )}
-                {!!addedAccounts?.length && !!removedAccounts.length && (
-                  <AccountsSectionTitle title={t('Added')} count={addedAccounts.length} />
+                {!!newlyAddedItems.length && hasMultipleGroups && (
+                  <AccountsSectionTitle title={t('Added')} count={newlyAddedItems.length} />
                 )}
-                {addedAccounts?.map((account, index) => (
+                {newlyAddedItems.map(({ account, index }, i) => (
                   <AccountPersonalizeCard
                     key={account.addr}
                     control={control}
                     index={index}
                     account={account}
-                    hasBottomSpacing={index !== addedAccounts.length - 1}
+                    hasBottomSpacing={i !== newlyAddedItems.length - 1}
+                    disableEdit
+                    onSaveName={handleSaveAccountName}
+                  />
+                ))}
+                {!!alreadyAddedItems.length && hasMultipleGroups && (
+                  <AccountsSectionTitle
+                    title={t('Already added')}
+                    count={alreadyAddedItems.length}
+                    style={newlyAddedItems.length ? spacings.mtXl : undefined}
+                  />
+                )}
+                {alreadyAddedItems.map(({ account, index }, i) => (
+                  <AccountPersonalizeCard
+                    key={account.addr}
+                    control={control}
+                    index={index}
+                    account={account}
+                    hasBottomSpacing={i !== alreadyAddedItems.length - 1}
                     disableEdit
                     onSaveName={handleSaveAccountName}
                   />
