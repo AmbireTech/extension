@@ -32,7 +32,6 @@ import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
-import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isWeb } from '@common/config/env'
@@ -50,6 +49,7 @@ import PrivacyPoolsBroadcasterBottomSheet, {
   PrivacyPoolsBroadcasterButton
 } from '@web/modules/privacy-pools/components/PrivacyPoolsBroadcasterBottomSheet'
 import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
+import PrivacyPoolsSendCompleted from '@web/modules/privacy-pools/components/PrivacyPoolsSendCompleted'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import loadTransactionSummary, {
   TransactionSummaryType
@@ -72,27 +72,6 @@ const NO_ADDRESS_RESOLUTION: Omit<AddressState, 'fieldValue'> = {
 }
 
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
-
-/** The success outcome, with a heading picked at random each time it is shown. */
-const PrivacyPoolsSendCompleted = ({ symbol }: { symbol: string | undefined }) => {
-  const { t } = useTranslation()
-  const titles: [string, ...string[]] = [
-    t('Transfer in motion.'),
-    t('Signed and on its way.'),
-    t('Mission accomplished'),
-    t('Whoosh!'),
-    t('Beep boop. Done!')
-  ]
-  const [titleIndex] = useState(() => Math.floor(Math.random() * titles.length))
-
-  return (
-    <Completed
-      title={titles[titleIndex] ?? titles[0]}
-      titleSecondary={t('Your {{symbol}} is on its way.', { symbol: symbol || t('Token') })}
-      openExplorerText={t('View Transfer')}
-    />
-  )
-}
 
 /**
  * The picked deposit's option, else the fullest deposit of a token picked without one, as when
