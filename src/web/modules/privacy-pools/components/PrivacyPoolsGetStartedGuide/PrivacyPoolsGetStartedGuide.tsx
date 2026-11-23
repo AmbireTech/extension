@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 
 import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
@@ -31,11 +31,12 @@ const ILLUSTRATION_CARD_STYLE = {
   borderRadius: BORDER_RADIUS_SECONDARY,
   overflow: 'hidden' as const
 }
-/**
- * As tall as the step with the longest text, so the dots and the button stay in place
- * while the steps change
- */
-const STEPS_STYLE = { minHeight: 366 }
+// The design's line heights, which are tighter than the font's own, so the guide fits the popup
+const TITLE_STYLE = { ...spacings.mbMi, lineHeight: 28 }
+const DESCRIPTION_STYLE = { lineHeight: 20 }
+// Out of the flow and invisible: only measured
+const MEASURED_TEXTS_STYLE = { height: 0, opacity: 0 }
+const MEASURED_TEXT_STYLE = { position: 'absolute' as const, top: 0, left: 0, right: 0 }
 const BUTTON_STYLE = { width: 180, alignSelf: 'center' as const }
 
 /**
@@ -47,6 +48,41 @@ const RAY_OFFSETS = {
   topUp: -38,
   verification: -98,
   privateSend: -68
+}
+
+interface StepText {
+  id: string
+  title: string
+  description: string
+}
+
+const StepTextContent = ({ title, description }: Omit<StepText, 'id'>) => (
+  <View style={spacings.phSm}>
+    <Text fontSize={20} weight="medium" style={TITLE_STYLE}>
+      {title}
+    </Text>
+    <Text fontSize={16} appearance="secondaryText" style={DESCRIPTION_STYLE}>
+      {description}
+    </Text>
+  </View>
+)
+
+const MeasuredStepText = ({
+  id,
+  title,
+  description,
+  onMeasure
+}: StepText & { onMeasure: (id: string, height: number) => void }) => {
+  const handleLayout = useCallback(
+    ({ nativeEvent: { layout } }: LayoutChangeEvent) => onMeasure(id, layout.height),
+    [id, onMeasure]
+  )
+
+  return (
+    <View style={MEASURED_TEXT_STYLE} onLayout={handleLayout}>
+      <StepTextContent title={title} description={description} />
+    </View>
+  )
 }
 
 interface Props {
@@ -68,6 +104,8 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const [stepIndex, setStepIndex] = useState(0)
+  // How tall each step's text is at the sheet's width
+  const [textHeights, setTextHeights] = useState<{ [id: string]: number }>({})
 
   const topUpText = useMemo(() => {
     if (!depositableSymbols.length)
@@ -89,70 +127,76 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
     )
   }, [depositableSymbols, t])
 
-  const steps: StepsGuideStep[] = useMemo(() => {
-    const renderContent = (title: string, description: string) => (
-      <View style={spacings.phSm}>
-        <Text fontSize={20} weight="medium" style={spacings.mbMi}>
-          {title}
-        </Text>
-        <Text fontSize={16} appearance="secondaryText">
-          {description}
-        </Text>
-      </View>
-    )
-
-    return [
+  const stepTexts: StepText[] = useMemo(
+    () => [
       {
         id: 'private-account',
-        illustration: (
-          <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.privateAccount}>
-            <PrivacyPoolsGuideAccountChip type="private" fontSize={20} />
-          </PrivacyPoolsGuideIllustration>
-        ),
-        content: renderContent(
-          t('Your private accounts'),
-          t(
-            'This is your private account. All funds that you send to your private account are shielded and untraceable.'
-          )
+        title: t('Your private accounts'),
+        description: t(
+          'This is your private account. All funds that you send to your private account are shielded and untraceable.'
         )
       },
-      {
-        id: 'top-up',
-        illustration: (
-          <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.topUp}>
-            <PrivacyPoolsGuideTransfer from="public" to="private" />
-          </PrivacyPoolsGuideIllustration>
-        ),
-        content: renderContent(t('Top up'), topUpText)
-      },
+      { id: 'top-up', title: t('Top up'), description: topUpText },
       {
         id: 'verification',
-        illustration: (
-          <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.verification}>
-            <PrivacyPoolsGuideVerifyingToken />
-          </PrivacyPoolsGuideIllustration>
-        ),
-        content: renderContent(
-          t('Private funds are verified'),
-          t(
-            'When you send funds to a private account, Privacy Pools checks where they came from. This usually takes up to 1 hour (rarely up to 7 days). You can get your funds back anytime.'
-          )
+        title: t('Private funds are verified'),
+        description: t(
+          'When you send funds to a private account, Privacy Pools checks where they came from. This usually takes up to 1 hour (rarely up to 7 days). You can get your funds back anytime.'
         )
       },
       {
         id: 'private-send',
-        illustration: (
-          <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.privateSend}>
-            <PrivacyPoolsGuideTransfer from="private" to="public" />
-          </PrivacyPoolsGuideIllustration>
-        ),
-        content: renderContent(
-          t('Private send'),
-          t('Once funds are verified, you can send them privately to any public address.')
+        title: t('Private send'),
+        description: t(
+          'Once funds are verified, you can send them privately to any public address.'
         )
       }
-    ]
-  }, [t, topUpText])
+    ],
+    [t, topUpText]
+  )
+
+  const handleTextMeasure = useCallback((id: string, height: number) => {
+    setTextHeights((prev) => (prev[id] === height ? prev : { ...prev, [id]: height }))
+  }, [])
+
+  // Every step leaves as much room as its longest text takes, so the dots and the button stay in
+  // place while the steps change. Measured, as how many lines a text takes depends on the width.
+  const textMinHeight = Math.max(0, ...Object.values(textHeights))
+
+  const steps: StepsGuideStep[] = useMemo(() => {
+    const illustrations: { [id: string]: React.ReactNode } = {
+      'private-account': (
+        <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.privateAccount}>
+          <PrivacyPoolsGuideAccountChip type="private" fontSize={20} />
+        </PrivacyPoolsGuideIllustration>
+      ),
+      'top-up': (
+        <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.topUp}>
+          <PrivacyPoolsGuideTransfer from="public" to="private" />
+        </PrivacyPoolsGuideIllustration>
+      ),
+      verification: (
+        <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.verification}>
+          <PrivacyPoolsGuideVerifyingToken />
+        </PrivacyPoolsGuideIllustration>
+      ),
+      'private-send': (
+        <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.privateSend}>
+          <PrivacyPoolsGuideTransfer from="private" to="public" />
+        </PrivacyPoolsGuideIllustration>
+      )
+    }
+
+    return stepTexts.map(({ id, title, description }) => ({
+      id,
+      illustration: illustrations[id],
+      content: (
+        <View style={{ minHeight: textMinHeight }}>
+          <StepTextContent title={title} description={description} />
+        </View>
+      )
+    }))
+  }, [stepTexts, textMinHeight])
 
   const goToPreviousStep = useCallback(() => setStepIndex((prev) => Math.max(prev - 1, 0)), [])
   // Starts over the next time it opens
@@ -167,8 +211,22 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
       type={isTab ? 'modal' : 'bottom-sheet'}
       style={SHEET_STYLE}
     >
-      {/* The ‹ steps back. Closing is the X, as in every sheet */}
-      <SheetHeaderRow onBack={stepIndex ? goToPreviousStep : undefined}>
+      {/* Every step's text at the width it is shown at, to measure the longest one. At the top,
+      so it stays within the content and never makes the sheet scroll */}
+      <View style={MEASURED_TEXTS_STYLE} pointerEvents="none" aria-hidden>
+        {stepTexts.map(({ id, title, description }) => (
+          <MeasuredStepText
+            key={id}
+            id={id}
+            title={title}
+            description={description}
+            onMeasure={handleTextMeasure}
+          />
+        ))}
+      </View>
+      {/* The ‹ steps back. Closing is the X, as in every sheet. Spaced less from the steps than
+      in other sheets, so the guide fits the popup without scrolling */}
+      <SheetHeaderRow onBack={stepIndex ? goToPreviousStep : undefined} style={spacings.mbTy}>
         <Text fontSize={20} weight="medium" style={text.center}>
           {t('Private transfers')}
         </Text>
@@ -176,7 +234,6 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
       <StepsGuide
         steps={steps}
         stepIndex={stepIndex}
-        style={STEPS_STYLE}
         illustrationCardStyle={ILLUSTRATION_CARD_STYLE}
       />
       <StepsGuideFooter
