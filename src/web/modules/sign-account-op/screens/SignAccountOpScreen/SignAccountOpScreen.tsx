@@ -43,6 +43,7 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
+import Pq1SafeApprovalSyncAlert from '@web/modules/sign-account-op/components/Pq1SafeApprovalSyncAlert'
 
 import getStyles from './styles'
 
@@ -586,6 +587,13 @@ const SignAccountOpScreen = () => {
                   </>
                 )}
                 {signAccountOpState?.hasSafeApiFailed && <SafeApiFailedAlert style={spacings.mt} />}
+                {!!signAccountOpState && (
+                  <Pq1SafeApprovalSyncAlert
+                    accountAddr={signAccountOpState.account.addr}
+                    calls={signAccountOpState.accountOp.calls}
+                    style={spacings.mt}
+                  />
+                )}
                 {isViewOnly && (
                   <NoKeysToSignAlert
                     style={spacings.mt}

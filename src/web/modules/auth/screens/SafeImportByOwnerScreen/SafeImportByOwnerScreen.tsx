@@ -75,6 +75,8 @@ const SafeImportByOwnerScreen = () => {
                     // The parent has the same color as the default input background, so use the focused
                     // input color to keep the input visible and the same before and after focus
                     inputBackgroundColor={theme.tertiaryBackground}
+                    // Nothing can be searched until the user turns sync back on
+                    disabled={!isSafeApiEnabled}
                   />
                 )}
               />

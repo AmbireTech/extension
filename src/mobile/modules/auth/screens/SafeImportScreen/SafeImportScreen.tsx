@@ -88,7 +88,14 @@ const SafeImportScreen = () => {
                     autoCorrect={false}
                     keyboardType="url"
                     onSubmitEditing={handleFormSubmit}
-                    button={!isAddressValid ? <AddressScanButton onScanned={onChange} /> : null}
+                    // Nothing can be searched until the user turns sync back on, so neither
+                    // typing nor scanning an address is offered
+                    disabled={!isSafeApiEnabled}
+                    button={
+                      !isAddressValid && isSafeApiEnabled ? (
+                        <AddressScanButton onScanned={onChange} />
+                      ) : null
+                    }
                   />
                 )
               }}

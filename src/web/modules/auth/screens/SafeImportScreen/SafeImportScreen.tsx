@@ -72,7 +72,8 @@ const SafeImportScreen = () => {
                     error={value.length ? errors?.safeAddress?.message : ''}
                     autoCorrect={false}
                     onSubmitEditing={handleFormSubmit}
-                    disabled={false}
+                    // Nothing can be searched until the user turns sync back on
+                    disabled={!isSafeApiEnabled}
                   />
                 )}
               />

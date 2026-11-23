@@ -135,7 +135,7 @@ const PrivacyOptOutsList = () => {
       <OptOutControlOption
         title={t('Sync Safe accounts')}
         description={t(
-          "Find Safe accounts to import, keep their pending transactions and messages in sync across your devices and with the other owners, and share your signatures with them. Your Safe and owner addresses are sent to Safe's servers to do this."
+          "Find Safe accounts to import and keep them in sync with the other owners and your other devices. This sends your Safe and owner addresses, what you sign, your signatures and the app that asked for them to Safe's servers."
         )}
         icon={<SafeIconGray width={24} height={24} />}
         flag="safeApi"

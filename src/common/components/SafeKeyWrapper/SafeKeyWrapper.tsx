@@ -7,6 +7,7 @@ import CheckIcon from '@common/assets/svg/CheckIcon'
 import NoEntryIcon from '@common/assets/svg/NoEntryIcon/NoEntryIcon'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
+import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { default as flexbox } from '@common/styles/utils/flexbox'
@@ -19,6 +20,8 @@ const SAFE_GLOBAL_STALL_WARNING_DELAY_MS = 5000
 const SafeGlobalLagWarning = React.memo(function SafeGlobalLagWarning() {
   const { t } = useTranslation()
   const [isVisible, setIsVisible] = useState(false)
+  // Nothing is sent to Safe Global while the user opted out of the Safe API
+  const { isSafeApiEnabled } = useSafeApiSetting()
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -28,7 +31,7 @@ const SafeGlobalLagWarning = React.memo(function SafeGlobalLagWarning() {
     return () => clearTimeout(timeoutId)
   }, [])
 
-  if (!isVisible) return null
+  if (!isVisible || !isSafeApiEnabled) return null
 
   return (
     <Text type="caption" appearance="warningText" style={[spacings.mtMi, spacings.phMi]}>
