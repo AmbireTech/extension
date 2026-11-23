@@ -475,10 +475,10 @@ const CustomGasPrice = ({
               onPress={resetCustomGas}
               hasBottomSpacing={false}
               style={[
-                spacings.mrTy,
+                isCompactLayout ? spacings.mrTy : spacings.mr,
                 isCompactLayout || isNarrowWebLayout ? flexbox.flex1 : { width: 100 }
               ]}
-              size={isNarrowWebLayout ? 'regular' : 'smaller'}
+              size="regular"
               testID="reset-custom-gas-button"
             />
           )}
@@ -495,7 +495,7 @@ const CustomGasPrice = ({
                   ? flexbox.flex1
                   : { width: 100 }
             }
-            size={isNarrowWebLayout ? 'regular' : 'smaller'}
+            size="regular"
           />
         </FooterGlassView>
       )}

@@ -11,7 +11,7 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
-import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import { isExtension } from '@web/constants/browserapi'
 
 const useIsCompactBenzinButtonsLayout = () => {
@@ -61,7 +61,7 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExpl
               ...spacings.phTy,
               ...(isCompactLayout
                 ? { flex: 1, minWidth: 0, width: '100%' }
-                : { width: 170, marginRight: SPACING_LG }),
+                : { width: 170, marginRight: SPACING }),
               ...(!isMobileLike && { borderWidth: 2 })
             }
           : { height: 46 }

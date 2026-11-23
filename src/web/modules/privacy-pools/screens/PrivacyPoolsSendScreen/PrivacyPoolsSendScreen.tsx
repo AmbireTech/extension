@@ -35,7 +35,6 @@ import TrackProgress from '@common/components/TrackProgress'
 import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
@@ -536,7 +535,7 @@ const PrivacyPoolsSendScreen = () => {
             onPress={handleSend}
             disabled={!canSend}
             isLoading={isPreparingTransfer}
-            size={isWeb ? 'smaller' : 'regular'}
+            size="regular"
           />
         }
       >

@@ -171,7 +171,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   completeText={t('Send')}
                   buttonType={holdButtonType}
                   onHoldComplete={onSend}
-                  size="smaller"
+                  size="regular"
                   style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
                 />
               ) : (
@@ -181,7 +181,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   isLoading={isBroadcasting}
                   disabled={isBroadcasting}
                   onPress={onSend}
-                  size="smaller"
+                  size="regular"
                   style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
                 />
               )}

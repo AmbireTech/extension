@@ -7,7 +7,6 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { isMobile, isWeb } from '@common/config/env'
-import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
@@ -29,7 +28,6 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const SurveyScreen = () => {
   const { addToast } = useToast()
-  const { isCompactLayout } = useCompactLayout()
   const {
     dispatch: dispatchToSurvey,
     state: { status, questions, answers, currentQuestion, errorMessage, surveyId, bannerId }
@@ -196,13 +194,13 @@ const SurveyScreen = () => {
             disabled={!buttonState.callback}
             isLoading={buttonState.loading}
             onPress={buttonState.callback}
-            size={isCompactLayout ? 'regular' : 'smaller'}
+            size="regular"
             testID="proceed-btn"
           />
         </View>
       </View>
     )
-  }, [buttonState.callback, buttonState.loading, buttonState.text, isCompactLayout])
+  }, [buttonState.callback, buttonState.loading, buttonState.text])
 
   const percentageDone = useMemo(() => {
     if (status === 'success-submitted') return 100

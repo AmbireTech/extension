@@ -6,22 +6,26 @@ import GlassView from '@common/components/GlassView'
 import { isMobile } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
+import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
+// The flat footer of narrow views, padded like the screen's sides
 const params: {
   [key in 'sm' | 'md']: ViewStyle
 } = {
   sm: {
-    borderRadius: 28,
     paddingHorizontal: SPACING_SM,
     paddingVertical: SPACING_SM
   },
   md: {
-    borderRadius: 32,
     paddingHorizontal: SPACING,
     paddingVertical: SPACING
   }
 }
+
+// The glass hugs its buttons like the iOS 26 bars, its corners concentric with theirs
+const GLASS_PADDING = SPACING_TY
+const GLASS_BORDER_RADIUS = BORDER_RADIUS_PRIMARY + GLASS_PADDING
 
 const FooterGlassView: FC<{
   children: React.ReactNode
@@ -160,7 +164,7 @@ const FooterGlassView: FC<{
       <GlassView
         {...glassViewProps}
         isSimpleBlur={isSimpleBlur ?? glassViewProps.isSimpleBlur}
-        borderRadius={Number(params[size].borderRadius)}
+        borderRadius={GLASS_BORDER_RADIUS}
         cssStyle={{
           pointerEvents: 'all',
           // Narrow view glass pills stay content-sized/centered unless the call site opts into stretch.
@@ -175,10 +179,7 @@ const FooterGlassView: FC<{
           style={[
             flexbox.directionRow,
             flexbox.alignCenter,
-            {
-              paddingHorizontal: params[size].paddingHorizontal,
-              paddingVertical: params[size].paddingVertical
-            },
+            { padding: GLASS_PADDING },
             innerContainerStyle
           ]}
         >

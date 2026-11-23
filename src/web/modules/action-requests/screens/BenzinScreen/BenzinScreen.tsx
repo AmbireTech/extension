@@ -71,11 +71,7 @@ const BenzinScreen = () => {
   const primaryButton = (
     <Button
       onPress={resolveAction}
-      style={
-        isNarrowWebLayout
-          ? { width: '100%' }
-          : { minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }
-      }
+      style={isNarrowWebLayout ? { width: '100%' } : { minWidth: maxWidthSize('s') ? 180 : 120 }}
       hasBottomSpacing={false}
       size={isNarrowWebLayout ? 'regular' : 'large'}
       text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
