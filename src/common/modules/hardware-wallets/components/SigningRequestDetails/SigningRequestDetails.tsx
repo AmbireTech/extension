@@ -105,7 +105,7 @@ const CheckRow = React.memo(function CheckRow({ check }: { check: SafeTransactio
 
 /**
  * Everything a user needs to verify a hardware wallet signing request on
- * their own: the hashes to compare with the device (with the ERC-8213
+ * their own: the address that signs, the hashes to compare with the device (with the ERC-8213
  * digests right below them), the request exactly as
  * sent (ready to paste into a hashing tool), and, for Safe transactions,
  * the checks that can be confirmed by reading the request.
@@ -153,6 +153,30 @@ const SigningRequestDetailsContent = ({
     return t('Request sent to your {{device}}', { device })
   }, [deviceName, requestKind, t])
 
+  const signerNote = useMemo(() => {
+    // A transaction doesn't carry its sender, so it's missing from the request
+    // below even though the device shows it
+    if (requestKind === 'transaction') {
+      return t(
+        "Your device shows this address as the sender (From). It's not in the transaction below, as your device adds it when signing."
+      )
+    }
+
+    return t('Check that your device signs with this same address.')
+  }, [requestKind, t])
+
+  const signerSection = !!signingRequest.signerAddr && (
+    <>
+      <SectionHeader title={t('Signing with')} copyText={signingRequest.signerAddr} />
+      <MonoBox>
+        <MonoText>{signingRequest.signerAddr}</MonoText>
+      </MonoBox>
+      <Text fontSize={12} appearance="secondaryText" style={spacings.mtMi}>
+        {signerNote}
+      </Text>
+    </>
+  )
+
   const hashesSection = (!!hashes.length || !!missingHashReason) && (
     <>
       <SectionHeader title={t('Hashes')} />
@@ -198,10 +222,12 @@ const SigningRequestDetailsContent = ({
 
   // A transaction reads in the order its hash is built: the fields, then
   // the hash of the unsigned transaction serialized from them, then the
-  // ERC-8213 digest of its calldata
+  // ERC-8213 digest of its calldata. The address that signs comes first,
+  // as the device shows it before anything else
   const details =
     requestKind === 'transaction' ? (
       <>
+        {signerSection}
         {requestSection}
         {hashesSection}
         {erc8213Section}
@@ -209,6 +235,7 @@ const SigningRequestDetailsContent = ({
       </>
     ) : (
       <>
+        {signerSection}
         {hashesSection}
         {erc8213Section}
         {checksSection}
