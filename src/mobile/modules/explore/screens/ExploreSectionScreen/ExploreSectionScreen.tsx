@@ -8,7 +8,7 @@ import { Network } from '@ambire-common/interfaces/network'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
-import HeaderButton from '@common/components/HeaderButton'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -198,13 +198,27 @@ const ExploreSectionScreen = () => {
         rightIcon={
           !hasSectionItems ? undefined : sectionType === 'recent' ? (
             <HeaderButton
-              icon={<DeleteIcon width={20} height={20} strokeWidth="1.75" />}
+              icon={
+                <DeleteIcon
+                  width={22}
+                  height={22}
+                  strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+                  color={theme.primaryText}
+                />
+              }
               accessibilityLabel={t('Clear recent apps')}
               onPress={handleClearRecentPress}
             />
           ) : sectionType === 'connected' ? (
             <HeaderButton
-              icon={<ConnectedIcon width={20} height={20} color={theme.errorDecorative} />}
+              icon={
+                <ConnectedIcon
+                  width={20}
+                  height={20}
+                  strokeWidth={getHeaderIconStrokeWidth(20, 20)}
+                  color={theme.errorDecorative}
+                />
+              }
               accessibilityLabel={t('Disconnect all apps')}
               onPress={handleDisconnectAllPress}
             />

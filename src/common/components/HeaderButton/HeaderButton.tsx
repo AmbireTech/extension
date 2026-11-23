@@ -7,6 +7,7 @@ import HoverablePressable from '@common/components/HoverablePressable'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 
+import { getHeaderIconStrokeWidth } from './constants'
 import HeaderButtonSurface from './HeaderButtonSurface'
 
 type Props = {
@@ -15,7 +16,10 @@ type Props = {
   disabled?: boolean
 } & (
   | { type: 'close' | 'back' }
-  /** Any other header action, like a settings or scan icon */
+  /**
+   * Any other header action, like a settings or scan icon. Draw it about 16px big in
+   * `theme.primaryText`, with `getHeaderIconStrokeWidth` for its stroke, like the iOS toolbar symbols
+   */
   | { icon: ReactNode; accessibilityLabel: string }
 )
 
@@ -35,12 +39,26 @@ const HeaderButton: FC<Props> = (props) => {
     if ('icon' in props) return { icon: props.icon, label: props.accessibilityLabel }
     if (props.type === 'close') {
       return {
-        icon: <CloseIcon width={14} height={14} strokeWidth="2" color={theme.primaryText} />,
+        icon: (
+          <CloseIcon
+            width={13}
+            height={13}
+            strokeWidth={String(getHeaderIconStrokeWidth(14.121, 13))}
+            color={theme.primaryText}
+          />
+        ),
         label: t('Close')
       }
     }
     return {
-      icon: <LeftArrowIcon width={8} height={14} color={theme.primaryText} />,
+      icon: (
+        <LeftArrowIcon
+          width={8}
+          height={14}
+          strokeWidth={getHeaderIconStrokeWidth(14.879, 14)}
+          color={theme.primaryText}
+        />
+      ),
       label: t('Back')
     }
   }

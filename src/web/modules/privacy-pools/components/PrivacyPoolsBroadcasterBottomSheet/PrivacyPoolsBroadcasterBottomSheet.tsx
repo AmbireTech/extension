@@ -9,7 +9,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
-import HeaderButton from '@common/components/HeaderButton'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -158,7 +158,14 @@ const PrivacyPoolsBroadcasterButtonComponent = ({ onPress }: { onPress: () => vo
 
   return (
     <HeaderButton
-      icon={<SettingsIcon width={20} height={20} color={theme.iconPrimary} />}
+      icon={
+        <SettingsIcon
+          width={22}
+          height={22}
+          strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+          color={theme.primaryText}
+        />
+      }
       accessibilityLabel={t('Send settings')}
       onPress={onPress}
       testID="privacy-pools-broadcaster-settings-button"

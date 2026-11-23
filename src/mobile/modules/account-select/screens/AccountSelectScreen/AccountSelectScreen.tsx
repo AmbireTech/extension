@@ -8,7 +8,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
-import HeaderButton from '@common/components/HeaderButton'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -169,7 +169,14 @@ const AccountSelectScreen = () => {
     >
       <HeaderWithTitle>
         <HeaderButton
-          icon={<SettingsIcon width={20} height={20} />}
+          icon={
+            <SettingsIcon
+              width={22}
+              height={22}
+              strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+              color={theme.primaryText}
+            />
+          }
           accessibilityLabel={t('Accounts settings')}
           onPress={() => navigate(WEB_ROUTES.accountsSettings)}
         />

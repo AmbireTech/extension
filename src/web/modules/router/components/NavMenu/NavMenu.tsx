@@ -14,7 +14,7 @@ import TelegramIcon from '@common/assets/svg/TelegramIcon'
 import TwitterIcon from '@common/assets/svg/TwitterIcon'
 import BackButton from '@common/components/BackButton'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import HeaderButton from '@common/components/HeaderButton'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import { AUTO_LOCK_OPTIONS } from '@common/constants/autoLock'
 import { DISCORD_URL, TELEGRAM_URL, TWITTER_URL } from '@common/constants/social'
@@ -139,13 +139,14 @@ const NavMenu = () => {
             <HeaderButton
               icon={
                 <MaximizeIcon
-                  color={theme.iconPrimary}
+                  color={theme.primaryText}
+                  strokeWidth={getHeaderIconStrokeWidth(24, 22)}
                   dataSet={createGlobalTooltipDataSet({
                     id: expandViewTooltipId,
                     content: t('Expand view')
                   })}
-                  width={20}
-                  height={20}
+                  width={22}
+                  height={22}
                 />
               }
               accessibilityLabel={t('Expand view')}

@@ -10,7 +10,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
-import HeaderButton from '@common/components/HeaderButton'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
@@ -144,7 +144,14 @@ const QrReaderScreen = () => {
 
   const rightIcon = permissionGranted ? (
     <HeaderButton
-      icon={<GalleryIcon width={20} height={20} />}
+      icon={
+        <GalleryIcon
+          width={16}
+          height={16}
+          strokeWidth={getHeaderIconStrokeWidth(22, 16)}
+          color={theme.primaryText}
+        />
+      }
       accessibilityLabel={t('Scan from an image')}
       onPress={handleGalleryPress}
     />
