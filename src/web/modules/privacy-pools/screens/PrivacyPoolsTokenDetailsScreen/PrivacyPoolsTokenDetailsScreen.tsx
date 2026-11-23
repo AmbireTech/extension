@@ -1,9 +1,9 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { LayoutChangeEvent } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import ExitIcon from '@common/assets/svg/ExitIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -58,7 +58,7 @@ const PrivacyPoolsTokenDetailsScreen = () => {
   )
   const { state: poolStats } = useController('PrivacyPoolsController', selectPoolStats)
   const { balances, balancesState, getTokenPrice } = usePrivacyPools()
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
   // Reserves as much scroll space as the floating footer takes, as on the regular token details
   const [footerHeight, setFooterHeight] = useState(0)
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {

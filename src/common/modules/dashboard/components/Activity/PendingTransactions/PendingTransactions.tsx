@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import RefreshIcon from '@common/assets/svg/RefreshIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
@@ -42,7 +42,7 @@ const PendingTransactions = () => {
     ref: safeSyncOffSheetRef,
     open: openSafeSyncOffSheet,
     close: closeSafeSyncOffSheet
-  } = useModalize()
+  } = useSheetRef()
   const { networkGroups, currentNonces } = usePendingSafeTransactions()
   const fetchPendingTransactions = useCallback(() => {
     // Opted out of the Safe API, so nothing can be checked until the user turns it back on

@@ -1,6 +1,8 @@
 import React, { FC } from 'react'
 import { View, ViewStyle } from 'react-native'
 
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -31,10 +33,18 @@ const ModalHeader: FC<Props> = ({
   headerTestID
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
+  // A sheet already spaces its content below the grabber, the same for every sheet
+  const isInSheet = useIsInsideBottomSheet()
+  const containerStyle = {
+    ...(isInSheet ? spacings.pt0 : spacings.ptTy),
+    ...spacings.pb0,
+    ...spacings.ph0,
+    ...spacings.mb0
+  }
   const withSideContainers = !!handleClose || !!children
   const showBackButton = ((handleClose && !isMobile) || forceBackButtonOnMobile) && !!handleClose
-  // On web the title sits next to the back arrow instead of being centered
-  const isWebTitleNextToBackButton = showBackButton && !isMobile
+  // On web the title sits next to the back arrow instead of being centered (a sheet draws its own)
+  const isWebTitleNextToBackButton = showBackButton && !isMobile && !isInSheet
   const titlePosition = isWebTitleNextToBackButton ? 'left' : titlePositionProp
   const shouldBalanceCenteredTitle = titlePosition === 'center' && showBackButton && !children
 
@@ -44,14 +54,34 @@ const ModalHeader: FC<Props> = ({
     minHeight: 28
   }
 
+  // Sheets draw the X (and ‹ back) of the design around a centered title,
+  // with `children` (right side actions) left of the X
+  if (isInSheet) {
+    return (
+      <SheetHeaderRow
+        onBack={forceBackButtonOnMobile ? handleClose : undefined}
+        rightContent={children}
+        style={style}
+      >
+        {!!title && (
+          <Text
+            testID={headerTestID}
+            fontSize={18}
+            weight="medium"
+            style={{ width: '100%', textAlign: titlePosition === 'left' ? 'left' : 'center' }}
+          >
+            {title}
+          </Text>
+        )}
+      </SheetHeaderRow>
+    )
+  }
+
   // The row layout places the title right after the arrow. The one below overlays the title
   // across the full width, so a left aligned one would end up under the arrow
   if (isNarrowWebLayout || isWebTitleNextToBackButton) {
     return (
-      <Header.Wrapper
-        containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0, ...spacings.mb0 }}
-        style={wrapperStyle}
-      >
+      <Header.Wrapper containerStyle={containerStyle} style={wrapperStyle}>
         <View
           style={[
             flexbox.directionRow,
@@ -100,10 +130,7 @@ const ModalHeader: FC<Props> = ({
   }
 
   return (
-    <Header.Wrapper
-      containerStyle={{ ...spacings.ptTy, ...spacings.pb0, ...spacings.ph0, ...spacings.mb0 }}
-      style={wrapperStyle}
-    >
+    <Header.Wrapper containerStyle={containerStyle} style={wrapperStyle}>
       {withSideContainers && (
         <Header.Container side="left">
           {showBackButton && (

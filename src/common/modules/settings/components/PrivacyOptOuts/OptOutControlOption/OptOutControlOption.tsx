@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
-import { useModalize } from 'react-native-modalize'
 
 import LinkIcon from '@common/assets/svg/LinkIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
@@ -60,7 +60,7 @@ const OptOutControlOption = (opts: Opts) => {
   const { theme } = useTheme()
   const { title, description, icon, flag, requiredBy, action, disableConfirmation } = opts
   const isRequired = !!requiredBy && flags[flag] && flags[requiredBy.flag]
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
 
   const setEnabled = useCallback(
     (isEnabling: boolean) => {

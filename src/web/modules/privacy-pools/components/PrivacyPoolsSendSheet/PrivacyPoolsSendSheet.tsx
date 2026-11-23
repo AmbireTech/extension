@@ -1,9 +1,13 @@
-import React, { FC, useCallback, useMemo, useState } from 'react'
+import React, { FC, useCallback, useState } from 'react'
 
-import { PrivacyPoolsOperation, PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
+import {
+  PrivacyPoolsBroadcaster,
+  PrivacyPoolsOperation,
+  PrivacyPoolsRating
+} from '@ambire-common/interfaces/privacyPools'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
-import Button from '@common/components/Button'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -51,6 +55,12 @@ interface Props {
 
 const transactionSummaryStyle = { marginBottom: SPACING_MD }
 
+/** Through 0xBow the relayer's service fee is taken too, besides the network fee. Translated where shown. */
+const FEE_NOTICES: { [broadcaster in PrivacyPoolsBroadcaster]: string } = {
+  '0xbow': 'The service and network fees are deducted automatically from the {{symbol}} you send.',
+  kohaku: 'The network fee is deducted automatically from the {{symbol}} you send.'
+}
+
 /**
  * Confirmation of a Privacy Pools transfer, like the regular Send's fee sheet. Opened once the
  * transfer is proved and priced, so the user sees what it does and its fee before Send. Its outcome
@@ -88,22 +98,6 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
     if (isReady) onRecheck()
   }, [isReady, onRecheck])
 
-  const backButton = useMemo(
-    () => (
-      <Button
-        testID="privacy-pools-send-back"
-        type="secondary"
-        text={t('Back')}
-        onPress={closeBottomSheet}
-        hasBottomSpacing={false}
-        disabled={isBroadcasting}
-        style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : { width: 98, ...spacings.mrLg }}
-        size="smaller"
-      />
-    ),
-    [closeBottomSheet, isBroadcasting, isNarrowWebLayout, t]
-  )
-
   return (
     <BottomSheet
       id="privacy-pools-send"
@@ -116,10 +110,12 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
       autoOpen={shouldOpenOnMount && isTransactionSummaryLoaded}
       backgroundColor="primaryBackground"
     >
+      {/* The sheet's X closes it, as on the one-click fee sheet. An ended transfer shows its outcome */}
+      <ModalHeader title={isConfirming ? t('Confirm send') : undefined} />
       {!!operation && (
         <>
-          {/* Like the transaction details of the one-click Swap & Bridge sheet, the network fee
-              among its rows. Not expandable: there is no raw call of the user's account to show */}
+          {/* Like the transaction details of the one-click Swap & Bridge sheet, the fee among its
+              rows. Not expandable: there is no raw call of the user's account to show */}
           {isConfirming && !!operation.humanization && !!TransactionSummary && (
             <TransactionSummary
               style={transactionSummaryStyle}
@@ -140,9 +136,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
               size="sm"
               style={spacings.mbSm}
               titleWeight="regular"
-              title={t('The network fee is deducted automatically from the {{symbol}} you send.', {
-                symbol
-              })}
+              title={t(FEE_NOTICES[operation.broadcaster], { symbol })}
             />
           )}
 
@@ -170,7 +164,6 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   : undefined
               }
             >
-              {!isNarrowWebLayout && backButton}
               {holdButtonType && !isBroadcasting ? (
                 <HoldToProceedButton
                   testID="privacy-pools-send-confirm"
@@ -179,7 +172,7 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   buttonType={holdButtonType}
                   onHoldComplete={onSend}
                   size="smaller"
-                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
                 />
               ) : (
                 <ButtonWithLoader
@@ -189,11 +182,9 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   disabled={isBroadcasting}
                   onPress={onSend}
                   size="smaller"
-                  style={isNarrowWebLayout ? { flex: 1, minWidth: 0 } : undefined}
+                  style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
                 />
               )}
-              {/* Back after Send on narrow layouts, like the regular fee sheet */}
-              {isNarrowWebLayout && backButton}
             </FooterGlassView>
           )}
         </>

@@ -2,7 +2,6 @@ import { computeAddress, getAddress, isAddress, isHexString } from 'ethers'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Linking, TouchableOpacity, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { AMBIRE_ACCOUNT_FACTORY } from '@ambire-common/consts/deploy'
 import { Account, AccountCreation } from '@ambire-common/interfaces/account'
@@ -12,6 +11,7 @@ import { isValidPrivateKey } from '@ambire-common/libs/keyIterator/keyIterator'
 import UploadIcon from '@common/assets/svg/UploadIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Spinner from '@common/components/Spinner'
@@ -190,7 +190,7 @@ const SmartAccountImportScreen = () => {
     ref: sheetRefConfirmKeyPassword,
     open: openConfirmKeyPassword,
     close: closeConfirmKeyPassword
-  } = useModalize()
+  } = useSheetRef()
 
   const importSmartAccountJson = useCallback(
     async (readyToAddAccount: Account, privateKey: string) => {
@@ -313,6 +313,12 @@ const SmartAccountImportScreen = () => {
     []
   )
 
+  // Closing the password sheet gives up on the import, so it stops loading
+  const handleCloseConfirmKeyPassword = useCallback(() => {
+    closeConfirmKeyPassword()
+    setIsLoading(false)
+  }, [closeConfirmKeyPassword])
+
   const onPasswordSubmitted = (password: string) => {
     if (!encryptedKey || !accountToImport) {
       addToast(t('Encrypted key or account to import is not set. Should not happen.'), {
@@ -419,7 +425,7 @@ const SmartAccountImportScreen = () => {
           sheetRef={sheetRefConfirmKeyPassword}
           id="confirm-password-bottom-sheet"
           type="modal"
-          closeBottomSheet={closeConfirmKeyPassword}
+          closeBottomSheet={handleCloseConfirmKeyPassword}
           scrollViewProps={{ contentContainerStyle: { flex: 1 } }}
           containerInnerWrapperStyles={{ flex: 1 }}
           style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
@@ -431,10 +437,6 @@ const SmartAccountImportScreen = () => {
             )}
             onPasswordConfirmed={() => closeConfirmKeyPassword()}
             onCustomSubmit={onPasswordSubmitted}
-            onBackButtonPress={() => {
-              closeConfirmKeyPassword()
-              setIsLoading(false)
-            }}
           />
         </BottomSheet>
       </TabLayoutWrapperMainContent>

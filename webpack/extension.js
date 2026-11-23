@@ -31,6 +31,8 @@ const LAVAMOAT_UNSAFE_ENTRIES = new Set([
   'ethereum-inpage',
   'content-script',
   'onekey-offscreen',
+  // Hashes public tree leaves in a worker, which has no LavaMoat runtime to load: see the entry
+  'privacy-pools-tree-worker',
   'content-script-ambire-injection',
   'content-script-ethereum-injection'
 ])
@@ -284,7 +286,12 @@ module.exports = async function buildExtension(
       // Privacy Pools prover's offscreen document. Firefox and Safari prove in the background.
       ...(isWebkit &&
         !isSafari && {
-          'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts'
+          'privacy-pools-prover': './src/web/extension-services/privacy-pools-prover/offscreen.ts',
+          // The module worker the document hashes Merkle tree levels on, one per core. Its own entry
+          // (PRIVACY_POOLS_TREE_WORKER_PATH): the worker webpack emits for the package's
+          // `new Worker(new URL(...))` loads its code with `importScripts`, which module workers lack.
+          // It gets only public leaves and returns hashes the SDK checks against the chain.
+          'privacy-pools-tree-worker': '@kohaku-eth/poseidon-lean-imt/worker.js'
         }),
       ...(isWebkit &&
         !isSafari && {
@@ -303,6 +310,16 @@ module.exports = async function buildExtension(
     {
       from: './src/web/assets',
       to: 'assets'
+    },
+    // Token and network icons from @ambire/token-and-network-icons, copied next to the pages and
+    // loaded by path (see getBundledIconUri.ts), so they stay out of the JS
+    {
+      from: './node_modules/@ambire/token-and-network-icons/assets/tokenIcons',
+      to: 'tokenIcons'
+    },
+    {
+      from: './node_modules/@ambire/token-and-network-icons/assets/networkIcons',
+      to: 'networkIcons'
     },
     {
       from: './src/web/public/style.css',
@@ -335,8 +352,8 @@ module.exports = async function buildExtension(
     // Privacy Pools proving keys and witness generators (~23 MB), served same-origin instead of the
     // SDK's default raw.githubusercontent.com (a third party in the withdrawal path, needing a CSP
     // entry, re-downloaded per prover). Also works offline. Filenames must match
-    // PRIVACY_POOLS_CIRCUIT_PATHS. Left out of the builds that hide the feature, so they don't
-    // grow by the artifacts' size. The prover itself stays, as nothing can reach it there.
+    // PRIVACY_POOLS_CIRCUIT_PATHS. Left out of the builds without Privacy Pools (Firefox), so they
+    // don't grow by the artifacts' size. The prover itself stays, as nothing can reach it there.
     ...(isPrivacyPoolsBundled
       ? [
           {
@@ -562,6 +579,8 @@ module.exports = async function buildExtension(
           chunk.name !== 'ethereum-inpage' &&
           chunk.name !== 'content-script' &&
           chunk.name !== 'onekey-offscreen' &&
+          // A worker cannot load other chunks
+          chunk.name !== 'privacy-pools-tree-worker' &&
           (!enableLavaMoat || chunk.name !== 'background')
         )
       }
@@ -599,6 +618,7 @@ module.exports = async function buildExtension(
       'ethereum-inpage',
       'content-script',
       'background',
+      'privacy-pools-tree-worker',
       ...(isGecko ? ['content-script-ambire-injection', 'content-script-ethereum-injection'] : [])
     ])
 

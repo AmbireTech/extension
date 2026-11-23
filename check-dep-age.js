@@ -25,7 +25,7 @@ const NON_REGISTRY_PROTOCOLS = [
 ]
 // First-party packages we publish ourselves. The gate exists to catch a
 // compromised upstream release, and we control this publish end to end.
-const FIRST_PARTY_PACKAGES = ['@ambire/react-native-crypto']
+const FIRST_PARTY_PACKAGES = ['@ambire/react-native-crypto', '@ambire/token-and-network-icons']
 
 /* -------- helpers -------- */
 

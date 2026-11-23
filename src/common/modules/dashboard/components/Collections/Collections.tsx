@@ -1,9 +1,9 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import CollectionCard from '@common/components/CollectionCard'
 import NftImagesDisabledHint from '@common/components/NftImagesDisabledHint'
@@ -65,7 +65,7 @@ const Collections: FC<Props> = ({ openTab, initTab, networks, dashboardNetworkFi
     'SelectedAccountController',
     selectDashboardNetworkFilter
   )
-  const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
+  const { ref: modalRef, open: openModal, close: closeModal } = useSheetRef()
   const { t } = useTranslation()
   const [selectedCollectible, setSelectedCollectible] = useState<SelectedCollectible | null>(null)
   const { control, watch, setValue } = useForm({ mode: 'all', defaultValues: { search: '' } })

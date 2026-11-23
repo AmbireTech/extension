@@ -12,6 +12,7 @@ import Main from '@common/modules/sign-message/components/Contents/main'
 import SignInWithEthereum from '@common/modules/sign-message/components/Contents/signInWithEthereum'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import SafeFooter from '@common/modules/sign-message/components/SafeFooter'
+import SignWarningModal from '@common/modules/sign-message/components/SignWarningModal'
 import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -31,6 +32,7 @@ const SignMessageScreen = () => {
     account,
     selectedAccountKeyStoreKeys,
     isViewOnly,
+    hasOnlyUnsupportedKeys,
     userRequest,
     isLedgerConnected,
     isChooseSignerShown,
@@ -59,7 +61,11 @@ const SignMessageScreen = () => {
     holdToProceedCompleteText,
     hasSafetyBanners,
     holdToProceedButtonType,
-    isResolveActionDisabled
+    isResolveActionDisabled,
+    warningToConfirmBeforeSign,
+    warningModalRef,
+    confirmWarning,
+    dismissWarning
   } = useSignMessage()
   const { styles } = useTheme(getStyles)
 
@@ -78,6 +84,15 @@ const SignMessageScreen = () => {
       footerStyle={{ ...spacings.ph0, ...spacings.pt0 }}
       footer={
         <View style={styles.footerContainer}>
+          {!!account.safeCreation && hasOnlyUnsupportedKeys && (
+            <View style={[spacings.phSm, spacings.ptSm]}>
+              <NoKeysToSignAlert
+                type="long"
+                isTransaction={false}
+                chainId={signMessageState.network?.chainId}
+              />
+            </View>
+          )}
           {!!account.safeCreation ? (
             <SafeFooter
               account={account}
@@ -121,7 +136,8 @@ const SignMessageScreen = () => {
               {isViewOnly && (
                 <View style={[spacings.mbSm]}>
                   <NoKeysToSignAlert
-                    type="short"
+                    // In full, like on the sign transaction screen, to explain what to do
+                    type={hasOnlyUnsupportedKeys ? 'long' : 'short'}
                     isTransaction={false}
                     chainId={signMessageState.network?.chainId}
                   />
@@ -146,6 +162,14 @@ const SignMessageScreen = () => {
         selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
         account={account}
       />
+      {!!warningToConfirmBeforeSign && (
+        <SignWarningModal
+          sheetRef={warningModalRef}
+          warning={warningToConfirmBeforeSign}
+          onConfirm={confirmWarning}
+          onCancel={dismissWarning}
+        />
+      )}
       {view === 'reinitializing' && (
         <View style={[StyleSheet.absoluteFill, flexbox.center]}>
           <Spinner />

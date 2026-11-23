@@ -1,19 +1,17 @@
 import React, { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ListRenderItemInfo, Pressable, View } from 'react-native'
-import { IHandles } from 'react-native-modalize/lib/options'
+import { ListRenderItemInfo, View } from 'react-native'
 
 import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
-import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
-import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import EnterSeedPassphraseBottomSheet, {
@@ -21,7 +19,7 @@ import EnterSeedPassphraseBottomSheet, {
   useSeedPassphraseGate
 } from '@common/modules/account-select/components/EnterSeedPassphraseBottomSheet'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
+import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -40,7 +38,7 @@ const SavedSeedPhrasesBottomSheet = ({
   close,
   handleClose
 }: {
-  sheetRef: React.RefObject<IHandles>
+  sheetRef: React.RefObject<SheetRef | null>
   open: (dest?: 'default' | 'top' | undefined) => void
   close: (dest?: 'default' | 'alwaysOpen' | undefined) => void
   handleClose: () => void
@@ -53,7 +51,6 @@ const SavedSeedPhrasesBottomSheet = ({
   const { dispatchAndWait: mainDispatchAndWait } = useController('MainController')
   const [preparingSeedId, setPreparingSeedId] = useState<string | null>(null)
   const { goToNextRoute } = useOnboardingNavigation()
-  const { navigate } = useNavigation()
 
   const getAccountsForSeed = useCallback(
     (seedId: string) => {
@@ -191,21 +188,7 @@ const SavedSeedPhrasesBottomSheet = ({
         sheetRef={sheetRef}
         closeBottomSheet={close}
         HeaderComponent={
-          <ModalHeader handleClose={handleClose} title={t('Add from recovery phrase')}>
-            <Pressable
-              onPress={() => {
-                navigate(ROUTES.recoveryPhrasesSettings)
-              }}
-            >
-              {({ hovered }: any) => (
-                <SettingsIcon
-                  width={28}
-                  height={28}
-                  color={hovered ? theme.primaryText : theme.iconPrimary}
-                />
-              )}
-            </Pressable>
-          </ModalHeader>
+          <ModalHeader handleClose={handleClose} title={t('Add from recovery phrase')} />
         }
         flatListProps={{
           data: seeds,

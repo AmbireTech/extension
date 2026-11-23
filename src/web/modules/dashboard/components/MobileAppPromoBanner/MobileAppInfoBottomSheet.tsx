@@ -1,9 +1,9 @@
 import React, { FC, useCallback } from 'react'
 import { TextStyle, View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
@@ -32,7 +32,7 @@ const legendLabelStyle: TextStyle = {
 }
 
 type Props = {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
   inviteCode: string
 }

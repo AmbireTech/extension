@@ -1,12 +1,12 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import { SAFE_NETWORKS } from '@ambire-common/consts/safe'
 import { Account } from '@ambire-common/interfaces/account'
 import { SafeDeploymentRequestError } from '@ambire-common/interfaces/safe'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import BottomSheetTitle from '@common/components/BottomSheetTitle'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -26,7 +26,7 @@ import useSafeActivationProgress from './useSafeActivationProgress'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
   onClosed?: () => void
   account: Account | null
@@ -207,8 +207,6 @@ const SafeActivationBottomSheet: FC<Props> = ({
       <BottomSheetTitle
         title={t('Activate Safe account')}
         subtitle={t('One-time transaction per network.')}
-        onClose={closeBottomSheet}
-        closeButtonTestID="safe-activation-close"
       />
       <View
         style={[

@@ -1,10 +1,7 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 
-import Button from '@common/components/Button'
-import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
@@ -16,20 +13,13 @@ import { openInTab } from '@common/utils/links'
 
 type Props = {
   onSignatureScanned: (payload: Uint8Array) => void
-  onBack: () => void
 }
 
 const SCANNER_SIZE = 280
 
-const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
+const QrSignResponseScanner = ({ onSignatureScanned }: Props) => {
   const { isCompactLayout: withMobileLayout } = useCompactLayout()
   const { t } = useTranslation()
-  const [isCameraTornDown, setIsCameraTornDown] = useState(false)
-
-  const handleBack = useCallback(() => {
-    setIsCameraTornDown(true)
-    onBack()
-  }, [onBack])
 
   const handleOpenOnFullScreenScanner = useCallback(
     async () =>
@@ -56,28 +46,11 @@ const QrSignResponseScanner = ({ onSignatureScanned, onBack }: Props) => {
             : [flexbox.center, { width: '100%', maxWidth: 300 }]
         }
       >
-        {!isCameraTornDown && (
-          <QrScannerWithPermission
-            onComplete={onSignatureScanned}
-            onOpenFullScreenScanner={handleOpenOnFullScreenScanner}
-          />
-        )}
-      </View>
-      <FooterGlassView
-        size="sm"
-        absolute={false}
-        style={{ ...spacings.ptSm, marginTop: 'auto' }}
-        mobileStyle={spacings.ptLg}
-      >
-        <Button
-          size={withMobileLayout ? 'regular' : 'smaller'}
-          hasBottomSpacing={false}
-          type={withMobileLayout ? 'tertiary' : 'secondary'}
-          text={t('Back')}
-          onPress={handleBack}
-          style={isWeb && !withMobileLayout ? { width: 98 } : undefined}
+        <QrScannerWithPermission
+          onComplete={onSignatureScanned}
+          onOpenFullScreenScanner={handleOpenOnFullScreenScanner}
         />
-      </FooterGlassView>
+      </View>
     </View>
   )
 }

@@ -1,14 +1,14 @@
 import React, { useCallback } from 'react'
-import { Modalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import { useTranslation } from '@common/config/localization'
 import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import spacings from '@common/styles/spacings'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
 }
 

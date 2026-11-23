@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { useModalize } from 'react-native-modalize'
 
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import useControllerState from '@common/hooks/useControllerState'
 import useNavigation from '@common/hooks/useNavigation'
 import useRoute from '@common/hooks/useRoute'
@@ -22,8 +22,8 @@ export default function useRequestsControllerHelpers(
   const { navigate } = useNavigation()
   const { path } = useRoute()
 
-  // Modalize hook for the requests bottom sheet
-  const { ref: requestModalRef, open: openRequestModal, close: closeRequestModal } = useModalize()
+  // The ref of the requests bottom sheet
+  const { ref: requestModalRef, open: openRequestModal, close: closeRequestModal } = useSheetRef()
 
   // Timeout ref for the 1000ms delay matching extension behavior
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)

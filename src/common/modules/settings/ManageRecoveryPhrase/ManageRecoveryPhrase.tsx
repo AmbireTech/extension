@@ -2,7 +2,6 @@ import { BlurTargetView, BlurView } from 'expo-blur'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import CopyIcon from '@common/assets/svg/CopyIcon'
@@ -11,9 +10,12 @@ import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -27,6 +29,7 @@ import eventBus from '@common/services/event/eventBus'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
@@ -56,12 +59,12 @@ const ManageRecoveryPhrase = ({
     ref: sheetRefDeleteConfirmation,
     open: openDeleteConfirmation,
     close: closeDeleteConfirmation
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
     close: closeConfirmPassword
-  } = useModalize()
+  } = useSheetRef()
 
   const { addToast } = useToast()
   const { theme, styles, themeType } = useTheme(getStyles)
@@ -164,17 +167,26 @@ const ManageRecoveryPhrase = ({
   const unmountEditNameSheet = useCallback(() => setIsEditNameSheetMounted(false), [])
 
   const isBlurred = blurred || seed === DUMMY_SEED
+  // Manage sits in a sheet, where the header row spaces the title instead
+  const isInSheet = useIsInsideBottomSheet()
 
   return (
     <>
       <View style={flexbox.flex1}>
-        <View
-          testID="manage-recovery-phrase-header"
-          style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}
-        >
-          {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
-          <PanelTitle title={t('Manage recovery phrase')} style={isWeb ? text.left : text.center} />
-        </View>
+        {/* In a sheet the header row adds the X and spaces the title itself */}
+        <SheetHeaderRow style={spacings.mbLg}>
+          <View
+            testID="manage-recovery-phrase-header"
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              common.fullWidth,
+              !isInSheet && spacings.mbLg
+            ]}
+          >
+            <PanelTitle title={t('Manage recovery phrase')} style={text.center} />
+          </View>
+        </SheetHeaderRow>
         <View style={[isMobile ? spacings.mbSm : spacings.mb, flexbox.alignStart]}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Text fontSize={16} weight="medium" numberOfLines={1} style={{ flexShrink: 1 }}>
@@ -335,13 +347,11 @@ const ManageRecoveryPhrase = ({
         containerInnerWrapperStyles={{ flex: 1 }}
         style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          {!isMobile && <PanelBackButton onPress={closeDeleteConfirmation} style={spacings.mrSm} />}
-          <PanelTitle
-            title={t('Confirm phrase removal')}
-            style={isMobile ? text.center : text.left}
-          />
-        </View>
+        <SheetHeaderRow style={spacings.mbLg}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, common.fullWidth]}>
+            <PanelTitle title={t('Confirm phrase removal')} style={text.center} />
+          </View>
+        </SheetHeaderRow>
         <View style={[flexbox.flex1, flexbox.justifyEnd]}>
           {hasPrivacyPoolsAccount && (
             <Alert
@@ -412,7 +422,6 @@ const ManageRecoveryPhrase = ({
           onPasswordConfirmed={onPasswordConfirmed}
           onBiometricsConfirmed={onPasswordConfirmed}
           withFullHeightLayout
-          onBackButtonPress={closeConfirmPassword}
         />
       </BottomSheet>
       {isEditNameSheetMounted && !!savedSeed && (

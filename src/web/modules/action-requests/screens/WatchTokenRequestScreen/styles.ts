@@ -7,6 +7,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
   container: ViewStyle
+  dappSafetyBanners: ViewStyle
   content: ViewStyle
   contentHeader: ViewStyle
   contentBody: ViewStyle
@@ -21,6 +22,10 @@ const getStyles = (theme: ThemeProps, themeType: ThemeType) =>
       marginHorizontal: 'auto',
       ...flexbox.flex1,
       maxWidth: 422
+    },
+    dappSafetyBanners: {
+      ...common.fullWidth,
+      ...spacings.mbLg
     },
     content: {
       ...common.fullWidth,

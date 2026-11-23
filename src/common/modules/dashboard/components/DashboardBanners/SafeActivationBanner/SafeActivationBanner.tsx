@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react'
-import { useModalize } from 'react-native-modalize'
 
 import SafeIcon from '@common/assets/svg/SafeIcon'
 import Banner from '@common/components/Banner'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -35,7 +35,7 @@ const SafeActivationBanner = () => {
     'AccountsController',
     selectIsActiveOnSomeNetwork
   )
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
 
   // Only a Safe created in the wallet has what's needed to activate it from here
   if (!account?.safeCreation) return null

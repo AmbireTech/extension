@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { Controller } from 'react-hook-form'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import InputPassword from '@common/components/InputPassword'
@@ -42,7 +42,7 @@ const ChangeKeystorePassword: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
+  const { ref: modalRef, open: openModal, close: closeModal } = useSheetRef()
   const { control, errors, newPassword, status } = form
   const {
     handleChangeKeystorePassword,
@@ -161,7 +161,6 @@ const ChangeKeystorePassword: React.FC<Props> = ({
           onCustomSubmit={changePassword}
           onPasswordConfirmed={changePassword}
           onBiometricsConfirmed={changePasswordAfterBiometrics}
-          onBackButtonPress={closeConfirmation}
           text={t('Please enter your current password to change it.')}
           submitText={t('Change password')}
           isSubmitting={status === 'LOADING'}

@@ -1,12 +1,12 @@
 import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { PRIVACY_POOLS_MIN_REASSURING_COVER } from '@ambire-common/consts/privacyPools'
 import { PrivacyPoolsRating } from '@ambire-common/interfaces/privacyPools'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import Badge from '@common/components/Badge'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -41,7 +41,7 @@ const PrivacySendStatus: FC<Props> = (props) => {
   const { rating, leaks, cover, style } = props
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
   const coverTone = getCoverTone(rating, cover)
@@ -81,10 +81,11 @@ const PrivacySendStatus: FC<Props> = (props) => {
         <HoverablePressable testID="privacy-pools-send-privacy-suggestions" onPress={handleOpen}>
           <Badge
             type={worstLeak.type}
+            // Without "privacy", which the whole line is about, so the deposit count fits beside it
             text={
               leaks.length === 1
-                ? t('1 privacy suggestion')
-                : t('{{count}} privacy suggestions', { count: leaks.length })
+                ? t('1 suggestion')
+                : t('{{count}} suggestions', { count: leaks.length })
             }
             isIconLeading
           >

@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import PendingActionWindowIcon from '@common/assets/svg/PendingActionWindowIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
@@ -19,7 +19,7 @@ const selectCurrentUserRequest = (state: AllControllersMappingType['RequestsCont
   state.currentUserRequest
 
 const PendingActionWindowModal = () => {
-  const { ref: sheetRef, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, close: closeBottomSheet } = useSheetRef()
   const { t } = useTranslation()
   const { state: requestWindow, dispatch: requestsDispatch } = useController(
     'RequestsController',

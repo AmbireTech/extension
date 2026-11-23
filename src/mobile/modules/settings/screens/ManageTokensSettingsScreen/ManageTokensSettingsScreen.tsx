@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -47,12 +47,12 @@ const ManageTokensSettingsScreen = () => {
     ref: addTokenBottomSheetRef,
     open: openAddTokenBottomSheet,
     close: closeAddTokenBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: addNftBottomSheetRef,
     open: openAddNftBottomSheet,
     close: closeAddNftBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)

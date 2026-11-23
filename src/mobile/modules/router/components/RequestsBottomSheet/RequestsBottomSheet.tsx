@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react'
-import { Modalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -16,7 +17,7 @@ import SignAccountOpScreen from '@mobile/modules/sign-account-op/screens/SignAcc
 import SignMessageScreen from '@mobile/modules/sign-message/screens/SignMessageScreen'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   onClosed?: () => void
   onOpened?: () => void
 }
@@ -26,7 +27,10 @@ interface Props {
  * Each screen is wrapped in a container that adapts it for bottom sheet display.
  */
 const RequestsBottomSheet: React.FC<Props> = ({ sheetRef, onClosed, onOpened }) => {
-  const { state: currentUserRequest } = useController('RequestsController', 'currentUserRequest')
+  const { state: currentUserRequest, closeRequestModal } = useController(
+    'RequestsController',
+    'currentUserRequest'
+  )
 
   const requestContent = useMemo(() => {
     if (!currentUserRequest) return null
@@ -68,6 +72,8 @@ const RequestsBottomSheet: React.FC<Props> = ({ sheetRef, onClosed, onOpened }) 
         return null
     }
   }, [currentUserRequest])
+  // Without a screen there are no buttons to reject or approve with, so the X or a swipe closes it
+  const isEmpty = !requestContent
 
   return (
     <BottomSheet
@@ -76,12 +82,14 @@ const RequestsBottomSheet: React.FC<Props> = ({ sheetRef, onClosed, onOpened }) 
       onClosed={onClosed}
       onOpened={onOpened}
       adjustToContentHeight={false}
-      shouldBeClosableOnDrag={false}
-      // No `closeBottomSheet`, so the user has to reject or approve the request
+      shouldBeClosableOnDrag={isEmpty}
+      // Otherwise no `closeBottomSheet`, so the user has to reject or approve the request
       // using the buttons
+      closeBottomSheet={isEmpty ? closeRequestModal || undefined : undefined}
       isScrollEnabled={false}
       containerInnerWrapperStyles={flexbox.flex1}
-      customRenderer={requestContent}
+      // An empty header row still draws the X
+      customRenderer={requestContent || <ModalHeader />}
       style={spacings.ph0}
     />
   )

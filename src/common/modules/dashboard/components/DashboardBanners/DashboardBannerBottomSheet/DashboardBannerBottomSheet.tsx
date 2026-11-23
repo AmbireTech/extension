@@ -4,6 +4,7 @@ import { View, ViewStyle } from 'react-native'
 
 import { getIsIntentRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
@@ -17,8 +18,9 @@ import type { FC } from 'react'
 
 type Props = {
   id: string
-  // Every swap or bridge has its own banner, so its sheet shows only that one
-  activeRouteId?: string
+  // Every swap or bridge has its own banner, so its sheet shows only that one. A token on its
+  // way shows the swaps and bridges that move it
+  activeRouteIds?: string[]
   sheetRef: RefObject<any>
   closeBottomSheet: () => void
 }
@@ -41,19 +43,19 @@ const style: {
 
 const DashboardBannerBottomSheet: FC<Props> = ({
   id,
-  activeRouteId,
+  activeRouteIds,
   sheetRef,
   closeBottomSheet
 }) => {
   const { t } = useTranslation()
   const { dispatch: extensionUpdateDispatch } = useController('ExtensionUpdateController')
   const { state: activeRoutes } = useController('SwapAndBridgeController', 'activeRoutes')
-  const sheetKind = activeRouteId ? BRIDGE_IN_PROGRESS : id
+  const sheetKind = activeRouteIds?.length ? BRIDGE_IN_PROGRESS : id
   const intentRoutes = useMemo(
     () =>
       activeRoutes.filter(
         (activeRoute) =>
-          (!activeRouteId || activeRoute.activeRouteId === activeRouteId) &&
+          (!activeRouteIds?.length || activeRouteIds.includes(activeRoute.activeRouteId)) &&
           activeRoute.route &&
           getIsIntentRoute(activeRoute.route) &&
           (activeRoute.routeStatus === 'in-progress' ||
@@ -61,7 +63,7 @@ const DashboardBannerBottomSheet: FC<Props> = ({
             activeRoute.routeStatus === 'refunded' ||
             activeRoute.routeStatus === 'failed')
       ),
-    [activeRoutes, activeRouteId]
+    [activeRoutes, activeRouteIds]
   )
 
   if (!WITH_BOTTOM_SHEET.includes(sheetKind)) return null
@@ -92,19 +94,15 @@ const DashboardBannerBottomSheet: FC<Props> = ({
               }
             })
           }
-          secondaryButtonText={t('Cancel')}
-          onSecondaryButtonPress={closeBottomSheet}
         />
       )}
       {sheetKind === BRIDGE_IN_PROGRESS && (
         <View style={[flexbox.flex1, spacings.ptSm]}>
-          <Text
-            fontSize={isMobile ? 20 : 16}
-            weight="medium"
-            style={[spacings.mbLg, isMobile && text.center]}
-          >
-            {t('Pending transactions')}
-          </Text>
+          <SheetHeaderRow style={spacings.mbLg}>
+            <Text fontSize={isMobile ? 20 : 16} weight="medium" style={text.center}>
+              {t('Pending transactions')}
+            </Text>
+          </SheetHeaderRow>
           {intentRoutes.map((activeRoute) => (
             <View key={activeRoute.activeRouteId} style={spacings.mbTy}>
               <ActiveRouteCard activeRoute={activeRoute} />

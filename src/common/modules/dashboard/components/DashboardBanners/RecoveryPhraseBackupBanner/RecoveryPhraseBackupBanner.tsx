@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
-import { useModalize } from 'react-native-modalize'
 
 import Banner from '@common/components/Banner'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
@@ -27,7 +27,7 @@ const RecoveryPhraseBackupBanner = () => {
     'SelectedAccountController',
     selectPrivacyPoolsAccountId
   )
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
 
   // Neutral on the dashboard so a freshly created account isn't greeted by a coloured
   // warning. The icon and the button stay warning coloured to keep the nudge visible.

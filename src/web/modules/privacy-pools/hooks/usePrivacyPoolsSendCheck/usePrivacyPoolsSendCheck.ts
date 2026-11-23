@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { PrivacyPoolsWithdrawalPrivacy } from '@ambire-common/interfaces/privacyPools'
 import useController from '@common/hooks/useController'
@@ -14,9 +14,14 @@ const selectWithdrawalPrivacy = (state: AllControllersMappingType['PrivacyPoolsC
 const selectPoolStats = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.poolStats
 
+const selectHasPrivacyDataFailed = (state: AllControllersMappingType['PrivacyPoolsController']) =>
+  state.hasPrivacyDataFailed
+
 type Params = {
   chainId: string
   tokenAddress: string
+  /** The deposit the send spends - see `PrivacyPoolsSendableDeposit.number`. */
+  depositNumber: number
   /** 0 before the user enters a valid amount, which still checks the recipient. */
   amount: bigint
   /** Null before the user enters a valid one. */
@@ -35,9 +40,17 @@ type Result = {
    * recipient is checked.
    */
   recipientPrivacy: PrivacyPoolsWithdrawalPrivacy | null
+  /**
+   * Whether reading what the check needs failed, so an `unchecked` privacy is final until
+   * `retryCheck`. Otherwise an `unchecked` one is still loading.
+   */
+  hasCheckFailed: boolean
+  retryCheck: () => void
 }
 
-const NOT_CHECKED: Result = { privacy: null, recipientPrivacy: null }
+type CheckResult = Pick<Result, 'privacy' | 'recipientPrivacy'>
+
+const NOT_CHECKED: CheckResult = { privacy: null, recipientPrivacy: null }
 
 /**
  * Checks what the Send form's transfer gives away, once the user stops typing, and again once the
@@ -49,8 +62,13 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
     selectWithdrawalPrivacy
   )
   const { state: poolStats } = useController('PrivacyPoolsController', selectPoolStats)
+  const { state: hasPrivacyDataFailed } = useController(
+    'PrivacyPoolsController',
+    selectHasPrivacyDataFailed
+  )
   const chainId = params?.chainId
   const tokenAddress = params?.tokenAddress
+  const depositNumber = params?.depositNumber
   const amount = params?.amount
   const recipient = params?.recipient ?? null
   // Pool numbers come with the deposits the check needs
@@ -58,28 +76,37 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
     !!chainId && !!tokenAddress && !!poolStats?.[chainId]?.byToken[tokenAddress.toLowerCase()]
 
   useEffect(() => {
-    if (!chainId || !tokenAddress || amount === undefined) return
+    if (!chainId || !tokenAddress || depositNumber === undefined || amount === undefined) return
 
     const timeout = setTimeout(() => {
       dispatch({
         type: 'method',
         params: {
           method: 'checkWithdrawalPrivacy',
-          args: [{ chainId, tokenAddress, amount, recipient }]
+          args: [{ chainId, tokenAddress, depositNumber, amount, recipient }]
         }
       })
     }, CHECK_DEBOUNCE_MS)
 
     return () => clearTimeout(timeout)
-  }, [amount, chainId, dispatch, isPoolRead, recipient, tokenAddress])
+  }, [amount, chainId, depositNumber, dispatch, isPoolRead, recipient, tokenAddress])
 
-  return useMemo(() => {
-    const isSameToken =
+  const hasCheckFailed = !!chainId && !!hasPrivacyDataFailed?.[chainId]
+  const retryCheck = useCallback(() => {
+    if (!chainId) return
+
+    dispatch({ type: 'method', params: { method: 'readPrivacyData', args: [chainId] } })
+  }, [chainId, dispatch])
+
+  const checkResult = useMemo((): CheckResult => {
+    // The deposit too: whom a send gives away depends on who made its deposit
+    const isSameDeposit =
       !!check &&
       check.chainId === chainId &&
       !!tokenAddress &&
-      isSameAddress(check.tokenAddress, tokenAddress)
-    if (!isSameToken) return NOT_CHECKED
+      isSameAddress(check.tokenAddress, tokenAddress) &&
+      check.depositNumber === depositNumber
+    if (!isSameDeposit) return NOT_CHECKED
 
     const isSameRecipient = isSameAddress(check.recipient, recipient)
     const isSameSend = isSameRecipient && check.amount === amount
@@ -88,7 +115,12 @@ const usePrivacyPoolsSendCheck = (params: Params | null): Result => {
       privacy: isSameSend ? check.privacy : null,
       recipientPrivacy: isSameRecipient ? check.privacy : null
     }
-  }, [amount, chainId, check, recipient, tokenAddress])
+  }, [amount, chainId, check, depositNumber, recipient, tokenAddress])
+
+  return useMemo(
+    () => ({ ...checkResult, hasCheckFailed, retryCheck }),
+    [checkResult, hasCheckFailed, retryCheck]
+  )
 }
 
 export default usePrivacyPoolsSendCheck

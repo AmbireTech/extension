@@ -1,9 +1,9 @@
 import { nanoid } from 'nanoid'
 import React, { FC, memo, useCallback, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Network } from '@ambire-common/interfaces/network'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Collectible from '@common/components/Collectible'
 import CollectibleModal, { SelectedCollectible } from '@common/components/CollectibleModal'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
@@ -48,7 +48,7 @@ const Nft: FC<Props> = ({
   hideSendNft,
   style
 }) => {
-  const { ref: modalRef, open: openModal, close: closeModal } = useModalize()
+  const { ref: modalRef, open: openModal, close: closeModal } = useSheetRef()
   const [collectibleData, setCollectibleData] = useState<SelectedCollectible | null>(null)
   const nftName = nftInfo?.name || 'NFT'
   const fullTokenId = tokenId.toString()
