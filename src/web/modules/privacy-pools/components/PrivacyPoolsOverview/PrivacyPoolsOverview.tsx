@@ -34,6 +34,8 @@ interface Props {
   canSend: boolean
   onRefresh: () => void
   onSend: () => void
+  /** Opens the guide on how a Privacy Pools account works */
+  onAbout: () => void
   /**
    * The balance and the actions collapse as on the regular dashboard: the pages slide over them,
    * see `DashboardOverview`.
@@ -57,6 +59,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
   canSend,
   onRefresh,
   onSend,
+  onAbout,
   onCollapsibleHeightChange
 }) => {
   const { theme } = useTheme()
@@ -137,7 +140,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
               </View>
             </View>
             {/* Disabled until the notes are read, or the form would have an empty dropdown */}
-            <PrivacyPoolsActions onSend={onSend} isSendDisabled={!canSend} />
+            <PrivacyPoolsActions onSend={onSend} isSendDisabled={!canSend} onAbout={onAbout} />
           </OverviewCollapsible>
         </View>
       </View>

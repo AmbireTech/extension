@@ -110,7 +110,8 @@ const PrivacyPoolsDashboardScreen = () => {
     return [...new Set(symbols)]
   }, [networkRows])
 
-  // Offered by the empty token list, to explain how the account works and how to top it up
+  // Offered by the empty token list and the About button, to explain how the account works and
+  // how to top it up
   const {
     ref: getStartedGuideSheetRef,
     open: openGetStartedGuide,
@@ -159,6 +160,7 @@ const PrivacyPoolsDashboardScreen = () => {
             canSend={!!withdrawTokens.length}
             onRefresh={syncAllChains}
             onSend={openSend}
+            onAbout={openGetStartedGuide}
             onCollapsibleHeightChange={setCollapsibleOverviewHeight}
           />
         </View>

@@ -29,6 +29,7 @@ const PrivacyPoolsDashboardShell = () => {
           canSend={false}
           onRefresh={noop}
           onSend={noop}
+          onAbout={noop}
         />
         <View style={[commonWebStyles.contentContainer, spacings.phSm, { paddingRight: 16 }]}>
           <TokensSkeleton />
