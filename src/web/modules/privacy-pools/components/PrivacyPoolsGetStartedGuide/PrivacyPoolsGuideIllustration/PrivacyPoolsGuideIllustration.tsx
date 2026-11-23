@@ -1,18 +1,12 @@
 import React, { ReactNode, useState } from 'react'
-import { StyleSheet, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 import { Defs, G, LinearGradient, Rect, Stop, Svg } from 'react-native-svg'
 
 import useTheme from '@common/hooks/useTheme'
-import { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
-import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsCornerFrames from '@web/modules/privacy-pools/components/PrivacyPoolsCornerFrames'
 
-/** The width of the illustration in the design, which the ray's geometry is measured in */
-const DESIGN_WIDTH = 352
-const HEIGHT = 220
+import getStyles, { DESIGN_WIDTH, HEIGHT, RAY_WIDTH } from './styles'
 
-/** Wider than the illustration, so the ray never shows its edge while it slides */
-const RAY_WIDTH = 450
 const RAY_OPACITY = 0.16
 /**
  * How far the ray slides to the left by the last step, in percent of its own width: almost
@@ -39,6 +33,7 @@ interface Streak {
 }
 
 interface Ray {
+  id: string
   /** Where the line across the streaks ends, from the ray's top-left corner */
   end: { x: number; y: number }
   /** How bright the ray is between its streaks */
@@ -54,6 +49,7 @@ interface Ray {
  * design's image, instead of the image, so no image or shader is shipped for it.
  */
 const MAIN_RAY: Ray = {
+  id: 'main',
   /** The narrow ray, 34° down from the horizontal, with the dark area left of it */
   end: { x: 411.3, y: 277.4 },
   base: 0.14,
@@ -66,6 +62,7 @@ const MAIN_RAY: Ray = {
   ]
 }
 const SECOND_RAY: Ray = {
+  id: 'second',
   /** The wide ray right of the main one, 42° down, drawn over it from the dark gap between them */
   end: { x: 357.9, y: 322.3 },
   base: 0.22,
@@ -103,8 +100,8 @@ const getRayStops = ({ base, streaks, fadeIn }: Ray) =>
     return { offset, color: `rgb(${channels.join(', ')})`, opacity }
   })
 
-const MAIN_RAY_STOPS = getRayStops(MAIN_RAY)
-const SECOND_RAY_STOPS = getRayStops(SECOND_RAY)
+// The second over the main one
+const RAYS = [MAIN_RAY, SECOND_RAY].map((ray) => ({ ...ray, stops: getRayStops(ray) }))
 
 // Fixed, not theme colors: the frames glow white in both themes
 const CORNER_COLOR = '#FFFFFF'
@@ -113,27 +110,8 @@ const CORNER_INSET = 6
 /** As in the design: the frames curve a bit wider than the illustration's own corners */
 const CORNER_RADIUS = 14
 
-const FRAME_STYLE: ViewStyle = {
-  width: '100%',
-  height: HEIGHT,
-  borderRadius: BORDER_RADIUS_SECONDARY,
-  overflow: 'hidden'
-}
-// In percent of the illustration, so the ray scales with it without measuring it
-const RAY_LAYER_STYLE = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  height: HEIGHT,
-  width: `${(RAY_WIDTH / DESIGN_WIDTH) * 100}%`,
-  transitionProperty: 'transform',
-  transitionDuration: '400ms',
-  // Moving it only recomposites the ray rather than repainting it every frame
-  willChange: 'transform'
-} as ViewStyle
-
 // A `url(#id)` reference resolves to the first matching id in the document
-let gradientIdCounter = 0
+let gradientIdsCounter = 0
 
 interface Props {
   /**
@@ -151,20 +129,17 @@ interface Props {
  * same instance stays mounted and the ray slides to the new step's place.
  */
 const PrivacyPoolsGuideIllustration = ({ progress, children }: Props) => {
-  const { theme } = useTheme()
-  const [ids] = useState(() => {
-    gradientIdCounter += 1
-    return {
-      main: `privacy-pools-guide-main-ray-${gradientIdCounter}`,
-      second: `privacy-pools-guide-second-ray-${gradientIdCounter}`
-    }
+  const { styles } = useTheme(getStyles)
+  const [gradientIdPrefix] = useState(() => {
+    gradientIdsCounter += 1
+    return `privacy-pools-guide-ray-${gradientIdsCounter}`
   })
   // A transform's percentages are of the ray's own width
   const rayStyle: ViewStyle = { transform: [{ translateX: `${-progress * RAY_TRAVEL}%` }] }
 
   return (
-    <View style={[FRAME_STYLE, { backgroundColor: theme.secondaryBackground }]}>
-      <View style={[RAY_LAYER_STYLE, rayStyle]}>
+    <View style={styles.frame}>
+      <View style={[styles.rayLayer, rayStyle]}>
         <Svg
           width="100%"
           height="100%"
@@ -172,39 +147,36 @@ const PrivacyPoolsGuideIllustration = ({ progress, children }: Props) => {
           preserveAspectRatio="none"
         >
           <Defs>
-            <LinearGradient
-              id={ids.main}
-              gradientUnits="userSpaceOnUse"
-              x1={0}
-              y1={0}
-              x2={MAIN_RAY.end.x}
-              y2={MAIN_RAY.end.y}
-            >
-              {MAIN_RAY_STOPS.map(({ offset, color }) => (
-                <Stop key={offset} offset={offset} stopColor={color} />
-              ))}
-            </LinearGradient>
-            <LinearGradient
-              id={ids.second}
-              gradientUnits="userSpaceOnUse"
-              x1={0}
-              y1={0}
-              x2={SECOND_RAY.end.x}
-              y2={SECOND_RAY.end.y}
-            >
-              {SECOND_RAY_STOPS.map(({ offset, color, opacity }) => (
-                <Stop key={offset} offset={offset} stopColor={color} stopOpacity={opacity} />
-              ))}
-            </LinearGradient>
+            {RAYS.map(({ id, end, stops }) => (
+              <LinearGradient
+                key={id}
+                id={`${gradientIdPrefix}-${id}`}
+                gradientUnits="userSpaceOnUse"
+                x1={0}
+                y1={0}
+                x2={end.x}
+                y2={end.y}
+              >
+                {stops.map(({ offset, color, opacity }) => (
+                  <Stop key={offset} offset={offset} stopColor={color} stopOpacity={opacity} />
+                ))}
+              </LinearGradient>
+            ))}
           </Defs>
           {/* Both rays at once at the design's opacity, so the second covers the first */}
           <G opacity={RAY_OPACITY}>
-            <Rect width={RAY_WIDTH} height={HEIGHT} fill={`url(#${ids.main})`} />
-            <Rect width={RAY_WIDTH} height={HEIGHT} fill={`url(#${ids.second})`} />
+            {RAYS.map(({ id }) => (
+              <Rect
+                key={id}
+                width={RAY_WIDTH}
+                height={HEIGHT}
+                fill={`url(#${gradientIdPrefix}-${id})`}
+              />
+            ))}
           </G>
         </Svg>
       </View>
-      <View style={[StyleSheet.absoluteFill, flexbox.center]}>{children}</View>
+      <View style={styles.content}>{children}</View>
       {/* Over the content, as in the design */}
       <PrivacyPoolsCornerFrames
         color={CORNER_COLOR}

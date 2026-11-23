@@ -1,5 +1,5 @@
 import { ZeroAddress } from 'ethers'
-import React, { CSSProperties, ReactNode } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 import { Line, Path, Svg } from 'react-native-svg'
 
@@ -13,19 +13,20 @@ import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import { SPACING, SPACING_MI, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import { SPACING_MI } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
-// The design's shadow under its glass, the same in both themes
-const GLASS_SHADOW = '0px 12px 20px 0px rgba(0, 0, 0, 0.12)'
-// The orange glow of the Privacy Pools overview card
-const PRIVATE_ACCOUNT_BORDER = '1px solid rgba(255, 149, 92, 0.64)'
-const PRIVATE_ACCOUNT_SHADOW = '0px 8px 16px 0px rgba(255, 149, 92, 0.24)'
+import getStyles, {
+  AVATAR_SIZE,
+  CONNECTOR_END_SIZE,
+  CONNECTOR_HEIGHT,
+  glassCssStyles,
+  SEND_BUTTON_HEIGHT
+} from './styles'
+
 // The connector between the accounts is drawn white in both themes
 const CONNECTOR_COLOR = '#FFFFFF'
 
-const AVATAR_SIZE = 40
 /** Any public account looks the same here, so its avatar has the design's own colors */
 const PUBLIC_ACCOUNT_AVATAR = {
   seed: 'privacy-pools-guide-public-account',
@@ -33,76 +34,16 @@ const PUBLIC_ACCOUNT_AVATAR = {
   color: '#2BB385',
   spotcolor: '#4876DA'
 }
-/** The width of an account in the transfer between two of them, as in the design */
-const TRANSFER_ACCOUNT_WIDTH = 200
 
 // The connector's geometry, in the design's pixels. Its ends overhang the accounts it joins by
 // half the diamond, so the diamond sits on the edge of the account above.
-const CONNECTOR_HEIGHT = 82
-const CONNECTOR_END_SIZE = 8.66
 const CONNECTOR_CENTER = CONNECTOR_END_SIZE / 2
 const CONNECTOR_ARROW_LENGTH = 7.5
-const SEND_BUTTON_HEIGHT = 40
 /** Where the Send button's top and bottom are, in the connector's own coordinates */
 const SEND_BUTTON_TOP = CONNECTOR_CENTER + (CONNECTOR_HEIGHT - SEND_BUTTON_HEIGHT) / 2
 const SEND_BUTTON_BOTTOM = SEND_BUTTON_TOP + SEND_BUTTON_HEIGHT
 const CONNECTOR_SVG_HEIGHT = CONNECTOR_HEIGHT + CONNECTOR_CENTER
 const CONNECTOR_DASHES = '2 2'
-
-const TOKEN_ROW_WIDTH = 290
-const CLOCK_SIZE = 48
-/** The clock overlaps the token below it, as in the design */
-const CLOCK_OVERLAP = 5
-
-/**
- * A piece of the illustration in the app's glass, with its white edge, over the background.
- * Only shown, so it doesn't look pressable.
- */
-const Glass = ({
-  borderRadius = BORDER_RADIUS_PRIMARY,
-  cssStyle,
-  children
-}: {
-  borderRadius?: number
-  cssStyle: CSSProperties
-  children: ReactNode
-}) => (
-  <GlassView
-    borderRadius={borderRadius}
-    cssStyle={{ alignItems: 'center', cursor: 'default', boxShadow: GLASS_SHADOW, ...cssStyle }}
-  >
-    {children}
-  </GlassView>
-)
-
-const PRIVATE_CHIP_STYLE: CSSProperties = {
-  columnGap: SPACING_TY,
-  padding: `${SPACING_MI}px ${SPACING}px ${SPACING_MI}px ${SPACING_MI}px`,
-  border: PRIVATE_ACCOUNT_BORDER,
-  boxShadow: PRIVATE_ACCOUNT_SHADOW
-}
-const PUBLIC_CHIP_STYLE: CSSProperties = {
-  columnGap: SPACING_TY,
-  padding: `${SPACING_MI}px ${SPACING}px ${SPACING_MI}px ${SPACING_MI}px`
-}
-const SEND_BUTTON_STYLE: CSSProperties = {
-  height: SEND_BUTTON_HEIGHT,
-  columnGap: SPACING_MI,
-  padding: `0 ${SPACING_SM}px`
-}
-const CLOCK_STYLE: CSSProperties = {
-  width: CLOCK_SIZE,
-  height: CLOCK_SIZE,
-  justifyContent: 'center',
-  marginBottom: -CLOCK_OVERLAP,
-  // Over the token, which comes after it
-  zIndex: 1
-}
-const TOKEN_ROW_STYLE: CSSProperties = {
-  width: TOKEN_ROW_WIDTH,
-  justifyContent: 'space-between',
-  padding: `${SPACING_TY}px ${SPACING_SM}px ${SPACING_TY}px ${SPACING_TY}px`
-}
 
 interface AccountChipProps {
   type: 'private' | 'public'
@@ -115,9 +56,9 @@ export const PrivacyPoolsGuideAccountChip = ({ type, fontSize = 16 }: AccountChi
   const isPrivate = type === 'private'
 
   return (
-    <Glass
+    <GlassView
       borderRadius={AVATAR_SIZE / 2 + SPACING_MI}
-      cssStyle={isPrivate ? PRIVATE_CHIP_STYLE : PUBLIC_CHIP_STYLE}
+      cssStyle={isPrivate ? glassCssStyles.privateAccountChip : glassCssStyles.publicAccountChip}
     >
       {isPrivate ? (
         <PrivacyPoolsAccountAvatar size={AVATAR_SIZE} />
@@ -132,23 +73,22 @@ export const PrivacyPoolsGuideAccountChip = ({ type, fontSize = 16 }: AccountChi
       >
         {isPrivate ? t('Private account') : t('Public account')}
       </Text>
-    </Glass>
+    </GlassView>
   )
 }
 
 /** The dotted line from one account to the other, with the Send button on it */
 const SendConnector = () => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { styles, theme } = useTheme(getStyles)
 
   return (
-    <View style={[flexbox.center, { height: CONNECTOR_HEIGHT }]}>
-      {/* Starts half a diamond higher, so the diamond sits on the edge of the account above */}
+    <View style={styles.connector}>
       <Svg
         width={CONNECTOR_END_SIZE}
         height={CONNECTOR_SVG_HEIGHT}
         viewBox={`0 0 ${CONNECTOR_END_SIZE} ${CONNECTOR_SVG_HEIGHT}`}
-        style={{ position: 'absolute', top: -CONNECTOR_CENTER }}
+        style={styles.connectorLine}
       >
         <Path
           d={`M${CONNECTOR_CENTER} 0L${CONNECTOR_END_SIZE} ${CONNECTOR_CENTER}L${CONNECTOR_CENTER} ${CONNECTOR_END_SIZE}L0 ${CONNECTOR_CENTER}Z`}
@@ -180,12 +120,12 @@ const SendConnector = () => {
           fill={CONNECTOR_COLOR}
         />
       </Svg>
-      <Glass cssStyle={SEND_BUTTON_STYLE}>
+      <GlassView cssStyle={glassCssStyles.sendButton}>
         <Text fontSize={12} weight="medium">
           {t('Send')}
         </Text>
         <SendIcon width={16} height={16} color={theme.primaryText} />
-      </Glass>
+      </GlassView>
     </View>
   )
 }
@@ -197,27 +137,31 @@ export const PrivacyPoolsGuideTransfer = ({
 }: {
   from: AccountChipProps['type']
   to: AccountChipProps['type']
-}) => (
-  <View style={{ width: TRANSFER_ACCOUNT_WIDTH }}>
-    <PrivacyPoolsGuideAccountChip type={from} />
-    <SendConnector />
-    <PrivacyPoolsGuideAccountChip type={to} />
-  </View>
-)
+}) => {
+  const { styles } = useTheme(getStyles)
+
+  return (
+    <View style={styles.transfer}>
+      <PrivacyPoolsGuideAccountChip type={from} />
+      <SendConnector />
+      <PrivacyPoolsGuideAccountChip type={to} />
+    </View>
+  )
+}
 
 /** A deposit of ETH that is still being verified, with a clock over it */
 export const PrivacyPoolsGuideVerifyingToken = () => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
+  const { styles, theme } = useTheme(getStyles)
 
   return (
     <View style={flexbox.alignCenter}>
-      <Glass cssStyle={CLOCK_STYLE}>
+      <GlassView cssStyle={glassCssStyles.clock}>
         <ClockIcon width={28} height={28} color={theme.primaryText} />
-      </Glass>
-      <Glass cssStyle={TOKEN_ROW_STYLE}>
-        <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
-          <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_TY }]}>
+      </GlassView>
+      <GlassView cssStyle={glassCssStyles.tokenRow}>
+        <View style={styles.tokenDetails}>
+          <View style={styles.tokenNameAndIcon}>
             <TokenIcon
               withContainer
               withNetworkIcon
@@ -238,16 +182,12 @@ export const PrivacyPoolsGuideVerifyingToken = () => {
               </Text>
             </View>
           </View>
-          <Badge
-            type="info"
-            text={t('being verified')}
-            style={{ borderWidth: 1, borderColor: theme.infoText }}
-          />
+          <Badge type="info" text={t('being verified')} style={styles.verifyingBadge} />
         </View>
         <Text fontSize={18} weight="number_bold">
           $500
         </Text>
-      </Glass>
+      </GlassView>
     </View>
   )
 }

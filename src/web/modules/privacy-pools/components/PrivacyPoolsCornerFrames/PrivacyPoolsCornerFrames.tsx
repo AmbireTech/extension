@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
-import { ViewStyle } from 'react-native'
 import { Defs, FeGaussianBlur, Filter, Path, Svg } from 'react-native-svg'
+
+import styles from './styles'
 
 /** Room for the corner frame and its glow, which fades out about three blurs from it */
 const CORNER_SIZE = 40
@@ -37,6 +38,13 @@ const getCornerPath = (insetX: number, insetY: number, cornerRadius: number) => 
   return `M${insetX} ${armEnd}V${curveEnd}A${radiusX} ${radiusY} 0 0 1 ${curveEnd} ${insetY}H${armEnd}`
 }
 
+const CORNERS = [
+  { id: 'top-left', edge: 'top', style: styles.topLeft },
+  { id: 'top-right', edge: 'top', style: styles.topRight },
+  { id: 'bottom-left', edge: 'bottom', style: styles.bottomLeft },
+  { id: 'bottom-right', edge: 'bottom', style: styles.bottomRight }
+] as const
+
 // A `url(#id)` reference resolves to the first matching id in the document, and two cards with
 // frames can be mounted at the same time - so every instance needs its own filter ids
 let instanceCounter = 0
@@ -58,42 +66,24 @@ const PrivacyPoolsCornerFrames = ({
     return `privacy-pools-corner-glow-${instanceCounter}`
   })
 
-  const corners = useMemo(() => {
-    const topCornerPath = getCornerPath(insetX, insetTop, cornerRadius)
-    const bottomCornerPath = getCornerPath(insetX, insetBottom, cornerRadius)
-
-    const frames: { id: string; path: string; style: ViewStyle }[] = [
-      { id: 'top-left', path: topCornerPath, style: { left: 0, top: 0 } },
-      {
-        id: 'top-right',
-        path: topCornerPath,
-        style: { right: 0, top: 0, transform: [{ scaleX: -1 }] }
-      },
-      {
-        id: 'bottom-left',
-        path: bottomCornerPath,
-        style: { left: 0, bottom: 0, transform: [{ scaleY: -1 }] }
-      },
-      {
-        id: 'bottom-right',
-        path: bottomCornerPath,
-        style: { right: 0, bottom: 0, transform: [{ scaleX: -1 }, { scaleY: -1 }] }
-      }
-    ]
-
-    return frames
-  }, [cornerRadius, insetBottom, insetTop, insetX])
+  const paths = useMemo(
+    () => ({
+      top: getCornerPath(insetX, insetTop, cornerRadius),
+      bottom: getCornerPath(insetX, insetBottom, cornerRadius)
+    }),
+    [cornerRadius, insetBottom, insetTop, insetX]
+  )
 
   return (
     <>
-      {corners.map(({ id, path, style }) => (
+      {CORNERS.map(({ id, edge, style }) => (
         <Svg
           key={id}
           width={CORNER_SIZE}
           height={CORNER_SIZE}
           viewBox={`0 0 ${CORNER_SIZE} ${CORNER_SIZE}`}
           fill="none"
-          style={[{ position: 'absolute' }, style]}
+          style={style}
         >
           <Defs>
             {/* Over the whole corner - by default it cuts the glow off in a square near the frame */}
@@ -109,12 +99,12 @@ const PrivacyPoolsCornerFrames = ({
             </Filter>
           </Defs>
           <Path
-            d={path}
+            d={paths[edge]}
             stroke={color}
             strokeWidth={STROKE_WIDTH}
             filter={`url(#${filterIdPrefix}-${id})`}
           />
-          <Path d={path} stroke={color} strokeWidth={STROKE_WIDTH} />
+          <Path d={paths[edge]} stroke={color} strokeWidth={STROKE_WIDTH} />
         </Svg>
       ))}
     </>

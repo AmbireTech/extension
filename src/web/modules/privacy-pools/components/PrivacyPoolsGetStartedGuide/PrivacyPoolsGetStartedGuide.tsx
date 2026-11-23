@@ -6,9 +6,9 @@ import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import StepsGuide, { StepsGuideFooter, StepsGuideStep } from '@common/components/StepsGuide'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
-import { BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
+import spacings from '@common/styles/spacings'
 import text from '@common/styles/utils/text'
+import joinNames from '@common/utils/joinNames'
 import { getUiType } from '@common/utils/uiType'
 
 import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
@@ -19,25 +19,9 @@ import {
   PrivacyPoolsGuideTransfer,
   PrivacyPoolsGuideVerifyingToken
 } from './PrivacyPoolsGuideVisuals'
+import styles from './styles'
 
 const { isTab } = getUiType()
-
-// As wide as in the design, also as a modal in a tab
-const SHEET_STYLE = { maxWidth: 400 }
-// The illustration draws its own card, so the step's card only spaces it from the text
-const ILLUSTRATION_CARD_STYLE = {
-  paddingVertical: 0,
-  marginBottom: SPACING_SM,
-  borderRadius: BORDER_RADIUS_SECONDARY,
-  overflow: 'hidden' as const
-}
-// The design's line heights, which are tighter than the font's own, so the guide fits the popup
-const TITLE_STYLE = { ...spacings.mbMi, lineHeight: 28 }
-const DESCRIPTION_STYLE = { lineHeight: 20 }
-// Out of the flow and invisible: only measured
-const MEASURED_TEXTS_STYLE = { height: 0, opacity: 0 }
-const MEASURED_TEXT_STYLE = { position: 'absolute' as const, top: 0, left: 0, right: 0 }
-const BUTTON_STYLE = { width: 180, alignSelf: 'center' as const }
 
 interface StepText {
   id: string
@@ -46,11 +30,11 @@ interface StepText {
 }
 
 const StepTextContent = ({ title, description }: Omit<StepText, 'id'>) => (
-  <View style={spacings.phSm}>
-    <Text fontSize={20} weight="medium" style={TITLE_STYLE}>
+  <View style={styles.stepText}>
+    <Text fontSize={20} weight="medium" style={styles.title}>
       {title}
     </Text>
-    <Text fontSize={16} appearance="secondaryText" style={DESCRIPTION_STYLE}>
+    <Text fontSize={16} appearance="secondaryText" style={styles.description}>
       {description}
     </Text>
   </View>
@@ -68,7 +52,7 @@ const MeasuredStepText = ({
   )
 
   return (
-    <View style={MEASURED_TEXT_STYLE} onLayout={handleLayout}>
+    <View style={styles.measuredText} onLayout={handleLayout}>
       <StepTextContent title={title} description={description} />
     </View>
   )
@@ -102,43 +86,43 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
         'To top up your private account, simply send funds from any of your regular accounts to your private account.'
       )
 
-    const tokens =
-      depositableSymbols.length === 1
-        ? depositableSymbols[0]
-        : t('{{tokens}} or {{lastToken}}', {
-            tokens: depositableSymbols.slice(0, -1).join(', '),
-            lastToken: depositableSymbols[depositableSymbols.length - 1]
-          })
-
     return t(
       'To top up your private account, simply send {{tokens}} from any of your regular accounts to your private account.',
-      { tokens }
+      { tokens: joinNames(depositableSymbols, t, 'or') }
     )
   }, [depositableSymbols, t])
 
-  const stepTexts: StepText[] = useMemo(
+  const stepsContent: (StepText & { illustration: React.ReactNode })[] = useMemo(
     () => [
       {
         id: 'private-account',
         title: t('Your private accounts'),
         description: t(
           'This is your private account. All funds that you send to your private account are shielded and untraceable.'
-        )
+        ),
+        illustration: <PrivacyPoolsGuideAccountChip type="private" fontSize={20} />
       },
-      { id: 'top-up', title: t('Top up'), description: topUpText },
+      {
+        id: 'top-up',
+        title: t('Top up'),
+        description: topUpText,
+        illustration: <PrivacyPoolsGuideTransfer from="public" to="private" />
+      },
       {
         id: 'verification',
         title: t('Private funds are verified'),
         description: t(
           'When you send funds to a private account, Privacy Pools checks where they came from. This usually takes up to 1 hour (rarely up to 7 days). You can get your funds back anytime.'
-        )
+        ),
+        illustration: <PrivacyPoolsGuideVerifyingToken />
       },
       {
         id: 'private-send',
         title: t('Private send'),
         description: t(
           'Once funds are verified, you can send them privately to any public address.'
-        )
+        ),
+        illustration: <PrivacyPoolsGuideTransfer from="private" to="public" />
       }
     ],
     [t, topUpText]
@@ -152,29 +136,24 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
   // place while the steps change. Measured, as how many lines a text takes depends on the width.
   const textMinHeight = Math.max(0, ...Object.values(textHeights))
 
-  const steps: StepsGuideStep[] = useMemo(() => {
-    const illustrations: { [id: string]: React.ReactNode } = {
-      'private-account': <PrivacyPoolsGuideAccountChip type="private" fontSize={20} />,
-      'top-up': <PrivacyPoolsGuideTransfer from="public" to="private" />,
-      verification: <PrivacyPoolsGuideVerifyingToken />,
-      'private-send': <PrivacyPoolsGuideTransfer from="private" to="public" />
-    }
-
-    return stepTexts.map(({ id, title, description }, index) => ({
-      id,
-      illustration: (
-        // The light moves from right to left as the guide goes on
-        <PrivacyPoolsGuideIllustration progress={index / (stepTexts.length - 1)}>
-          {illustrations[id]}
-        </PrivacyPoolsGuideIllustration>
-      ),
-      content: (
-        <View style={{ minHeight: textMinHeight }}>
-          <StepTextContent title={title} description={description} />
-        </View>
-      )
-    }))
-  }, [stepTexts, textMinHeight])
+  const steps: StepsGuideStep[] = useMemo(
+    () =>
+      stepsContent.map(({ id, title, description, illustration }, index) => ({
+        id,
+        illustration: (
+          // The light moves from right to left as the guide goes on
+          <PrivacyPoolsGuideIllustration progress={index / (stepsContent.length - 1)}>
+            {illustration}
+          </PrivacyPoolsGuideIllustration>
+        ),
+        content: (
+          <View style={{ minHeight: textMinHeight }}>
+            <StepTextContent title={title} description={description} />
+          </View>
+        )
+      })),
+    [stepsContent, textMinHeight]
+  )
 
   const goToPreviousStep = useCallback(() => setStepIndex((prev) => Math.max(prev - 1, 0)), [])
   // Starts over the next time it opens
@@ -187,12 +166,12 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
       closeBottomSheet={closeBottomSheet}
       onClosed={handleClosed}
       type={isTab ? 'modal' : 'bottom-sheet'}
-      style={SHEET_STYLE}
+      style={styles.sheet}
     >
       {/* Every step's text at the width it is shown at, to measure the longest one. At the top,
       so it stays within the content and never makes the sheet scroll */}
-      <View style={MEASURED_TEXTS_STYLE} pointerEvents="none" aria-hidden>
-        {stepTexts.map(({ id, title, description }) => (
+      <View style={styles.measuredTexts} pointerEvents="none" aria-hidden>
+        {stepsContent.map(({ id, title, description }) => (
           <MeasuredStepText
             key={id}
             id={id}
@@ -212,7 +191,7 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
       <StepsGuide
         steps={steps}
         stepIndex={stepIndex}
-        illustrationCardStyle={ILLUSTRATION_CARD_STYLE}
+        illustrationCardStyle={styles.illustrationCard}
       />
       <StepsGuideFooter
         steps={steps}
@@ -221,7 +200,7 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
         finishText={t('Got it')}
         finishButtonType="tertiary"
         onFinish={closeBottomSheet}
-        buttonStyle={BUTTON_STYLE}
+        buttonStyle={styles.button}
         nextButtonTestID="privacy-pools-guide-next"
         finishButtonTestID="privacy-pools-guide-got-it"
         style={spacings.mtLg}
