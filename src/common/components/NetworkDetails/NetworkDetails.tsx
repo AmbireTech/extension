@@ -1,7 +1,8 @@
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
+import { PortalHost } from '@gorhom/portal'
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { isColibriProviderAvailable } from '@ambire-common/libs/networks/colibri'
 import colibriLogo from '@common/assets/images/colibri-logo.png'
@@ -27,6 +28,8 @@ import spacings, { SPACING, SPACING_MD, SPACING_SM, SPACING_TY } from '@common/s
 import flexbox from '@common/styles/utils/flexbox'
 
 import getStyles from './styles'
+
+const EDIT_NETWORK_FOOTER_HOST_NAME = 'edit-network-footer'
 
 type Props = {
   name: string
@@ -64,10 +67,10 @@ const NetworkDetails = ({
     state: { statuses, allNetworks },
     dispatch: networksDispatch
   } = useController('NetworksController')
-  const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
+  const { ref: dialogRef, open: openDialog, close: closeDialog } = useSheetRef()
 
   const { pathname } = useRoute()
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const [showAllRpcUrls, setShowAllRpcUrls] = useState(false)
   const isEmpty = useMemo(
     () => [name, rpcUrls[0], chainId].some((p) => p === '-'),
@@ -470,16 +473,9 @@ const NetworkDetails = ({
         )}
         closeDialog={closeDialog}
       >
-        <DialogFooter
-          horizontalAlignment="justifyEnd"
-          style={isMobile ? { columnGap: SPACING_SM } : {}}
-        >
-          <View style={isMobile && flexbox.flex1}>
-            <DialogButton text={t('Close')} type="secondary" onPress={() => closeDialog()} />
-          </View>
-          <View style={isMobile && flexbox.flex1}>
+        <DialogFooter horizontalAlignment="justifyEnd">
+          <View style={flexbox.flex1}>
             <DialogButton
-              style={isWeb && spacings.ml}
               text={t('Disable')}
               testID="disable-network-confirm-btn"
               type="danger"
@@ -502,11 +498,14 @@ const NetworkDetails = ({
         }
         containerInnerWrapperStyles={isWeb ? { flex: 1 } : {}}
         style={isWeb ? { ...spacings.ph0, ...spacings.pv0, overflow: 'hidden', maxWidth: 880 } : {}}
+        // The form's buttons portal into it, so they stay in view while the form scrolls
+        FooterComponent={<PortalHost name={EDIT_NETWORK_FOOTER_HOST_NAME} />}
       >
         <NetworkForm
           selectedChainId={chainId.toString()}
           onCancel={closeBottomSheet}
           onSaved={closeBottomSheet}
+          footerHostName={EDIT_NETWORK_FOOTER_HOST_NAME}
         />
       </BottomSheet>
     </>

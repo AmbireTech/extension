@@ -3,6 +3,8 @@ import { TextStyle, View, ViewStyle } from 'react-native'
 
 import ErrorIcon from '@common/assets/svg/ErrorIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { Props as DualChoiceModalProps } from '@common/components/DualChoiceModal/DualChoiceModal'
 import CommonText, { Props } from '@common/components/Text'
@@ -17,6 +19,8 @@ import getStyles from './styles'
 type Type = 'error' | 'warning' | 'info'
 
 const DEFAULT_TYPE = 'warning'
+const TITLE_STYLE: ViewStyle = { backgroundColor: 'transparent' }
+const NATIVE_SHEET_TITLE_STYLE: ViewStyle = { ...TITLE_STYLE, ...spacings.mb0 }
 
 const Wrapper: FC<{ children: React.ReactNode | React.ReactNode[] }> = ({ children }) => {
   const { styles } = useTheme(getStyles)
@@ -129,11 +133,19 @@ const DualChoiceWarningModal = ({
 }) => {
   const { theme } = useTheme()
   const { isCompactLayout, isNarrowWebLayout } = useCompactLayout()
+  const isInSheet = useIsInsideBottomSheet()
 
   return (
     <Wrapper>
       <ContentWrapper style={contentStyle}>
-        <TitleAndIcon type={type} title={title} style={{ backgroundColor: 'transparent' }} />
+        {/* In a sheet the header row adds the X and spaces the title itself */}
+        <SheetHeaderRow>
+          <TitleAndIcon
+            type={type}
+            title={title}
+            style={isInSheet ? NATIVE_SHEET_TITLE_STYLE : TITLE_STYLE}
+          />
+        </SheetHeaderRow>
         {!!description && (
           <Text
             testID="dual-choice-modal-title-text"

@@ -2,7 +2,6 @@ import { parseUnits } from 'ethers'
 import React, { Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
 import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
@@ -15,6 +14,7 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -116,7 +116,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { state: accountsOps } = useController('ActivityController', selectAccountsOps)
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
@@ -241,7 +241,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     ref: estimationModalRef,
     open: openEstimationModal,
     close: closeEstimationModal
-  } = useModalize()
+  } = useSheetRef()
 
   const closeEstimationModalAndDispatch = useCallback(() => {
     transferDispatch({

@@ -2,12 +2,12 @@ import React from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddressBookIcon from '@common/assets/svg/AddressBookIcon'
 import WalletIcon from '@common/assets/svg/WalletIcon'
 import AddressBookContact from '@common/components/AddressBookContact'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -47,7 +47,7 @@ const ContactsList = () => {
     ref: addContactFormRef,
     open: openAddContactForm,
     close: closeAddContactForm
-  } = useModalize()
+  } = useSheetRef()
   const { control, watch } = useForm({
     defaultValues: {
       search: ''

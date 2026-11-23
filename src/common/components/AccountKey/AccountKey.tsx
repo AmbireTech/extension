@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Animated, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
 import { Account } from '@ambire-common/interfaces/account'
@@ -16,6 +15,7 @@ import AccountKeyIcon from '@common/components/AccountKeyIcon'
 import AccountKeyDetails from '@common/components/AccountKeysBottomSheet/AccountKeyDetails'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Dropdown from '@common/components/Dropdown'
 import ExportKey from '@common/components/ExportKey'
@@ -88,6 +88,9 @@ const NOT_IMPORTED_KEY_ADDRESS_MAX_LENGTH = 16
 const OWNER_CHAIN_ICON_SIZE = 14
 const OWNER_CHAIN_ICON_OVERLAP = 5
 
+/** The height of a key row, unless the caller sets `itemHeight` */
+export const ACCOUNT_KEY_ITEM_HEIGHT = 48
+
 // A compact view shows a full-width bottom sheet, so only a wider layout gets the minimum height.
 // The popup is barely wider than the width cap, so the modal there takes the popup's full width
 // instead of leaving a thin gap on each side
@@ -114,7 +117,7 @@ const AccountKey: React.FC<Props> = ({
   showExportImport = false,
   onChains,
   tooltipContent,
-  itemHeight = 48,
+  itemHeight = ACCOUNT_KEY_ITEM_HEIGHT,
   onExportKeyPress,
   onRemoveKeyPress,
   singleLineLabel = false,
@@ -132,7 +135,7 @@ const AccountKey: React.FC<Props> = ({
     property: 'bottom',
     values: { from: 0, to: -2 }
   })
-  const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useModalize()
+  const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useSheetRef()
   const [bindCopyIconAnim, copyIconAnimStyle] = useHover({
     preset: 'opacityInverted'
   })

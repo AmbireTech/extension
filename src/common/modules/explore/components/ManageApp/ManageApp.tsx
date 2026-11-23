@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import AccountOption from '@common/components/Option/AccountOption'
@@ -51,7 +52,7 @@ const ManageApp = ({
   const { theme } = useTheme()
   const { networks, onDisconnect, onDisconnectWcSession, onSelectNetwork, onToggleTrust } =
     useManageApp(dapp)
-  const { ref: sheetRef, open, close } = useModalize()
+  const { ref: sheetRef, open, close } = useSheetRef()
   const [isManageAccountsOpen, setIsManageAccountsOpen] = useState(false)
   // Every app in Explore has its own ManageApp, so the account sheet mounts only once this one
   // opens - before its Manage button can be pressed, so the sheet is ready to open by then
@@ -122,9 +123,11 @@ const ManageApp = ({
         adjustToContentHeight
         style={style}
       >
-        <Text weight="semiBold" fontSize={18} style={[spacings.mb, { textAlign: 'center' }]}>
-          {t('Manage app')}
-        </Text>
+        <SheetHeaderRow>
+          <Text weight="semiBold" fontSize={18} style={{ textAlign: 'center' }}>
+            {t('Manage app')}
+          </Text>
+        </SheetHeaderRow>
 
         <View style={spacings.mbSm}>
           <DappItem {...dapp} isInSettings onPressOverride={() => {}} />

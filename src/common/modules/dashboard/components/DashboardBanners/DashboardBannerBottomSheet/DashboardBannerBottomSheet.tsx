@@ -4,6 +4,7 @@ import { View, ViewStyle } from 'react-native'
 
 import { getIsIntentRoute } from '@ambire-common/libs/swapAndBridge/swapAndBridge'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
@@ -93,19 +94,15 @@ const DashboardBannerBottomSheet: FC<Props> = ({
               }
             })
           }
-          secondaryButtonText={t('Cancel')}
-          onSecondaryButtonPress={closeBottomSheet}
         />
       )}
       {sheetKind === BRIDGE_IN_PROGRESS && (
         <View style={[flexbox.flex1, spacings.ptSm]}>
-          <Text
-            fontSize={isMobile ? 20 : 16}
-            weight="medium"
-            style={[spacings.mbLg, isMobile && text.center]}
-          >
-            {t('Pending transactions')}
-          </Text>
+          <SheetHeaderRow style={spacings.mbLg}>
+            <Text fontSize={isMobile ? 20 : 16} weight="medium" style={text.center}>
+              {t('Pending transactions')}
+            </Text>
+          </SheetHeaderRow>
           {intentRoutes.map((activeRoute) => (
             <View key={activeRoute.activeRouteId} style={spacings.mbTy}>
               <ActiveRouteCard activeRoute={activeRoute} />

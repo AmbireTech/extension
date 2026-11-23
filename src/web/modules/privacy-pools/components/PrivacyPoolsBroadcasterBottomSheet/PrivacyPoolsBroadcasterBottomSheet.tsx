@@ -8,9 +8,10 @@ import OxBowIcon from '@common/assets/svg/OxBowIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -18,8 +19,6 @@ import useTheme from '@common/hooks/useTheme'
 import getAccountStyles from '@common/modules/account-select/components/Account/styles'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-
-import type { Modalize } from 'react-native-modalize'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -185,7 +184,7 @@ const PrivacyPoolsBroadcasterBottomSheet = ({
   sheetRef,
   closeBottomSheet
 }: {
-  sheetRef: RefObject<Modalize>
+  sheetRef: RefObject<SheetRef | null>
   closeBottomSheet: () => void
 }) => {
   const { t } = useTranslation()
@@ -218,13 +217,7 @@ const PrivacyPoolsBroadcasterBottomSheet = ({
   )
 
   const headerComponent = useMemo(
-    () => (
-      <ModalHeader
-        title={t('Send through')}
-        handleClose={closeBottomSheet}
-        titlePosition={isMobile ? 'left' : 'center'}
-      />
-    ),
+    () => <ModalHeader title={t('Send through')} handleClose={closeBottomSheet} />,
     [closeBottomSheet, t]
   )
 

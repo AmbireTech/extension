@@ -351,32 +351,31 @@ const RoutesModal = ({
     <BottomSheet
       id="select-routes-modal"
       sheetRef={sheetRef}
-      // On mobile, the list is rendered by Modalize, which ignores `flatListProps.ref` and
-      // attaches this ref instead. On web, the list is rendered by the BottomSheet, so the
-      // ref is passed with `flatListProps`. The cast is needed because the prop is typed
-      // as a ScrollView, while Modalize attaches it to the FlatList it renders.
-      scrollViewRef={isMobile ? (scrollRef as unknown as RefObject<ScrollView>) : undefined}
+      // The sheet attaches it to the FlatList it renders, which it also tracks the scroll of.
+      // The cast is needed because the prop is typed as a ScrollView
+      scrollViewRef={scrollRef as unknown as RefObject<ScrollView>}
       closeBottomSheet={closeBottomSheet}
       adjustToContentHeight={isWeb}
       onClosed={handleRoutesModalClosed}
       HeaderComponent={
-        <ModalHeader
-          title={t('Select route')}
-          handleClose={closeBottomSheet}
-          titlePosition={isMobile ? 'left' : 'center'}
-        >
-          <RetryButton
-            onPress={updateQuote}
-            label={t('Request new quote')}
-            disabled={isQuoteLoading}
-            isLarge
+        <>
+          <ModalHeader
+            title={t('Select route')}
+            handleClose={closeBottomSheet}
+            style={spacings.mbTy}
           />
-        </ModalHeader>
+          {/* Under the title, not next to it, which it would squeeze on narrow screens */}
+          <View style={[flexbox.alignCenter, spacings.mb]}>
+            <RetryButton
+              onPress={updateQuote}
+              label={t('Request new quote')}
+              disabled={isQuoteLoading}
+              isLarge
+            />
+          </View>
+        </>
       }
       flatListProps={{
-        // Spread, as Modalize's `flatListProps` type doesn't include `ref`, though the web
-        // BottomSheet renders the FlatList with these props and attaches it
-        ...{ ref: scrollRef },
         data: isQuoteLoading || !quote ? ([{ isSkeleton: true }] as any) : quote?.routes,
         renderItem,
         keyExtractor: (r: SwapAndBridgeRoute) =>

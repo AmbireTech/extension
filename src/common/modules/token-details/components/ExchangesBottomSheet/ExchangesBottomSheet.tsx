@@ -1,12 +1,12 @@
 import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { ExchangeInfo } from '@ambire-common/libs/portfolio/interfaces'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ManifestImage from '@common/components/ManifestImage'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Text from '@common/components/Text'
@@ -19,7 +19,7 @@ import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
 
 type Props = {
-  handleClose: ReturnType<typeof useModalize>['close']
+  handleClose: ReturnType<typeof useSheetRef>['close']
   sheetRef: any
   exchangesToRender: ExchangeInfo[]
 }

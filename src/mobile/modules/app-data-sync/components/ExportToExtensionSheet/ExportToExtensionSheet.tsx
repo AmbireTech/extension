@@ -1,7 +1,6 @@
 import { BlurTargetView, BlurView } from 'expo-blur'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import QRCode from 'react-native-qrcode-svg'
 
 import { APP_DATA_SYNC_UR_TYPE } from '@ambire-common/libs/appDataSync/appDataSync'
@@ -9,6 +8,7 @@ import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -72,7 +72,7 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     reset,
     qrCbor
   } = useAppDataSyncExport()
-  const { ref: selectSheetRef, open: openSelectSheet, close: closeSelectSheet } = useModalize()
+  const { ref: selectSheetRef, open: openSelectSheet, close: closeSelectSheet } = useSheetRef()
   const [bindPlaceholderAnim, placeholderAnimStyle] = useHover({ preset: 'opacityInverted' })
   const { width: windowWidth, height: windowHeight } = useWindowDimensions()
 

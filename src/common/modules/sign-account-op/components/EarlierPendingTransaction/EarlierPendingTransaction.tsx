@@ -1,6 +1,5 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { findPendingAccountOpById } from '@ambire-common/libs/accountOp/earlierPendingAccountOp'
@@ -14,6 +13,7 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import HumanizerAddress from '@common/components/HumanizerAddress'
 import Text from '@common/components/Text'
@@ -123,7 +123,7 @@ const EarlierPendingTransaction = ({
     action: Replacement
     fromRequestId: string | number | undefined
   } | null>(null)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { state: signScreenEarlierPendingAccountOpId, dispatch: signAccountOpDispatch } =
     useController('SignAccountOpController', selectEarlierPendingAccountOpId)
   const { state: signScreenCanReplace } = useController(
@@ -454,8 +454,15 @@ const EarlierPendingTransaction = ({
           title={t('Pending transaction')}
           handleClose={handleClose}
           style={spacings.mbSm}
-        >
-          {explorerTxnUrl ? (
+        />
+        <Text appearance="secondaryText" fontSize={14} style={isMobile ? text.center : undefined}>
+          {t(
+            'Sent earlier and not confirmed yet. The transaction you are signing now can only go through after it.'
+          )}
+        </Text>
+        {/* Below the text, not next to the title, which it would squeeze on narrow screens */}
+        {!!explorerTxnUrl && (
+          <View style={[spacings.mtTy, isMobile ? flexbox.alignCenter : flexbox.alignStart]}>
             <FooterActionLink
               label={t('View in explorer')}
               onPress={handleOpenExplorer}
@@ -463,13 +470,8 @@ const EarlierPendingTransaction = ({
               iconSize={14}
               Icon={OpenIcon}
             />
-          ) : null}
-        </ModalHeader>
-        <Text appearance="secondaryText" fontSize={14} style={isMobile ? text.center : undefined}>
-          {t(
-            'Sent earlier and not confirmed yet. The transaction you are signing now can only go through after it.'
-          )}
-        </Text>
+          </View>
+        )}
       </View>
     ),
     [explorerTxnUrl, handleClose, handleOpenExplorer, t]

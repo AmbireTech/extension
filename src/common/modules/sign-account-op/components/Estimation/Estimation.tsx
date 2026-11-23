@@ -2,7 +2,6 @@ import { formatUnits } from 'ethers'
 import React, { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import {
   EstimationFailureKind,
@@ -30,6 +29,7 @@ import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Select, { SectionedSelect } from '@common/components/Select'
@@ -150,7 +150,7 @@ const Estimation = ({
     ref: customGasPriceSheetRef,
     open: openCustomGasPriceSheet,
     close: closeCustomGasPriceSheet
-  } = useModalize()
+  } = useSheetRef()
 
   // The estimation failed for a reason that may resolve on its own and there is
   // no previous result to fall back on, so it keeps asking in the background

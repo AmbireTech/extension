@@ -197,7 +197,8 @@ export class SwapAndBridgePage extends BasePage {
     await this.click(selectors.swapAndBridge.receiveTokenDropdown)
 
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol, { timeout: 5000 })
-    await this.page.getByText('Not found. Try with token').isVisible()
+    // A sheet's hidden copy, which it measures its height with, has the same text
+    await this.page.getByText('Not found. Try with token').filter({ visible: true }).isVisible()
 
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.address, { timeout: 5000 })
     await this.page
@@ -376,6 +377,10 @@ export class SwapAndBridgePage extends BasePage {
     const kyberRoute = this.page.locator(selectors.swapAndBridge.kyberSwapRoute)
 
     await this.click(selectors.selectRouteButton)
+    // The sheet renders its routes only as it opens, so they are counted once one is shown
+    await expect(oneInchRoute.or(kyberRoute).first())
+      .toBeVisible()
+      .catch(() => {})
 
     if ((await oneInchRoute.count()) > 0) {
       await this.page.locator(selectors.swapAndBridge.oneInchSwapRoute).first().click()

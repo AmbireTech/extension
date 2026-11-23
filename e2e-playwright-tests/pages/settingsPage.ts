@@ -100,13 +100,13 @@ export class SettingsPage extends BasePage {
     await this.typeNetworkField('Currency Name', network.ccyName)
     await this.typeNetworkField('Add RPC URL', network.rpcUrl)
 
-    // confirm adding rpc url
-    await this.page.locator(selectors.addRPCURLButton).click()
+    // confirm adding rpc url (the sheet's hidden measuring copy has the same buttons)
+    await this.page.locator(selectors.addRPCURLButton).filter({ visible: true }).click()
     await this.page.waitForTimeout(5000) // wait for adding rpc
     await this.typeNetworkField('Block Explorer URL', network.explorerUrl)
 
     // add network
-    await this.page.locator(selectors.addNetworkButton).click()
+    await this.page.locator(selectors.addNetworkButton).filter({ visible: true }).click()
 
     await expect(this.page.locator(selectors.networkSuccessfullyAddedSnackbar)).toContainText(
       'Network successfully added!'
@@ -118,7 +118,8 @@ export class SettingsPage extends BasePage {
     // The label text sits inside a row (label + optional tooltip icon), so the input is a sibling of that row
     const selector = `//div[text()="${field}"]/parent::div/following-sibling::div//input`
     await this.page.waitForSelector(selector, { state: 'visible', timeout: 5000 })
-    await this.page.locator(selector).fill(text)
+    // A sheet's hidden copy, which it measures its height with, has the same label and input
+    await this.page.locator(selector).filter({ visible: true }).fill(text)
   }
 
   async addNetworkFromChainlist(networkSymbol: string) {
@@ -182,11 +183,11 @@ export class SettingsPage extends BasePage {
       network.explorerUrl
     )
 
-    // Select Edit, change 'Block Explorer URL' and 'Cancel'
+    // Select Edit, change 'Block Explorer URL' and close the sheet
     await this.page.locator(selectors.networkDetailEditButton).click()
     await expect(this.page.locator(selectors.editNetworkModalTitle)).toBeVisible()
     await this.typeNetworkField('Block Explorer URL', '/')
-    await this.page.locator(selectors.editNetworkCancelButton).click()
+    await this.page.locator(selectors.editNetworkCloseButton).click()
     await expect(this.page.locator(selectors.blockExplorerURL(network.explorerUrl))).toContainText(
       network.explorerUrl
     )

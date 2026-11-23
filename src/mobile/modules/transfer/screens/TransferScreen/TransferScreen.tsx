@@ -251,6 +251,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           onEstimationModalClosed={handleEstimationModalClosed}
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
+          shouldShowTxnDetails
           Modals={Modals}
           serviceFee={privacyPoolsDepositFee}
         />

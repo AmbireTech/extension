@@ -1,25 +1,29 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScrollView, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { AMBIRE_V1_QUICK_ACC_MANAGER } from '@ambire-common/consts/addresses'
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import AccountKey, {
+  ACCOUNT_KEY_ITEM_HEIGHT,
   AccountKeyMenuTarget,
   AccountKeyType
 } from '@common/components/AccountKey/AccountKey'
 import RemoveKey from '@common/components/AccountKeysBottomSheet/RemoveKey'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ExportKey from '@common/components/ExportKey'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { selectKeys, selectUnsupportedKeys } from '@common/utils/keys'
@@ -29,7 +33,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 interface Props {
   account: Account
   openAddAccountBottomSheet?: () => void
-  closeBottomSheet: () => void
   keyIconColor?: string
   showExportImport?: boolean
   /**
@@ -81,7 +84,6 @@ const selectContacts = (state: AllControllersMappingType['AddressBookController'
 const AccountKeys: FC<Props> = ({
   account,
   openAddAccountBottomSheet,
-  closeBottomSheet,
   keyIconColor,
   showExportImport,
   removableKeys,
@@ -112,9 +114,9 @@ const AccountKeys: FC<Props> = ({
     addr: string
     label?: string
   } | null>(null)
-  const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useModalize()
+  const { ref: sheetRefExportKey, open: openExportKey, close: closeExportKey } = useSheetRef()
   const [keyToRemove, setKeyToRemove] = useState<{ addr: string; type: Key['type'] } | null>(null)
-  const { ref: sheetRefRemoveKey, open: openRemoveKey, close: closeRemoveKey } = useModalize()
+  const { ref: sheetRefRemoveKey, open: openRemoveKey, close: closeRemoveKey } = useSheetRef()
 
   const usedNetworks = useMemo(() => {
     return account.safeCreation && chainId
@@ -232,6 +234,13 @@ const AccountKeys: FC<Props> = ({
     ]
   }, [associatedKeys, keys, unsupportedKeys])
 
+  // The keys saved with the account stand in for the on-chain ones while those load, one
+  // placeholder row each (an EOA has its own address)
+  const placeholderKeyAddrs = useMemo(
+    () => (account.associatedKeys.length ? account.associatedKeys : [account.addr]),
+    [account.associatedKeys, account.addr]
+  )
+
   // Looked up once for the whole list, so that the rows do not subscribe to the accounts and contacts
   const accountsByAddr = useMemo(
     () => new Map(accounts.map((acc) => [acc.addr.toLowerCase(), acc])),
@@ -285,23 +294,33 @@ const AccountKeys: FC<Props> = ({
     // In a full width web sheet, the sheet takes the height of this view rather than filling
     // a fixed one, see `AccountKeysBottomSheet`
     <View style={isWeb ? { maxHeight: 384, ...(!isFullWidthSheet && flexbox.flex1) } : undefined}>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-        {isWeb && <PanelBackButton onPress={closeBottomSheet} style={spacings.mrSm} />}
-        <PanelTitle
-          title={
-            account.safeCreation
-              ? t('{{accName}} owners', { accName: account.preferences.label })
-              : t('{{accName}} keys', { accName: account.preferences.label })
-          }
-          style={isWeb ? text.left : text.center}
-        />
-      </View>
+      <SheetHeaderRow style={spacings.mbLg}>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, common.fullWidth]}>
+          <PanelTitle
+            title={
+              account.safeCreation
+                ? t('{{accName}} owners', { accName: account.preferences.label })
+                : t('{{accName}} keys', { accName: account.preferences.label })
+            }
+            style={text.center}
+          />
+        </View>
+      </SheetHeaderRow>
       <ScrollView
         bounces={isMobile}
         style={[!!withAlert && spacings.mb, isWeb && !isFullWidthSheet && flexbox.flex1]}
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={isWeb}
       >
+        {!accountState &&
+          placeholderKeyAddrs.map((addr, index) => (
+            <SkeletonLoader
+              key={addr}
+              width="100%"
+              height={ACCOUNT_KEY_ITEM_HEIGHT}
+              style={index === placeholderKeyAddrs.length - 1 ? spacings.mb0 : spacings.mbTy}
+            />
+          ))}
         {accountKeys.map((accountKey, index) => {
           const { type, addr, isImported, meta, dedicatedToOneSA, label } = accountKey
           const isLast = index === accountKeys.length - 1

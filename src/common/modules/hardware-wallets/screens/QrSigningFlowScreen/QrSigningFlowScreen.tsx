@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
@@ -53,7 +53,7 @@ const QrSigningFlowScreen = ({
   onReject,
   handleQrSigningFlowOnBackPressed
 }: Props) => {
-  const { ref, open, close } = useModalize()
+  const { ref, open, close } = useSheetRef()
   const { isCompactLayout: withMobileLayout } = useCompactLayout()
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -66,6 +66,10 @@ const QrSigningFlowScreen = ({
     else close()
   }, [open, close, isVisible])
 
+  // Before a step starts there is nothing to act on, so a swipe closes it too. Mid-signing
+  // only the X does, so a stray swipe can't cancel it
+  const isClosableOnDrag = !request || step === 'idle'
+
   const title = step === 'scan-response' ? t('Scan QR response') : t('Sign with QR wallet')
 
   const handleOnRejectPressed = useCallback(() => {
@@ -73,60 +77,35 @@ const QrSigningFlowScreen = ({
     onReject()
   }, [close, onReject])
 
-  // Sticky footer, so the actions stay in place while a long signing request scrolls
+  // Sticky footer, so the action stays in place while a long signing request scrolls.
+  // The header's X cancels the signing
   const footerComponent = useMemo(() => {
     if (!withMobileLayout || !request || step !== 'show-request') return undefined
 
     return (
-      <View
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          spacings.ptSm,
-          {
-            backgroundColor: theme.primaryBackground
-          }
-        ]}
-      >
-        <Button
-          size="regular"
-          hasBottomSpacing={false}
-          type="tertiary"
-          text={t('Back')}
-          onPress={handleOnRejectPressed}
-          style={[flexbox.flex1, spacings.mrSm]}
-        />
+      <View style={[spacings.ptSm, { backgroundColor: theme.primaryBackground }]}>
         <Button
           size="regular"
           hasBottomSpacing={false}
           text={t('Get signature')}
           onPress={onContinue}
-          style={flexbox.flex1}
         />
       </View>
     )
-  }, [
-    request,
-    step,
-    theme.primaryBackground,
-    t,
-    handleOnRejectPressed,
-    onContinue,
-    withMobileLayout
-  ])
+  }, [request, step, theme.primaryBackground, t, onContinue, withMobileLayout])
 
   return (
     <BottomSheet
       id="qr-signing-flow-screen"
       sheetRef={ref}
-      autoWidth={false}
       adjustToContentHeight={withMobileLayout}
       modalHeight={isWeb && !withMobileLayout ? 585 : undefined}
       onClosed={handleClose}
       autoOpen={isVisible}
       type={!isTab ? 'bottom-sheet' : 'modal'}
       withBackdropBlur={false}
-      shouldBeClosableOnDrag={false}
+      shouldBeClosableOnDrag={isClosableOnDrag}
+      closeBottomSheet={isClosableOnDrag ? close : handleOnRejectPressed}
       FooterComponent={footerComponent}
       containerInnerWrapperStyles={isWeb && !withMobileLayout ? flexbox.flex1 : undefined}
       scrollViewProps={
@@ -137,7 +116,12 @@ const QrSigningFlowScreen = ({
           : undefined
       }
     >
-      <ModalHeader title={title} />
+      {/* While scanning, ‹ goes back to the QR code to sign */}
+      <ModalHeader
+        title={title}
+        forceBackButtonOnMobile={step === 'scan-response'}
+        handleClose={step === 'scan-response' ? handleQrSigningFlowOnBackPressed : undefined}
+      />
 
       {!request ? (
         <View style={[flexbox.alignCenter, spacings.ptXl, spacings.pbLg]}>
@@ -165,17 +149,13 @@ const QrSigningFlowScreen = ({
           urType={request.urType}
           urCborHex={request.urCborHex}
           onContinue={onContinue}
-          onReject={handleOnRejectPressed}
           transactionProgress={transactionProgress}
           signingRequest={signingRequest}
           humanization={humanization}
           isTooLargeForDevice={!!request.isTooLargeForDevice}
         />
       ) : step === 'scan-response' ? (
-        <QrSignResponseScanner
-          onSignatureScanned={(payload) => submitSignatureResponse(payload)}
-          onBack={handleQrSigningFlowOnBackPressed}
-        />
+        <QrSignResponseScanner onSignatureScanned={(payload) => submitSignatureResponse(payload)} />
       ) : null}
     </BottomSheet>
   )

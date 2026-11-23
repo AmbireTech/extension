@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { isAmbireV1LinkedAccount } from '@ambire-common/libs/account/account'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import PrivateKeyExport from '@common/components/ExportKey/PrivateKeyExport'
 import SmartAccountExport from '@common/components/ExportKey/SmartAccountExport'
 import Text from '@common/components/Text'
@@ -18,11 +19,12 @@ import usePrevious from '@common/hooks/usePrevious'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
 import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { getUiType } from '@common/utils/uiType'
 
-import { PanelBackButton, PanelTitle } from '../Panel/Panel'
+import { PanelTitle } from '../Panel/Panel'
 
 const { isPopup } = getUiType()
 
@@ -59,7 +61,7 @@ const ExportKey = ({
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
     close: closeConfirmPassword
-  } = useModalize()
+  } = useSheetRef()
 
   useEffect(() => {
     if (!prevBlurred && !!blurred) {
@@ -143,10 +145,12 @@ const ExportKey = ({
 
   return (
     <View style={flexbox.flex1}>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, isWeb && spacings.mbLg]}>
-        {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrTy} />}
-        <PanelTitle title={t('Private key export')} style={isWeb ? text.left : text.center} />
-      </View>
+      {/* The sheet's header row draws the X, and the ‹ back to the sheet this one opened from */}
+      <SheetHeaderRow>
+        <View style={[flexbox.directionRow, flexbox.alignCenter, common.fullWidth]}>
+          <PanelTitle title={t('Private key export')} style={text.center} />
+        </View>
+      </SheetHeaderRow>
       <Text weight="semiBold" fontSize={fontSize} numberOfLines={1} style={spacings.mb}>
         {keyLabel}
       </Text>
@@ -192,7 +196,6 @@ const ExportKey = ({
           // fingerprint could hand it. Revealing the key needs no more than proof of identity.
           onBiometricsConfirmed={isExportingV2SA ? undefined : onBiometricsConfirmed}
           withFullHeightLayout
-          onBackButtonPress={closeConfirmPassword}
         />
       </BottomSheet>
     </View>

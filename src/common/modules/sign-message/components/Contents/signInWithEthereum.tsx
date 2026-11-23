@@ -474,6 +474,15 @@ const SignInWithEthereum = ({
             <HardwareWalletSigningModal
               keyType={signMessageState.signer.key.type}
               isVisible={signStatus === 'LOADING'}
+              cancelReq={() => {
+                signMessageDispatch({
+                  type: 'method',
+                  params: {
+                    method: 'cancelSignReq',
+                    args: []
+                  }
+                })
+              }}
               signingRequest={signMessageState.hardwareWalletSigningRequest}
             />
           )}

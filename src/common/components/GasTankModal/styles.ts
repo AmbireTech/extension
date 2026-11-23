@@ -19,7 +19,6 @@ type Style = {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     containerInnerWrapper: {
-      ...(isWeb ? common.shadowSecondary : {}),
       maxHeight: isWeb ? 600 : 'auto'
     },
     content: {

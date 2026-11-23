@@ -1,10 +1,10 @@
 import React, { useCallback, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { isDev, isTesting } from '@common/config/env'
@@ -51,7 +51,7 @@ const InviteVerifyScreen = () => {
     [dispatch, errorMessage]
   )
 
-  const { ref: helpSheetRef, open: openHelpSheet, close: closeHelpSheet } = useModalize()
+  const { ref: helpSheetRef, open: openHelpSheet, close: closeHelpSheet } = useSheetRef()
 
   const handleOpenHelpSheet = useCallback(() => openHelpSheet(), [openHelpSheet])
 
@@ -111,7 +111,7 @@ const InviteVerifyScreen = () => {
       </MobileLayoutWrapperMainContent>
 
       <BottomSheet id="invite-code-help" sheetRef={helpSheetRef} closeBottomSheet={closeHelpSheet}>
-        <ModalHeader handleClose={closeHelpSheet} title={t('How to get mobile access?')} />
+        <ModalHeader handleClose={closeHelpSheet} title={t('Get mobile access')} />
         <Text fontSize={16} appearance="secondaryText" style={spacings.mbLg}>
           {t(
             "We’re rolling out our mobile app in waves, starting with longtime extension users. If you're in, your code is ready."

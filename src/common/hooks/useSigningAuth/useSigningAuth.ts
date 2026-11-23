@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useModalize } from 'react-native-modalize'
 
 import { SigningAuthRequirement } from '@ambire-common/interfaces/signingAuth'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useSecretConfirmation from '@common/hooks/useSecretConfirmation'
@@ -24,7 +24,7 @@ type Props = {
 const useSigningAuth = ({ requirement, requestId }: Props) => {
   const { t } = useTranslation()
   const { dispatch: dappsDispatch } = useController('DappsController')
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
 
   // Nothing renders differently once a request is confirmed, so it is a ref rather than state.
   // Wrapped in an object so a request with no id of its own still gets a latch.

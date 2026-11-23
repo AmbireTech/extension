@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -78,13 +78,13 @@ const AccountSelectScreen = () => {
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
-  } = useModalize()
-  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
+  } = useSheetRef()
+  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useSheetRef()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')

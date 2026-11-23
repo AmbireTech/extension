@@ -1,7 +1,6 @@
 import { parseUnits } from 'ethers'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
 import { AddressStateOptional } from '@ambire-common/interfaces/domains'
@@ -11,6 +10,7 @@ import { getSanitizedAmount } from '@ambire-common/libs/transfer/amount'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useControllerSession from '@common/hooks/useControllerSession'
@@ -93,7 +93,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { state: accountsOps } = useController('ActivityController', selectAccountsOps)
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
@@ -218,7 +218,7 @@ const useTransfer = (isTopUpScreen: boolean) => {
     ref: estimationModalRef,
     open: openEstimationModal,
     close: closeEstimationModal
-  } = useModalize()
+  } = useSheetRef()
 
   // Resets the proceeded state without closing the sheet, so the sheet can call it once it closed
   const handleEstimationModalClosed = useCallback(() => {

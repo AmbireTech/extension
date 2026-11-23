@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { HARDWARE_WALLET_DEVICE_NAMES } from '@ambire-common/consts/hardwareWallets'
 import { ExternalKey } from '@ambire-common/interfaces/keystore'
 import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAccountOp'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import type { IrCall } from '@ambire-common/libs/humanizer/interfaces'
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
 import DriveIcon from '@common/assets/svg/DriveIcon'
@@ -20,6 +20,7 @@ import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import SigningRequestDetails from '@common/modules/hardware-wallets/components/SigningRequestDetails'
 import spacings from '@common/styles/spacings'
@@ -58,8 +59,9 @@ const HardwareWalletSigningModal = ({
   humanization
 }: Props) => {
   const { t } = useTranslation()
-  const { ref, open, close } = useModalize()
+  const { ref, open, close } = useSheetRef()
   const { theme } = useTheme()
+  const { isCompactLayout } = useCompactLayout()
 
   useEffect(() => {
     if (isVisible) open()
@@ -88,23 +90,33 @@ const HardwareWalletSigningModal = ({
     )
   }, [keyType, t])
 
-  const isTrezor = useMemo(() => {
-    return HARDWARE_WALLET_DEVICE_NAMES[keyType] === 'Trezor'
-  }, [keyType])
-
   const deviceName = HARDWARE_WALLET_DEVICE_NAMES[keyType]
+
+  // The sheet can't be swiped away, so this is the way out when the device never answers
+  const cancelButton = !!cancelReq && (
+    <Button
+      type="danger"
+      text={t('Cancel request')}
+      onPress={cancelReq}
+      hasBottomSpacing={false}
+      style={isCompactLayout ? undefined : spacings.mtLg}
+    />
+  )
 
   return (
     <BottomSheet
       id="hardware-wallet-signing-modal"
       // The modal is displayed in tab in swap and bridge
       type={!isTab ? 'bottom-sheet' : 'modal'}
-      autoWidth
       sheetRef={ref}
       shouldBeClosableOnDrag={false}
       autoOpen={isVisible}
       withBackdropBlur={false}
       containerInnerWrapperStyles={isTab ? { ...spacings.pv2Xl, ...spacings.ph2Xl } : {}}
+      // On narrow screens the button is pinned to the bottom of the sheet, full width
+      FooterComponent={
+        isCompactLayout && !!cancelButton && <View style={spacings.ptSm}>{cancelButton}</View>
+      }
     >
       <ModalHeader title={title} style={flexbox.justifyCenter} />
       <View
@@ -142,15 +154,7 @@ const HardwareWalletSigningModal = ({
             humanization={humanization}
           />
         )}
-        {isTrezor && !!cancelReq && (
-          <Button
-            type="danger"
-            text={t('Cancel request')}
-            onPress={cancelReq}
-            hasBottomSpacing={false}
-            style={spacings.mtLg}
-          />
-        )}
+        {!isCompactLayout && cancelButton}
       </View>
     </BottomSheet>
   )

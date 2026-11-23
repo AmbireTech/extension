@@ -16,6 +16,7 @@ import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
@@ -68,6 +69,7 @@ const TokenSelectOptionLabel = React.memo(
   }: TokenSelectOptionLabelProps) => {
     const { t } = useTranslation()
     const { theme } = useTheme()
+    const { isCompactLayout } = useCompactLayout()
 
     const {
       balanceUSDFormatted = '',
@@ -254,13 +256,16 @@ const TokenSelectOptionLabel = React.memo(
         </>
       )
 
+    // On narrow screens the network goes under the symbol, as both don't fit next to the balance
+    const isNetworkBelowSymbol = isSelected || isCompactLayout
+
     return (
       <>
         <View
           style={[
             flexbox.flex1,
-            !isSelected && flexbox.directionRow,
-            !isSelected && flexbox.alignEnd
+            !isNetworkBelowSymbol && flexbox.directionRow,
+            !isNetworkBelowSymbol && flexbox.alignEnd
           ]}
         >
           <Text
@@ -274,14 +279,14 @@ const TokenSelectOptionLabel = React.memo(
           </Text>
           {!!networkName && (
             <Text
-              fontSize={isSelected ? 12 : 14}
-              weight={isSelected ? 'regular' : 'medium'}
+              fontSize={isNetworkBelowSymbol ? 12 : 14}
+              weight={isNetworkBelowSymbol ? 'regular' : 'medium'}
               appearance="secondaryText"
               ellipsizeMode="tail"
               numberOfLines={1}
-              style={!isSelected && spacings.mlTy}
+              style={!isNetworkBelowSymbol && spacings.mlTy}
             >
-              {`${isSelected ? '' : ' '}on ${networkName}`}
+              {`${isNetworkBelowSymbol ? '' : ' '}on ${networkName}`}
             </Text>
           )}
         </View>

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
@@ -9,8 +8,10 @@ import DragIndicatorIcon from '@common/assets/svg/DragIndicatorIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import Search from '@common/components/Search'
@@ -26,7 +27,7 @@ import AddAccount from '@common/modules/account-select/components/AddAccount'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_MI, SPACING_SM } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import {
@@ -50,7 +51,7 @@ const AccountsSettingsScreen = () => {
     getAccountItemHeight,
     onAccountExtraHeightChange
   } = useAccountsList()
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { navigate } = useNavigation()
@@ -61,23 +62,23 @@ const AccountsSettingsScreen = () => {
     ref: sheetRefExportImportKey,
     open: openExportImportKey,
     close: closeExportImportKey
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefRemoveAccount,
     open: openRemoveAccount,
     close: closeRemoveAccount
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
-  } = useModalize()
-  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
+  } = useSheetRef()
+  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useSheetRef()
   const {
     ref: sheetRefAccountDeploySettings,
     open: openAccountDeploySettings,
     close: closeAccountDeploySettings
-  } = useModalize()
+  } = useSheetRef()
 
   const [exportImportAccount, setExportImportAccount] = useState<AccountInterface | null>(null)
   const [accountToRemove, setAccountToRemove] = useState<AccountInterface | null>(null)
@@ -335,23 +336,23 @@ const AccountsSettingsScreen = () => {
           containerInnerWrapperStyles={{ flex: 1 }}
           style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
         >
-          <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-            {!isMobile && (
-              <PanelBackButton
-                onPress={() => {
-                  setAccountToRemove(null)
-                  closeRemoveAccount()
-                }}
-                style={spacings.mrSm}
+          <SheetHeaderRow style={spacings.mbLg}>
+            <View
+              style={[
+                flexbox.directionRow,
+                flexbox.alignCenter,
+                common.fullWidth,
+                isWeb && spacings.mbLg
+              ]}
+            >
+              <PanelTitle
+                title={t('Remove {{ label }}', {
+                  label: accountToRemove?.preferences?.label || 'account'
+                })}
+                style={isMobile ? text.center : text.left}
               />
-            )}
-            <PanelTitle
-              title={t('Remove {{ label }}', {
-                label: accountToRemove?.preferences?.label || 'account'
-              })}
-              style={isMobile ? text.center : text.left}
-            />
-          </View>
+            </View>
+          </SheetHeaderRow>
           <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
             <Text fontSize={16} weight="medium" style={{ ...spacings.mb, textAlign: 'center' }}>
               {t('Are you sure you want to remove this account?')}

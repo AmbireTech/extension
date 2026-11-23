@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from 'react'
-import { useModalize } from 'react-native-modalize'
 
 import {
   BIP44_STANDARD_TESTNET_DERIVATION_TEMPLATE,
@@ -8,6 +7,7 @@ import {
 } from '@ambire-common/consts/derivation'
 import { IAccountPickerController } from '@ambire-common/interfaces/accountPicker'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import { SelectValue } from '@common/components/Select/types'
 import { isWeb } from '@common/config/env'
@@ -24,7 +24,7 @@ type Props = {
 }
 
 const ChangeHdPath: React.FC<Props> = ({ disabled, type }) => {
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { t } = useTranslation()
   const {
     state: { hdPathTemplate, pageError, page, derivableHdPathTemplates },

@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useState } from 'react'
+import React, { FC, useCallback, useState } from 'react'
 
 import {
   PrivacyPoolsBroadcaster,
@@ -7,7 +7,7 @@ import {
 } from '@ambire-common/interfaces/privacyPools'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
-import Button from '@common/components/Button'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -98,22 +98,6 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
     if (isReady) onRecheck()
   }, [isReady, onRecheck])
 
-  const backButton = useMemo(
-    () => (
-      <Button
-        testID="privacy-pools-send-back"
-        type="secondary"
-        text={t('Back')}
-        onPress={closeBottomSheet}
-        hasBottomSpacing={false}
-        disabled={isBroadcasting}
-        style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : { width: 98, ...spacings.mrLg }}
-        size="smaller"
-      />
-    ),
-    [closeBottomSheet, isBroadcasting, isNarrowWebLayout, t]
-  )
-
   return (
     <BottomSheet
       id="privacy-pools-send"
@@ -126,6 +110,8 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
       autoOpen={shouldOpenOnMount && isTransactionSummaryLoaded}
       backgroundColor="primaryBackground"
     >
+      {/* The sheet's X closes it, as on the one-click fee sheet. An ended transfer shows its outcome */}
+      <ModalHeader title={isConfirming ? t('Confirm send') : undefined} />
       {!!operation && (
         <>
           {/* Like the transaction details of the one-click Swap & Bridge sheet, the fee among its
@@ -178,7 +164,6 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   : undefined
               }
             >
-              {!isNarrowWebLayout && backButton}
               {holdButtonType && !isBroadcasting ? (
                 <HoldToProceedButton
                   testID="privacy-pools-send-confirm"
@@ -200,8 +185,6 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                   style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
                 />
               )}
-              {/* Back after Send on narrow layouts, like the regular fee sheet */}
-              {isNarrowWebLayout && backButton}
             </FooterGlassView>
           )}
         </>

@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { SelectedAccountPortfolio } from '@ambire-common/interfaces/selectedAccount'
 import { isSmartAccount } from '@ambire-common/libs/account/account'
 import { PortfolioGasTankResult } from '@ambire-common/libs/portfolio/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import DualChoiceModal from '@common/components/DualChoiceModal'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
@@ -20,7 +20,7 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 type Props = {
   id: string
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet?: (dest?: 'alwaysOpen' | 'default' | undefined) => void
   onPrimaryButtonPress: () => void
   portfolio: SelectedAccountPortfolio

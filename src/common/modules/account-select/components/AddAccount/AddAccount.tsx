@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AddFromCurrentRecoveryPhraseIcon from '@common/assets/svg/AddFromCurrentRecoveryPhraseIcon'
@@ -22,6 +21,7 @@ import TrezorBadgeIcon from '@common/assets/svg/TrezorBadgeIcon'
 import ViewOnlyIcon from '@common/assets/svg/ViewOnlyIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Option from '@common/components/Option'
 import { isMobile, isPrivacyPoolsSupported, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -82,12 +82,12 @@ const AddAccount = ({
     ref: seedPhraseSheetRef,
     open: openSeedPhraseBottomSheet,
     close: closeSeedPhraseBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: privacyPoolsSheetRef,
     open: openPrivacyPoolsBottomSheet,
     close: closePrivacyPoolsBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { state: seeds } = useController('KeystoreController', selectSeeds)
 
   // Both sheets close as the flow moves on to the personalize step
@@ -272,20 +272,20 @@ const AddAccount = ({
           ? {
               // Prevent the scroll view from expanding when a dropdown is open
               style: { maxHeight: height },
-              showsVerticalScrollIndicator: false
+              showsVerticalScrollIndicator: false,
+              // The full content, with the sheet's padding around the options, so it fits unscrolled
+              onContentSizeChange: (_width: number, contentHeight: number) => {
+                if (height) return
+
+                setHeight(contentHeight)
+              }
             }
           : undefined
       }
       scrollViewRef={scrollViewRef}
       containerInnerWrapperStyles={isWeb ? spacings.pr0 : {}}
     >
-      <View
-        onLayout={(e) => {
-          if (height) return
-
-          setHeight(e.nativeEvent.layout.height)
-        }}
-      >
+      <View>
         <ModalHeader handleClose={closeBottomSheet} title={t('Add an account')} />
         <Option
           text={t('Add from stored recovery phrases')}

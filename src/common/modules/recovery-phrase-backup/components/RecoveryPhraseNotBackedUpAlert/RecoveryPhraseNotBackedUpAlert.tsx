@@ -1,8 +1,8 @@
 import React from 'react'
 import { ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { useTranslation } from '@common/config/localization'
 import RecoveryPhraseBackupBottomSheet from '@common/modules/recovery-phrase-backup/components/RecoveryPhraseBackupBottomSheet'
 
@@ -19,7 +19,7 @@ const RecoveryPhraseNotBackedUpAlert = ({
   style?: ViewStyle
 }) => {
   const { t } = useTranslation()
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
 
   return (
     <>
