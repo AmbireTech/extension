@@ -36,6 +36,7 @@ const AccountPersonalizeScreen = () => {
   const {
     control,
     fields,
+    alreadyAddedAddrs,
     isLoading,
     hasBackButton,
     isAdding,
@@ -140,6 +141,7 @@ const AccountPersonalizeScreen = () => {
             ) : (
               <PersonalizeAccountsList
                 fields={fields}
+                alreadyAddedAddrs={alreadyAddedAddrs}
                 control={control}
                 accountsToRemove={accountsToRemove}
                 isAdding={isAdding}

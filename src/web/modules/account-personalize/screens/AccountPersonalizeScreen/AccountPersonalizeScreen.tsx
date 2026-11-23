@@ -54,6 +54,7 @@ const AccountPersonalizeScreen = () => {
   const {
     control,
     fields,
+    alreadyAddedAddrs,
     isLoading,
     hasBackButton,
     isAdding,
@@ -83,6 +84,9 @@ const AccountPersonalizeScreen = () => {
   const [walletOpenedFor, setWalletOpenedFor] = useState<typeof added>(null)
   if (added && isWalletOpen && walletOpenedFor !== added) setWalletOpenedFor(added)
   const hasWalletOpened = !!added && walletOpenedFor === added
+  // Nothing new came, the accounts the wallet has were only named again (e.g. a repeated sync)
+  const isAlreadyAddedOnly =
+    !!addedAccounts?.length && addedAccounts.every(({ addr }) => alreadyAddedAddrs.includes(addr))
 
   const listEmpty = useMemo(
     () => (
@@ -111,7 +115,9 @@ const AccountPersonalizeScreen = () => {
                 fontSize={20}
                 style={{ alignSelf: 'center', ...spacings.mbXl }}
               >
-                {removedAccounts.length ? t('Accounts updated') : t('Added successfully')}
+                {removedAccounts.length || isAlreadyAddedOnly
+                  ? t('Accounts updated')
+                  : t('Added successfully')}
               </Text>
               <ScrollView style={spacings.mbLg}>
                 {!!addedPrivacyPoolsAccount && !!privacyPoolsAccount && (
@@ -204,6 +210,7 @@ const AccountPersonalizeScreen = () => {
               ) : (
                 <PersonalizeAccountsList
                   fields={fields}
+                  alreadyAddedAddrs={alreadyAddedAddrs}
                   control={control}
                   accountsToRemove={accountsToRemove}
                   isAdding={isAdding}

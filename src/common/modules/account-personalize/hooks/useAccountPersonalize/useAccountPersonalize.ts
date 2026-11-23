@@ -180,6 +180,23 @@ export default function useAccountPersonalize() {
     accountsToNameRef.current = accountsToName
   }, [accountsToName])
 
+  // The prepared accounts the wallet has already (e.g. a sync of accounts this device has too).
+  // Kept from before adding, which puts all of them in the wallet while the screen is still up.
+  const alreadyAddedKey = isExistingSafeMode
+    ? ''
+    : accountsToName
+        .filter(({ addr }) => accounts.some((account) => account.addr === addr))
+        .map(({ addr }) => addr)
+        .join(',')
+  const [keptAlreadyAddedKey, setKeptAlreadyAddedKey] = useState(alreadyAddedKey)
+  if (!isAdding && !addedAccounts && keptAlreadyAddedKey !== alreadyAddedKey) {
+    setKeptAlreadyAddedKey(alreadyAddedKey)
+  }
+  const alreadyAddedAddrs = useMemo(
+    () => (keptAlreadyAddedKey ? keptAlreadyAddedKey.split(',') : []),
+    [keptAlreadyAddedKey]
+  )
+
   // The prepared accounts change when more are added from the picker. The names the
   // user gave the ones already there are kept.
   useEffect(() => {
@@ -337,6 +354,9 @@ export default function useAccountPersonalize() {
   ])
 
   const isRemovalOnly = !fields.length && !!accountsToRemove.length
+  const newAccountsCount = fields.filter(({ addr }) => !alreadyAddedAddrs.includes(addr)).length
+  // Nothing new, only names and keys of accounts the wallet has to update
+  const isAlreadyAddedOnly = !!fields.length && !newAccountsCount && !accountsToRemove.length
   // Removing only changes what was picked already, so there is nothing more to pick
   const canAddMore = !isExistingSafeMode && !addedAccounts && !isLoading && !isRemovalOnly
 
@@ -350,6 +370,7 @@ export default function useAccountPersonalize() {
     if (accountsToRemove.length) return t('Review changes')
     if (privacyPoolsAccount) return t('Personalize account')
     if (!fields.length) return t('No new accounts added')
+    if (isAlreadyAddedOnly) return t('Already in your wallet')
 
     return fields.length > 1 ? t('Personalize accounts') : t('Personalize account')
   }
@@ -370,8 +391,12 @@ export default function useAccountPersonalize() {
     if (accountsToRemove.length) {
       if (isAdding) return t('Updating...')
 
-      return t('Update {{count}} accounts', { count: fields.length + accountsToRemove.length })
+      const updateCount = newAccountsCount + accountsToRemove.length
+      return updateCount === 1
+        ? t('Update 1 account')
+        : t('Update {{count}} accounts', { count: updateCount })
     }
+    if (isAlreadyAddedOnly) return isAdding ? t('Saving...') : t('Done')
     if (isNewAccount) {
       if (isAdding || privacyPools.isAdding) return t('Creating...')
 
@@ -383,14 +408,16 @@ export default function useAccountPersonalize() {
     }
     if (isAdding) return t('Adding...')
 
-    return fields.length === 1
+    return newAccountsCount === 1
       ? t('Add 1 account')
-      : t('Add {{count}} accounts', { count: fields.length })
+      : t('Add {{count}} accounts', { count: newAccountsCount })
   }
 
   return {
     control,
     fields,
+    // Listed apart from the new accounts
+    alreadyAddedAddrs,
     isLoading,
     // No way back while loading
     hasBackButton: !isLoading,
