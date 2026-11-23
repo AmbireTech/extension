@@ -21,99 +21,90 @@ const RAY_OPACITY = 0.16
 const RAY_TRAVEL = ((RAY_WIDTH - DESIGN_WIDTH) / RAY_WIDTH) * 0.95 * 100
 
 /**
- * The design's light ray image has two rays, their streaks at slightly different angles, so each
- * is a gradient of its own, read across its streaks: from the ray's top-left corner to where its
- * bottom-right one falls on that line. Their colors are the ones the design's hatching shader
- * gives them: mix(#454A50, #F2F4F7, luminance × 1.36). Gradients instead of the image, so no
- * image or shader is shipped for it.
+ * The design's shader over the ray ("Hatching") paints it between a dark and a light grey by how
+ * bright the ray is, a row per red, green and blue
  */
-const MAIN_RAY = {
+const SHADER_GREYS = [
+  { dark: 69, light: 242 },
+  { dark: 74, light: 244 },
+  { dark: 80, light: 247 }
+]
+
+interface Streak {
+  /** Where across the ray it is, from 0 to 1 */
+  at: number
+  width: number
+  /** How far it lights the ray from the shader's dark grey towards its light one */
+  brightness: number
+}
+
+interface Ray {
+  /** Where the line across the streaks ends, from the ray's top-left corner */
+  end: { x: number; y: number }
+  /** How bright the ray is between its streaks */
+  base: number
+  streaks: Streak[]
+  /** Where across the ray it fades in, over the one below it */
+  fadeIn?: { from: number; to: number }
+}
+
+/**
+ * The design's light ray image has two rays, their streaks at slightly different angles, so each
+ * is a gradient of its own, read across its streaks. Described by their streaks, as read from the
+ * design's image, instead of the image, so no image or shader is shipped for it.
+ */
+const MAIN_RAY: Ray = {
   /** The narrow ray, 34° down from the horizontal, with the dark area left of it */
   end: { x: 411.3, y: 277.4 },
-  stops: [
-    { offset: 0, color: '#D0D3D7' },
-    { offset: 0.0083, color: '#CCCFD3' },
-    { offset: 0.015, color: '#C6C9CD' },
-    { offset: 0.0217, color: '#BCBFC3' },
-    { offset: 0.0483, color: '#878A90' },
-    { offset: 0.0617, color: '#72767C' },
-    { offset: 0.0717, color: '#696D73' },
-    { offset: 0.0817, color: '#63676D' },
-    { offset: 0.1017, color: '#5E6268' },
-    { offset: 0.3317, color: '#5D6167' },
-    { offset: 0.3517, color: '#5F6369' },
-    { offset: 0.3717, color: '#686C72' },
-    { offset: 0.3783, color: '#696C72' },
-    { offset: 0.4017, color: '#5E6268' },
-    { offset: 0.4317, color: '#5E6268' },
-    { offset: 0.435, color: '#62666C' },
-    { offset: 0.4383, color: '#6E7278' },
-    { offset: 0.4417, color: '#878B90' },
-    { offset: 0.445, color: '#A9ACB0' },
-    { offset: 0.4483, color: '#C7CACE' },
-    { offset: 0.4517, color: '#D1D3D7' },
-    { offset: 0.455, color: '#D0D2D6' },
-    { offset: 0.4583, color: '#CBCED1' },
-    { offset: 0.4617, color: '#D1D4D7' },
-    { offset: 0.4683, color: '#E6E9EC' },
-    { offset: 0.4717, color: '#EBEDF0' },
-    { offset: 0.4783, color: '#EFF1F4' },
-    { offset: 0.485, color: '#EBEDF0' },
-    { offset: 0.495, color: '#DBDDE1' },
-    { offset: 0.505, color: '#D5D7DB' },
-    { offset: 0.5117, color: '#CDCFD3' },
-    { offset: 0.515, color: '#C7CACE' },
-    { offset: 0.5317, color: '#A3A6AB' },
-    { offset: 0.5483, color: '#878A90' },
-    { offset: 0.565, color: '#74787E' },
-    { offset: 0.5817, color: '#6B6E74' },
-    { offset: 0.585, color: '#676B71' },
-    { offset: 0.5883, color: '#60646A' },
-    { offset: 0.5917, color: '#6B6F75' },
-    { offset: 1, color: '#6B6F75' }
+  base: 0.14,
+  streaks: [
+    { at: 0, width: 0.034, brightness: 0.67 },
+    { at: 0.375, width: 0.012, brightness: 0.06 },
+    { at: 0.45, width: 0.005, brightness: 0.34 },
+    { at: 0.472, width: 0.016, brightness: 0.48 },
+    { at: 0.506, width: 0.032, brightness: 0.61 }
   ]
 }
-const SECOND_RAY = {
+const SECOND_RAY: Ray = {
   /** The wide ray right of the main one, 42° down, drawn over it from the dark gap between them */
   end: { x: 357.9, y: 322.3 },
-  stops: [
-    { offset: 0, color: '#6B6F75', opacity: 0 },
-    { offset: 0.535, color: '#6B6F75', opacity: 0 },
-    { offset: 0.5383, color: '#A1A5A9', opacity: 0 },
-    { offset: 0.5417, color: '#989BA0', opacity: 0.02 },
-    { offset: 0.555, color: '#7F8388', opacity: 0.19 },
-    { offset: 0.5583, color: '#7B7F84', opacity: 0.21 },
-    { offset: 0.5617, color: '#777B80', opacity: 0.26 },
-    { offset: 0.565, color: '#74787E', opacity: 0.29 },
-    { offset: 0.5683, color: '#73777C', opacity: 0.34 },
-    { offset: 0.575, color: '#6F7379', opacity: 0.41 },
-    { offset: 0.5783, color: '#6F7378', opacity: 0.46 },
-    { offset: 0.5817, color: '#6E7278', opacity: 0.48 },
-    { offset: 0.585, color: '#6E7278', opacity: 0.54 },
-    { offset: 0.5883, color: '#6E7278', opacity: 0.57 },
-    { offset: 0.5917, color: '#6E7277', opacity: 0.61 },
-    { offset: 0.5983, color: '#70747A', opacity: 0.68 },
-    { offset: 0.6017, color: '#72767B', opacity: 0.73 },
-    { offset: 0.605, color: '#74787D', opacity: 0.76 },
-    { offset: 0.615, color: '#7C7F85', opacity: 0.88 },
-    { offset: 0.625, color: '#8A8E93', opacity: 0.99 },
-    { offset: 0.6317, color: '#999CA1', opacity: 1 },
-    { offset: 0.645, color: '#C1C4C8', opacity: 1 },
-    { offset: 0.6517, color: '#CCCFD3', opacity: 1 },
-    { offset: 0.6583, color: '#D1D3D7', opacity: 1 },
-    { offset: 0.665, color: '#D2D5D8', opacity: 1 },
-    { offset: 0.6783, color: '#CCCFD3', opacity: 1 },
-    { offset: 0.6817, color: '#CDD0D4', opacity: 1 },
-    { offset: 0.6983, color: '#DCDEE2', opacity: 1 },
-    { offset: 0.7117, color: '#E5E7EA', opacity: 1 },
-    { offset: 0.7317, color: '#EDEFF2', opacity: 1 },
-    { offset: 0.7517, color: '#EEF0F3', opacity: 1 },
-    { offset: 0.785, color: '#DEE1E4', opacity: 1 },
-    { offset: 0.8417, color: '#CED1D5', opacity: 1 },
-    { offset: 0.9383, color: '#C4C7CB', opacity: 1 },
-    { offset: 1, color: '#CBCDD1', opacity: 1 }
+  base: 0.22,
+  fadeIn: { from: 0.54, to: 0.626 },
+  streaks: [
+    { at: 0.654, width: 0.017, brightness: 0.31 },
+    { at: 0.715, width: 0.043, brightness: 0.43 },
+    { at: 0.792, width: 0.063, brightness: 0.29 },
+    { at: 1, width: 0.181, brightness: 0.54 }
   ]
 }
+
+/** Enough for the narrowest streak to keep its shape */
+const STOPS_PER_RAY = 100
+
+/** The ray as gradient stops: its streaks summed up, in the shader's greys */
+const getRayStops = ({ base, streaks, fadeIn }: Ray) =>
+  Array.from({ length: STOPS_PER_RAY + 1 }, (_, index) => {
+    const offset = index / STOPS_PER_RAY
+    const brightness = Math.min(
+      1,
+      streaks.reduce(
+        (sum, streak) =>
+          sum + streak.brightness * Math.exp(-0.5 * ((offset - streak.at) / streak.width) ** 2),
+        base
+      )
+    )
+    const channels = SHADER_GREYS.map(({ dark, light }) =>
+      Math.round(dark + (light - dark) * brightness)
+    )
+    const opacity = fadeIn
+      ? Math.min(1, Math.max(0, (offset - fadeIn.from) / (fadeIn.to - fadeIn.from)))
+      : 1
+
+    return { offset, color: `rgb(${channels.join(', ')})`, opacity }
+  })
+
+const MAIN_RAY_STOPS = getRayStops(MAIN_RAY)
+const SECOND_RAY_STOPS = getRayStops(SECOND_RAY)
 
 // Fixed, not theme colors: the frames glow white in both themes
 const CORNER_COLOR = '#FFFFFF'
@@ -189,7 +180,7 @@ const PrivacyPoolsGuideIllustration = ({ progress, children }: Props) => {
               x2={MAIN_RAY.end.x}
               y2={MAIN_RAY.end.y}
             >
-              {MAIN_RAY.stops.map(({ offset, color }) => (
+              {MAIN_RAY_STOPS.map(({ offset, color }) => (
                 <Stop key={offset} offset={offset} stopColor={color} />
               ))}
             </LinearGradient>
@@ -201,7 +192,7 @@ const PrivacyPoolsGuideIllustration = ({ progress, children }: Props) => {
               x2={SECOND_RAY.end.x}
               y2={SECOND_RAY.end.y}
             >
-              {SECOND_RAY.stops.map(({ offset, color, opacity }) => (
+              {SECOND_RAY_STOPS.map(({ offset, color, opacity }) => (
                 <Stop key={offset} offset={offset} stopColor={color} stopOpacity={opacity} />
               ))}
             </LinearGradient>
