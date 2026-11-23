@@ -1,7 +1,7 @@
 import { memo, ReactNode, useCallback } from 'react'
 import { View } from 'react-native'
 
-import Button from '@common/components/Button'
+import Button, { Props as ButtonProps } from '@common/components/Button'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
@@ -40,6 +40,13 @@ interface FooterProps extends Props {
   finishText: string
   finishIcon?: React.ReactNode
   onFinish: () => void
+  /**
+   * The finish button stands out as the primary action by default. A guide that only
+   * explains something keeps the look of the Next button instead.
+   */
+  finishButtonType?: ButtonProps['type']
+  /** E.g. a fixed width, as the button spans the whole footer by default */
+  buttonStyle?: ViewStyle
   nextButtonTestID?: string
   finishButtonTestID?: string
 }
@@ -86,6 +93,8 @@ const StepsGuideFooter = ({
   finishText,
   finishIcon,
   onFinish,
+  finishButtonType = 'primary',
+  buttonStyle,
   nextButtonTestID,
   finishButtonTestID,
   style
@@ -121,11 +130,12 @@ const StepsGuideFooter = ({
         testID={isLastStep ? finishButtonTestID : nextButtonTestID}
         // `tertiary` is the filled grey button of the design. `secondary` is the same on
         // mobile, but on web it is white, which is invisible on the white panel.
-        type={isLastStep ? 'primary' : 'tertiary'}
+        type={isLastStep ? finishButtonType : 'tertiary'}
         text={isLastStep ? finishText : t('Next')}
         onPress={handleNext}
         hasBottomSpacing={false}
         childrenPosition="left"
+        style={buttonStyle}
       >
         {isLastStep ? finishIcon : null}
       </Button>
