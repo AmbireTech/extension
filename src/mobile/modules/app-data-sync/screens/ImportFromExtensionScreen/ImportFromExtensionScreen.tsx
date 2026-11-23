@@ -30,6 +30,7 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY, BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -38,6 +39,7 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
+import { STACK_SETTLED_EVENT } from '@mobile/constants/navigationStack'
 
 import type { AppDataSyncImportResult } from '@common/modules/app-data-sync/hooks/useAppDataSyncImport/useAppDataSyncImport'
 import type { CarouselRef } from 'react-native-reanimated-carousel'
@@ -235,19 +237,21 @@ const ImportFromExtensionScreen = () => {
   } = useAppDataSyncImport({ onImported: handleImported })
 
   // Going back from the next steps drops the prepared accounts, and the scanned data is gone
-  // already, so the scan starts over. Reset as the screen is left, so the way back shows it.
-  useEffect(
-    () =>
-      screenFocusStore.subscribe(() => {
-        if (screenFocusStore.isFocused.current || !hasPreparedAccountsRef.current) return
+  // already, so the scan starts over. Reset once the next screen has covered this one, so
+  // neither the way there nor the way back shows it changing.
+  useEffect(() => {
+    const resetCoveredScan = () => {
+      if (screenFocusStore.isFocused.current || !hasPreparedAccountsRef.current) return
 
-        hasPreparedAccountsRef.current = false
-        retryScan()
-        setScanProgress(null)
-        setScannerKey((key) => key + 1)
-      }),
-    [screenFocusStore, retryScan]
-  )
+      hasPreparedAccountsRef.current = false
+      retryScan()
+      setScanProgress(null)
+      setScannerKey((key) => key + 1)
+    }
+
+    eventBus.addEventListener(STACK_SETTLED_EVENT, resetCoveredScan)
+    return () => eventBus.removeEventListener(STACK_SETTLED_EVENT, resetCoveredScan)
+  }, [screenFocusStore, retryScan])
 
   // The password of the other device confirms every sync, whatever was scanned, so it is
   // asked for as soon as the scan completes
