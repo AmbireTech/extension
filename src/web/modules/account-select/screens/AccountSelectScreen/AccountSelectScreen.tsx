@@ -14,7 +14,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isPrivacyPoolsEnabled, isPrivacyPoolsSupported } from '@common/config/env'
+import { isPrivacyPoolsSupported } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -213,7 +213,7 @@ const AccountSelectScreen = () => {
     [listBottomInset]
   )
   const noAccountsFound = <Text>{t('No accounts found')}</Text>
-  const isPrivateTabOpen = isPrivacyPoolsEnabled && activeTab === 'private'
+  const isPrivateTabOpen = isPrivacyPoolsSupported && activeTab === 'private'
   const listStyle = isPrivacyPoolsSupported ? styles.containerBelowTabs : styles.container
 
   const addAccountButton = (
