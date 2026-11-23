@@ -17,6 +17,7 @@ import {
   SigningRequestVerification,
   VerificationHash
 } from '@common/modules/hardware-wallets/utils/getSigningRequestVerification'
+import { isRecord } from '@common/modules/hardware-wallets/utils/signingRequestData'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -155,15 +156,20 @@ const SigningRequestDetailsContent = ({
 
   const signerNote = useMemo(() => {
     // A transaction doesn't carry its sender, so it's missing from the request
-    // below even though the device shows it
-    if (requestKind === 'transaction') {
+    // below. A request with a list of calls (e.g. PQ1) has its own `from`
+    const isSenderMissingFromRequest =
+      requestKind === 'transaction' &&
+      isRecord(signingRequest.data) &&
+      !('from' in signingRequest.data)
+
+    if (isSenderMissingFromRequest) {
       return t(
-        "Your device shows this address as the sender (From). It's not in the transaction below, as your device adds it when signing."
+        "This is the sender (From) of the transaction. It's not in the transaction below, as it comes from your device's signature."
       )
     }
 
-    return t('Check that your device signs with this same address.')
-  }, [requestKind, t])
+    return t('If your device shows an address, it should match this one.')
+  }, [requestKind, signingRequest.data, t])
 
   const signerSection = !!signingRequest.signerAddr && (
     <>
