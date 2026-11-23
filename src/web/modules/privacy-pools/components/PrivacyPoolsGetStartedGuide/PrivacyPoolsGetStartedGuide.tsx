@@ -39,17 +39,6 @@ const MEASURED_TEXTS_STYLE = { height: 0, opacity: 0 }
 const MEASURED_TEXT_STYLE = { position: 'absolute' as const, top: 0, left: 0, right: 0 }
 const BUTTON_STYLE = { width: 180, alignSelf: 'center' as const }
 
-/**
- * Where the light ray falls on each step, in the design's pixels. Moved by every step, as
- * the light on a turning card.
- */
-const RAY_OFFSETS = {
-  privateAccount: 0,
-  topUp: -38,
-  verification: -98,
-  privateSend: -68
-}
-
 interface StepText {
   id: string
   title: string
@@ -165,31 +154,20 @@ const PrivacyPoolsGetStartedGuide: FC<Props> = ({
 
   const steps: StepsGuideStep[] = useMemo(() => {
     const illustrations: { [id: string]: React.ReactNode } = {
-      'private-account': (
-        <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.privateAccount}>
-          <PrivacyPoolsGuideAccountChip type="private" fontSize={20} />
-        </PrivacyPoolsGuideIllustration>
-      ),
-      'top-up': (
-        <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.topUp}>
-          <PrivacyPoolsGuideTransfer from="public" to="private" />
-        </PrivacyPoolsGuideIllustration>
-      ),
-      verification: (
-        <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.verification}>
-          <PrivacyPoolsGuideVerifyingToken />
-        </PrivacyPoolsGuideIllustration>
-      ),
-      'private-send': (
-        <PrivacyPoolsGuideIllustration rayOffset={RAY_OFFSETS.privateSend}>
-          <PrivacyPoolsGuideTransfer from="private" to="public" />
-        </PrivacyPoolsGuideIllustration>
-      )
+      'private-account': <PrivacyPoolsGuideAccountChip type="private" fontSize={20} />,
+      'top-up': <PrivacyPoolsGuideTransfer from="public" to="private" />,
+      verification: <PrivacyPoolsGuideVerifyingToken />,
+      'private-send': <PrivacyPoolsGuideTransfer from="private" to="public" />
     }
 
-    return stepTexts.map(({ id, title, description }) => ({
+    return stepTexts.map(({ id, title, description }, index) => ({
       id,
-      illustration: illustrations[id],
+      illustration: (
+        // The light moves from right to left as the guide goes on
+        <PrivacyPoolsGuideIllustration progress={index / (stepTexts.length - 1)}>
+          {illustrations[id]}
+        </PrivacyPoolsGuideIllustration>
+      ),
       content: (
         <View style={{ minHeight: textMinHeight }}>
           <StepTextContent title={title} description={description} />
