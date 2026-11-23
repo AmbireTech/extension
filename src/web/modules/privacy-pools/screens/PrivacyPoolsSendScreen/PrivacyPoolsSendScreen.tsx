@@ -73,6 +73,27 @@ const NO_ADDRESS_RESOLUTION: Omit<AddressState, 'fieldValue'> = {
 
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
 
+/** The success outcome, with a heading picked at random each time it is shown. */
+const PrivacyPoolsSendCompleted = ({ symbol }: { symbol: string | undefined }) => {
+  const { t } = useTranslation()
+  const titles: [string, ...string[]] = [
+    t('Transfer in motion.'),
+    t('Signed and on its way.'),
+    t('Mission accomplished'),
+    t('Whoosh!'),
+    t('Beep boop. Done!')
+  ]
+  const [titleIndex] = useState(() => Math.floor(Math.random() * titles.length))
+
+  return (
+    <Completed
+      title={titles[titleIndex] ?? titles[0]}
+      titleSecondary={t('Your {{symbol}} is on its way.', { symbol: symbol || t('Token') })}
+      openExplorerText={t('View Transfer')}
+    />
+  )
+}
+
 /**
  * The picked deposit's option, else the fullest deposit of a token picked without one, as when
  * opened from the token on the dashboard, else the first one. Null when there is none.
@@ -511,13 +532,7 @@ const PrivacyPoolsSendScreen = () => {
             }
           />
         ) : (
-          <Completed
-            title={t('Sending successfully')}
-            titleSecondary={t('Your {{symbol}} is on its way.', {
-              symbol: operationAsset?.symbol || t('Token')
-            })}
-            openExplorerText={t('View Transfer')}
-          />
+          <PrivacyPoolsSendCompleted symbol={operationAsset?.symbol} />
         )}
       </TrackProgress>
     )
