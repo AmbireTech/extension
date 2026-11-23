@@ -78,6 +78,7 @@ const Text: React.FC<Props> = ({
   color,
   style = {},
   shouldScale = false,
+  numberOfLines,
   onTextLayout,
   ...rest
 }) => {
@@ -88,8 +89,8 @@ const Text: React.FC<Props> = ({
   // the theme. Building a map of all nine of them to read one, on every render of every
   // one of the hundreds of texts a screen holds, is what this replaces.
   const appearanceColor: ColorValue = theme[appearance]
-  // In the title of a native sheet's header: it wraps up to the caller's `numberOfLines` and
-  // reports its lines, so the row can move a long title left and line the buttons up with line one
+  // In the title of a native sheet's header: it wraps up to the caller's `numberOfLines` (once moved
+  // left) and reports its lines, so the row can move a long title left and line the buttons up with line one
   const sheetHeaderTitle = useContext(SheetHeaderTitleContext)
   const handleTextLayout: TextProps['onTextLayout'] = sheetHeaderTitle
     ? (e) => {
@@ -121,6 +122,7 @@ const Text: React.FC<Props> = ({
         style,
         sheetHeaderTitle?.align === 'left' && LEFT_ALIGN_STYLE
       ])}
+      numberOfLines={sheetHeaderTitle?.isLineCapIgnored ? undefined : numberOfLines}
       onTextLayout={handleTextLayout}
       {...rest}
     >

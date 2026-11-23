@@ -55,6 +55,7 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
   const titleContextValue = useMemo<SheetHeaderTitleContextValue>(
     () => ({
       align: isTitleOnLeft ? 'left' : 'center',
+      isLineCapIgnored: canTitleMoveLeft && !isTitleOnLeft,
       reportLines: (lineCount, firstLineHeight) => {
         if (lineCount > 1 && canTitleMoveLeft) setIsTitleLeft(true)
         setWrappedTitleFirstLineHeight(lineCount > 1 ? firstLineHeight : null)
