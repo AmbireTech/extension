@@ -12,3 +12,12 @@
  * which we're chasing FOR MONTHS, see https://developers.ledger.com/docs/clear-signing/for-wallets
  */
 export const LEDGER_ORIGIN_TOKEN = ''
+
+/**
+ * The sideloaded fork of Ledger's Ethereum app that signs the EIP-7702 flows
+ * the official app can't: the delegation authorization (the official app doesn't
+ * allow the Ambire delegator) and type 4 transactions (the official app needs a
+ * special build for them since v1.24.0). The same name lives in the DSK patch
+ * (`patches/@ledgerhq+device-signer-kit-ethereum+*.patch`) and in the app build.
+ */
+export const AMBIRE_SIGNER_APP_NAME = 'Ambire Signer'
