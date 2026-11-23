@@ -47,6 +47,8 @@ function categorizeRequests(requests: string[]) {
     'strapi.jumper.xyz',
     // Token images
     'static.debank.com',
+    // DeFi protocol icons, now that the relayer serves DeFi positions from Zerion
+    'protocol-icons.s3.amazonaws.com',
     'tokenlist.superfluid.org',
     'strapi.jumper.exchange',
     'assets.coingecko.com',

@@ -3,16 +3,17 @@ import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
 
 import { PINNED_TOKENS } from '@ambire-common/consts/pinnedTokens'
-import { getRpcTokenPriceConfig } from '@ambire-common/consts/rpcTokenPrices'
 import { Network } from '@ambire-common/interfaces/network'
 import { AssetType } from '@ambire-common/libs/defiPositions/types'
 import { PORTFOLIO_LIB_ERROR_NAMES } from '@ambire-common/libs/portfolio/errorNames'
 import { getTokenAmount, getTokenBalanceInUSD } from '@ambire-common/libs/portfolio/helpers'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
+import { isMissingPriceMeaningful } from '@ambire-common/libs/tokenPrices/canPriceNetwork'
 import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useDebounce from '@common/hooks/useDebounce'
+import usePendingDeliveries from '@common/modules/dashboard/hooks/usePendingDeliveries'
 import {
   selectIsAutoDiscoveryEnabled,
   selectIsTokenPricesEnabled
@@ -77,38 +78,13 @@ const PINNED_TOKEN_KEYS = new Set(
   PINNED_TOKENS.map(({ address, chainId }) => getTokenId({ address, chainId }))
 )
 
-/**
- * Whether the network's RPC can price every token and not only the native one: it has both the
- * native token's USD feed (Chainlink's) and 1inch's spot price aggregator
- */
-const canRpcPriceEveryToken = (chainId: bigint): boolean =>
-  !!getRpcTokenPriceConfig(chainId)?.spotPrices
-
-/** Whether a token without a USD price can be classified as lower-value */
-const isTokenWithoutPriceCollapsible = (
-  chainId: bigint,
-  isTokenPricesEnabled: boolean,
-  isAutoDiscoveryEnabled: boolean
-): boolean => {
-  if (isTokenPricesEnabled) return true
-
-  // When token prices are disabled the prices come from the network's RPC. With auto discovery
-  // enabled, tokens without a price cannot be classified as lower-value
-  if (isAutoDiscoveryEnabled) return false
-
-  // Without auto discovery the tokens the account receives are learned without checking that they
-  // have a price, so scam tokens show up too. When the network has both price oracles and the
-  // token still has no price, it has no pool with enough liquidity. Otherwise the missing price
-  // says nothing about the token, so it isn't classified as lower-value.
-  return canRpcPriceEveryToken(chainId)
-}
-
 const isCollapsibleToken = (
   token: TokenResult,
   balanceUSD: number,
   isLargePortfolio: boolean,
   isTokenPricesEnabled: boolean,
-  isAutoDiscoveryEnabled: boolean
+  isAutoDiscoveryEnabled: boolean,
+  hasPendingDelivery: boolean
 ): boolean => {
   // Rewards and vesting tokens should never be hidden as lower-value tokens
   if (
@@ -124,6 +100,12 @@ const isCollapsibleToken = (
     return false
   }
 
+  // Tokens that in-progress swaps and bridges will move shouldn't be hidden either,
+  // e.g. the user may be receiving a token they don't hold yet
+  if (hasPendingDelivery) {
+    return false
+  }
+
   const tokenHasUSDPrice = hasUSDPrice(token)
 
   // Custom tokens that don't have a price shouldn't be hidden as lower-value tokens
@@ -133,11 +115,8 @@ const isCollapsibleToken = (
   }
 
   if (!tokenHasUSDPrice) {
-    return isTokenWithoutPriceCollapsible(
-      token.chainId,
-      isTokenPricesEnabled,
-      isAutoDiscoveryEnabled
-    )
+    // A token without a price is lower-value only if the missing price means it has no market
+    return isMissingPriceMeaningful(token.chainId, isTokenPricesEnabled, isAutoDiscoveryEnabled)
   }
 
   if (isLargePortfolio) {
@@ -177,6 +156,7 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
     'SelectedAccountController',
     selectDashboardNetworkFilter
   )
+  const { getTokenPendingDelivery } = usePendingDeliveries()
   const { control, watch, setValue } = useForm({
     mode: 'all',
     defaultValues: {
@@ -253,6 +233,7 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
 
       return (
         hasAmount(token) ||
+        !!token.pendingDeliveryAmount ||
         isCustom ||
         // Don't display pinned tokens until we are sure the user has no balance
         (isPinned && userHasNoBalance && isPortfolioAllReady)
@@ -263,16 +244,17 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
       token,
       balanceUSD: balancesInUSD.get(token) ?? 0,
       amount: Number(getTokenAmount(token)),
-      isSimulated:
-        typeof token.amountPostSimulation === 'bigint' &&
-        token.amountPostSimulation !== BigInt(token.amount),
+      isPending:
+        (typeof token.amountPostSimulation === 'bigint' &&
+          token.amountPostSimulation !== BigInt(token.amount)) ||
+        !!token.pendingDeliveryAmount,
       rewardsType: token.flags.rewardsType,
       onGasTank: token.flags.onGasTank
     }))
 
     decorated.sort((a, b) => {
       // pending tokens go on top
-      if (a.isSimulated !== b.isSimulated) return a.isSimulated ? -1 : 1
+      if (a.isPending !== b.isPending) return a.isPending ? -1 : 1
 
       // rewards tokens come before regular ones
       if (!a.rewardsType !== !b.rewardsType) return a.rewardsType ? -1 : 1
@@ -289,7 +271,14 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
     })
 
     return decorated.map(({ token }) => token)
-  }, [tokens, networks, customTokenKeys, userHasNoBalance, isPortfolioAllReady, balancesInUSD])
+  }, [
+    tokens,
+    networks,
+    customTokenKeys,
+    userHasNoBalance,
+    isPortfolioAllReady,
+    balancesInUSD
+  ])
 
   const { visibleTokens, dustTokens } = useMemo(() => {
     if (userHasNoBalance || searchValue.length > 0) {
@@ -312,7 +301,8 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
             balancesInUSD.get(token) ?? 0,
             isLargePortfolio,
             isTokenPricesEnabled,
-            isAutoDiscoveryEnabled
+            isAutoDiscoveryEnabled,
+            !!token.pendingDeliveryAmount
           ) &&
           !networkIdsWithPriceError.has(token.chainId.toString())
         ) {
@@ -436,7 +426,13 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
 
       if (!initTab?.tokens || !item) return null
 
-      return <TokenItem token={item} />
+      // The token's own `pendingDeliveryAmount` skips its Gas Tank and rewards copies
+      return (
+        <TokenItem
+          token={item}
+          pendingDelivery={item.pendingDeliveryAmount ? getTokenPendingDelivery(item) : undefined}
+        />
+      )
     },
     [
       initTab?.tokens,
@@ -447,7 +443,8 @@ const Tokens = ({ openTab, initTab, dashboardNetworkFilterName }: Props) => {
       dustTokens.length,
       dustTotalUSD,
       expandDust,
-      collapseDust
+      collapseDust,
+      getTokenPendingDelivery
     ]
   )
 

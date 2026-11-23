@@ -71,6 +71,11 @@ const DashboardBanner = ({
   const isPendingAccountOp = category === 'pending-to-be-signed-acc-op'
   const isPendingSignatureRequest = banner.id === 'safe-message-request-banner'
   const isSwapAndBridgeStatus = category === 'bridge-in-progress'
+  const bannerActiveRouteId = isSwapAndBridgeStatus ? meta?.activeRouteId : undefined
+  const bannerActiveRouteIds = useMemo(
+    () => (bannerActiveRouteId ? [bannerActiveRouteId] : undefined),
+    [bannerActiveRouteId]
+  )
   const isUpdateAvailable = banner.id === 'update-available'
   const isSingleRow =
     isPendingAccountOp || isPendingSignatureRequest || isSwapAndBridgeStatus || isUpdateAvailable
@@ -368,7 +373,7 @@ const DashboardBanner = ({
       />
       <DashboardBannerBottomSheet
         id={String(banner.id)}
-        activeRouteId={isSwapAndBridgeStatus ? meta?.activeRouteId : undefined}
+        activeRouteIds={bannerActiveRouteIds}
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
       />
