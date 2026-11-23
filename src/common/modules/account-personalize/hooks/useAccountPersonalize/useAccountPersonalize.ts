@@ -28,6 +28,8 @@ const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPicke
 const selectReadyToRemoveAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
   state.readyToRemoveAccounts
 const selectSubType = (state: AllControllersMappingType['AccountPickerController']) => state.subType
+const selectIsFromNewSeed = (state: AllControllersMappingType['AccountPickerController']) =>
+  state.isFromNewSeed
 // Set up by a flow that only sets the picker up, and not started yet
 const selectIsWaitingToStart = (state: AllControllersMappingType['AccountPickerController']) =>
   (!!state.initParams && !state.isInitialized && !state.readyToAddAccounts.length) ||
@@ -75,6 +77,7 @@ export default function useAccountPersonalize() {
     selectReadyToRemoveAccounts
   )
   const { state: subType } = useController('AccountPickerController', selectSubType)
+  const { state: isFromNewSeed } = useController('AccountPickerController', selectIsFromNewSeed)
   const { state: isWaitingToStart } = useController(
     'AccountPickerController',
     selectIsWaitingToStart
@@ -388,15 +391,40 @@ export default function useAccountPersonalize() {
     return fields.length > 1 ? t('Personalize accounts') : t('Personalize account')
   }
 
+  // Made by the flow rather than imported: a new recovery phrase, a Safe or a Privacy Pools account
+  const isNewAccount =
+    isFromNewSeed || (!!safeCreateDraft && !isExistingSafeMode) || !!privacyPoolsAccount
+
   const getProceedText = () => {
     if (isExistingSafeMode) return t('Open dashboard')
-    if (privacyPools.isAdding) return t('Adding...')
-    if (isAdding) return isRemovalOnly ? t('Removing...') : t('Adding...')
-    if (!isRemovalOnly) return t('Proceed')
+    // A sync added its accounts already, so proceeding only saves their names
+    if (isSyncedMode) return t('Done')
+    if (isRemovalOnly) {
+      if (isAdding) return t('Removing...')
 
-    return accountsToRemove.length > 1
-      ? t('Remove {{count}} accounts', { count: accountsToRemove.length })
-      : t('Remove 1 account')
+      return accountsToRemove.length > 1
+        ? t('Remove {{count}} accounts', { count: accountsToRemove.length })
+        : t('Remove 1 account')
+    }
+    if (accountsToRemove.length) {
+      if (isAdding) return t('Updating...')
+
+      return t('Update {{count}} accounts', { count: fields.length + accountsToRemove.length })
+    }
+    if (isNewAccount) {
+      if (isAdding || privacyPools.isAdding) return t('Creating...')
+
+      // A Privacy Pools account is shown instead of the fields
+      const createCount = privacyPoolsAccount ? 1 : fields.length
+      return createCount === 1
+        ? t('Create 1 account')
+        : t('Create {{count}} accounts', { count: createCount })
+    }
+    if (isAdding) return t('Adding...')
+
+    return fields.length === 1
+      ? t('Add 1 account')
+      : t('Add {{count}} accounts', { count: fields.length })
   }
 
   return {

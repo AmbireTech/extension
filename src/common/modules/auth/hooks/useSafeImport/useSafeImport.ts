@@ -150,12 +150,7 @@ const useSafeImport = () => {
     return safe && safeInfo && accounts.find((a) => a.addr === safe && !!a.safeCreation)
   }, [safe, safeInfo, accounts])
 
-  const btnText = useMemo(() => {
-    if (isSafeImported) {
-      return isLoading ? 'Proceeding...' : 'Proceed'
-    }
-    return isLoading ? 'Importing...' : 'Import'
-  }, [isSafeImported, isLoading])
+  const btnText = isLoading ? 'Loading...' : 'Continue'
 
   return {
     control,

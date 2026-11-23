@@ -133,7 +133,7 @@ const SafeImportByOwnerScreen = () => {
               <Button
                 testID="import-safe-owner-button"
                 size="large"
-                text={t('Import')}
+                text={t('Continue')}
                 hasBottomSpacing={false}
                 onPress={handleImport}
                 disabled={isImportButtonDisabled}
