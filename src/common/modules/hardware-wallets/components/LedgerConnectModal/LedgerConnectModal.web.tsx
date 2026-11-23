@@ -147,6 +147,7 @@ const LedgerConnectModal = ({
       {displayOptionToAuthorize && (
         <Button
           text={isLoading ? t('Connecting...') : t('Authorize & Connect')}
+          hasBottomSpacing={false}
           disabled={isLoading}
           style={{ width: 264, ...flexbox.alignSelfCenter }}
           onPress={onPressNext}

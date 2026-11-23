@@ -67,6 +67,7 @@ const HideTokenModal = ({
       >
         <Button
           testID="yes-hide-it-text"
+          hasBottomSpacing={false}
           type="primary"
           text={t('Yes, hide it!')}
           style={flexbox.flex1}

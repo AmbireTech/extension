@@ -531,6 +531,7 @@ const AccountsSettingsScreen = () => {
         <View style={flexbox.alignCenter}>
           <Button
             testID="confirm-remove-account-button"
+            hasBottomSpacing={false}
             type="danger"
             style={spacings.mtTy}
             text={t('Remove account')}
@@ -571,6 +572,7 @@ const AccountsSettingsScreen = () => {
         <View style={flexbox.alignCenter}>
           <Button
             testID="confirm-remove-privacy-pools-account-button"
+            hasBottomSpacing={false}
             type="danger"
             style={spacings.mtTy}
             text={t('Remove account')}
