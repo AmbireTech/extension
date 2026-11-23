@@ -3,8 +3,8 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
 
 import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
-import Alert from '@common/components/Alert'
 import Banner from '@common/components/Banner'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -21,6 +21,7 @@ import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsActivityPage from '@web/modules/privacy-pools/components/PrivacyPoolsActivityPage'
+import PrivacyPoolsGetStartedGuide from '@web/modules/privacy-pools/components/PrivacyPoolsGetStartedGuide'
 import PrivacyPoolsOverview from '@web/modules/privacy-pools/components/PrivacyPoolsOverview'
 import PrivacyPoolsTokensPage, {
   PRIVACY_POOLS_TABS
@@ -96,7 +97,8 @@ const PrivacyPoolsDashboardScreen = () => {
     [networkRows]
   )
 
-  // What can be sent to the account from a public one, by the pools of the networks it is read on
+  // What can be sent to the account from a public one, by the pools of the networks it is read on.
+  // The guide's top up step names them.
   const depositableSymbols = useMemo(() => {
     const symbols = networkRows.flatMap(
       ({ chainId }) =>
@@ -108,24 +110,12 @@ const PrivacyPoolsDashboardScreen = () => {
     return [...new Set(symbols)]
   }, [networkRows])
 
-  // Only once read: before that, an empty list does not mean an empty account
-  const isEmpty = isBackedUp && balancesState === 'ready' && !balances.length
-  const topUpText = useMemo(() => {
-    if (!depositableSymbols.length) return null
-
-    const tokens =
-      depositableSymbols.length === 1
-        ? depositableSymbols[0]
-        : t('{{tokens}} or {{lastToken}}', {
-            tokens: depositableSymbols.slice(0, -1).join(', '),
-            lastToken: depositableSymbols[depositableSymbols.length - 1]
-          })
-
-    return t(
-      'You can top up this private account by sending {{tokens}} from any of your public accounts.',
-      { tokens }
-    )
-  }, [depositableSymbols, t])
+  // Offered by the empty token list, to explain how the account works and how to top it up
+  const {
+    ref: getStartedGuideSheetRef,
+    open: openGetStartedGuide,
+    close: closeGetStartedGuide
+  } = useSheetRef()
 
   // Above the tabs row, in place of the regular dashboard's banners
   const banners = useMemo(
@@ -133,16 +123,6 @@ const PrivacyPoolsDashboardScreen = () => {
       <View>
         {/* Under the overview card, like on the regular dashboard */}
         <RecoveryPhraseBackupBanner />
-        {isEmpty && !!topUpText && (
-          // As the title, as the alert shows its icon on the title's row and the text below it
-          <Alert
-            type="info"
-            size="sm"
-            titleWeight="regular"
-            title={topUpText}
-            style={spacings.mbTy}
-          />
-        )}
         {/* A first read takes a while. Locking skips queued networks, hence "keep unlocked". */}
         {!!firstSyncNetworkNames.length && (
           <Banner
@@ -156,7 +136,7 @@ const PrivacyPoolsDashboardScreen = () => {
         )}
       </View>
     ),
-    [firstSyncNetworkNames, isEmpty, t, topUpText]
+    [firstSyncNetworkNames, t]
   )
 
   // See PrivacyPoolsSendScreen
@@ -208,11 +188,17 @@ const PrivacyPoolsDashboardScreen = () => {
               unavailableReason={unavailableReason}
               isWaitingForBackup={!!selectedAccount && !isBackedUp}
               networkFilterName={networkFilterName}
+              onGetStarted={openGetStartedGuide}
             />
             <PrivacyPoolsActivityPage openTab={openTab} sessionId={sessionId} />
           </DashboardPagesCarousel>
         </View>
       </View>
+      <PrivacyPoolsGetStartedGuide
+        sheetRef={getStartedGuideSheetRef}
+        closeBottomSheet={closeGetStartedGuide}
+        depositableSymbols={depositableSymbols}
+      />
       {/* The first time a Privacy Pools account opens, which is right after it is added */}
     </LayoutWrapper>
   )
