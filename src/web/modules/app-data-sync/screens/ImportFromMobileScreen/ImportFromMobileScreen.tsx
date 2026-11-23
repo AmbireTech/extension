@@ -1,11 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, ImageSourcePropType, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheMobile from '@common/assets/images/sync-steps-on-the-mobile.gif'
 import ScanIcon from '@common/assets/svg/ScanIcon'
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -70,7 +70,7 @@ const ImportFromMobileScreen = () => {
     ref: passwordSheetRef,
     open: openPasswordSheet,
     close: closePasswordSheet
-  } = useModalize()
+  } = useSheetRef()
   const [isScanning, setIsScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState<QrScanProgress | null>(null)
   const [stepIndex, setStepIndex] = useState(0)

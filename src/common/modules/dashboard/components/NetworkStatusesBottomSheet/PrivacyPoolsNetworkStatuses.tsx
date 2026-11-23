@@ -1,15 +1,10 @@
 import React, { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView } from 'react-native'
-
 import { PrivacyPoolsChainState } from '@ambire-common/interfaces/privacyPools'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
 import { formatSyncDuration } from './helpers'
-import NetworkStatusesHeader from './NetworkStatusesHeader'
 import { Cell, NetworkStatusRowShell } from './NetworkStatusRow'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -24,8 +19,8 @@ const NO_VALUE = '—'
 const isSyncing = (chain?: PrivacyPoolsChainState) => chain?.syncStatus === 'syncing'
 
 /**
- * A Privacy Pools account's statuses table: each network's last read, whether its first read is
- * done, and how long the first and latest reads took.
+ * The rows of a Privacy Pools account's statuses table: each network's last read, whether its
+ * first read is done, and how long the first and latest reads took.
  */
 const PrivacyPoolsNetworkStatuses = () => {
   const { t } = useTranslation()
@@ -36,15 +31,6 @@ const PrivacyPoolsNetworkStatuses = () => {
     selectSupportedChainIds
   )
   const { state: chains } = useController('PrivacyPoolsController', selectChains)
-
-  const columns = useMemo(
-    () => [
-      { label: t('Initial sync'), flex: 1 },
-      { label: t('Initial sync time'), flex: 1 },
-      { label: t('Last sync time'), flex: 1 }
-    ],
-    [t]
-  )
 
   const rows = useMemo(
     () =>
@@ -88,31 +74,26 @@ const PrivacyPoolsNetworkStatuses = () => {
 
   return (
     <>
-      <NetworkStatusesHeader networkLabel={t('Network')} columns={columns} />
-      <ScrollView style={flexbox.flex1} contentContainerStyle={spacings.ptTy}>
-        {rows.map(({ chainId, name, chain }) => (
-          <NetworkStatusRowShell
-            key={chainId}
-            networkKey={chainId}
-            name={name}
-            lastUpdatedAt={chain?.lastSyncedAt ?? undefined}
-            isLoading={isSyncing(chain)}
-            theme={theme}
-          >
-            <Cell {...getInitialSyncCell(chain)} />
-            <Cell
-              label={
-                chain?.initialSyncDuration
-                  ? formatSyncDuration(chain.initialSyncDuration)
-                  : NO_VALUE
-              }
-              backgroundColor="transparent"
-              color={theme.secondaryText}
-            />
-            <Cell {...getLastSyncCell(chain)} />
-          </NetworkStatusRowShell>
-        ))}
-      </ScrollView>
+      {rows.map(({ chainId, name, chain }) => (
+        <NetworkStatusRowShell
+          key={chainId}
+          networkKey={chainId}
+          name={name}
+          lastUpdatedAt={chain?.lastSyncedAt ?? undefined}
+          isLoading={isSyncing(chain)}
+          theme={theme}
+        >
+          <Cell {...getInitialSyncCell(chain)} />
+          <Cell
+            label={
+              chain?.initialSyncDuration ? formatSyncDuration(chain.initialSyncDuration) : NO_VALUE
+            }
+            backgroundColor="transparent"
+            color={theme.secondaryText}
+          />
+          <Cell {...getLastSyncCell(chain)} />
+        </NetworkStatusRowShell>
+      ))}
     </>
   )
 }

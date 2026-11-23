@@ -3,6 +3,7 @@ import { LayoutChangeEvent, View } from 'react-native'
 
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
+import { useIsSheetSectionHeaderGlass } from '@common/components/BottomSheet/SheetStickyHeader/SheetSectionHeaderGlassContext'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -75,6 +76,8 @@ const AccountSelectSectionHeader = ({
 }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  // In a sheet, the glass behind the header shows through
+  const isGlass = useIsSheetSectionHeaderGlass()
   const isVisibleSection = type === 'visible'
   const SectionIcon = isVisibleSection ? VisibilityIcon : InvisibilityIcon
   const accentColor = isVisibleSection ? theme.successText : theme.secondaryText
@@ -91,7 +94,7 @@ const AccountSelectSectionHeader = ({
       style={{
         height: isVisibleSection ? visibleHeaderHeight : ACCOUNT_SELECT_HIDDEN_HEADER_HEIGHT,
         paddingTop: isVisibleSection ? 0 : SEPARATOR_TOP_PADDING,
-        backgroundColor: theme.primaryBackground
+        backgroundColor: isGlass ? undefined : theme.primaryBackground
       }}
     >
       {/* A background line, as a top border can leak onto the next screen on native */}

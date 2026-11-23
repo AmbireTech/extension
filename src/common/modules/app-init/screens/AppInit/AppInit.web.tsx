@@ -18,6 +18,7 @@ import GestureHandler from '@common/modules/app-init/screens/AppInit/GestureHand
 import { AuthProvider } from '@common/modules/auth/contexts/authContext'
 import { OnboardingNavigationProvider } from '@common/modules/auth/contexts/onboardingNavigationContext'
 import { PortalHost, PortalProvider } from '@gorhom/portal'
+import { TrueSheetProvider } from '@lodev09/react-native-true-sheet'
 import SidePanelTooNarrowOverlay from '@web/components/SidePanelTooNarrowOverlay'
 import { isExtension } from '@web/constants/browserapi'
 import { ControllersMiddlewareProvider } from '@web/contexts/controllersMiddlewareContext'
@@ -33,13 +34,14 @@ const AppInit = () => {
   if (!fontsLoaded) return null
 
   const appContent = (
-    <>
+    // Sheets portal to the global host, and from there into the provider's container on the page
+    <TrueSheetProvider>
       <AppRouter />
       <PortalHost name="global" />
       {/* Above everything, the splash included - the width is known right away, so a too-narrow
       sidebar shows this from the first frame instead of the splash or the dashboard first */}
       <SidePanelTooNarrowOverlay />
-    </>
+    </TrueSheetProvider>
   )
 
   return (

@@ -57,7 +57,7 @@ export class BasePage {
     // ignored by the app and the menu never opens. We retry the click, but only while the
     // BottomSheet isn't attached yet: toggleMenu (useSelect.ts) flips isMenuOpen on every call,
     // so clicking again once it's already open/opening would close it right back. The
-    // BottomSheet only carries testID="bottom-sheet" while isOpen is true (BottomSheet.web.tsx),
+    // BottomSheet only carries testID="bottom-sheet" while isOpen is true (BottomSheet.tsx),
     // so "attached" mirrors that state directly, safe to use as the click-guard even before any
     // animation finishes.
     const bottomSheet = this.page.getByTestId(selectors.bottomSheet)

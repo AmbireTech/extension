@@ -1,9 +1,9 @@
 import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -32,7 +32,7 @@ const PrivacyStatus: FC<PrivacyStatusProps> = (props) => {
   const { stage, rating, leaks, cover, style } = props
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
   const handleOpen = useCallback(() => openSheet(), [openSheet])
 
   const severity = getPrivacySeverity(stage, rating, cover)

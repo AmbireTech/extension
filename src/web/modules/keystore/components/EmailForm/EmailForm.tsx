@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { EmailVaultState } from '@ambire-common/controllers/emailVault/emailVault'
 import { isEmail } from '@ambire-common/services/validations'
 import KeyStoreIcon from '@common/assets/svg/KeyStoreIcon'
 import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Input from '@common/components/Input'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -38,7 +38,7 @@ const EmailForm = () => {
     ref: confirmationModalRef,
     open: openConfirmationModal,
     close: closeConfirmationModal
-  } = useModalize()
+  } = useSheetRef()
 
   const isWaitingConfirmation = useMemo(
     () => emailVault.currentState === EmailVaultState.WaitingEmailConfirmation,
@@ -144,11 +144,12 @@ const EmailForm = () => {
       <BottomSheet
         id="keystore-reset-confirmation-modal"
         sheetRef={confirmationModalRef}
+        closeBottomSheet={handleCancelLoginAttempt}
         style={{ width: 400 }}
         autoOpen={isWaitingConfirmation}
         shouldBeClosableOnDrag={false}
       >
-        <EmailConfirmation email={formEmail} handleCancelLoginAttempt={handleCancelLoginAttempt} />
+        <EmailConfirmation email={formEmail} />
       </BottomSheet>
     </>
   )

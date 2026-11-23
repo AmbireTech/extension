@@ -1,16 +1,14 @@
 import React, { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Dialog from '@common/components/Dialog'
 import DialogButton from '@common/components/Dialog/DialogButton'
 import DialogFooter from '@common/components/Dialog/DialogFooter'
 import Dropdown from '@common/components/Dropdown'
-import { isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
@@ -23,7 +21,7 @@ const ManageContact: FC<Props> = ({ address, name }) => {
   const { theme } = useTheme()
   const { addToast } = useToast()
   const { dispatch: addressBookDispatch } = useController('AddressBookController')
-  const { ref: dialogRef, open: openDialog, close: closeDialog } = useModalize()
+  const { ref: dialogRef, open: openDialog, close: closeDialog } = useSheetRef()
 
   const menu = useMemo(
     () => [
@@ -59,11 +57,8 @@ const ManageContact: FC<Props> = ({ address, name }) => {
         closeDialog={closeDialog}
       >
         <DialogFooter horizontalAlignment="justifyEnd">
-          {isWeb && (
-            <DialogButton text={t('Close')} type="secondary" onPress={() => closeDialog()} />
-          )}
           <DialogButton
-            style={isWeb ? spacings.ml : flexbox.flex1}
+            style={flexbox.flex1}
             text={t('Delete')}
             type="danger"
             onPress={removeContact}

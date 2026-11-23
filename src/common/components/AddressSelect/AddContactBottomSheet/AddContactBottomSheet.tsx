@@ -1,15 +1,15 @@
 import React, { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Modalize } from 'react-native-modalize'
 
 import AddressBookContact from '@common/components/AddressBookContact'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -17,7 +17,7 @@ import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
   address: string
 }
@@ -71,16 +71,6 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
         absolute={false}
         mobileStyle={{ ...flexbox.directionRow, columnGap: SPACING_TY }}
       >
-        {/* On web the header's back arrow already closes the sheet */}
-        {isMobile && (
-          <Button
-            hasBottomSpacing={false}
-            type="secondary"
-            text={t('Cancel')}
-            onPress={closeBottomSheet}
-            style={flexbox.flex1}
-          />
-        )}
         <Button
           testID="form-add-to-contacts-button"
           style={isWeb ? { minWidth: 160 } : flexbox.flex1}

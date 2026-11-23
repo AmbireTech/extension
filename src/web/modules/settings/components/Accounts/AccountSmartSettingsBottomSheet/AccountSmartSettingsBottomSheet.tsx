@@ -1,7 +1,6 @@
 import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import { Account } from '@ambire-common/interfaces/account'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
@@ -10,10 +9,12 @@ import MetamaskIcon from '@common/assets/svg/Metamask/MetamaskIcon'
 import Alert from '@common/components/Alert'
 import Badge from '@common/components/Badge'
 import BottomSheet from '@common/components/BottomSheet'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import useTheme from '@common/hooks/useTheme'
@@ -30,7 +31,7 @@ import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerCon
 import { installLedgerApp } from '@web/modules/hardware-wallet/controllers/LedgerController/ledgerSideload'
 
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
   onClosed?: () => void
   account: Account | null
@@ -86,14 +87,13 @@ const AccountSmartSettingsBottomSheet: FC<Props> = ({
       style={{ maxWidth: TAB_CONTENT_WIDTH * 0.85, ...spacings.pvMd }}
     >
       <>
-        <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-          <PanelBackButton onPress={closeBottomSheet} style={spacings.mrTy} />
+        <SheetHeaderRow>
           {account ? (
-            <PanelTitle title={`${account.preferences.label} smart settings`} style={text.left} />
+            <PanelTitle title={`${account.preferences.label} smart settings`} style={text.center} />
           ) : (
             <SkeletonLoader width={200} height={24} />
           )}
-        </View>
+        </SheetHeaderRow>
         <Authorization7702>
           {is7702 && networkRows.length ? (
             <>

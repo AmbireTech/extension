@@ -6,10 +6,11 @@ import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { LegendsSvgProps } from '@legends/types/svg'
 
-import { tooltipManager } from '@common/components/Tooltip/TooltipManager'
+import useShowTooltipAtPress from '@common/components/Tooltip/useShowTooltipAtPress'
 
 const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, ...rest }) => {
   const { theme } = useTheme()
+  const showTooltipAtPress = useShowTooltipAtPress()
 
   const tooltipData = React.useMemo(() => {
     if (rest['data-tooltip-id']) return { id: rest['data-tooltip-id'] }
@@ -39,7 +40,9 @@ const InfoIcon: React.FC<LegendsSvgProps> = ({ width = 24, height = 24, color, .
   if (isMobile && tooltipData?.id) {
     return (
       <Pressable
-        onPress={() => tooltipManager.show(tooltipData.id, tooltipData.content, tooltipData.title)}
+        onPress={(event) =>
+          showTooltipAtPress(event, tooltipData, { width: Number(width), height: Number(height) })
+        }
       >
         {icon}
       </Pressable>

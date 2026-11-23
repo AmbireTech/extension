@@ -1,7 +1,6 @@
 import { formatUnits, isAddress, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import {
   getPrivacyPoolsAsset,
@@ -17,6 +16,7 @@ import {
 } from '@ambire-common/libs/transfer/fieldAmounts'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
@@ -125,15 +125,16 @@ const PrivacyPoolsSendScreen = () => {
     recheckWithdrawal,
     broadcastWithdrawal,
     dismissOperation,
-    isAvailable
+    isAvailable,
+    balancesState
   } = usePrivacyPools()
   const { withdrawTokens, withdrawTokenSections } = usePrivacyPoolsTokens({ getNetworkName })
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
   const {
     ref: broadcasterSheetRef,
     open: openBroadcasterSheet,
     close: closeBroadcasterSheet
-  } = useModalize()
+  } = useSheetRef()
   const [TransactionSummary, setTransactionSummary] = useState<TransactionSummaryType | null>(null)
   const [isTransactionSummaryLoaded, setIsTransactionSummaryLoaded] = useState(false)
 
@@ -216,18 +217,20 @@ const PrivacyPoolsSendScreen = () => {
     [withdrawTokens, selectedTokenValue]
   )
 
-  // Shown in the select itself, like the regular Send, so the form does not grow
-  const noTokensOption: SelectValue = useMemo(
+  // Shown in the select itself, like the regular Send, so the form does not grow. Before the first
+  // read an empty list does not mean an empty account, so it says the tokens are loading instead.
+  const isReadingTokens = balancesState === 'loading' || balancesState === 'not-loaded'
+  const emptyTokenOption: SelectValue = useMemo(
     () => ({
-      value: 'noTokens',
+      value: isReadingTokens ? 'loading' : 'noTokens',
       label: (
         <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
-          {t('No tokens found')}
+          {isReadingTokens ? t('Loading tokens...') : t('No tokens found')}
         </Text>
       ),
       icon: null
     }),
-    [t]
+    [isReadingTokens, t]
   )
 
   const handleChangeToken = useCallback(
@@ -567,7 +570,7 @@ const PrivacyPoolsSendScreen = () => {
             renderSectionHeader={renderPrivacyPoolsTokenSectionHeader}
             getSectionHeaderHeight={getPrivacyPoolsTokenSectionHeaderHeight}
             sectionOptionHeight={PRIVACY_POOLS_DEPOSIT_OPTION_HEIGHT}
-            fromTokenValue={selectedToken || noTokensOption}
+            fromTokenValue={selectedToken || emptyTokenOption}
             fromAmountValue={fieldMode === 'token' ? amount : amounts.amountInFiat}
             fromTokenAmountSelectDisabled={!withdrawTokens.length || isTransferInFlight}
             handleChangeFromToken={handleChangeToken}

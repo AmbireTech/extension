@@ -151,20 +151,13 @@ const PayOption = ({
             <Text weight="semiBold" fontSize={14} numberOfLines={1}>
               {formattedFee}
             </Text>
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              {hasUsdAmount && (
-                <Text fontSize={12} numberOfLines={1} style={spacings.mrTy}>
-                  {formattedTokenAmount}
-                </Text>
-              )}
-              <Text
-                fontSize={isMobile ? 10 : 12}
-                numberOfLines={1}
-                appearance={disabledTextAppearance}
-              >
+            {/* One text, so the reason follows the amount and wraps onto a second line, uncut */}
+            <Text fontSize={12}>
+              {hasUsdAmount && `${formattedTokenAmount} `}
+              <Text fontSize={isMobile ? 10 : 12} appearance={disabledTextAppearance}>
                 {disabledReason}
               </Text>
-            </View>
+            </Text>
           </View>
         ) : (
           <View>

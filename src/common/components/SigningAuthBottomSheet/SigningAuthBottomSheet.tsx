@@ -1,12 +1,12 @@
 import React, { useCallback, useState } from 'react'
 import { View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 import { SvgProps } from 'react-native-svg'
 
 import { isValidPassword } from '@ambire-common/services/validations'
 import BiometricsPrompt, { SwitchToBiometricsButton } from '@common/components/BiometricsPrompt'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import InputPassword from '@common/components/InputPassword'
 import Text from '@common/components/Text'
@@ -36,7 +36,7 @@ export type SigningAuthProps = {
 }
 
 type Props = SigningAuthProps & {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   onCancel: () => void
 }
 

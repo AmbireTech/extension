@@ -1,13 +1,12 @@
 import { StyleSheet, ViewStyle } from 'react-native'
 
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
-  modalHeader: ViewStyle
   rpcUrlsContainer: ViewStyle
   selectRpcItem: ViewStyle
   selectRpcItemBorder: ViewStyle
@@ -17,19 +16,6 @@ interface Style {
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
-    modalHeader: {
-      ...flexbox.directionRow,
-      ...flexbox.alignCenter,
-      ...(isWeb ? spacings.mhMi : {}),
-      ...(isWeb ? spacings.mvMi : {}),
-      ...(isMobile ? spacings.mbSm : {}),
-      ...(isMobile ? spacings.phSm : spacings.phXl),
-      borderRadius: 12,
-      height: 60,
-      backgroundColor: theme.secondaryBackground,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.neutral400
-    },
     rpcUrlsContainer: {
       backgroundColor: theme.secondaryBackground,
       ...common.borderRadiusPrimary,

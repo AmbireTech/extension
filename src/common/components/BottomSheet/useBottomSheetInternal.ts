@@ -9,11 +9,9 @@ import { HEADER_HEIGHT } from '@common/modules/header/components/Header/Header'
 import { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
-import { BottomSheetProps } from './BottomSheet'
+import { BottomSheetProps } from './types'
 import { bottomSheetCloseEventStream, openBottomSheetsCount } from './bottomSheetEventStream'
-import { BOTTOM_SHEET_Z_INDEX } from './styles'
-
-const ANIMATION_DURATION: number = 250
+import type { SheetRef } from './useSheetRef'
 
 const { isPopup, isMobileApp } = getUiType()
 
@@ -23,7 +21,6 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
     type: _type,
     sheetRef,
     autoOpen = false,
-    customZIndex,
     modalTopOffset: customModalTopOffset
   } = props
   const { closeBottomSheet: _closeBottomSheet = () => {} } = props
@@ -39,7 +36,6 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
   const isModal = type === 'modal'
   const [isOpen, setIsOpen] = useState(false)
   const prevIsOpen = usePrevious(isOpen)
-  const [isBackdropVisible, setIsBackdropVisible] = useState(false)
   const [openCountAtOpenTime, setOpenCountAtOpenTime] = useState(0)
   const { top } = useSafeAreaInsets()
 
@@ -48,10 +44,8 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
 
   const autoOpened: React.MutableRefObject<boolean> = useRef(false)
   const setRef = useCallback(
-    (node: HTMLElement | null) => {
-      // @ts-ignore
-
-      sheetRef.current = node
+    (handle: SheetRef | null) => {
+      sheetRef.current = handle
       // check if component is mounted and if should autoOpen
       if (autoOpen && sheetRef.current && !autoOpened.current) {
         sheetRef.current.open()
@@ -66,13 +60,6 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
 
   useEffect(() => {
     isOpenRef.current = isOpen
-    if (prevIsOpen && !isOpen) {
-      setTimeout(() => {
-        // Delays the backdrop unmounting because of the closing animation duration
-        setIsBackdropVisible(false)
-      }, ANIMATION_DURATION)
-    }
-
     if (isOpen && !prevIsOpen) {
       setOpenCountAtOpenTime(openBottomSheetsCount.value + 1)
       openBottomSheetsCount.next(openBottomSheetsCount.value + 1)
@@ -117,15 +104,6 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
     return topOffset
   }, [customModalTopOffset, isModal, isNarrowWebLayout, top])
 
-  // Compute dynamic zIndex based on nesting level when the sheet opened
-  // Each nested sheet gets a higher zIndex so its backdrop renders on top of parent sheets
-  const computedZIndex = useMemo(() => {
-    if (customZIndex) return customZIndex
-    // Add (openCountAtOpenTime - 1) * 2 to base zIndex to ensure nested sheets stack properly
-    // Multiply by 2 to account for both the sheet and its backdrop
-    return BOTTOM_SHEET_Z_INDEX + (openCountAtOpenTime - 1) * 2
-  }, [customZIndex, openCountAtOpenTime])
-
   return {
     modalTopOffset,
     setRef,
@@ -133,10 +111,9 @@ const useBottomSheetInternal = (props: BottomSheetProps) => {
     isModal,
     isOpen,
     setIsOpen,
-    isBackdropVisible,
-    setIsBackdropVisible,
     id,
-    computedZIndex
+    /** Opened while another sheet was up, so it was opened from that one. */
+    isNested: openCountAtOpenTime > 1
   }
 }
 

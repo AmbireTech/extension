@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import { SelectedAccountBalanceError } from '@ambire-common/libs/selectedAccount/errors'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import useController from '@common/hooks/useController'
 import {
   getBalanceAffectedNetworkNames,
@@ -50,7 +50,7 @@ const useBalanceAffectingErrors = () => {
   // never sees errors from a old/stale RPC that is about to be replaced.
   const isLoadingTakingTooLong = areNetworksFetchingFromRelayer ? false : shouldShowPartialResult
   const { state: isOffline } = useController('MainController', selectIsOffline)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   /** Because errors change frequently due to background updates we have to store a snapshot
    * of the errors when the user clicks on the warning icon to display the errors in the bottom sheet.
    * Otherwise the user may want to screenshot the errors and the errors may change.

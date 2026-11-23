@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LayoutChangeEvent, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoverablePressable from '@common/components/HoverablePressable'
@@ -14,7 +14,7 @@ import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isPrivacyPoolsEnabled, isPrivacyPoolsSupported } from '@common/config/env'
+import { isPrivacyPoolsSupported } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -83,12 +83,12 @@ const AccountSelectScreen = () => {
     'SelectedAccountController',
     selectPrivacyPoolsAccountId
   )
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
@@ -213,7 +213,7 @@ const AccountSelectScreen = () => {
     [listBottomInset]
   )
   const noAccountsFound = <Text>{t('No accounts found')}</Text>
-  const isPrivateTabOpen = isPrivacyPoolsEnabled && activeTab === 'private'
+  const isPrivateTabOpen = isPrivacyPoolsSupported && activeTab === 'private'
   const listStyle = isPrivacyPoolsSupported ? styles.containerBelowTabs : styles.container
 
   const addAccountButton = (

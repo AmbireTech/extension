@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { ColorValue, StyleSheet, Text as RNText, TextProps, TextStyle } from 'react-native'
 
 import { isAndroid } from '@common/config/env'
@@ -8,6 +8,7 @@ import {
   ROBOTO_FONT_FAMILIES
 } from '@common/hooks/useFonts'
 import useTheme from '@common/hooks/useTheme'
+import { SheetHeaderTitleContext } from '@common/components/BottomSheet/SheetHeaderRow/SheetHeaderTitleContext'
 
 import styles, { TEXT_SCALE } from './styles'
 
@@ -65,6 +66,8 @@ const textWeights: { [key in TextWeight]: string } = {
   mono_regular: GEIST_MONO_FONT_FAMILIES.REGULAR
 }
 
+const LEFT_ALIGN_STYLE: TextStyle = { textAlign: 'left' }
+
 const Text: React.FC<Props> = ({
   type = 'regular',
   weight = 'regular',
@@ -75,6 +78,7 @@ const Text: React.FC<Props> = ({
   color,
   style = {},
   shouldScale = false,
+  onTextLayout,
   ...rest
 }) => {
   const fontSize = _fontSize ? (shouldScale ? _fontSize + TEXT_SCALE : _fontSize) : _fontSize
@@ -84,6 +88,16 @@ const Text: React.FC<Props> = ({
   // the theme. Building a map of all nine of them to read one, on every render of every
   // one of the hundreds of texts a screen holds, is what this replaces.
   const appearanceColor: ColorValue = theme[appearance]
+  // In the title of a native sheet's header: it wraps up to the caller's `numberOfLines` and
+  // reports its lines, so the row can move a long title left and line the buttons up with line one
+  const sheetHeaderTitle = useContext(SheetHeaderTitleContext)
+  const handleTextLayout: TextProps['onTextLayout'] = sheetHeaderTitle
+    ? (e) => {
+        const { lines } = e.nativeEvent
+        sheetHeaderTitle.reportLines(lines.length, lines[0]?.height ?? 0)
+        onTextLayout?.(e)
+      }
+    : onTextLayout
 
   return (
     <RNText
@@ -104,8 +118,10 @@ const Text: React.FC<Props> = ({
         },
         !!appearance && { color: appearanceColor },
         !!color && { color },
-        style
+        style,
+        sheetHeaderTitle?.align === 'left' && LEFT_ALIGN_STYLE
       ])}
+      onTextLayout={handleTextLayout}
       {...rest}
     >
       {children}

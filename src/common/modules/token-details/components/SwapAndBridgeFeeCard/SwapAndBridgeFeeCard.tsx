@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { WALLET_TOKEN } from '@ambire-common/consts/addresses'
 import { ETHEREUM_CHAIN_ID } from '@ambire-common/consts/networks'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -33,7 +33,7 @@ const SwapAndBridgeFeeCardContent = () => {
     ref: feeInfoSheetRef,
     open: openFeeInfoBottomSheet,
     close: closeFeeInfoBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const feePercent = useStkWalletFeePercent()
   const handleViewFeeTiers = useCallback(() => openFeeInfoBottomSheet(), [openFeeInfoBottomSheet])
   const handleStakeNow = useCallback(

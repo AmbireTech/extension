@@ -1,16 +1,15 @@
 import React, { useCallback, useContext, useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { EmailVaultState } from '@ambire-common/controllers/emailVault/emailVault'
 import { isEmail } from '@ambire-common/services/validations'
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import DisabledPasswordRecovery from '@common/assets/svg/DisabledPasswordRecovery'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
-import HoverablePressable from '@common/components/HoverablePressable'
 import Input from '@common/components/Input'
 import { PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
@@ -29,8 +28,6 @@ import EmailConfirmation from '@web/modules/keystore/components/EmailConfirmatio
 import EmailVaultDisabledAlert from '@web/modules/keystore/components/EmailVaultDisabledAlert'
 import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
-
-const CLOSE_ICON_SIZE = 14
 
 const DevicePasswordRecoverySettingsScreen = () => {
   const { state: ev, dispatch: evDispatch } = useController('EmailVaultController')
@@ -51,14 +48,14 @@ const DevicePasswordRecoverySettingsScreen = () => {
     ref: passwordConfirmationModalRef,
     open: openPasswordConfirmationModal,
     close: closePasswordConfirmationModal
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: confirmationModalRef,
     open: openConfirmationModal,
     close: closeConfirmationModal
-  } = useModalize()
+  } = useSheetRef()
 
-  const { ref: successModalRef, open: openSuccessModal, close: closeSuccessModal } = useModalize()
+  const { ref: successModalRef, open: openSuccessModal, close: closeSuccessModal } = useSheetRef()
 
   const {
     control,
@@ -252,8 +249,12 @@ const DevicePasswordRecoverySettingsScreen = () => {
         text={t('Please enter your extension password to disable email recovery.')}
         onPasswordConfirmed={handlePasswordConfirmed}
       />
-      <BottomSheet id="backup-password-confirmation-modal" sheetRef={confirmationModalRef}>
-        <EmailConfirmation email={email} handleCancelLoginAttempt={handleCancelLoginAttempt} />
+      <BottomSheet
+        id="backup-password-confirmation-modal"
+        sheetRef={confirmationModalRef}
+        closeBottomSheet={handleCancelLoginAttempt}
+      >
+        <EmailConfirmation email={email} />
       </BottomSheet>
       <BottomSheet
         id="backup-password-success-modal"
@@ -262,14 +263,9 @@ const DevicePasswordRecoverySettingsScreen = () => {
         // This screen is hidden from the sidebar once recovery is off, so send the user to biometrics unlock
         onClosed={navigateToGeneralSettings}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbXl]}>
-          {/* Balances the close button, so the title stays centered */}
-          <View style={{ width: CLOSE_ICON_SIZE }} />
-          <PanelTitle title={t('Email recovery is off')} />
-          <HoverablePressable onPress={() => closeSuccessModal()}>
-            <CloseIcon width={CLOSE_ICON_SIZE} height={CLOSE_ICON_SIZE} />
-          </HoverablePressable>
-        </View>
+        <SheetHeaderRow style={spacings.mbXl}>
+          <PanelTitle title={t('Email recovery is off')} style={text.center} />
+        </SheetHeaderRow>
         <DisabledPasswordRecovery style={[flexbox.alignSelfCenter, spacings.mbXl]} />
         <Text fontSize={16} style={[spacings.mbXl, text.center]} appearance="secondaryText">
           {t('You can no longer reset your extension password by email on this device.')}

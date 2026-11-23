@@ -6,7 +6,7 @@
 // failures for the user, and leaves bundler rejections and RPC failures to
 // Ambire's own broadcast error handling.
 
-import type { JsonRpcProvider } from 'ethers'
+import { Interface, ZeroHash, type JsonRpcProvider } from 'ethers'
 import { DeviceError, Pq1Error } from 'pq1-sdk'
 import {
   BundlerError,
@@ -19,6 +19,7 @@ import {
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 
 import { PQ1_SEND_FAILED_MESSAGE } from '../pq1/errors'
+import { PQ1_SAFE_APPROVAL_NEEDS_SYNC_MESSAGE } from '../pq1/safeApproval'
 import PQ1Signer from './PQ1Signer'
 
 jest.mock('@common/config/analytics/CrashAnalytics.web', () => ({ captureException: jest.fn() }))
@@ -36,11 +37,15 @@ const SIGNATURE = '0x5191'
 
 const mocked = <T extends (...args: never[]) => unknown>(fn: T) => fn as unknown as jest.Mock
 
-function signerWith(key: { deviceId?: string; index?: number } = {}) {
+function signerWith(
+  key: { deviceId?: string; index?: number } = {},
+  { isSafeApiEnabled = true }: { isSafeApiEnabled?: boolean } = {}
+) {
   const device = { commands: { name: 'commands' }, getInitCode: jest.fn() }
   const controller = {
     deviceId: 'device-a',
-    getUnlockedDevice: jest.fn(async () => device)
+    getUnlockedDevice: jest.fn(async () => device),
+    canUseSafeApi: jest.fn(async () => isSafeApiEnabled)
   }
   const signer = new PQ1Signer({
     addr: WALLET,
@@ -232,5 +237,78 @@ describe('PQ1Signer.broadcastAccountOp', () => {
     await expect(result).rejects.toBeInstanceOf(ExternalSignerError)
     await expect(result).rejects.toThrow('The request was rejected on the PQ1.')
     expect(submitUserOperation).not.toHaveBeenCalled()
+  })
+})
+
+describe('PQ1Signer — while the user opted out of the Safe API', () => {
+  const env = { ...process.env }
+  // A call approving a Safe transaction, which the SDK shows by fetching it from the Safe API
+  const safeApproval = {
+    to: '0x0000000000000000000000000000000000005afe',
+    value: 0n,
+    data: new Interface(['function approveHash(bytes32 hashToApprove)']).encodeFunctionData(
+      'approveHash',
+      [ZeroHash]
+    )
+  }
+  const sendWith = (signer: PQ1Signer, calls: { to: string; value: bigint; data: string }[]) =>
+    signer.broadcastAccountOp({
+      chainId: 1n,
+      provider: {} as JsonRpcProvider,
+      calls,
+      gasFeePayment: { gasPrice: 2n }
+    })
+
+  beforeEach(() => {
+    process.env.REACT_APP_PIMLICO_API_KEY = 'test-key'
+    mocked(prepareTransaction).mockResolvedValue({ chainId: 1, wallet: { nonce: 3n } })
+    mocked(signPreparedTransaction).mockResolvedValue({ signed: true })
+    mocked(submitUserOperation).mockResolvedValue('0x01')
+  })
+
+  afterAll(() => {
+    process.env = env
+  })
+
+  it('refuses to approve a Safe transaction, saying why, before asking the device', async () => {
+    const { signer, controller } = signerWith({}, { isSafeApiEnabled: false })
+
+    const result = sendWith(signer, [safeApproval])
+
+    await expect(result).rejects.toBeInstanceOf(ExternalSignerError)
+    await expect(result).rejects.toThrow(PQ1_SAFE_APPROVAL_NEEDS_SYNC_MESSAGE)
+    expect(controller.getUnlockedDevice).not.toHaveBeenCalled()
+    expect(signPreparedTransaction).not.toHaveBeenCalled()
+  })
+
+  it('approves a Safe transaction while the user allows the Safe API', async () => {
+    const { signer } = signerWith({}, { isSafeApiEnabled: true })
+
+    await expect(sendWith(signer, [safeApproval])).resolves.toEqual({
+      userOpHash: '0x01',
+      nonce: 3n
+    })
+  })
+
+  it('still sends any other transaction, without asking about the Safe API', async () => {
+    const { signer, controller } = signerWith({}, { isSafeApiEnabled: false })
+
+    await expect(sendWith(signer, [{ to: WALLET, value: 1n, data: '0x' }])).resolves.toEqual({
+      userOpHash: '0x01',
+      nonce: 3n
+    })
+    expect(controller.canUseSafeApi).not.toHaveBeenCalled()
+  })
+
+  it('gives the SDK a Safe lookup that refuses, in case it reaches it another way', async () => {
+    const { signer } = signerWith({}, { isSafeApiEnabled: false })
+    mocked(signPq1Message).mockResolvedValueOnce(SIGNATURE)
+
+    await signer.signMessage('0x68656c6c6f', ctx())
+
+    const [{ ctx: sdkContext }] = mocked(signPq1Message).mock.calls[0]
+    await expect(sdkContext.safeTxService.getTransaction(1, ZeroHash)).rejects.toThrow(
+      'opted out of the Safe API'
+    )
   })
 })

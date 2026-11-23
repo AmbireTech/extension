@@ -12,6 +12,7 @@ import Main from '@common/modules/sign-message/components/Contents/main'
 import SignInWithEthereum from '@common/modules/sign-message/components/Contents/signInWithEthereum'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import SafeFooter from '@common/modules/sign-message/components/SafeFooter'
+import SignWarningModal from '@common/modules/sign-message/components/SignWarningModal'
 import useSignMessage from '@common/modules/sign-message/hooks/useSignMessage'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -59,7 +60,11 @@ const SignMessageScreen = () => {
     holdToProceedCompleteText,
     hasSafetyBanners,
     holdToProceedButtonType,
-    isResolveActionDisabled
+    isResolveActionDisabled,
+    warningToConfirmBeforeSign,
+    warningModalRef,
+    confirmWarning,
+    dismissWarning
   } = useSignMessage()
 
   // In the split second when the request window opens, but the state is not yet
@@ -196,6 +201,14 @@ const SignMessageScreen = () => {
           selectedAccountKeyStoreKeys={selectedAccountKeyStoreKeys}
           account={account}
         />
+        {!!warningToConfirmBeforeSign && (
+          <SignWarningModal
+            sheetRef={warningModalRef}
+            warning={warningToConfirmBeforeSign}
+            onConfirm={confirmWarning}
+            onCancel={dismissWarning}
+          />
+        )}
         {view === 'reinitializing' && (
           <View style={[StyleSheet.absoluteFill, flexbox.center]}>
             <Spinner />

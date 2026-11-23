@@ -3,8 +3,8 @@ import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button, { BUTTON_HEIGHT } from '@common/components/Button'
 import NumberInput from '@common/components/NumberInput'
 import { SelectValue } from '@common/components/Select/types'
@@ -75,43 +75,12 @@ const CustomHDPathBottomSheet: FC<Props> = ({
       closeBottomSheet={closeBottomSheetWrapped}
       style={{ ...spacings.ph0, ...spacings.pv0, maxWidth: 624 }}
     >
-      <View
-        style={{
-          ...flexbox.directionRow,
-          ...flexbox.justifySpaceBetween,
-          ...flexbox.alignCenter,
-          ...spacings.mhMi,
-          ...spacings.mvMi,
-          ...spacings.phXl,
-          borderRadius: 12,
-          height: 60,
-          backgroundColor: theme.secondaryBackground,
-          borderBottomWidth: 1,
-          borderBottomColor: theme.neutral400
-        }}
-      >
-        <View style={{ width: 32, height: 32 }} />
+      <SheetHeaderRow>
         <Text fontSize={20} weight="semiBold">
           {t('Custom address HD path')}
         </Text>
-        <Pressable
-          onPress={closeBottomSheetWrapped}
-          style={[
-            flexbox.center,
-            {
-              width: 32,
-              height: 32
-            }
-          ]}
-        >
-          {({ hovered }: any) => (
-            <View style={[hovered && { backgroundColor: theme.secondaryBackground }]}>
-              <CloseIcon />
-            </View>
-          )}
-        </Pressable>
-      </View>
-      <View style={[spacings.phMd, spacings.ptXl, spacings.pbMd]}>
+      </SheetHeaderRow>
+      <View style={[spacings.phMd, spacings.pbMd]}>
         <Text fontSize={16} weight="medium" style={spacings.mbSm}>
           {t('Select HD path')}
         </Text>
