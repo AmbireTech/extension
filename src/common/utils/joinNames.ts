@@ -7,11 +7,11 @@ import type { TFunction } from 'i18next'
 const joinNames = (names: string[], t: TFunction, conjunction: 'and' | 'or' = 'and'): string => {
   if (names.length <= 1) return names[0] || ''
 
-  const params = { names: names.slice(0, -1).join(', '), lastName: names[names.length - 1] }
-
-  if (conjunction === 'or') return t('{{names}} or {{lastName}}', params)
-
-  return t('{{names}} and {{lastName}}', params)
+  return t('{{names}} {{conjunction}} {{lastName}}', {
+    names: names.slice(0, -1).join(', '),
+    conjunction: t(conjunction),
+    lastName: names[names.length - 1]
+  })
 }
 
 export default joinNames
