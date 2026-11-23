@@ -54,15 +54,10 @@ const OnboardingNavigationContext = createContext<{
   isOnboardingRoute: boolean
   goToNextRoute: (routeName?: OnboardingRoute | '/', routeState?: Record<string, unknown>) => void
   goToPrevRoute: () => void
-  /** Accounts a sync added already, which the personalize step shows for naming */
-  syncedAccountAddrs: string[]
-  setSyncedAccountAddrs: (addrs: string[]) => void
   safeCreateDraft: SafeCreateDraft | null
   setSafeCreateDraft: (draft: SafeCreateDraft | null) => void
 }>({
   isOnboardingRoute: false,
-  syncedAccountAddrs: [],
-  setSyncedAccountAddrs: () => {},
   safeCreateDraft: null,
   setSafeCreateDraft: () => {},
   goToNextRoute: () => {},
@@ -120,9 +115,6 @@ const findNextEnabledRoute = (nodes: RouteNode[], targetName?: string): RouteNod
 }
 
 const ONBOARDING_HISTORY_STORAGE_KEY = 'onboarding_history'
-
-// Keeps the same (empty) array when there is nothing to drop, so the context does not change
-const dropSyncedAccountAddrs = (addrs: string[]) => (addrs.length ? [] : addrs)
 
 const loadHistory = (): string[] => {
   try {
@@ -194,8 +186,6 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
   const isOnboardingRoute = ONBOARDING_WEB_ROUTES.includes((path || '').substring(1))
   const { areAllControllerStatesLoaded } = useContext(ControllersStateLoadedContext)
 
-  const [syncedAccountAddrs, setSyncedAccountAddrs] = useState<string[]>([])
-  const hasSyncedAccounts = !!syncedAccountAddrs.length
   const [safeCreateDraft, setSafeCreateDraft] = useState<SafeCreateDraft | null>(null)
   const isSafeAlreadyInWallet = !!safeCreateDraft?.isAlreadyInWallet
 
@@ -209,8 +199,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
           route('/')
         ]
     // Nothing to add or name, so the flow skips it
-    const isPersonalizeDisabled =
-      !hasAccountAddingFlow && !hasSyncedAccounts && !isSafeAlreadyInWallet
+    const isPersonalizeDisabled = !hasAccountAddingFlow && !isSafeAlreadyInWallet
 
     const accountPickerRoutes =
       subType === 'hw'
@@ -260,14 +249,7 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       ],
       { disabled: authStatus !== AUTH_STATUS.NOT_AUTHENTICATED }
     )
-  }, [
-    hasPasswordSecret,
-    authStatus,
-    subType,
-    hasAccountAddingFlow,
-    hasSyncedAccounts,
-    isSafeAlreadyInWallet
-  ])
+  }, [hasPasswordSecret, authStatus, subType, hasAccountAddingFlow, isSafeAlreadyInWallet])
 
   const [history, setHistory] = useState<string[]>(loadHistory)
 
@@ -410,7 +392,6 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
     // Leaving the flow ends it. The reset effect below never runs in the popup, where
     // personalize can be reopened with the prepared accounts (see `getInitialRoute`).
     accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
-    setSyncedAccountAddrs(dropSyncedAccountAddrs)
     navigateRef.current('/')
     setHistory([])
   }, [onboardingRoutesTree, goBackThePlatformWay, accountPickerDispatch])
@@ -434,20 +415,10 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
 
     if (!wasOnOnboardingRoute || path === prevPath) return
 
-    // After a sync, personalize has no way back (see `useAccountPersonalize`). The browser's
-    // back cannot be blocked, so it ends the flow instead, on the dashboard.
-    const isBackFromSyncedPersonalize =
-      hasSyncedAccounts &&
-      prevPath === `/${WEB_ROUTES.accountPersonalize}` &&
-      currentRoute !== WEB_ROUTES.onboardingCompleted
-    if (isBackFromSyncedPersonalize && !getUiType().isMobileApp) navigateRef.current('/')
-
     if (ACCOUNT_ADDING_FLOW_ROUTES.includes(currentRoute)) return
 
     accountPickerDispatch({ type: 'method', params: { method: 'reset', args: [] } })
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSyncedAccountAddrs(dropSyncedAccountAddrs)
-  }, [path, prevPath, accountPickerDispatch, hasSyncedAccounts])
+  }, [path, prevPath, accountPickerDispatch])
 
   // Leaving Safe create and the steps after it (e.g. once the Safe is added) ends what was
   // entered there, so the next Safe create starts empty
@@ -527,12 +498,10 @@ const OnboardingNavigationProvider = ({ children }: { children: React.ReactNode 
       isOnboardingRoute,
       goToNextRoute,
       goToPrevRoute,
-      syncedAccountAddrs,
-      setSyncedAccountAddrs,
       safeCreateDraft,
       setSafeCreateDraft
     }),
-    [isOnboardingRoute, goToPrevRoute, goToNextRoute, syncedAccountAddrs, safeCreateDraft]
+    [isOnboardingRoute, goToPrevRoute, goToNextRoute, safeCreateDraft]
   )
   return (
     <OnboardingNavigationContext.Provider value={value}>

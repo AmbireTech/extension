@@ -4,7 +4,6 @@ import { useFieldArray, useForm } from 'react-hook-form'
 import { Account } from '@ambire-common/interfaces/account'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
-import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import useController from '@common/hooks/useController'
 import { ReplyTimeoutError } from '@common/hooks/useController/waitForReply'
 import { ADD_ACCOUNTS_TIMEOUT_MS } from '@common/modules/account-personalize/constants/timeouts'
@@ -37,10 +36,6 @@ const selectIsWaitingToStart = (state: AllControllersMappingType['AccountPickerC
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectAddAccountsStatus = (state: AllControllersMappingType['AccountPickerController']) =>
   state.addAccountsStatus
-// Takes the swipe and Android's back over, to go nowhere
-const stayOnScreen = () => {}
-// A stable empty list, so the callbacks depending on it keep their identity
-const NO_ACCOUNTS: Account[] = []
 
 /**
  * Where the flow goes on once the accounts are added: "Ambire Wallet is ready to use" greets only
@@ -57,16 +52,15 @@ const getNextRoute = (walletAccounts: Account[], namedAccounts: Account[]) => {
 /**
  * The personalize step of every account adding flow: shows the accounts the flow prepared
  * (or prepares them, see below), lets the user name them, and adds them once the user
- * proceeds. Nothing is added before - going back only resets the flow. Accounts a sync
- * added already are only named here, as is a Safe that Safe create found in the wallet already.
+ * proceeds. Nothing is added before - going back only resets the flow. A Safe that Safe create
+ * found in the wallet already is only named here.
  * The already added accounts deselected on the picker are listed too, and removed on proceeding
  * as well. A Privacy Pools account is personalized the same way, by
  * `usePrivacyPoolsAccountPersonalize`.
  */
 export default function useAccountPersonalize() {
   const { t } = useTranslation()
-  const { goToNextRoute, syncedAccountAddrs, setSyncedAccountAddrs, safeCreateDraft } =
-    useOnboardingNavigation()
+  const { goToNextRoute, safeCreateDraft } = useOnboardingNavigation()
   const { dispatch: mainDispatch } = useController('MainController')
   const privacyPools = usePrivacyPoolsAccountPersonalize()
   const privacyPoolsAccount = privacyPools.account
@@ -86,29 +80,18 @@ export default function useAccountPersonalize() {
     'AccountsController',
     selectAccounts
   )
-  const isSyncedMode = !!syncedAccountAddrs.length
-  const syncedAccounts = useMemo(() => {
-    const syncedAddrs = syncedAccountAddrs.map((addr) => addr.toLowerCase())
-
-    return accounts.filter(({ addr }) => syncedAddrs.includes(addr.toLowerCase()))
-  }, [accounts, syncedAccountAddrs])
-  // Safe create found its Safe in the wallet already, so it is only shown here, like a synced
-  // account, but the way back to Safe create stays open
+  // Safe create found its Safe in the wallet already, so it is only shown here, and the way
+  // back to Safe create stays open
   const existingSafeAddr = safeCreateDraft?.isAlreadyInWallet ? safeCreateDraft.safeAddress : null
   const isExistingSafeMode = !!existingSafeAddr
   const existingSafeAccounts = useMemo(
     () => accounts.filter(({ addr }) => addr.toLowerCase() === existingSafeAddr?.toLowerCase()),
     [accounts, existingSafeAddr]
   )
-  // Without a sync: the Safe found in the wallet, or what the flow prepared. Plain expressions
-  // rather than a function, which keeps the React Compiler optimizing the callbacks below
-  const unsyncedAccountsToName = isExistingSafeMode ? existingSafeAccounts : readyToAddAccounts
-  const accountsToName = isSyncedMode ? syncedAccounts : unsyncedAccountsToName
-  const accountsToRemove = isSyncedMode ? NO_ACCOUNTS : readyToRemoveAccounts
+  // The Safe found in the wallet, or what the flow prepared
+  const accountsToName = isExistingSafeMode ? existingSafeAccounts : readyToAddAccounts
+  const accountsToRemove = readyToRemoveAccounts
 
-  // A sync has added its accounts already, so there is nothing to go back to - only Proceed
-  // (the browser's back is handled by the onboarding navigation)
-  useScreenBackHandler(isSyncedMode ? stayOnScreen : null)
   const [prepareResult, setPrepareResult] = useState<{ preparedCount: number } | 'failed' | null>(
     null
   )
@@ -134,7 +117,7 @@ export default function useAccountPersonalize() {
   // so it is started here, once per run. The controller decides whether to start, as the state
   // here can lag behind the flow.
   useEffect(() => {
-    if (startedPrepareRun.current === prepareRun || isSyncedMode || isExistingSafeMode) return
+    if (startedPrepareRun.current === prepareRun || isExistingSafeMode) return
 
     startedPrepareRun.current = prepareRun
     const isCurrentRun = () => startedPrepareRun.current === prepareRun
@@ -150,7 +133,7 @@ export default function useAccountPersonalize() {
         console.error('Failed to prepare the accounts', error)
         if (isCurrentRun()) setPrepareResult('failed')
       })
-  }, [accountPickerDispatchAndWait, isSyncedMode, isExistingSafeMode, prepareRun])
+  }, [accountPickerDispatchAndWait, isExistingSafeMode, prepareRun])
 
   useEffect(() => {
     if (readyToAddAccounts.length || readyToRemoveAccounts.length || privacyPoolsAccount)
@@ -186,11 +169,7 @@ export default function useAccountPersonalize() {
   // first (mobile holds updates back while a screen transition runs)
   const preparedCount = prepareResult === 'failed' ? 0 : prepareResult?.preparedCount
   const isPreparing =
-    !isSyncedMode &&
-    !isExistingSafeMode &&
-    !privacyPoolsAccount &&
-    !readyToAddAccounts.length &&
-    preparedCount !== 0
+    !isExistingSafeMode && !privacyPoolsAccount && !readyToAddAccounts.length && preparedCount !== 0
   const isLoading = !hasMinLoadingPassed || (isPreparing && !hasMaxLoadingPassed)
 
   // Every controller update hands over a new list, so the form follows the addresses instead -
@@ -287,24 +266,11 @@ export default function useAccountPersonalize() {
 
   const handleProceed = useCallback(async () => {
     if (isProceedingRef.current) return
-    // Left set after a sync, as the screen moves on or shows them as added
     isProceedingRef.current = true
 
     const namedAccounts = getValues('accounts')
     const names = namedAccounts.map(({ addr, preferences }) => ({ addr, preferences }))
     const nextRoute = getNextRoute(accountsRef.current, namedAccounts)
-    if (isSyncedMode) {
-      accountsDispatch({
-        type: 'method',
-        params: { method: 'updateAccountPreferences', args: [names] }
-      })
-      setAddedAccounts(namedAccounts)
-      // Dropped first, as the way back is closed only while they are set
-      setSyncedAccountAddrs([])
-      goToNextRouteRef.current(nextRoute)
-      return
-    }
-
     // Nothing to add - the names are saved, and the dashboard opens on the Safe. The screen
     // stays usable, as on web the dashboard opens in the popup and this tab stays up
     if (existingSafeAddr) {
@@ -361,12 +327,10 @@ export default function useAccountPersonalize() {
     isProceedingRef.current = false
     setIsAdding(false)
   }, [
-    isSyncedMode,
     existingSafeAddr,
     mainDispatch,
     getValues,
     accountsDispatch,
-    setSyncedAccountAddrs,
     accountPickerDispatchAndWait,
     accountsToRemove,
     finishAdding
@@ -374,8 +338,7 @@ export default function useAccountPersonalize() {
 
   const isRemovalOnly = !fields.length && !!accountsToRemove.length
   // Removing only changes what was picked already, so there is nothing more to pick
-  const canAddMore =
-    !isSyncedMode && !isExistingSafeMode && !addedAccounts && !isLoading && !isRemovalOnly
+  const canAddMore = !isExistingSafeMode && !addedAccounts && !isLoading && !isRemovalOnly
 
   const getTitle = () => {
     // A blank title while loading: the header (and its height) shows only with a title or a
@@ -397,8 +360,6 @@ export default function useAccountPersonalize() {
 
   const getProceedText = () => {
     if (isExistingSafeMode) return t('Open dashboard')
-    // A sync added its accounts already, so proceeding only saves their names
-    if (isSyncedMode) return t('Done')
     if (isRemovalOnly) {
       if (isAdding) return t('Removing...')
 
@@ -431,8 +392,8 @@ export default function useAccountPersonalize() {
     control,
     fields,
     isLoading,
-    // No way back while loading, nor after a sync
-    hasBackButton: !isLoading && !isSyncedMode,
+    // No way back while loading
+    hasBackButton: !isLoading,
     isAdding: isAdding || privacyPools.isAdding,
     addedAccounts,
     accountsToRemove,
