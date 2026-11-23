@@ -27,6 +27,7 @@ import {
 import PQ1Controller from '../../controllers/PQ1Controller'
 import { createPq1Bundler, pq1ChainReader, pq1Context } from '../pq1/context'
 import { PQ1_SEND_FAILED_MESSAGE, toUserFacingPq1Error } from '../pq1/errors'
+import { isSafeApproveHashCall, PQ1_SAFE_APPROVAL_NEEDS_SYNC_MESSAGE } from '../pq1/safeApproval'
 
 type TypedMessage = Parameters<KeystoreSignerInterface['signTypedData']>[0]
 
@@ -154,10 +155,36 @@ class PQ1Signer implements KeystoreSignerInterface {
     )
   }
 
+  /** Whether the PQ1 may fetch the Safe transactions it approves from the Safe API. Not
+   *  without the controller, so nothing reaches the Safe API by mistake. */
+  async #canUseSafeApi(): Promise<boolean> {
+    return (await this.controller?.canUseSafeApi()) ?? false
+  }
+
+  /** The SDK context, with a Safe Transaction Service that asks nothing while the user opted
+   *  out of the Safe API. Safe approvals are refused before they get here (see
+   *  `broadcastAccountOp`), so this only guards any other way the SDK could reach it. */
+  get #pq1Context(): typeof pq1Context {
+    const { safeTxService } = pq1Context
+    if (!safeTxService) return pq1Context
+
+    return {
+      ...pq1Context,
+      safeTxService: {
+        getTransaction: async (chainId, safeTxHash) => {
+          if (!(await this.#canUseSafeApi())) {
+            throw new Error('PQ1: the user opted out of the Safe API')
+          }
+          return safeTxService.getTransaction(chainId, safeTxHash)
+        }
+      }
+    }
+  }
+
   /** What the SDK's message signing needs, for the chain in `ctx`. */
   #signContext(ctx: SignMessageContext, device: Pq1Device): SignOffchainContext {
     return {
-      ctx: pq1Context,
+      ctx: this.#pq1Context,
       device: device.commands,
       chain: pq1ChainReader(ctx.chainId, ctx.provider),
       accountIndex: this.#accountIndex(),
@@ -237,6 +264,13 @@ class PQ1Signer implements KeystoreSignerInterface {
         "A PQ1 account can't create new contracts directly. Nothing was sent."
       )
     }
+    // Approving a Safe transaction makes the SDK fetch it from the Safe API, which the user may
+    // have opted out of. Refused here, with a message saying why, instead of failing in the SDK
+    if (calls.some((c) => isSafeApproveHashCall(c.data)) && !(await this.#canUseSafeApi())) {
+      throw new ExternalSignerError(PQ1_SAFE_APPROVAL_NEEDS_SYNC_MESSAGE, {
+        sendCrashReport: false
+      })
+    }
     const chain = pq1ChainReader(chainId, provider)
     try {
       // #withDevice may replay the whole pipeline once on a mid-flight
@@ -264,7 +298,7 @@ class PQ1Signer implements KeystoreSignerInterface {
           }
         })
         const signed = await signPreparedTransaction({
-          ctx: pq1Context,
+          ctx: this.#pq1Context,
           device: device.commands,
           prepared
         })
