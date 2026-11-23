@@ -197,7 +197,8 @@ export class SwapAndBridgePage extends BasePage {
     await this.click(selectors.swapAndBridge.receiveTokenDropdown)
 
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.symbol, { timeout: 5000 })
-    await this.page.getByText('Not found. Try with token').isVisible()
+    // A sheet's hidden copy, which it measures its height with, has the same text
+    await this.page.getByText('Not found. Try with token').filter({ visible: true }).isVisible()
 
     await this.page.getByTestId(selectors.searchInput).fill(receiveToken.address, { timeout: 5000 })
     await this.page

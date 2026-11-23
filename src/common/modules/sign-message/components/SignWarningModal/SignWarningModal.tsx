@@ -1,7 +1,7 @@
-import React, { FC } from 'react'
-import { Modalize } from 'react-native-modalize'
+import React, { FC, RefObject } from 'react'
 
 import BottomSheet from '@common/components/BottomSheet'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import { useTranslation } from '@common/config/localization'
 import { getUiType } from '@common/utils/uiType'
@@ -10,7 +10,7 @@ import type { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
 const { isTab, isRequestWindow } = getUiType()
 
 type Props = {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: RefObject<SheetRef | null>
   warning: HumanizerWarning
   onConfirm: () => void
   onCancel: () => void

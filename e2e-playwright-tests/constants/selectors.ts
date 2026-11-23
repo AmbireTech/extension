@@ -329,6 +329,9 @@ const selectors = {
   editNetworkModalTitle: '//div[text()="Edit network"]',
   editNetworkCloseButton: '[data-testid="bottom-sheet-close-button"]',
   editNetworkSaveButton: '//div[contains(text(),"Save")]',
+  // the round buttons in a sheet's header row
+  sheetBackButton: 'bottom-sheet-back-button',
+  sheetCloseButton: 'bottom-sheet-close-button',
   networkSettingsSavedSnackbar: (networkName: string) =>
     `((//div[contains(normalize-space(), "${networkName} settings saved!")]))[4]`, // TODO: snackbar selector finding 8 elements; change once we have ID on FE
   // Sign

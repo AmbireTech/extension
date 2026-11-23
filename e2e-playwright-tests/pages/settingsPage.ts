@@ -100,13 +100,13 @@ export class SettingsPage extends BasePage {
     await this.typeNetworkField('Currency Name', network.ccyName)
     await this.typeNetworkField('Add RPC URL', network.rpcUrl)
 
-    // confirm adding rpc url
-    await this.page.locator(selectors.addRPCURLButton).click()
+    // confirm adding rpc url (the sheet's hidden measuring copy has the same buttons)
+    await this.page.locator(selectors.addRPCURLButton).filter({ visible: true }).click()
     await this.page.waitForTimeout(5000) // wait for adding rpc
     await this.typeNetworkField('Block Explorer URL', network.explorerUrl)
 
     // add network
-    await this.page.locator(selectors.addNetworkButton).click()
+    await this.page.locator(selectors.addNetworkButton).filter({ visible: true }).click()
 
     await expect(this.page.locator(selectors.networkSuccessfullyAddedSnackbar)).toContainText(
       'Network successfully added!'

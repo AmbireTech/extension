@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import { Key } from '@ambire-common/interfaces/keystore'
 import { SignMessageStatus } from '@ambire-common/interfaces/signMessage'
@@ -9,6 +8,7 @@ import { getDappIconFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { humanizeMessage } from '@ambire-common/libs/humanizer'
 import { HumanizerWarning } from '@ambire-common/libs/humanizer/interfaces'
 import { EIP_1271_NOT_SUPPORTED_BY, toPersonalSignHex } from '@ambire-common/libs/signMessage/utils'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import useController from '@common/hooks/useController'
 import useControllersMiddleware from '@common/hooks/useControllersMiddleware'
 import useDappInfo from '@common/hooks/useDappInfo/useDappInfo'
@@ -70,7 +70,7 @@ const useSignMessage = () => {
   const [isChooseSignerShown, setIsChooseSignerShown] = useState(false)
   const [shouldDisplayLedgerConnectModal, setShouldDisplayLedgerConnectModal] = useState(false)
   const [confirmedWarningKeys, setConfirmedWarningKeys] = useState<string[]>([])
-  const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useModalize()
+  const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useSheetRef()
   // The signers Sign was pressed with while the warning was shown, to sign with once it's confirmed
   const signersPendingWarningRef = useRef<{ addr: Key['addr']; type: Key['type'] }[] | undefined>(
     undefined

@@ -27,9 +27,15 @@ export class AccountKeysPage extends BasePage {
     await this.checkUrl('/settings/accounts')
   }
 
-  // Closes the topmost visible sheet by clicking its panel-back-btn
+  // Closes the topmost visible sheet: the ‹ back of a nested one closes only it, while a sheet
+  // opened on its own has just the X. Waits until one sheet fewer is open
   private async closeTopSheet(): Promise<void> {
-    await this.page.getByTestId('panel-back-btn').last().click()
+    const closeButtons = this.page.getByTestId(selectors.sheetCloseButton).filter({ visible: true })
+    const backButtons = this.page.getByTestId(selectors.sheetBackButton).filter({ visible: true })
+    const openSheetCount = await closeButtons.count()
+    const button = (await backButtons.count()) ? backButtons.last() : closeButtons.last()
+    await button.click()
+    await expect(closeButtons).toHaveCount(openSheetCount - 1)
   }
 
   private async findAndOpenAccountKeys(keyAddr: string, accountAddr: string): Promise<void> {

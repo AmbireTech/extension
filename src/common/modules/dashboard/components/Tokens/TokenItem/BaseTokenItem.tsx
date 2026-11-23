@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { FormatType } from '@ambire-common/utils/formatDecimals/formatDecimals'
 import rewardsImage from '@common/assets/images/AmbireLogoLikeCoin.png'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
@@ -100,7 +100,7 @@ const BaseTokenItem = ({
     ref: pendingDeliverySheetRef,
     open: openPendingDeliverySheet,
     close: closePendingDeliverySheet
-  } = useModalize()
+  } = useSheetRef()
   // The routes stay in the sheet after they finish, so it doesn't disappear while the user
   // is looking at it, but shows how the swap or bridge ended, like the banner's sheet does
   const [sheetActiveRouteIds, setSheetActiveRouteIds] = useState<string[]>()
