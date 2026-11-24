@@ -14,8 +14,10 @@
 # This patch therefore changes exactly ONE string, in ONE method:
 # `signDelegationAuthorization` opens "Ambire Signer" instead of "Ethereum".
 # Everything else (getAddress, signPersonalMessage, signTypedData,
-# signTransaction - including the ongoing type-4 sends) keeps using the official
-# Ethereum app. Patching rather than reimplementing the APDU keeps DSK's
+# signTransaction) keeps using the official Ethereum app. The one exception, type-4
+# transactions (the official app rejects them since v1.24.0), needs no patch: the
+# LedgerController opens "Ambire Signer" itself and calls signTransaction with
+# `skipOpenApp: true`. Patching rather than reimplementing the APDU keeps DSK's
 # maintained 7702 TLV payload building and chunking.
 #
 # Both the cjs and esm builds are patched, since bundlers pick either one.
