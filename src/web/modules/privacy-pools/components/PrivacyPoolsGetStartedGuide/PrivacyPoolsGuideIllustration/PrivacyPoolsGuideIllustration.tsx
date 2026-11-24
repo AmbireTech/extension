@@ -4,7 +4,7 @@ import { Image, ImageSourcePropType, View, ViewStyle } from 'react-native'
 import useTheme from '@common/hooks/useTheme'
 import PrivacyPoolsCornerFrames from '@web/modules/privacy-pools/components/PrivacyPoolsCornerFrames'
 
-import rayImage from './ray.png'
+import rayImage from './ray.jpg'
 import getStyles, { DESIGN_WIDTH, RAY_WIDTH } from './styles'
 
 /**
