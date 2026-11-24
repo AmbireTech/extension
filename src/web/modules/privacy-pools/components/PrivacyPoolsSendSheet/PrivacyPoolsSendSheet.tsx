@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native'
 import {
   PrivacyPoolsBroadcaster,
   PrivacyPoolsOperation,
+  PrivacyPoolsOperationPhase,
   PrivacyPoolsRating
 } from '@ambire-common/interfaces/privacyPools'
 import Alert from '@common/components/Alert'
@@ -57,6 +58,17 @@ interface Props {
   onClosed: () => void
 }
 
+/** What the sheet shows of the transfer: one step at a time, or nothing once it has ended. */
+type SheetStep =
+  | Extract<PrivacyPoolsOperationPhase, 'proving' | 'ready' | 'broadcasting'>
+  | 'hidden'
+
+const getSheetStep = (operation: PrivacyPoolsOperation | null): SheetStep => {
+  if (operation?.status !== 'pending' || operation.phase === 'finalizing') return 'hidden'
+
+  return operation.phase
+}
+
 const transactionSummaryStyle = { marginBottom: SPACING_MD }
 
 /**
@@ -102,22 +114,18 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
   const { t } = useTranslation()
   const { isNarrowWebLayout } = useCompactLayout()
 
-  const isProving = operation?.status === 'pending' && operation.phase === 'proving'
-  const isReady = operation?.status === 'pending' && operation.phase === 'ready'
-  const isBroadcasting = operation?.status === 'pending' && operation.phase === 'broadcasting'
-  const isConfirming = isReady || isBroadcasting
-  const isShown = isProving || isConfirming
+  const step = getSheetStep(operation)
   // The screen opens the sheet without waiting for the summary, which may still be loading then
-  const isSummaryLoading = isProving || (isConfirming && !isTransactionSummaryLoaded)
+  const isSummaryLoading = step === 'proving' || !isTransactionSummaryLoaded
   const privacy = operation?.privacy
   const holdButtonType = getHoldButtonType(privacy?.rating)
   // Only on mount: later, the screen opens it when the user proceeds
-  const [shouldOpenOnMount] = useState(isShown)
+  const [shouldOpenOnMount] = useState(step !== 'hidden')
 
   // Only a transfer still to confirm: an ended one has nothing left to check
   const handleOpen = useCallback(() => {
-    if (isReady) onRecheck()
-  }, [isReady, onRecheck])
+    if (step === 'ready') onRecheck()
+  }, [step, onRecheck])
 
   return (
     <BottomSheet
@@ -125,7 +133,9 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
       sheetRef={sheetRef}
       // Not closable while proving, as closing would not stop it, or while sending: the transfer
       // goes on anyway and its outcome is shown here
-      closeBottomSheet={isProving || isBroadcasting ? undefined : closeBottomSheet}
+      closeBottomSheet={
+        step === 'proving' || step === 'broadcasting' ? undefined : closeBottomSheet
+      }
       onOpen={handleOpen}
       onClosed={onClosed}
       // Waits for the summary, so it does not appear after the sheet has opened
@@ -133,19 +143,17 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
       backgroundColor="primaryBackground"
     >
       {/* The sheet's X closes it, as on the one-click fee sheet. An ended transfer shows its outcome */}
-      <ModalHeader title={isShown ? t('Confirm send') : undefined} />
-      {!!operation && (
+      <ModalHeader title={step !== 'hidden' ? t('Confirm send') : undefined} />
+      {!!operation && step !== 'hidden' && (
         <>
           {/* Like the transaction details of the one-click Swap & Bridge sheet, the fee among its
               rows. Not expandable: there is no raw call of the user's account to show */}
-          {isShown && isSummaryLoading && (
+          {isSummaryLoading ? (
             <PrivacyPoolsSendSummarySkeleton
               broadcaster={operation.broadcaster}
               style={transactionSummaryStyle}
             />
-          )}
-          {isConfirming &&
-            !isSummaryLoading &&
+          ) : (
             !!operation.humanization &&
             !!TransactionSummary && (
               <TransactionSummary
@@ -157,80 +165,77 @@ const PrivacyPoolsSendSheet: FC<Props> = ({
                 enableExpand={false}
                 hideDeleteIcon
               />
-            )}
+            )
+          )}
 
           {/* While proving, the fee notice and the privacy line are hidden but keep their room, so
               nothing moves once they show. The loading texts sit over them, right above Send */}
-          {isShown && (
-            <View>
-              <View style={isProving && styles.hidden} aria-hidden={isProving}>
-                {/* Paying the fee from anything else would link it to the transfer. As the title,
-                    as the alert shows its icon on the title's row and the text below it */}
-                <Alert
-                  type="info"
-                  size="sm"
-                  style={spacings.mbSm}
-                  titleWeight="regular"
-                  title={t(FEE_NOTICES[operation.broadcaster], { symbol })}
-                />
+          <View>
+            <View style={step === 'proving' && styles.hidden} aria-hidden={step === 'proving'}>
+              {/* Paying the fee from anything else would link it to the transfer. As the title,
+                  as the alert shows its icon on the title's row and the text below it */}
+              <Alert
+                type="info"
+                size="sm"
+                style={spacings.mbSm}
+                titleWeight="regular"
+                title={t(FEE_NOTICES[operation.broadcaster], { symbol })}
+              />
 
-                {/* For the deposits the proof actually spends. The amount can't change here
-                    anymore */}
-                <View style={privacyLineStyle}>
-                  {isConfirming && !!privacy && (
-                    <PrivacySendStatus
-                      rating={privacy.rating}
-                      leaks={privacy.leaks}
-                      cover={privacy.cover.bigEnough}
-                      decimals={decimals}
-                      symbol={symbol}
-                    />
-                  )}
-                </View>
+              {/* For the deposits the proof actually spends. The amount can't change here
+                  anymore */}
+              <View style={privacyLineStyle}>
+                {step !== 'proving' && !!privacy && (
+                  <PrivacySendStatus
+                    rating={privacy.rating}
+                    leaks={privacy.leaks}
+                    cover={privacy.cover.bigEnough}
+                    decimals={decimals}
+                    symbol={symbol}
+                  />
+                )}
               </View>
-              {isProving && (
-                <View style={[StyleSheet.absoluteFill, flexbox.justifyEnd]}>
-                  <PrivacyPoolsLoadingTexts />
-                </View>
-              )}
             </View>
-          )}
+            {step === 'proving' && (
+              <View style={[StyleSheet.absoluteFill, flexbox.justifyEnd]}>
+                <PrivacyPoolsLoadingTexts />
+              </View>
+            )}
+          </View>
 
-          {isShown && (
-            <FooterGlassView
-              size="sm"
-              absolute={false}
-              isSimpleBlur={false}
-              style={spacings.pt}
-              innerContainerStyle={
-                isNarrowWebLayout
-                  ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
-                  : undefined
-              }
-            >
-              {holdButtonType && isReady ? (
-                <HoldToProceedButton
-                  testID="privacy-pools-send-confirm"
-                  text={t('Hold to send')}
-                  completeText={t('Send')}
-                  buttonType={holdButtonType}
-                  onHoldComplete={onSend}
-                  size="regular"
-                  style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
-                />
-              ) : (
-                <ButtonWithLoader
-                  testID="privacy-pools-send-confirm"
-                  text={t('Send')}
-                  isLoading={isProving || isBroadcasting}
-                  disabled={isProving || isBroadcasting}
-                  onPress={onSend}
-                  size="regular"
-                  style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
-                />
-              )}
-            </FooterGlassView>
-          )}
+          <FooterGlassView
+            size="sm"
+            absolute={false}
+            isSimpleBlur={false}
+            style={spacings.pt}
+            innerContainerStyle={
+              isNarrowWebLayout
+                ? { width: '100%', gap: SPACING_TY, alignItems: 'stretch' }
+                : undefined
+            }
+          >
+            {holdButtonType && step === 'ready' ? (
+              <HoldToProceedButton
+                testID="privacy-pools-send-confirm"
+                text={t('Hold to send')}
+                completeText={t('Send')}
+                buttonType={holdButtonType}
+                onHoldComplete={onSend}
+                size="regular"
+                style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
+              />
+            ) : (
+              <ButtonWithLoader
+                testID="privacy-pools-send-confirm"
+                text={t('Send')}
+                isLoading={step !== 'ready'}
+                disabled={step !== 'ready'}
+                onPress={onSend}
+                size="regular"
+                style={isNarrowWebLayout ? { width: '100%', minWidth: 0 } : undefined}
+              />
+            )}
+          </FooterGlassView>
         </>
       )}
     </BottomSheet>

@@ -1,7 +1,4 @@
-import {
-  PRIVACY_POOLS_COVER_WINDOW_DAYS,
-  PRIVACY_POOLS_MIN_REASSURING_COVER
-} from '@ambire-common/consts/privacyPools'
+import { PRIVACY_POOLS_MIN_REASSURING_COVER } from '@ambire-common/consts/privacyPools'
 import {
   PrivacyPoolsLeak,
   PrivacyPoolsLeakAction,
@@ -14,12 +11,6 @@ import { formatPrivacyPoolsAmount } from '@common/utils/privacyPools'
 import { PrivacySeverity, PrivacyStage, PrivacyTone } from './types'
 
 import type { TFunction } from 'i18next'
-
-const COVER_WINDOW_DAYS = Number(PRIVACY_POOLS_COVER_WINDOW_DAYS)
-
-/** The size of a skeleton in place of a privacy line, so nothing moves once the line loads. */
-const PRIVACY_LINE_SKELETON_HEIGHT = 16
-const PRIVACY_LINE_SKELETON_WIDTH = 160
 
 const PRIVACY_TONE_COLORS: Record<
   PrivacyTone,
@@ -81,12 +72,9 @@ const getPrivacyStatusText = (t: TFunction, rating: PrivacyPoolsRating, cover: n
 }
 
 export {
-  COVER_WINDOW_DAYS,
   getLeakTextAppearance,
   getPrivacyActionText,
   getPrivacySeverity,
   getPrivacyStatusText,
-  getPrivacyToneColors,
-  PRIVACY_LINE_SKELETON_HEIGHT,
-  PRIVACY_LINE_SKELETON_WIDTH
+  getPrivacyToneColors
 }
