@@ -45,6 +45,10 @@ const SEND_BUTTON_BOTTOM = SEND_BUTTON_TOP + SEND_BUTTON_HEIGHT
 const CONNECTOR_SVG_HEIGHT = CONNECTOR_HEIGHT + CONNECTOR_CENTER
 const CONNECTOR_DASHES = '2 2'
 
+const SEND_ICON_SIZE = 16
+/** The design draws the icon with a 1.5px line at 16px. SendIcon's line is set in its 24px box */
+const SEND_ICON_STROKE_WIDTH = (1.5 * 24) / SEND_ICON_SIZE
+
 interface AccountChipProps {
   type: 'private' | 'public'
   fontSize?: number
@@ -63,7 +67,12 @@ export const PrivacyPoolsGuideAccountChip = ({ type, fontSize = 16 }: AccountChi
       {isPrivate ? (
         <PrivacyPoolsAccountAvatar size={AVATAR_SIZE} />
       ) : (
-        <Blockies {...PUBLIC_ACCOUNT_AVATAR} width={AVATAR_SIZE} height={AVATAR_SIZE} />
+        <Blockies
+          {...PUBLIC_ACCOUNT_AVATAR}
+          width={AVATAR_SIZE}
+          height={AVATAR_SIZE}
+          borderRadius={AVATAR_SIZE / 2}
+        />
       )}
       <Text
         fontSize={fontSize}
@@ -124,7 +133,12 @@ const SendConnector = () => {
         <Text fontSize={12} weight="medium">
           {t('Send')}
         </Text>
-        <SendIcon width={16} height={16} color={theme.primaryText} />
+        <SendIcon
+          width={SEND_ICON_SIZE}
+          height={SEND_ICON_SIZE}
+          strokeWidth={SEND_ICON_STROKE_WIDTH}
+          color={theme.primaryText}
+        />
       </GlassView>
     </View>
   )
@@ -177,7 +191,7 @@ export const PrivacyPoolsGuideVerifyingToken = () => {
               <Text fontSize={18} weight="semiBold">
                 ETH
               </Text>
-              <Text fontSize={14} weight="medium" appearance="secondaryText">
+              <Text fontSize={14} weight="number_medium" appearance="secondaryText">
                 0.005
               </Text>
             </View>
