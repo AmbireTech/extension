@@ -4,13 +4,15 @@ import { View } from 'react-native'
 import Button, { Props as ButtonProps } from '@common/components/Button'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { ViewStyle } from 'react-native'
 const DOT_SIZE = 10
 const DOT_ACTIVE_WIDTH = 24
+/** The other steps' dots are the current one's color, faded, as in the design */
+const DOT_INACTIVE_OPACITY = 0.5
 
 export interface StepsGuideStep {
   id: string
@@ -112,7 +114,9 @@ const StepsGuideFooter = ({
 
   return (
     <View style={style}>
-      <View style={[flexbox.directionRow, flexbox.center, spacings.mbMd]}>
+      <View
+        style={[flexbox.directionRow, flexbox.center, spacings.mbMd, { columnGap: SPACING_TY }]}
+      >
         {steps.map(({ id }, index) => (
           <View
             key={id}
@@ -120,8 +124,8 @@ const StepsGuideFooter = ({
               width: index === stepIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE,
               height: DOT_SIZE,
               borderRadius: DOT_SIZE / 2,
-              ...spacings.mhTy,
-              backgroundColor: index === stepIndex ? theme.secondaryText : theme.tertiaryText
+              backgroundColor: theme.tertiaryText,
+              opacity: index === stepIndex ? 1 : DOT_INACTIVE_OPACITY
             }}
           />
         ))}
