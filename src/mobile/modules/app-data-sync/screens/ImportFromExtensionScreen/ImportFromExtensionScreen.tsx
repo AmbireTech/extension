@@ -8,6 +8,7 @@ import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
+import StepsGuide, { StepsGuideFooter, StepsGuideStep } from '@common/components/StepsGuide'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import { useScreenBackHandler } from '@common/contexts/screenBackContext'
@@ -18,10 +19,6 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import SyncImportSteps, {
-  SyncImportStep,
-  SyncImportStepsFooter
-} from '@common/modules/app-data-sync/components/SyncImportSteps'
 import SyncPasswordOptions from '@common/modules/app-data-sync/components/SyncPasswordOptions'
 import SyncScanFeedbackAlert from '@common/modules/app-data-sync/components/SyncScanFeedbackAlert'
 import useAppDataSyncImport from '@common/modules/app-data-sync/hooks/useAppDataSyncImport'
@@ -98,7 +95,7 @@ const ImportFromExtensionScreen = () => {
 
   const carouselStyle = useMemo(() => ({ width: carouselWidth }), [carouselWidth])
 
-  const steps: SyncImportStep[] = useMemo(
+  const steps: StepsGuideStep[] = useMemo(
     () => [
       {
         id: 'steps-on-the-extension',
@@ -272,7 +269,7 @@ const ImportFromExtensionScreen = () => {
   }, [])
 
   const renderStep = useCallback(
-    ({ index }: { index: number }) => <SyncImportSteps steps={steps} stepIndex={index} />,
+    ({ index }: { index: number }) => <StepsGuide steps={steps} stepIndex={index} />,
     [steps]
   )
 
@@ -334,12 +331,14 @@ const ImportFromExtensionScreen = () => {
             )}
           </>
         ) : (
-          <SyncImportStepsFooter
+          <StepsGuideFooter
             steps={steps}
             stepIndex={stepIndex}
             onStepIndexChange={handleStepIndexChange}
             finishText={t('Scan QR code')}
             onFinish={handleStartScanning}
+            nextButtonTestID="sync-import-next-step"
+            finishButtonTestID="sync-import-start-scanning"
           />
         )
       }

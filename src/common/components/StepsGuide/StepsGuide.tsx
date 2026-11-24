@@ -1,28 +1,30 @@
 import { memo, ReactNode, useCallback } from 'react'
 import { View } from 'react-native'
 
-import Button from '@common/components/Button'
+import Button, { Props as ButtonProps } from '@common/components/Button'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_TY } from '@common/styles/spacings'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 import type { ViewStyle } from 'react-native'
 const DOT_SIZE = 10
 const DOT_ACTIVE_WIDTH = 24
+/** The other steps' dots are the current one's color, faded, as in the design */
+const DOT_INACTIVE_OPACITY = 0.5
 
-export interface SyncImportStep {
+export interface StepsGuideStep {
   id: string
-  /** The design's illustration (image or animation) of what to do on the other device */
+  /** The design's illustration (image or animation) of the step */
   illustration: ReactNode
   content: ReactNode
 }
 
 interface Props {
-  steps: SyncImportStep[]
+  steps: StepsGuideStep[]
   /**
-   * The step is controlled by the screen, so its back button can return to the previous
+   * The step is controlled by the parent, so its back button can return to the previous
    * step instead of leaving the flow
    */
   stepIndex: number
@@ -36,18 +38,27 @@ interface Props {
 
 interface FooterProps extends Props {
   onStepIndexChange: (stepIndex: number) => void
-  /** Label of the button on the last step, which starts the scanning */
+  /** Label of the button on the last step, which finishes the guide */
   finishText: string
   finishIcon?: React.ReactNode
   onFinish: () => void
+  /**
+   * The finish button stands out as the primary action by default. A guide that only
+   * explains something keeps the look of the Next button instead.
+   */
+  finishButtonType?: ButtonProps['type']
+  /** E.g. a fixed width, as the button spans the whole footer by default */
+  buttonStyle?: ViewStyle
+  nextButtonTestID?: string
+  finishButtonTestID?: string
 }
 
 /**
- * Walks the user through what to do on the other Ambire product before scanning its QR
- * codes. Shown by both products, in the onboarding flow and when syncing later on, so
- * the steps themselves (copy and illustrations) are passed in by the platform screen.
+ * A guide of a few steps, each an illustration on a card with its content below it. The
+ * parent owns the current step and passes the steps (copy and illustrations) in, so the
+ * same guide works in a screen, a sheet or a swipeable carousel.
  */
-const SyncImportSteps = ({ steps, stepIndex, style, illustrationCardStyle }: Props) => {
+const StepsGuide = ({ steps, stepIndex, style, illustrationCardStyle }: Props) => {
   const { theme } = useTheme()
 
   const step = steps[stepIndex]
@@ -75,15 +86,19 @@ const SyncImportSteps = ({ steps, stepIndex, style, illustrationCardStyle }: Pro
 
 /**
  * The pagination dots and the button that advances the steps. Separate from the steps
- * themselves, so the mobile screen can pin it to the bottom of the screen as a footer.
+ * themselves, so a mobile screen can pin it to the bottom of the screen as a footer.
  */
-const SyncImportStepsFooter = ({
+const StepsGuideFooter = ({
   steps,
   stepIndex,
   onStepIndexChange,
   finishText,
   finishIcon,
   onFinish,
+  finishButtonType = 'primary',
+  buttonStyle,
+  nextButtonTestID,
+  finishButtonTestID,
   style
 }: FooterProps) => {
   const { t } = useTranslation()
@@ -99,7 +114,9 @@ const SyncImportStepsFooter = ({
 
   return (
     <View style={style}>
-      <View style={[flexbox.directionRow, flexbox.center, spacings.mbMd]}>
+      <View
+        style={[flexbox.directionRow, flexbox.center, spacings.mbMd, { columnGap: SPACING_TY }]}
+      >
         {steps.map(({ id }, index) => (
           <View
             key={id}
@@ -107,21 +124,22 @@ const SyncImportStepsFooter = ({
               width: index === stepIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE,
               height: DOT_SIZE,
               borderRadius: DOT_SIZE / 2,
-              ...spacings.mhTy,
-              backgroundColor: index === stepIndex ? theme.secondaryText : theme.tertiaryText
+              backgroundColor: theme.tertiaryText,
+              opacity: index === stepIndex ? 1 : DOT_INACTIVE_OPACITY
             }}
           />
         ))}
       </View>
       <Button
-        testID={isLastStep ? 'sync-import-start-scanning' : 'sync-import-next-step'}
+        testID={isLastStep ? finishButtonTestID : nextButtonTestID}
         // `tertiary` is the filled grey button of the design. `secondary` is the same on
         // mobile, but on web it is white, which is invisible on the white panel.
-        type={isLastStep ? 'primary' : 'tertiary'}
+        type={isLastStep ? finishButtonType : 'tertiary'}
         text={isLastStep ? finishText : t('Next')}
         onPress={handleNext}
         hasBottomSpacing={false}
         childrenPosition="left"
+        style={buttonStyle}
       >
         {isLastStep ? finishIcon : null}
       </Button>
@@ -129,8 +147,8 @@ const SyncImportStepsFooter = ({
   )
 }
 
-const MemoizedSyncImportStepsFooter = memo(SyncImportStepsFooter)
+const MemoizedStepsGuideFooter = memo(StepsGuideFooter)
 
-export { MemoizedSyncImportStepsFooter as SyncImportStepsFooter }
+export { MemoizedStepsGuideFooter as StepsGuideFooter }
 
-export default memo(SyncImportSteps)
+export default memo(StepsGuide)
