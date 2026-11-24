@@ -195,7 +195,9 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
             {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
             {!!withBackButton && (
-              <View style={[{ width: HEADER_BUTTON_SIZE }, flexbox.alignCenter]}>{rightIcon}</View>
+              <View style={[{ minWidth: HEADER_BUTTON_SIZE }, flexbox.alignCenter]}>
+                {rightIcon}
+              </View>
             )}
           </View>
         )}
@@ -232,9 +234,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
           {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
           {!!withBackButton && (
-            <View style={[{ width: HEADER_BUTTON_SIZE }, flexbox.center]}>
-              {rightIcon}
-            </View>
+            <View style={[{ minWidth: HEADER_BUTTON_SIZE }, flexbox.center]}>{rightIcon}</View>
           )}
         </View>
       )}

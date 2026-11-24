@@ -24,8 +24,8 @@ const CARD_POSITION_STYLE = {
   right: 0,
   zIndex: 10
 }
-// On mobile the card is rendered as the layout's `headerOverlay`, which starts right at the header's bottom edge. Pushed down
-// by the caret's overhang, so the caret tip sits right under the header (same as web).
+// On mobile the card is the layout's `headerOverlay`, which starts at the header's bottom edge.
+// Pushed down by the caret's overhang, so the caret tip sits right under the header (as on web)
 const HEADER_OVERLAY_CARD_POSITION_STYLE = { ...CARD_POSITION_STYLE, top: CARET_OVERHANG }
 
 type Props = {
@@ -45,10 +45,7 @@ type Props = {
  * `headerOverlay`. In both cases the parent covers the card, because Android
  * doesn't deliver touches to children that overflow their parent.
  */
-const CowSwapAnnouncement = ({
-  openProviderSettingsModal,
-  isHeaderOverlay = false
-}: Props) => {
+const CowSwapAnnouncement = ({ openProviderSettingsModal, isHeaderOverlay = false }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   const { isCowSwapAnnouncementVisible, dismissCowSwapAnnouncement } = useCowSwapAnnouncement()

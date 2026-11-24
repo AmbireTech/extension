@@ -188,6 +188,43 @@ const ExploreSectionScreen = () => {
 
   const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
 
+  const getRightIcon = () => {
+    if (!hasSectionItems) return undefined
+    if (sectionType === 'recent') {
+      return (
+        <HeaderButton
+          icon={
+            <DeleteIcon
+              width={22}
+              height={22}
+              strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+              color={theme.primaryText}
+            />
+          }
+          accessibilityLabel={t('Clear recent apps')}
+          onPress={handleClearRecentPress}
+        />
+      )
+    }
+    if (sectionType === 'connected') {
+      return (
+        <HeaderButton
+          icon={
+            <ConnectedIcon
+              width={20}
+              height={20}
+              strokeWidth={getHeaderIconStrokeWidth(20, 20)}
+              color={theme.errorDecorative}
+            />
+          }
+          accessibilityLabel={t('Disconnect all apps')}
+          onPress={handleDisconnectAllPress}
+        />
+      )
+    }
+    return undefined
+  }
+
   return (
     <MobileLayoutContainer>
       <MobileLayoutWrapperMainContent
@@ -195,35 +232,7 @@ const ExploreSectionScreen = () => {
         title={title}
         onBackButtonPress={() => navigate(ROUTES.explore)}
         withScroll={false}
-        rightIcon={
-          !hasSectionItems ? undefined : sectionType === 'recent' ? (
-            <HeaderButton
-              icon={
-                <DeleteIcon
-                  width={22}
-                  height={22}
-                  strokeWidth={getHeaderIconStrokeWidth(28, 22)}
-                  color={theme.primaryText}
-                />
-              }
-              accessibilityLabel={t('Clear recent apps')}
-              onPress={handleClearRecentPress}
-            />
-          ) : sectionType === 'connected' ? (
-            <HeaderButton
-              icon={
-                <ConnectedIcon
-                  width={20}
-                  height={20}
-                  strokeWidth={getHeaderIconStrokeWidth(20, 20)}
-                  color={theme.errorDecorative}
-                />
-              }
-              accessibilityLabel={t('Disconnect all apps')}
-              onPress={handleDisconnectAllPress}
-            />
-          ) : undefined
-        }
+        rightIcon={getRightIcon()}
       >
         <View style={flexbox.flex1}>
           <View style={[spacings.mbSm]}>
