@@ -1,4 +1,4 @@
-import { formatUnits } from 'ethers'
+import { formatUnits, ZeroAddress } from 'ethers'
 import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
@@ -6,8 +6,11 @@ import { View } from 'react-native'
 import { TokenResult } from '@ambire-common/libs/portfolio/interfaces'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
+import OpenIcon from '@common/assets/svg/OpenIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
+import HoverablePressable from '@common/components/HoverablePressable'
+import useAddressActions from '@common/components/HumanizerAddress/components/BaseAddress/useAddressActions'
 import Text from '@common/components/Text'
 import TokenIcon from '@common/components/TokenIcon'
 import { isMobile } from '@common/config/env'
@@ -29,6 +32,13 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
   const tokenId = getTokenId(token)
+  const { network, handleOpenExplorer } = useAddressActions({
+    address: token.address,
+    chainId,
+    isToken: true
+  })
+  const canOpenExplorer =
+    !!network?.explorerUrl || (token.address === ZeroAddress && !!network?.nativeAssetId)
   const { formattedAmount, fullAmount } = useMemo(() => {
     if (token.simulationAmount === undefined || token.decimals === undefined) {
       return {
@@ -140,12 +150,18 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
           !hasBottomSpacing && spacings.mb0
         ]}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
-          <View style={spacings.mrTy}>{tokenIcon}</View>
-          <Text fontSize={16} weight="medium" appearance="secondaryText">
-            {token.symbol}
-          </Text>
-        </View>
+        <HoverablePressable
+          onPress={handleOpenExplorer}
+          disabled={!canOpenExplorer}
+          accessibilityRole={canOpenExplorer ? 'link' : undefined}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { minWidth: 0 }]}>
+            <View style={spacings.mrTy}>{tokenIcon}</View>
+            <Text fontSize={16} weight="medium" appearance="secondaryText">
+              {token.symbol}
+            </Text>
+          </View>
+        </HoverablePressable>
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlTy]}>
           <Text
             selectable
@@ -200,17 +216,32 @@ const PendingTokenSummary = ({ token, chainId, hasBottomSpacing = true }: Props)
             content: String(fullAmount)
           })}
         >{`${amountToSendSign}${formattedAmount}`}</Text>
-        <Text fontSize={16} weight="medium" appearance="secondaryText">
-          {` ${token.symbol}`}
-        </Text>
-        {!!priceInUsd && (
-          <Text
-            fontSize={16}
-            weight="medium"
-            appearance="secondaryText"
-          >{` ($${priceInUsd}) `}</Text>
-        )}
       </Text>
+      <HoverablePressable
+        onPress={handleOpenExplorer}
+        disabled={!canOpenExplorer}
+        accessibilityRole={canOpenExplorer ? 'link' : undefined}
+      >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlMi]}>
+          <Text fontSize={16} weight="medium" appearance="secondaryText">
+            {token.symbol}
+          </Text>
+          {canOpenExplorer && (
+            <View style={[{ marginLeft: 2, marginTop: -8 }, flexbox.center]}>
+              <OpenIcon color={theme.secondaryText} width={11} height={11} />
+            </View>
+          )}
+        </View>
+      </HoverablePressable>
+      {!!priceInUsd && (
+        <Text
+          selectable
+          fontSize={16}
+          weight="medium"
+          appearance="secondaryText"
+          style={spacings.mlMi}
+        >{`($${priceInUsd})`}</Text>
+      )}
       {suspiciousTokenWarning}
     </View>
   )
