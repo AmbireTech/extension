@@ -535,7 +535,7 @@ const PrivacyPoolsSendScreen = () => {
       >
         <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={flexbox.flex1}>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-            <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} style={spacings.mrSm} />
+            <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} />
             <PanelTitle title={t('Send')} />
             <PrivacyPoolsBroadcasterButton onPress={openBroadcasterSheet} />
           </View>

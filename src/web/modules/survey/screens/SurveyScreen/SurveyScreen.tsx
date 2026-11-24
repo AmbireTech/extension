@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { SurveyAnswers } from '@ambire-common/interfaces/survey'
 import { getNextQuestionForAnswers } from '@ambire-common/utils/survey'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { HEADER_BUTTON_SIZE } from '@common/components/HeaderButton'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { isMobile, isWeb } from '@common/config/env'
@@ -232,8 +233,9 @@ const SurveyScreen = () => {
         <View>
           <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={[flexbox.flex1]}>
             <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-              <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
-              <PanelTitle title={'Survey'} style={spacings.pr2Xl} />
+              <PanelBackButton onPress={handleGoBackPress} />
+              <PanelTitle title={'Survey'} />
+              <View style={{ width: HEADER_BUTTON_SIZE }} />
             </View>
             <View style={[spacings.mh2Xl, spacings.mtMd]}>
               <ProgressBar percentageDone={percentageDone} />
