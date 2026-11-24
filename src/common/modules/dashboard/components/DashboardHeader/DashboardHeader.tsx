@@ -9,12 +9,13 @@ import useController from '@common/hooks/useController'
 import useHover from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
+import { ROUND_BUTTON_STYLE } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -50,12 +51,19 @@ const DashboardHeader = () => {
           closeBottomSheet={closeNetworkStatusesSheet}
         />
       )}
-      <View style={[flexbox.directionRow, flexbox.flex1, flexbox.justifySpaceBetween]}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.flex1,
+          flexbox.justifySpaceBetween,
+          { gap: SPACING_TY }
+        ]}
+      >
         <AccountButton />
-        <View style={[flexbox.directionRow, flexbox.alignStart]}>
+        <View style={[flexbox.directionRow, flexbox.alignStart, { gap: SPACING_TY }]}>
           {SHOULD_DISPLAY_NETWORK_STATUSES && (
             <Pressable
-              style={[flexbox.justifyCenter, flexbox.alignCenter, { width: 40, height: 40 }]}
+              style={ROUND_BUTTON_STYLE}
               onPress={() => openNetworkStatusesSheet()}
               {...bindNetworkStatusesAnim}
             >
@@ -67,21 +75,7 @@ const DashboardHeader = () => {
 
           <Pressable
             testID="dashboard-hamburger-btn"
-            style={[
-              spacings.mlTy,
-              flexbox.justifyCenter,
-              flexbox.alignCenter,
-              {
-                borderRadius: 50,
-                width: 40,
-                height: 40,
-                backgroundColor: '#000000A3'
-              },
-              isMobile && {
-                borderWidth: 1,
-                borderColor: '#FFFFFF1F'
-              }
-            ]}
+            style={ROUND_BUTTON_STYLE}
             onPress={() => {
               isPopup || isMobile ? navigate(ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
             }}

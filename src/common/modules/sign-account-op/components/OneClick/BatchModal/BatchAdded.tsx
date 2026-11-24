@@ -85,7 +85,7 @@ const BatchAdded: FC<Props> = ({
       {isMobile ? (
         <HeaderWithTitle title={t('Batch')} withBackButton={false} />
       ) : isPopup ? (
-        <Header.Wrapper containerStyle={spacings.ptSm}>
+        <Header.Wrapper containerStyle={spacings.ptSm} style={{ gap: SPACING_TY }}>
           <Header.AccountData />
           <Header.Logo withOG />
         </Header.Wrapper>
