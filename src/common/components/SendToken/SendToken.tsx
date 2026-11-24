@@ -45,7 +45,8 @@ type Props = {
   fromAmountFieldMode: 'token' | 'fiat'
   maxFromAmount: string
   validateFromAmount: {
-    message?: string
+    /** A node to style a part of it, e.g. an amount with a tooltip, as nested text. */
+    message?: ReactNode
     success?: boolean
     severity?: 'error' | 'warning' | 'info' | 'success'
   }

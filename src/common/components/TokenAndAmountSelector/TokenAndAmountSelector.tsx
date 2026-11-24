@@ -56,7 +56,8 @@ type Props = {
   onMaxPress: () => void
   isMaxDisabled?: boolean
   message?: {
-    text?: string
+    /** A node to style a part of it, e.g. an amount with a tooltip, as nested text. */
+    text?: ReactNode
     severity?: 'error' | 'warning' | 'info' | 'success'
   }
   testIDs?: { amount?: string; amountFieldModeSwitch?: string; maxButton?: string }

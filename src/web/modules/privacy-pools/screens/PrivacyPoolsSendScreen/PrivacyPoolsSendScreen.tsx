@@ -15,9 +15,11 @@ import {
   getAmountsFromFieldValue
 } from '@ambire-common/libs/transfer/fieldAmounts'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
 import {
@@ -35,7 +37,7 @@ import TrackProgress from '@common/components/TrackProgress'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isWeb } from '@common/config/env'
-import { useTranslation } from '@common/config/localization'
+import { Trans, useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -342,10 +344,29 @@ const PrivacyPoolsSendScreen = () => {
       return {
         success: false,
         severity: 'error' as const,
-        message: t('You can send at most {{max}} {{symbol}}.', {
-          max: maxAmount,
-          symbol: selectedToken.symbol
-        })
+        message: (
+          <Trans
+            defaults="You can send at most <amount>{{max}} {{symbol}}</amount>."
+            values={{
+              // Rounded as on the dashboard, with the exact amount on hovering it
+              max: formatDecimals(Number(maxAmount), 'amount'),
+              symbol: selectedToken.symbol
+            }}
+            components={{
+              // Styled as the error message it is nested in
+              amount: (
+                <Text
+                  fontSize={12}
+                  appearance="errorText"
+                  dataSet={createGlobalTooltipDataSet({
+                    id: 'privacy-pools-send-max-amount',
+                    content: `${maxAmount} ${selectedToken.symbol}`
+                  })}
+                />
+              )
+            }}
+          />
+        )
       }
 
     return { success: true }
