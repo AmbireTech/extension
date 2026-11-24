@@ -115,6 +115,17 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     }
   }
 
+  async signTransactionTypeFour(derivationPath: string, transaction: Uint8Array) {
+    try {
+      return await ledgerTransportService.signTransactionTypeFour(
+        derivationPath,
+        stripHexPrefix(hexlify(transaction))
+      )
+    } catch (e: any) {
+      throw new ExternalSignerError(normalizeLedgerMessage(e?.message))
+    }
+  }
+
   signTypedData = async ({
     path,
     signTypedData: { domain, types, message, primaryType }
