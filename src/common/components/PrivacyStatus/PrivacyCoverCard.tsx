@@ -9,7 +9,7 @@ import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
-import { COVER_WINDOW_DAYS } from './helpers'
+import { COVER_WINDOW_DAYS } from './constants'
 import PrivacyCommunityNote from './PrivacyCommunityNote'
 import PrivacyCoverShield from './PrivacyCoverShield'
 import { PrivacySeverity, PrivacyStage } from './types'

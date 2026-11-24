@@ -21,6 +21,8 @@ import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoad
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
 import {
+  PRIVACY_LINE_SKELETON_HEIGHT,
+  PRIVACY_LINE_SKELETON_WIDTH,
   PrivacyFieldNote,
   PrivacyFieldTip,
   PrivacySendStatus
@@ -47,7 +49,6 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import PrivacyPoolsBroadcasterBottomSheet, {
   PrivacyPoolsBroadcasterButton
 } from '@web/modules/privacy-pools/components/PrivacyPoolsBroadcasterBottomSheet'
-import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
 import PrivacyPoolsSendCompleted from '@web/modules/privacy-pools/components/PrivacyPoolsSendCompleted'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import loadTransactionSummary, {
@@ -95,10 +96,6 @@ const findPickedTokenOption = (
 
   return fullestOfToken || options[0] || null
 }
-
-/** As tall as the privacy line, so the form does not move once it loads */
-const PRIVACY_SKELETON_HEIGHT = 16
-const PRIVACY_SKELETON_WIDTH = 160
 
 const selectSendForm = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.sendForm
@@ -413,8 +410,8 @@ const PrivacyPoolsSendScreen = () => {
       />
     )
   }, [isTransferInFlight, parsedAmount, selectedToken, setRawAmount])
-  // Proving and pricing, before the fee sheet opens. The form is locked meanwhile, as the transfer
-  // is proved for what it held on Proceed; leaving the screen cancels it.
+  // Proving and pricing, while the fee sheet waits for it. The form is locked meanwhile, as the
+  // transfer is proved for what it held on Proceed; leaving the screen cancels it.
   const isPreparingTransfer = isTransferInFlight && operation?.phase === 'proving'
   const canSend =
     isAvailable &&
@@ -429,7 +426,7 @@ const PrivacyPoolsSendScreen = () => {
   const handleSend = useCallback(() => {
     if (!canSend || !selectedToken || parsedAmount === null) return
 
-    // The fee sheet opens once the transfer is proved and priced - see the effect below
+    // The fee sheet opens right away and waits there for the transfer - see the effect below
     prepareWithdrawal({
       chainId: selectedToken.chainId,
       tokenAddress: selectedToken.tokenAddress,
@@ -439,16 +436,16 @@ const PrivacyPoolsSendScreen = () => {
     })
   }, [canSend, parsedAmount, prepareWithdrawal, recipient, selectedToken])
 
-  // Opens the sheet when the transfer is ready and its summary is loaded. One already ready on
-  // coming back to the screen is opened by the sheet itself - see `PrivacyPoolsSendSheet`
+  // Opens the sheet as the transfer starts proving, and closes it if proving fails, as that failure
+  // is only a toast. One already proving or ready on coming back to the screen is opened by the
+  // sheet itself - see `PrivacyPoolsSendSheet`
   const operationPhase = operation?.phase
   const operationStatus = operation?.status
   useEffect(() => {
-    if (!isTransactionSummaryLoaded) return
-    if (operationStatus !== 'pending' || operationPhase !== 'ready') return
-
-    openSheet()
-  }, [isTransactionSummaryLoaded, operationStatus, operationPhase, openSheet])
+    if (operationPhase !== 'proving') return
+    if (operationStatus === 'pending') openSheet()
+    if (operationStatus === 'failed') closeSheet()
+  }, [closeSheet, operationStatus, operationPhase, openSheet])
 
   /**
    * Sent, or could not be sent from the confirmation sheet: shown on its own screen, like the regular
@@ -598,8 +595,8 @@ const PrivacyPoolsSendScreen = () => {
           />
           {isPrivacyLoading && (
             <SkeletonLoader
-              width={PRIVACY_SKELETON_WIDTH}
-              height={PRIVACY_SKELETON_HEIGHT}
+              width={PRIVACY_LINE_SKELETON_WIDTH}
+              height={PRIVACY_LINE_SKELETON_HEIGHT}
               style={{ ...spacings.mtSm, ...spacings.mlSm }}
             />
           )}
@@ -614,12 +611,6 @@ const PrivacyPoolsSendScreen = () => {
               onRetry={retryCheck}
               style={{ ...spacings.mtSm, ...spacings.phSm }}
             />
-          )}
-          {/* At the bottom, right above the button */}
-          {isPreparingTransfer && (
-            <View style={{ marginTop: 'auto' }}>
-              <PrivacyPoolsLoadingTexts />
-            </View>
           )}
         </ScrollableWrapper>
       </Content>

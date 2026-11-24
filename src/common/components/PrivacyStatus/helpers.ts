@@ -1,7 +1,4 @@
-import {
-  PRIVACY_POOLS_COVER_WINDOW_DAYS,
-  PRIVACY_POOLS_MIN_REASSURING_COVER
-} from '@ambire-common/consts/privacyPools'
+import { PRIVACY_POOLS_MIN_REASSURING_COVER } from '@ambire-common/consts/privacyPools'
 import {
   PrivacyPoolsLeak,
   PrivacyPoolsLeakAction,
@@ -14,8 +11,6 @@ import { formatPrivacyPoolsAmount } from '@common/utils/privacyPools'
 import { PrivacySeverity, PrivacyStage, PrivacyTone } from './types'
 
 import type { TFunction } from 'i18next'
-
-const COVER_WINDOW_DAYS = Number(PRIVACY_POOLS_COVER_WINDOW_DAYS)
 
 const PRIVACY_TONE_COLORS: Record<
   PrivacyTone,
@@ -77,7 +72,6 @@ const getPrivacyStatusText = (t: TFunction, rating: PrivacyPoolsRating, cover: n
 }
 
 export {
-  COVER_WINDOW_DAYS,
   getLeakTextAppearance,
   getPrivacyActionText,
   getPrivacySeverity,
