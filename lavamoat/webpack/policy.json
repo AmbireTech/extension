@@ -628,6 +628,10 @@
     "@kohaku-eth/privacy-pools": {
       "globals": {
         "AbortController": true,
+        "Response": true,
+        "TextDecoder": true,
+        "TextEncoder": true,
+        "TransformStream": true,
         "URL": true,
         "Worker": true,
         "clearTimeout": true,
