@@ -501,7 +501,12 @@ const init = async () => {
   const pq1Ctrl = new PQ1Controller(eventEmitterRegistry, {
     getImportedAccounts: () => mainCtrl.accounts.accounts,
     onPrepareAccounts: (prepared) => mainCtrl.accountPicker.prepareAccounts(prepared),
-    sendUiMessage: (params) => mainCtrl.ui.message.sendUiMessage(params)
+    sendUiMessage: (params) => mainCtrl.ui.message.sendUiMessage(params),
+    // Read once the flags are loaded, as until then they are the defaults
+    isSafeApiEnabled: async () => {
+      await mainCtrl.featureFlags.initialLoadPromise
+      return mainCtrl.featureFlags.isFeatureEnabled('safeApi')
+    }
   })
 
   // Created before mainCtrl, whose UI manager reads the side panel mode. It doesn't need mainCtrl

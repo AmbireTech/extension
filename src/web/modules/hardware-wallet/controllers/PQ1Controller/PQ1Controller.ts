@@ -26,6 +26,9 @@ export type PQ1ControllerOptions = {
   onPrepareAccounts: (prepared: { accounts: Account[]; keys: ReadyToAddKeys }) => Promise<void>
   /** Replies to a UI request made with `dispatchAndWait`. */
   sendUiMessage: (reply: UiRequestReply) => void
+  /** Whether the user allows requests to the Safe API ("Sync Safe accounts" in the privacy
+   *  settings), which the PQ1 needs to show the Safe transactions it approves. */
+  isSafeApiEnabled: () => Promise<boolean>
 }
 
 /** The reply `dispatchAndWait` waits for: resolves it when `ok`, rejects it with `error`
@@ -82,14 +85,22 @@ class PQ1Controller extends EventEmitter implements ExternalSignerController {
 
   #sendUiMessage: PQ1ControllerOptions['sendUiMessage']
 
+  #isSafeApiEnabled: PQ1ControllerOptions['isSafeApiEnabled']
+
   constructor(
     eventEmitterRegistry: IEventEmitterRegistryController,
-    { getImportedAccounts, onPrepareAccounts, sendUiMessage }: PQ1ControllerOptions
+    {
+      getImportedAccounts,
+      onPrepareAccounts,
+      sendUiMessage,
+      isSafeApiEnabled
+    }: PQ1ControllerOptions
   ) {
     super(eventEmitterRegistry)
     this.#getImportedAccounts = getImportedAccounts
     this.#onPrepareAccounts = onPrepareAccounts
     this.#sendUiMessage = sendUiMessage
+    this.#isSafeApiEnabled = isSafeApiEnabled
     this.#manager = new Pq1DeviceManager({
       // Never left to the SDK's default, which reads chrome.storage.local itself
       cache: pq1InitCodeCache,
@@ -104,6 +115,11 @@ class PQ1Controller extends EventEmitter implements ExternalSignerController {
         this.emitUpdate()
       }
     })
+  }
+
+  /** Whether the PQ1 may fetch the Safe transactions it approves from the Safe API. */
+  canUseSafeApi() {
+    return this.#isSafeApiEnabled()
   }
 
   isUnlocked() {

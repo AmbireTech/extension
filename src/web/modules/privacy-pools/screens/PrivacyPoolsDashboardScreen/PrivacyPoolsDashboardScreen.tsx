@@ -27,7 +27,6 @@ import PrivacyPoolsTokensPage, {
   PRIVACY_POOLS_TABS
 } from '@web/modules/privacy-pools/components/PrivacyPoolsTokensPage'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
-import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -56,7 +55,6 @@ const PrivacyPoolsDashboardScreen = () => {
   const { selectedAccount } = usePrivacyPoolsAccounts()
   const isBackedUp = !!selectedAccount?.isBackedUp
   const { t } = useTranslation()
-  const { withdrawTokens } = usePrivacyPoolsTokens({ getNetworkName })
   // As on the regular dashboard: the pager starts where the collapsed overview ends and slides
   // over the part that collapses, which hides the network filter with it. Both heights are static.
   const [overviewHeight, setOverviewHeight] = useState(0)
@@ -157,7 +155,6 @@ const PrivacyPoolsDashboardScreen = () => {
             isSyncing={isSyncingAnyChain}
             hasSyncError={hasSyncError}
             totalPrivateBalance={totalPrivateBalance}
-            canSend={!!withdrawTokens.length}
             onRefresh={syncAllChains}
             onSend={openSend}
             onAbout={openGetStartedGuide}

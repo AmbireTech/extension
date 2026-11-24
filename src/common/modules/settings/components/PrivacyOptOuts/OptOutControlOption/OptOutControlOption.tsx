@@ -3,8 +3,11 @@ import React, { useCallback, useMemo } from 'react'
 import LinkIcon from '@common/assets/svg/LinkIcon'
 import LockIcon from '@common/assets/svg/LockIcon'
 import Badge from '@common/components/Badge'
+import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import ControlOption from '@common/components/ControlOption'
+import DualChoiceWarningModal from '@common/components/DualChoiceWarningModal'
 import FatToggle from '@common/components/FatToggle'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -32,6 +35,12 @@ interface Action {
   onPress: () => void
 }
 
+/** Asked before turning the option off, for when that has consequences the user should know */
+interface DisableConfirmation {
+  title: string
+  text: string
+}
+
 interface Opts {
   title: string
   description: string
@@ -39,6 +48,7 @@ interface Opts {
   flag: keyof FeatureFlags
   requiredBy?: RequiredBy
   action?: Action
+  disableConfirmation?: DisableConfirmation
 }
 
 const OptOutControlOption = (opts: Opts) => {
@@ -48,20 +58,39 @@ const OptOutControlOption = (opts: Opts) => {
   )
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { title, description, icon, flag, requiredBy, action } = opts
+  const { title, description, icon, flag, requiredBy, action, disableConfirmation } = opts
   const isRequired = !!requiredBy && flags[flag] && flags[requiredBy.flag]
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
+
+  const setEnabled = useCallback(
+    (isEnabling: boolean) => {
+      featureFlagsDispatch({
+        type: 'method',
+        params: {
+          method: 'setFeatureFlags',
+          args: [getFeatureFlagUpdates(flag, isEnabling)]
+        }
+      })
+    },
+    [featureFlagsDispatch, flag]
+  )
 
   const handleToggle = useCallback(() => {
     const isEnabling = !flags[flag]
+    if (!isEnabling && disableConfirmation) {
+      openSheet()
+      return
+    }
 
-    featureFlagsDispatch({
-      type: 'method',
-      params: {
-        method: 'setFeatureFlags',
-        args: [getFeatureFlagUpdates(flag, isEnabling)]
-      }
-    })
-  }, [featureFlagsDispatch, flags, flag])
+    setEnabled(isEnabling)
+  }, [flags, flag, disableConfirmation, openSheet, setEnabled])
+
+  const handleConfirmDisable = useCallback(() => {
+    setEnabled(false)
+    closeSheet()
+  }, [setEnabled, closeSheet])
+
+  const handleCancelDisable = useCallback(() => closeSheet(), [closeSheet])
 
   const titleAccessory = useMemo(() => {
     if (!isRequired || !requiredBy) return null
@@ -81,34 +110,53 @@ const OptOutControlOption = (opts: Opts) => {
   }, [isRequired, requiredBy, t, theme.primaryAccent300])
 
   return (
-    <ControlOption
-      style={spacings.mbTy}
-      title={title}
-      titleAccessory={titleAccessory}
-      description={description}
-      forceDescriptionOnMobile
-      renderIcon={icon}
-    >
-      {action ? (
-        <Button
-          type="success"
-          size="smaller"
-          style={spacings.phLg}
-          text={action.text}
-          onPress={action.onPress}
-          hasBottomSpacing={false}
-        />
-      ) : (
-        <FatToggle
-          isOn={flags[flag]}
-          onToggle={handleToggle}
-          disabled={isRequired}
-          trackStyle={spacings.mr0}
+    <>
+      <ControlOption
+        style={spacings.mbTy}
+        title={title}
+        titleAccessory={titleAccessory}
+        description={description}
+        forceDescriptionOnMobile
+        renderIcon={icon}
+      >
+        {action ? (
+          <Button
+            type="success"
+            size="smaller"
+            style={spacings.phLg}
+            text={action.text}
+            onPress={action.onPress}
+            hasBottomSpacing={false}
+          />
+        ) : (
+          <FatToggle
+            isOn={flags[flag]}
+            onToggle={handleToggle}
+            disabled={isRequired}
+            trackStyle={spacings.mr0}
+          >
+            {isRequired && <LockIcon width={14} height={14} color={theme.primaryAccent300} />}
+          </FatToggle>
+        )}
+      </ControlOption>
+      {!!disableConfirmation && (
+        <BottomSheet
+          id={`opt-out-${flag}-confirmation`}
+          sheetRef={sheetRef}
+          closeBottomSheet={closeSheet}
+          type="modal"
         >
-          {isRequired && <LockIcon width={14} height={14} color={theme.primaryAccent300} />}
-        </FatToggle>
+          <DualChoiceWarningModal
+            title={disableConfirmation.title}
+            description={disableConfirmation.text}
+            primaryButtonText={t('Turn off')}
+            secondaryButtonText={t('Cancel')}
+            onPrimaryButtonPress={handleConfirmDisable}
+            onSecondaryButtonPress={handleCancelDisable}
+          />
+        </BottomSheet>
       )}
-    </ControlOption>
+    </>
   )
 }
 

@@ -63,7 +63,7 @@ const ImportFromMobileScreen = () => {
   const { addToast } = useToast()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
-  const { goToNextRoute, goToPrevRoute, setSyncedAccountAddrs } = useOnboardingNavigation()
+  const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const {
     ref: passwordSheetRef,
     open: openPasswordSheet,
@@ -176,15 +176,12 @@ const ImportFromMobileScreen = () => {
         return
       }
 
-      // Added already - personalize shows them for naming
-      setSyncedAccountAddrs(importedAccountAddrs)
-
       // During onboarding the accounts arrive before the extension has a password of its
       // own. Reusing the mobile app's one sets it (and biometrics) right here, so the
       // keystore setup screen is skipped and the modal stays up until it lands.
       if (!hasPasswordSecret && isPasswordReused) {
         // A cancelled biometrics prompt returns no secret. The accounts are already
-        // imported and the password still has to be set, so the flow goes on without
+        // prepared and the password still has to be set, so the flow goes on without
         // biometrics and only says so.
         const biometricsSecret = isBiometricsEnabled ? await saveBiometricsSecret() : null
 
@@ -213,7 +210,6 @@ const ImportFromMobileScreen = () => {
       leaveScreen,
       saveBiometricsSecret,
       setPasswordFromSync,
-      setSyncedAccountAddrs,
       t
     ]
   )

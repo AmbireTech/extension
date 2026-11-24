@@ -31,7 +31,8 @@ interface Props {
   hasSyncError: boolean
   /** USD value of the approved and the pending part, matching the rows below. */
   totalPrivateBalance: number
-  canSend: boolean
+  /** Only while the controllers load, as there is no form to open yet - see `PrivacyPoolsDashboardShell` */
+  isSendDisabled?: boolean
   onRefresh: () => void
   onSend: () => void
   /** Opens the guide on how a Privacy Pools account works */
@@ -56,7 +57,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
   isSyncing,
   hasSyncError,
   totalPrivateBalance,
-  canSend,
+  isSendDisabled = false,
   onRefresh,
   onSend,
   onAbout,
@@ -139,8 +140,12 @@ const PrivacyPoolsOverview: FC<Props> = ({
                 </Pressable>
               </View>
             </View>
-            {/* Disabled until the notes are read, or the form would have an empty dropdown */}
-            <PrivacyPoolsActions onSend={onSend} isSendDisabled={!canSend} onAbout={onAbout} />
+            {/* Enabled without tokens too, like the regular Send: the form says there are none */}
+            <PrivacyPoolsActions
+              onSend={onSend}
+              isSendDisabled={isSendDisabled}
+              onAbout={onAbout}
+            />
           </OverviewCollapsible>
         </View>
       </View>

@@ -26,7 +26,7 @@ const PrivacyPoolsDashboardShell = () => {
           isSyncing
           hasSyncError={false}
           totalPrivateBalance={0}
-          canSend={false}
+          isSendDisabled
           onRefresh={noop}
           onSend={noop}
           onAbout={noop}

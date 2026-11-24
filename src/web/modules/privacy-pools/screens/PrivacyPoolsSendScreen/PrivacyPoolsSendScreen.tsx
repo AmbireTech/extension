@@ -32,7 +32,6 @@ import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
-import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { isWeb } from '@common/config/env'
@@ -50,6 +49,7 @@ import PrivacyPoolsBroadcasterBottomSheet, {
   PrivacyPoolsBroadcasterButton
 } from '@web/modules/privacy-pools/components/PrivacyPoolsBroadcasterBottomSheet'
 import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
+import PrivacyPoolsSendCompleted from '@web/modules/privacy-pools/components/PrivacyPoolsSendCompleted'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import loadTransactionSummary, {
   TransactionSummaryType
@@ -125,7 +125,8 @@ const PrivacyPoolsSendScreen = () => {
     recheckWithdrawal,
     broadcastWithdrawal,
     dismissOperation,
-    isAvailable
+    isAvailable,
+    balancesState
   } = usePrivacyPools()
   const { withdrawTokens, withdrawTokenSections } = usePrivacyPoolsTokens({ getNetworkName })
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
@@ -216,18 +217,20 @@ const PrivacyPoolsSendScreen = () => {
     [withdrawTokens, selectedTokenValue]
   )
 
-  // Shown in the select itself, like the regular Send, so the form does not grow
-  const noTokensOption: SelectValue = useMemo(
+  // Shown in the select itself, like the regular Send, so the form does not grow. Before the first
+  // read an empty list does not mean an empty account, so it says the tokens are loading instead.
+  const isReadingTokens = balancesState === 'loading' || balancesState === 'not-loaded'
+  const emptyTokenOption: SelectValue = useMemo(
     () => ({
-      value: 'noTokens',
+      value: isReadingTokens ? 'loading' : 'noTokens',
       label: (
         <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
-          {t('No tokens found')}
+          {isReadingTokens ? t('Loading tokens...') : t('No tokens found')}
         </Text>
       ),
       icon: null
     }),
-    [t]
+    [isReadingTokens, t]
   )
 
   const handleChangeToken = useCallback(
@@ -511,13 +514,7 @@ const PrivacyPoolsSendScreen = () => {
             }
           />
         ) : (
-          <Completed
-            title={t('Sending successfully')}
-            titleSecondary={t('Your {{symbol}} is on its way.', {
-              symbol: operationAsset?.symbol || t('Token')
-            })}
-            openExplorerText={t('View Transfer')}
-          />
+          <PrivacyPoolsSendCompleted symbol={operationAsset?.symbol} />
         )}
       </TrackProgress>
     )
@@ -567,7 +564,7 @@ const PrivacyPoolsSendScreen = () => {
             renderSectionHeader={renderPrivacyPoolsTokenSectionHeader}
             getSectionHeaderHeight={getPrivacyPoolsTokenSectionHeaderHeight}
             sectionOptionHeight={PRIVACY_POOLS_DEPOSIT_OPTION_HEIGHT}
-            fromTokenValue={selectedToken || noTokensOption}
+            fromTokenValue={selectedToken || emptyTokenOption}
             fromAmountValue={fieldMode === 'token' ? amount : amounts.amountInFiat}
             fromTokenAmountSelectDisabled={!withdrawTokens.length || isTransferInFlight}
             handleChangeFromToken={handleChangeToken}

@@ -6,9 +6,11 @@ import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomS
 import { ControllersMiddlewareContext } from '@common/contexts/controllersMiddlewareContext/controllersMiddlewareContext'
 import useRouterHistory from '@common/hooks/useRouterHistory'
 import { ROUTES } from '@common/modules/router/constants/common'
+import eventBus from '@common/services/event/eventBus'
 import { setStackGoBackHandler } from '@common/services/navigation/stackBackNavigation'
 import { useCanGoBackInWebViewHistory } from '@common/services/webview/webViewBackNavigation'
 import flexbox from '@common/styles/utils/flexbox'
+import { STACK_SETTLED_EVENT } from '@mobile/constants/navigationStack'
 
 import { getDismissDelta } from './stackEntries'
 import StackScreen from './StackScreen'
@@ -96,7 +98,10 @@ const NavigationStack = ({ onScreenSettled }: Props) => {
     .pathname
 
   useEffect(() => {
-    if (settledPathname) onScreenSettled?.(settledPathname)
+    if (!settledPathname) return
+
+    onScreenSettled?.(settledPathname)
+    eventBus.emit(STACK_SETTLED_EVENT)
   }, [settledPathname, onScreenSettled])
 
   // Told at the start of every navigation, and released either by the platform

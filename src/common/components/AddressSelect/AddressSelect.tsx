@@ -223,14 +223,17 @@ const SelectedMenuOption: React.FC<{
         // because highlight rendering lives in the detailed address row.
         withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
-        onScanAddress={type === 'input' ? setAddress : undefined}
+        // A disabled field takes no address, typed or scanned
+        onScanAddress={type === 'input' && !disabled ? setAddress : undefined}
         // The collapsed row is a button that opens the contacts menu, so the scan
         // icon is rendered next to the dropdown arrow to stay reachable without it.
         childrenBeforeButtons={
-          isButtonMode && !address ? <AddressScanButton onScanned={setAddress} /> : undefined
+          isButtonMode && !address && !disabled ? (
+            <AddressScanButton onScanned={setAddress} />
+          ) : undefined
         }
         disabled={disabled}
-        editable={!isButtonMode}
+        editable={!isButtonMode && !disabled}
         pointerEvents={isButtonMode ? 'none' : 'auto'}
         renderConfirmAddress={renderConfirmAddress}
         onFocus={() => {
@@ -297,7 +300,9 @@ const SelectedMenuOption: React.FC<{
   )
 
   return isButtonMode ? (
-    <Pressable onPress={() => setIsMenuOpen(true)}>{content}</Pressable>
+    <Pressable disabled={disabled} onPress={() => setIsMenuOpen(true)}>
+      {content}
+    </Pressable>
   ) : (
     content
   )
