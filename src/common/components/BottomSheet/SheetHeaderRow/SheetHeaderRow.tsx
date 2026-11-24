@@ -17,6 +17,8 @@ type Props = {
   onBack?: () => void
   /** Actions shown left of the X. */
   rightContent?: React.ReactNode
+  /** Keeps a long title centered, cut at its `numberOfLines`, instead of moving it left to wrap. */
+  isTitleAlwaysCentered?: boolean
   style?: StyleProp<ViewStyle>
 }
 
@@ -30,7 +32,13 @@ const SIDE_SLOT_STYLE = { minWidth: HEADER_BUTTON_SIZE, flexShrink: 0 }
  * sheet closes every sheet. It renders in the sheet's fixed header, above the scrolling
  * content. Outside a sheet only the title is rendered, in place.
  */
-const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) => {
+const SheetHeaderRow: FC<Props> = ({
+  children,
+  onBack,
+  rightContent,
+  isTitleAlwaysCentered = false,
+  style
+}) => {
   const {
     isInsideBottomSheet,
     isNested,
@@ -44,7 +52,7 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
   // A title that wraps while centered moves left over the space the centering kept free,
   // where it may take a second line (only without a back button, as the X alone is on the right)
   const [isTitleLeft, setIsTitleLeft] = useState(false)
-  const canTitleMoveLeft = !handleBack && hasTitle
+  const canTitleMoveLeft = !handleBack && hasTitle && !isTitleAlwaysCentered
   const isTitleOnLeft = canTitleMoveLeft && isTitleLeft
   // The first line of a title that wraps, which the buttons line up with instead of its middle
   const [wrappedTitleFirstLineHeight, setWrappedTitleFirstLineHeight] = useState<number | null>(

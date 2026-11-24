@@ -16,7 +16,7 @@ import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
-import { getVisibleNftTokenId } from '@common/utils/nft'
+import { getVisibleNftName, getVisibleNftTokenId } from '@common/utils/nft'
 
 interface Props {
   tokenId: bigint
@@ -30,11 +30,6 @@ interface Props {
   hideSendNft?: boolean
   style?: ViewStyle
 }
-
-const NFT_NAME_MAX_LENGTH = 12
-
-const getVisibleNftName = (name: string) =>
-  name.length > NFT_NAME_MAX_LENGTH ? `${name.slice(0, NFT_NAME_MAX_LENGTH)}...` : name
 
 const Nft: FC<Props> = ({
   address,
