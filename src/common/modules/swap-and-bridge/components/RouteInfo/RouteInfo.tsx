@@ -15,10 +15,9 @@ import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile, isWeb } from '@common/config/env'
-import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
-import spacings from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import formatTime from '@common/utils/formatTime'
 import RetryButton from '@web/components/RetryButton'
@@ -33,6 +32,11 @@ type Props = {
   openProviderSettingsModal: () => void
   areAllProvidersDisabled: boolean
 }
+
+// The fee button goes under the fee only when the time and the route selection leave it no room,
+// as on mobile and in a narrow side panel
+const FEE_STYLE = { flexShrink: 1, columnGap: SPACING_TY, rowGap: SPACING_MI }
+const ROUTE_STYLE = { flexShrink: 0 }
 
 const RouteInfo: FC<Props> = ({
   isEstimatingRoute,
@@ -54,7 +58,6 @@ const RouteInfo: FC<Props> = ({
     dispatch: swapAndBridgeDispatch
   } = useController('SwapAndBridgeController')
   const { theme } = useTheme()
-  const { isCompactLayout } = useCompactLayout()
   const { t } = useTranslation()
   const {
     ref: feeInfoSheetRef,
@@ -117,11 +120,6 @@ const RouteInfo: FC<Props> = ({
     signAccountOpController?.estimation.status === EstimationStatus.Success &&
     formStatus !== SwapAndBridgeFormStatus.InvalidRouteSelected
 
-  const shouldShowServiceTime = shouldShowSelectRoute && !!quote?.selectedRoute?.serviceTime
-  // On mobile and in a narrow side panel there isn't enough width for the fee, the button,
-  // the time and the route selection in one row, so the button goes under the fee
-  const shouldPlaceFeeButtonUnderFee = isCompactLayout && shouldShowServiceTime
-
   const updateQuote = useCallback(() => {
     swapAndBridgeDispatch({
       type: 'method',
@@ -178,20 +176,12 @@ const RouteInfo: FC<Props> = ({
       <View
         style={[
           flexbox.directionRow,
-          // When the button is under the fee the left side has two rows, so keep the time and
-          // the route selection on the first row instead of centering them vertically
-          shouldPlaceFeeButtonUnderFee ? flexbox.alignStart : flexbox.alignCenter,
+          flexbox.alignCenter,
           flexbox.justifySpaceBetween,
-          { width: '100%' }
+          { width: '100%', columnGap: SPACING_TY }
         ]}
       >
-        <View
-          style={
-            shouldPlaceFeeButtonUnderFee
-              ? flexbox.alignStart
-              : [flexbox.directionRow, flexbox.alignCenter]
-          }
-        >
+        <View style={[flexbox.directionRow, flexbox.alignCenter, flexbox.wrap, FEE_STYLE]}>
           <View style={[flexbox.directionRow, flexbox.alignCenter]}>
             <Text appearance="secondaryText" fontSize={12} weight="medium">
               {t('Ambire fee')}
@@ -210,11 +200,7 @@ const RouteInfo: FC<Props> = ({
             testID="swap-and-bridge-fee-info-button"
             hasBottomSpacing={false}
             submitOnEnter={false}
-            style={[
-              spacings.phTy,
-              shouldPlaceFeeButtonUnderFee ? spacings.mtMi : spacings.mlTy,
-              { height: 'auto', paddingTop: 2, paddingBottom: 2 }
-            ]}
+            style={[spacings.phTy, { height: 'auto', paddingTop: 2, paddingBottom: 2 }]}
             childrenPosition="right"
           >
             <RightArrowIcon width={10} height={10} color="#fff" style={spacings.mlMi} />
@@ -222,7 +208,7 @@ const RouteInfo: FC<Props> = ({
         </View>
 
         {shouldShowSelectRoute && (
-          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, ROUTE_STYLE]}>
             {quote?.selectedRoute?.serviceTime ? (
               <Text appearance="tertiaryText" fontSize={12} weight="medium">
                 {t('Time: {{time}}', {
