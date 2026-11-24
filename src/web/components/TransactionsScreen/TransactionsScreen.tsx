@@ -7,7 +7,7 @@ import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
 import Header from '@common/modules/header/components/Header'
-import spacings, { SPACING, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -31,7 +31,7 @@ const Wrapper: FC<WrapperProps> = ({ children }) => {
       backgroundStyle={isRequestWindow ? spacings.pt0 : {}}
     >
       {isPopup ? (
-        <Header.Wrapper containerStyle={spacings.ptSm}>
+        <Header.Wrapper containerStyle={spacings.ptSm} style={{ gap: SPACING_TY }}>
           <Header.AccountData />
           <Header.Logo withOG />
         </Header.Wrapper>

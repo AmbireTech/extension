@@ -18,7 +18,7 @@ import useSidePanelSettingsTab from '@web/hooks/useSidePanelSettingsTab'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
-import { DASHBOARD_HEADER_BUTTON_SIZE, ROUND_BUTTON_STYLE } from './styles'
+import { ROUND_BUTTON_STYLE } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -68,7 +68,7 @@ const DashboardHeader = () => {
         ]}
       >
         {/* Also shows a Privacy Pools account */}
-        <AccountButton height={DASHBOARD_HEADER_BUTTON_SIZE} isExpanded />
+        <AccountButton />
         <View style={[flexbox.directionRow, flexbox.alignStart, { gap: SPACING_TY }]}>
           {shouldDisplayNetworkStatuses && (
             <Pressable

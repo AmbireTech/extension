@@ -18,7 +18,6 @@ const getStyles = () =>
       height: 40,
       ...spacings.plMi,
       ...(isMobile ? spacings.prTy : spacings.prSm),
-      ...(isMobile ? spacings.mrMi : spacings.mrTy),
       borderRadius: 50
     },
     accountCopyIcon: { backgroundColor: 'transparent', borderColor: 'transparent' }

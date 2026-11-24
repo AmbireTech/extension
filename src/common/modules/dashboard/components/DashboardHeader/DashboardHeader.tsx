@@ -15,7 +15,7 @@ import { getUiType } from '@common/utils/uiType'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
-import { DASHBOARD_HEADER_BUTTON_SIZE, ROUND_BUTTON_STYLE } from './styles'
+import { ROUND_BUTTON_STYLE } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -59,7 +59,7 @@ const DashboardHeader = () => {
           { gap: SPACING_TY }
         ]}
       >
-        <AccountButton height={DASHBOARD_HEADER_BUTTON_SIZE} isExpanded />
+        <AccountButton />
         <View style={[flexbox.directionRow, flexbox.alignStart, { gap: SPACING_TY }]}>
           {SHOULD_DISPLAY_NETWORK_STATUSES && (
             <Pressable
