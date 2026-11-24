@@ -155,11 +155,9 @@ export default function useViewOnlyAccountAdder() {
   ])
 
   const buttonText = useMemo(() => {
-    if (isEveryAccountImported) {
-      return t('Continue')
-    }
+    if (!isEveryAccountImported && isLoading) return t('Loading...')
 
-    return isLoading ? t('Importing...') : t('Import')
+    return t('Continue')
   }, [isEveryAccountImported, isLoading, t])
 
   return {

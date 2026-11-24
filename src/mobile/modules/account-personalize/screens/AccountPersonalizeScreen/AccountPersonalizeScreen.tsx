@@ -36,6 +36,8 @@ const AccountPersonalizeScreen = () => {
   const {
     control,
     fields,
+    updatingKeysAddrs,
+    alreadyAddedAddrs,
     isLoading,
     hasBackButton,
     isAdding,
@@ -140,6 +142,8 @@ const AccountPersonalizeScreen = () => {
             ) : (
               <PersonalizeAccountsList
                 fields={fields}
+                updatingKeysAddrs={updatingKeysAddrs}
+                alreadyAddedAddrs={alreadyAddedAddrs}
                 control={control}
                 accountsToRemove={accountsToRemove}
                 isAdding={isAdding}

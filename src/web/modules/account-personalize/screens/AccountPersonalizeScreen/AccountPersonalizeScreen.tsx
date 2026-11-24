@@ -54,6 +54,8 @@ const AccountPersonalizeScreen = () => {
   const {
     control,
     fields,
+    updatingKeysAddrs,
+    alreadyAddedAddrs,
     isLoading,
     hasBackButton,
     isAdding,
@@ -83,6 +85,33 @@ const AccountPersonalizeScreen = () => {
   const [walletOpenedFor, setWalletOpenedFor] = useState<typeof added>(null)
   if (added && isWalletOpen && walletOpenedFor !== added) setWalletOpenedFor(added)
   const hasWalletOpened = !!added && walletOpenedFor === added
+  // Listed apart like on the personalize step, each keeping the index of its field
+  const addedGroups = useMemo(() => {
+    const items = (addedAccounts || []).map((account, index) => ({ account, index }))
+    const isInWallet = (addr: string) =>
+      updatingKeysAddrs.includes(addr) || alreadyAddedAddrs.includes(addr)
+
+    return [
+      {
+        key: 'added',
+        title: t('Added'),
+        items: items.filter(({ account }) => !isInWallet(account.addr))
+      },
+      {
+        key: 'keysUpdated',
+        title: t('Keys updated'),
+        items: items.filter(({ account }) => updatingKeysAddrs.includes(account.addr))
+      },
+      {
+        key: 'alreadyAdded',
+        title: t('Already added'),
+        items: items.filter(({ account }) => alreadyAddedAddrs.includes(account.addr))
+      }
+    ].filter(({ items: groupItems }) => groupItems.length)
+  }, [addedAccounts, updatingKeysAddrs, alreadyAddedAddrs, t])
+  // Nothing new came, the accounts the wallet has got new keys or were only named again
+  const hasNoNewAccounts = !addedGroups.some(({ key }) => key === 'added')
+  const hasMultipleGroups = addedGroups.length + (removedAccounts.length ? 1 : 0) > 1
 
   const listEmpty = useMemo(
     () => (
@@ -111,7 +140,9 @@ const AccountPersonalizeScreen = () => {
                 fontSize={20}
                 style={{ alignSelf: 'center', ...spacings.mbXl }}
               >
-                {removedAccounts.length ? t('Accounts updated') : t('Added successfully')}
+                {removedAccounts.length || (!!addedAccounts?.length && hasNoNewAccounts)
+                  ? t('Accounts updated')
+                  : t('Added successfully')}
               </Text>
               <ScrollView style={spacings.mbLg}>
                 {!!addedPrivacyPoolsAccount && !!privacyPoolsAccount && (
@@ -122,19 +153,27 @@ const AccountPersonalizeScreen = () => {
                     onSaveName={handleSavePrivacyPoolsAccountName}
                   />
                 )}
-                {!!addedAccounts?.length && !!removedAccounts.length && (
-                  <AccountsSectionTitle title={t('Added')} count={addedAccounts.length} />
-                )}
-                {addedAccounts?.map((account, index) => (
-                  <AccountPersonalizeCard
-                    key={account.addr}
-                    control={control}
-                    index={index}
-                    account={account}
-                    hasBottomSpacing={index !== addedAccounts.length - 1}
-                    disableEdit
-                    onSaveName={handleSaveAccountName}
-                  />
+                {addedGroups.map(({ key, title, items }, groupIndex) => (
+                  <React.Fragment key={key}>
+                    {hasMultipleGroups && (
+                      <AccountsSectionTitle
+                        title={title}
+                        count={items.length}
+                        style={groupIndex ? spacings.mtXl : undefined}
+                      />
+                    )}
+                    {items.map(({ account, index }, i) => (
+                      <AccountPersonalizeCard
+                        key={account.addr}
+                        control={control}
+                        index={index}
+                        account={account}
+                        hasBottomSpacing={i !== items.length - 1}
+                        disableEdit
+                        onSaveName={handleSaveAccountName}
+                      />
+                    ))}
+                  </React.Fragment>
                 ))}
                 {!!removedAccounts.length && (
                   <View style={!!addedAccounts?.length && spacings.mtXl}>
@@ -204,6 +243,8 @@ const AccountPersonalizeScreen = () => {
               ) : (
                 <PersonalizeAccountsList
                   fields={fields}
+                  updatingKeysAddrs={updatingKeysAddrs}
+                  alreadyAddedAddrs={alreadyAddedAddrs}
                   control={control}
                   accountsToRemove={accountsToRemove}
                   isAdding={isAdding}
