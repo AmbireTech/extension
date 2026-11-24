@@ -1,11 +1,19 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FlatList, ListRenderItemInfo, Pressable, TextStyle, View } from 'react-native'
+import {
+  FlatList,
+  GestureResponderEvent,
+  ListRenderItemInfo,
+  Pressable,
+  TextStyle,
+  View
+} from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import AboveSheetsOverlay from '@common/components/AboveSheetsOverlay'
 import { openBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
 import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
+import usePressedElementScreenPosition from '@common/components/BottomSheet/usePressedElementScreenPosition'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
@@ -41,6 +49,7 @@ const Dropdown: FC<Props> = ({
   const modalRef: any = useRef(null)
   const touchStartedInsideRef = useRef(false)
   const [internalPosition, setInternalPosition] = useState({ x: 0, y: 0 })
+  const getPressedElementScreenPosition = usePressedElementScreenPosition()
 
   const position = useMemo(
     () => externalPosition || internalPosition,
@@ -130,25 +139,25 @@ const Dropdown: FC<Props> = ({
     touchStartedInsideRef.current = true
   }, [])
 
-  const toggleDropdown = useCallback((): void => {
-    if (position.x !== 0 || position.y !== 0) {
-      setPosition({ x: 0, y: 0 })
-      return
-    }
+  // Not from `measure`, which can't tell where a sheet is on the screen. On web it ignores the CSS
+  // transform that places the sheet, and on mobile the sheet is a native view of its own
+  const toggleDropdown = useCallback(
+    (event: GestureResponderEvent): void => {
+      if (position.x !== 0 || position.y !== 0) {
+        setPosition({ x: 0, y: 0 })
+        return
+      }
 
-    // On web `measure` ignores CSS transforms, like the one that places a sheet on the screen,
-    // so the menu of a button in a sheet would open away from it
-    if (isWeb) {
-      // @ts-expect-error the ref is untyped
-      DropdownButton.current.measureInWindow((x, y) => setPosition({ x, y }))
-      return
-    }
+      if (isWeb) {
+        // @ts-expect-error the ref is untyped
+        DropdownButton.current.measureInWindow((x, y) => setPosition({ x, y }))
+        return
+      }
 
-    // @ts-ignore
-    DropdownButton.current.measure((fx, fy, w, h, px, py) => {
-      setPosition({ x: px, y: py })
-    })
-  }, [position, setPosition])
+      setPosition(getPressedElementScreenPosition(event))
+    },
+    [getPressedElementScreenPosition, position, setPosition]
+  )
 
   const onItemPress = useCallback(
     (item: any): void => {
@@ -181,7 +190,8 @@ const Dropdown: FC<Props> = ({
     <>
       <View onTouchStart={flagTouchStartedInside}>
         <Pressable onPress={toggleDropdown} ref={DropdownButton} testID={testID}>
-          <View style={styles.button}>
+          {/* The button takes the touch, which its position on mobile is read from */}
+          <View style={styles.button} pointerEvents="none">
             <KebabMenuIcon {...kebabIconProps} />
           </View>
         </Pressable>
