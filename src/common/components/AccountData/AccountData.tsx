@@ -1,11 +1,10 @@
 import React, { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Animated, View } from 'react-native'
+import { View } from 'react-native'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
-import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
 import { getHeaderIconStrokeWidth } from '@common/components/HeaderButton/constants'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
@@ -15,7 +14,7 @@ import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useControllerStore from '@common/hooks/useControllerStore'
-import useHover, { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -33,19 +32,13 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 type Props = {
   onPress?: () => void
-  /**
-   * It would be much nicer to just render children,
-   * but then it would be harder to animate them.
-   * Consider refactoring in the future, if this is needed
-   */
-  withArrowRightIcon?: boolean
   /** A ⌄ at the end, for a button that opens the account list */
   withArrowDownIcon?: boolean
   /** The solid color behind the button, which its translucent background darkens */
   backgroundBehindColor?: string
   /** Overrides the button's default height */
   height?: number
-  /** Takes all the width its row leaves, instead of fitting its content */
+  /** Takes all the width its row leaves, with the name and the address on two rows */
   isExpanded?: boolean
 }
 
@@ -70,7 +63,6 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const AccountData: FC<Props> = ({
   onPress,
-  withArrowRightIcon,
   withArrowDownIcon,
   backgroundBehindColor,
   height,
@@ -89,12 +81,6 @@ const AccountData: FC<Props> = ({
   const { selectedAccount: privacyPoolsAccount } = usePrivacyPoolsAccounts()
   const [bindAddressAnim, addressAnimStyle] = useHover({
     preset: 'opacityInverted',
-    duration: 50
-  })
-
-  const [bindAccountBtnAnim, accountBtnAnimStyle] = useCustomHover({
-    property: isWeb ? 'left' : 'opacity',
-    values: isWeb ? { from: 0, to: 2 } : { from: 1, to: 1 },
     duration: 50
   })
 
@@ -132,6 +118,7 @@ const AccountData: FC<Props> = ({
   const label = account ? account.preferences.label : privacyPoolsAccount?.label
   const subtitle = account ? `(${formattedAddress})` : `(${t('Privacy Pools')})`
   const canCopyAddress = isWeb && !!account
+  const hasTwoRows = isMobile || !!isExpanded
 
   if (!account && !privacyPoolsAccount) return null
 
@@ -158,13 +145,13 @@ const AccountData: FC<Props> = ({
             ...(isNarrowWebLayout ? { minWidth: 0 } : {}),
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
           },
-          isMobile && {
+          // On web, only the dashboard's button has the border
+          (isMobile || isExpanded) && {
             borderWidth: 1,
             borderColor: '#FFFFFF1F'
           }
         ]}
         onPress={onPress}
-        {...(onPress ? bindAccountBtnAnim : {})}
       >
         <>
           {isStoreReady && account && (
@@ -184,7 +171,7 @@ const AccountData: FC<Props> = ({
           {!isStoreReady && (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />
           )}
-          {isNarrowWebLayout && (
+          {!hasTwoRows && isNarrowWebLayout && (
             <>
               <Text
                 numberOfLines={1}
@@ -235,31 +222,43 @@ const AccountData: FC<Props> = ({
               )}
             </>
           )}
-          {isMobile && (
+          {hasTwoRows && (
             // The name and the address on two rows, both as wide as the button lets them. In an
             // expanded button they take its free width, which pushes the ⌄ to its end.
             <View style={[spacings.mrMi, { flexGrow: 1, flexShrink: 1, minWidth: 0 }]}>
               <Text
                 numberOfLines={1}
-                weight="medium"
+                weight={isMobile ? 'medium' : 'semiBold'}
                 color="#FFFFFF"
                 fontSize={14}
                 style={{ lineHeight: 18 }}
               >
                 {label}
               </Text>
-              <Text
-                color="#B9BFC9"
-                numberOfLines={1}
-                weight={account ? 'mono_regular' : 'regular'}
-                fontSize={12}
-                style={{ lineHeight: 16 }}
-              >
-                {account ? formattedAddress : t('Privacy Pools')}
-              </Text>
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <Text
+                  color="#B9BFC9"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  weight={account ? 'mono_regular' : 'regular'}
+                  fontSize={12}
+                  style={{ lineHeight: 16, flexShrink: 1, minWidth: 0 }}
+                >
+                  {account ? formattedAddress : t('Privacy Pools')}
+                </Text>
+                {canCopyAddress && (
+                  <AnimatedPressable
+                    style={[spacings.mlMi, addressAnimStyle]}
+                    onPress={handleCopyText}
+                    {...bindAddressAnim}
+                  >
+                    <CopyIcon width={16} height={16} color="#E3E6EB" />
+                  </AnimatedPressable>
+                )}
+              </View>
             </View>
           )}
-          {!isNarrowWebLayout && !isMobile && (
+          {!hasTwoRows && !isNarrowWebLayout && (
             <>
               <Text
                 numberOfLines={1}
@@ -303,18 +302,6 @@ const AccountData: FC<Props> = ({
             </>
           )}
 
-          {!!withArrowRightIcon && (
-            <Animated.View style={accountBtnAnimStyle}>
-              <RightArrowIcon
-                style={[
-                  styles.accountButtonRightIcon,
-                  maxWidthSize(480) ? spacings.mlMd : spacings.mlTy
-                ]}
-                width={12}
-                color="#E3E6EB"
-              />
-            </Animated.View>
-          )}
           {!!withArrowDownIcon && (
             <DownArrowIcon
               style={[spacings.mlMi, { marginRight: 2 }]}

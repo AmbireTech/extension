@@ -1,7 +1,6 @@
 import React from 'react'
 
 import AccountData from '@common/components/AccountData'
-import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
@@ -15,8 +14,7 @@ const AccountButton = ({ height, isExpanded }: Props) => {
       onPress={() => {
         navigate(WEB_ROUTES.accountSelect)
       }}
-      withArrowRightIcon={isWeb}
-      withArrowDownIcon={!isWeb}
+      withArrowDownIcon
       // The black of the dashboard's overview card
       backgroundBehindColor="#000000"
       height={height}

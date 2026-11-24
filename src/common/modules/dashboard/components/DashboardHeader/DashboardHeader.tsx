@@ -15,31 +15,13 @@ import { getUiType } from '@common/utils/uiType'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
+import { DASHBOARD_HEADER_BUTTON_SIZE, ROUND_BUTTON_STYLE } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 const { isPopup } = getUiType()
 
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
-
-/** The account button and the menu button, a bit taller than the other screens' header buttons */
-const DASHBOARD_HEADER_BUTTON_SIZE = 44
-
-/** The dark circle behind the icon buttons of the header */
-const ROUND_BUTTON_STYLE = [
-  flexbox.justifyCenter,
-  flexbox.alignCenter,
-  {
-    borderRadius: DASHBOARD_HEADER_BUTTON_SIZE / 2,
-    width: DASHBOARD_HEADER_BUTTON_SIZE,
-    height: DASHBOARD_HEADER_BUTTON_SIZE,
-    backgroundColor: '#000000A3'
-  },
-  isMobile && {
-    borderWidth: 1,
-    borderColor: '#FFFFFF1F'
-  }
-]
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
