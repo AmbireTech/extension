@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import { useOpenBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
+import { HEADER_BUTTON_SIZE } from '@common/components/HeaderButton'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -194,7 +195,9 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
             {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
             {!!title && <PanelTitle title={title} size={18} />}
             {!!withBackButton && (
-              <View style={[{ width: 28 }, flexbox.alignCenter]}>{rightIcon}</View>
+              <View style={[{ minWidth: HEADER_BUTTON_SIZE }, flexbox.alignCenter]}>
+                {rightIcon}
+              </View>
             )}
           </View>
         )}
@@ -231,7 +234,7 @@ const MobileLayoutWrapperMainContent: React.FC<MobileLayoutWrapperMainContentPro
           {!!withBackButton && <PanelBackButton onPress={handleBackButtonPress} />}
           {!!title && <PanelTitle title={title} size={18} />}
           {!!withBackButton && (
-            <View style={[{ width: 28, maxHeight: 15 }, flexbox.center]}>{rightIcon}</View>
+            <View style={[{ minWidth: HEADER_BUTTON_SIZE }, flexbox.center]}>{rightIcon}</View>
           )}
         </View>
       )}

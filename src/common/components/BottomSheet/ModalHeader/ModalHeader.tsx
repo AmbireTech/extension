@@ -3,6 +3,7 @@ import { View, ViewStyle } from 'react-native'
 
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import { HEADER_BUTTON_SIZE } from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -20,8 +21,6 @@ interface Props {
   children?: React.ReactNode
   headerTestID?: string
 }
-
-const BACK_BUTTON_BALANCE_WIDTH = 40
 
 const ModalHeader: FC<Props> = ({
   handleClose,
@@ -122,7 +121,7 @@ const ModalHeader: FC<Props> = ({
           {children ? (
             <View style={{ flexShrink: 0, maxWidth: '55%' }}>{children}</View>
           ) : shouldBalanceCenteredTitle ? (
-            <View style={{ width: BACK_BUTTON_BALANCE_WIDTH, flexShrink: 0 }} />
+            <View style={{ width: HEADER_BUTTON_SIZE, flexShrink: 0 }} />
           ) : null}
         </View>
       </Header.Wrapper>

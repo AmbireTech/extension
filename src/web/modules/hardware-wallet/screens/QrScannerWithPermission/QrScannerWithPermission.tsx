@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
 import Button from '@common/components/Button'
-import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -264,14 +263,14 @@ const QrScannerWithPermission = ({
           {message}
         </Text>
         {!!onOpenFullScreenScanner && (
-          <FooterGlassView size="sm" absolute={false} style={spacings.pv}>
+          <View style={[spacings.pv, flexbox.alignCenter]}>
             <Button
               size="small"
               hasBottomSpacing={false}
               text={t('Open full-screen')}
               onPress={onOpenFullScreenScanner}
             />
-          </FooterGlassView>
+          </View>
         )}
       </View>
     )
@@ -325,14 +324,12 @@ const QrScannerWithPermission = ({
             {cameraError ? message : externalError}
           </Text>
 
-          <FooterGlassView size="sm" absolute={false}>
-            <Button
-              size="small"
-              hasBottomSpacing={false}
-              text={retryText}
-              onPress={handleRetryPress}
-            />
-          </FooterGlassView>
+          <Button
+            size="small"
+            hasBottomSpacing={false}
+            text={retryText}
+            onPress={handleRetryPress}
+          />
         </View>
       ) : null}
     </View>

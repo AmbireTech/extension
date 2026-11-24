@@ -2,7 +2,7 @@ import { scanFromURLAsync } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppState, Linking, Pressable, View } from 'react-native'
+import { AppState, Linking, View } from 'react-native'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
@@ -10,6 +10,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
@@ -142,9 +143,18 @@ const QrReaderScreen = () => {
   }, [addToast, t, handleScannedValue])
 
   const rightIcon = permissionGranted ? (
-    <Pressable onPress={handleGalleryPress} hitSlop={12}>
-      <GalleryIcon width={22} height={22} />
-    </Pressable>
+    <HeaderButton
+      icon={
+        <GalleryIcon
+          width={16}
+          height={16}
+          strokeWidth={getHeaderIconStrokeWidth(22, 16)}
+          color={theme.primaryText}
+        />
+      }
+      accessibilityLabel={t('Scan from an image')}
+      onPress={handleGalleryPress}
+    />
   ) : undefined
 
   const footer = permissionGranted ? (

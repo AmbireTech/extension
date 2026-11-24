@@ -1,13 +1,14 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Dapp } from '@ambire-common/interfaces/dapp'
 import { Network } from '@ambire-common/interfaces/network'
 import ConnectedIcon from '@common/assets/svg/ConnectedIcon'
 import DeleteIcon from '@common/assets/svg/DeleteIcon'
 import NetworksIcon from '@common/assets/svg/NetworksIcon'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import NetworkIcon from '@common/components/NetworkIcon'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -187,6 +188,43 @@ const ExploreSectionScreen = () => {
 
   const renderItem = useCallback(({ item }: { item: Dapp }) => <DappItem {...item} />, [])
 
+  const getRightIcon = () => {
+    if (!hasSectionItems) return undefined
+    if (sectionType === 'recent') {
+      return (
+        <HeaderButton
+          icon={
+            <DeleteIcon
+              width={22}
+              height={22}
+              strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+              color={theme.primaryText}
+            />
+          }
+          accessibilityLabel={t('Clear recent apps')}
+          onPress={handleClearRecentPress}
+        />
+      )
+    }
+    if (sectionType === 'connected') {
+      return (
+        <HeaderButton
+          icon={
+            <ConnectedIcon
+              width={20}
+              height={20}
+              strokeWidth={getHeaderIconStrokeWidth(20, 20)}
+              color={theme.errorDecorative}
+            />
+          }
+          accessibilityLabel={t('Disconnect all apps')}
+          onPress={handleDisconnectAllPress}
+        />
+      )
+    }
+    return undefined
+  }
+
   return (
     <MobileLayoutContainer>
       <MobileLayoutWrapperMainContent
@@ -194,17 +232,7 @@ const ExploreSectionScreen = () => {
         title={title}
         onBackButtonPress={() => navigate(ROUTES.explore)}
         withScroll={false}
-        rightIcon={
-          !hasSectionItems ? undefined : sectionType === 'recent' ? (
-            <Pressable onPress={handleClearRecentPress} hitSlop={8}>
-              <DeleteIcon width={24} height={24} strokeWidth="1.75" />
-            </Pressable>
-          ) : sectionType === 'connected' ? (
-            <Pressable onPress={handleDisconnectAllPress} hitSlop={8}>
-              <ConnectedIcon width={20} height={20} color={theme.errorDecorative} />
-            </Pressable>
-          ) : undefined
-        }
+        rightIcon={getRightIcon()}
       >
         <View style={flexbox.flex1}>
           <View style={[spacings.mbSm]}>

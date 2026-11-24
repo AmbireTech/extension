@@ -12,7 +12,6 @@ import {
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
-import { BUTTON_HEIGHT } from '@common/components/Button'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -219,8 +218,7 @@ const OneClickEstimation = ({
   const footerComponent = useMemo(() => {
     if (!signAccountOpController) return null
 
-    // The wide footer keeps `smaller` buttons, but as tall as the compact ones
-    const signButtonStyle = isCompactLayout ? { width: '100%' as const } : { height: BUTTON_HEIGHT }
+    const signButtonStyle = isCompactLayout ? { width: '100%' as const } : undefined
     const signButton =
       (!!banners && !!banners.length) || isLinkingNewFeePayerToSafe ? (
         <HoldToProceedButton
@@ -234,7 +232,7 @@ const OneClickEstimation = ({
           disabled={isSignDisabled || signingErrors.length > 0}
           onPressIn={markFreshActionPress}
           onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
-          size={isCompactLayout ? 'regular' : 'smaller'}
+          size="regular"
           style={signButtonStyle}
         />
       ) : (
@@ -246,7 +244,7 @@ const OneClickEstimation = ({
           disabled={isSignDisabled || signingErrors.length > 0}
           onPressIn={markFreshActionPress}
           onPress={() => runWithFreshActionPress(onSignButtonClick)}
-          size={isCompactLayout ? 'regular' : 'smaller'}
+          size="regular"
           style={signButtonStyle}
         />
       )

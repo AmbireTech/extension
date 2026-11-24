@@ -249,7 +249,7 @@ const EditApproval = ({
                   text={t('Save')}
                   onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
                   hasBottomSpacing={false}
-                  size={isNarrowWebLayout ? 'regular' : 'smaller'}
+                  size="regular"
                   // flex: 1 would squash the height of the stacked narrow view buttons
                   style={isNarrowWebLayout ? { width: '100%' } : flexbox.flex1}
                 />
@@ -261,7 +261,7 @@ const EditApproval = ({
                 text={t('Save')}
                 onPress={() => editCall(amountRef.current, token, chainId, closeEditApprovals)}
                 hasBottomSpacing={false}
-                size="smaller"
+                size="regular"
                 style={[{ width: 100 }, flexbox.flex1]}
               />
             )}

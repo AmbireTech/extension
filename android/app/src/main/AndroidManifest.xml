@@ -7,6 +7,8 @@
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.NFC"/>
   <uses-feature android:name="android.hardware.nfc" android:required="false"/>
+  <uses-feature android:name="android.hardware.screen.portrait" android:required="false"/>
+  <uses-feature android:name="android.hardware.wifi" android:required="false"/>
   <!--
     Gallery access (scanning a QR code from an image) uses the Android Photo Picker via
     expo-image-picker's launchImageLibraryAsync, which needs no runtime permission. We strip the
