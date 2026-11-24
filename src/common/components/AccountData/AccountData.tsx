@@ -39,6 +39,10 @@ type Props = {
   withArrowRightIcon?: boolean
   /** The solid color behind the button, which its translucent background darkens */
   backgroundBehindColor?: string
+  /** Overrides the button's default height */
+  height?: number
+  /** Takes all the width its row leaves, instead of fitting its content */
+  isExpanded?: boolean
 }
 
 /** How much the button's black background covers what is behind it */
@@ -60,7 +64,13 @@ const getButtonColorOver = (backgroundBehindColor: string) => {
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
 
-const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindColor }) => {
+const AccountData: FC<Props> = ({
+  onPress,
+  withArrowRightIcon,
+  backgroundBehindColor,
+  height,
+  isExpanded
+}) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { styles, theme } = useTheme(getStyles)
@@ -125,6 +135,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
       style={{
         overflow: 'hidden',
         flexShrink: 1,
+        ...(isExpanded ? { flex: 1 } : {}),
         borderTopRightRadius: 50,
         borderBottomRightRadius: 50
       }}
@@ -136,6 +147,9 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
           {
             backgroundColor: hexToRgba('#000000', BUTTON_BACKGROUND_OPACITY),
             flexShrink: 1,
+            ...(height ? { height } : {}),
+            // Fills its row, so the row spaces it from its neighbours
+            ...(isExpanded ? { marginRight: 0 } : {}),
             ...(isNarrowWebLayout ? { minWidth: 0 } : {}),
             ...(isWeb && !onPress ? { cursor: 'auto' } : {})
           },
@@ -165,7 +179,7 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
           {!isStoreReady && (
             <SkeletonLoader width={32} height={32} borderRadius={16} style={spacings.mrTy} />
           )}
-          {isNarrowWebLayout ? (
+          {isNarrowWebLayout && (
             <>
               <Text
                 numberOfLines={1}
@@ -215,11 +229,35 @@ const AccountData: FC<Props> = ({ onPress, withArrowRightIcon, backgroundBehindC
                 </View>
               )}
             </>
-          ) : (
+          )}
+          {isMobile && (
+            // The name and the address on two rows, both as wide as the button lets them
+            <View style={[spacings.mrMi, { flexShrink: 1, minWidth: 0 }]}>
+              <Text
+                numberOfLines={1}
+                weight="medium"
+                color="#FFFFFF"
+                fontSize={14}
+                style={{ lineHeight: 18 }}
+              >
+                {label}
+              </Text>
+              <Text
+                color="#B9BFC9"
+                numberOfLines={1}
+                weight={account ? 'mono_regular' : 'regular'}
+                fontSize={12}
+                style={{ lineHeight: 16 }}
+              >
+                {account ? formattedAddress : t('Privacy Pools')}
+              </Text>
+            </View>
+          )}
+          {!isNarrowWebLayout && !isMobile && (
             <>
               <Text
                 numberOfLines={1}
-                weight={isMobile ? 'medium' : 'semiBold'}
+                weight="semiBold"
                 style={[
                   spacings.mrMi,
                   // Capped to leave room for the address. A Privacy Pools account has none, so its

@@ -5,7 +5,9 @@ import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
-const AccountButton = () => {
+type Props = Pick<React.ComponentProps<typeof AccountData>, 'height' | 'isExpanded'>
+
+const AccountButton = ({ height, isExpanded }: Props) => {
   const { navigate } = useNavigation()
 
   return (
@@ -16,6 +18,8 @@ const AccountButton = () => {
       withArrowRightIcon={isWeb}
       // The black of the dashboard's overview card
       backgroundBehindColor="#000000"
+      height={height}
+      isExpanded={isExpanded}
     />
   )
 }

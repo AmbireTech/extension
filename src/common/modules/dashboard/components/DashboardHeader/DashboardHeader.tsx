@@ -9,7 +9,7 @@ import useController from '@common/hooks/useController'
 import useHover from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { getUiType } from '@common/utils/uiType'
 
@@ -21,6 +21,25 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 const { isPopup } = getUiType()
 
 const SHOULD_DISPLAY_NETWORK_STATUSES = isAmbireNext || isDev
+
+/** The account button and the menu button, a bit taller than the other screens' header buttons */
+const DASHBOARD_HEADER_BUTTON_SIZE = 44
+
+/** The dark circle behind the icon buttons of the header */
+const ROUND_BUTTON_STYLE = [
+  flexbox.justifyCenter,
+  flexbox.alignCenter,
+  {
+    borderRadius: DASHBOARD_HEADER_BUTTON_SIZE / 2,
+    width: DASHBOARD_HEADER_BUTTON_SIZE,
+    height: DASHBOARD_HEADER_BUTTON_SIZE,
+    backgroundColor: '#000000A3'
+  },
+  isMobile && {
+    borderWidth: 1,
+    borderColor: '#FFFFFF1F'
+  }
+]
 
 const selectAccount = (state: AllControllersMappingType['SelectedAccountController']) =>
   state.account
@@ -50,12 +69,19 @@ const DashboardHeader = () => {
           closeBottomSheet={closeNetworkStatusesSheet}
         />
       )}
-      <View style={[flexbox.directionRow, flexbox.flex1, flexbox.justifySpaceBetween]}>
-        <AccountButton />
-        <View style={[flexbox.directionRow, flexbox.alignStart]}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.flex1,
+          flexbox.justifySpaceBetween,
+          { gap: SPACING_TY }
+        ]}
+      >
+        <AccountButton height={DASHBOARD_HEADER_BUTTON_SIZE} isExpanded />
+        <View style={[flexbox.directionRow, flexbox.alignStart, { gap: SPACING_TY }]}>
           {SHOULD_DISPLAY_NETWORK_STATUSES && (
             <Pressable
-              style={[flexbox.justifyCenter, flexbox.alignCenter, { width: 40, height: 40 }]}
+              style={ROUND_BUTTON_STYLE}
               onPress={() => openNetworkStatusesSheet()}
               {...bindNetworkStatusesAnim}
             >
@@ -67,21 +93,7 @@ const DashboardHeader = () => {
 
           <Pressable
             testID="dashboard-hamburger-btn"
-            style={[
-              spacings.mlTy,
-              flexbox.justifyCenter,
-              flexbox.alignCenter,
-              {
-                borderRadius: 50,
-                width: 40,
-                height: 40,
-                backgroundColor: '#000000A3'
-              },
-              isMobile && {
-                borderWidth: 1,
-                borderColor: '#FFFFFF1F'
-              }
-            ]}
+            style={ROUND_BUTTON_STYLE}
             onPress={() => {
               isPopup || isMobile ? navigate(ROUTES.menu) : navigate(WEB_ROUTES.generalSettings)
             }}
