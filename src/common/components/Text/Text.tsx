@@ -124,6 +124,8 @@ const Text: React.FC<Props> = ({
       ])}
       numberOfLines={sheetHeaderTitle?.isLineCapIgnored ? undefined : numberOfLines}
       onTextLayout={handleTextLayout}
+      // The layouts have fixed heights, so the system's text size setting would crowd or clip the text
+      allowFontScaling={false}
       {...rest}
     >
       {children}
