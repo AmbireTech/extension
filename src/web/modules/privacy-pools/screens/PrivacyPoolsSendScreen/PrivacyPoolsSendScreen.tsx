@@ -500,6 +500,8 @@ const PrivacyPoolsSendScreen = () => {
 
   if (isOutcomeShown && operation) {
     const hasFailed = operation.status === 'failed'
+    // Only an expired transfer fails while still ready: it was dropped before it was sent
+    const hasExpired = hasFailed && operation.phase === 'ready'
 
     return (
       <TrackProgress
@@ -511,7 +513,7 @@ const PrivacyPoolsSendScreen = () => {
         {/* No explorer link: the transfer's hash is not kept */}
         {hasFailed ? (
           <Failed
-            title={t('Something went wrong!')}
+            title={hasExpired ? t("Let's try that again") : t('Something went wrong!')}
             alertStyle={FAILED_ALERT_STYLE}
             errorMessage={
               operation.error ||
