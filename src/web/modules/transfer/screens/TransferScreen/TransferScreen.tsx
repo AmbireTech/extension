@@ -672,7 +672,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               ]}
             >
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-                <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
+                <PanelBackButton onPress={handleGoBackPress} />
                 <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
                 <View style={{ width: 40 }} />
               </View>
