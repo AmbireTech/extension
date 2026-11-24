@@ -30,6 +30,8 @@ const createThumb = (axis: Axis) => {
 
 const getScrolledElement = (target: EventTarget | null) => {
   if (target === document) return document.scrollingElement as HTMLElement | null
+  // Fields scroll their text as the caret moves past their edge, which needs no scrollbar
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return null
 
   return target instanceof HTMLElement ? target : null
 }

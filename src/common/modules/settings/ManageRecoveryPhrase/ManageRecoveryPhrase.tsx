@@ -398,6 +398,7 @@ const ManageRecoveryPhrase = ({
               type="danger"
               style={spacings.mtTy}
               text={t('Remove recovery phrase')}
+              hasBottomSpacing={false}
               disabled={!deleteSeedIsConfirmed}
               onPress={deleteSavedSeed}
             />
