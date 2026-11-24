@@ -5,7 +5,10 @@ import { getPrivacyPoolsTokenId } from '@ambire-common/consts/privacyPools'
 import { PrivacyPoolsDepositPrivacy as DepositPrivacy } from '@ambire-common/interfaces/privacyPools'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import PrivacyStatus from '@common/components/PrivacyStatus'
+import PrivacyStatus, {
+  PRIVACY_LINE_SKELETON_HEIGHT,
+  PRIVACY_LINE_SKELETON_WIDTH
+} from '@common/components/PrivacyStatus'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -20,10 +23,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const selectDepositAssetConfigs = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.depositAssetConfigs
-
-/** As tall as the status line, so the form does not move once it loads */
-const STATUS_SKELETON_HEIGHT = 16
-const STATUS_SKELETON_WIDTH = 160
 
 /** 10000 basis points make 100% */
 const BASIS_POINTS_PER_PERCENT = 100
@@ -76,7 +75,10 @@ const PrivacyPoolsDepositPrivacy: FC<Props> = ({
     <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtTy]}>
       {privacy.isLoading ? (
         <View style={flexbox.flex1}>
-          <SkeletonLoader width={STATUS_SKELETON_WIDTH} height={STATUS_SKELETON_HEIGHT} />
+          <SkeletonLoader
+            width={PRIVACY_LINE_SKELETON_WIDTH}
+            height={PRIVACY_LINE_SKELETON_HEIGHT}
+          />
         </View>
       ) : (
         <PrivacyStatus
