@@ -230,7 +230,7 @@
     "react-native-quick-crypto": "1.1.9",
     "react-native-reanimated": "4.7.1",
     "react-native-reanimated-carousel": "5.2.2",
-    "react-native-reanimated-dnd": "2.0.0",
+    "react-native-reorderable-list": "0.18.3",
     "react-native-safe-area-context": "5.11.1",
     "react-native-screens": "4.30.1",
     "react-native-stallion": "2.4.2",
