@@ -26,6 +26,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -34,6 +35,7 @@ import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
+import PrivacyPoolsAccountsEmptyState from '@web/modules/privacy-pools/components/PrivacyPoolsAccountsEmptyState'
 
 import getStyles from './styles'
 
@@ -88,6 +90,11 @@ const AccountSelectScreen = () => {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
+  } = useSheetRef()
+  const {
+    ref: privacyPoolsSheetRef,
+    open: openPrivacyPoolsBottomSheet,
+    close: closePrivacyPoolsBottomSheet
   } = useSheetRef()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
@@ -213,6 +220,12 @@ const AccountSelectScreen = () => {
     [listBottomInset]
   )
   const noAccountsFound = <Text>{t('No accounts found')}</Text>
+  // Only without any Privacy Pools account - when the search hides them all, nothing was found
+  const privacyPoolsAccountsEmptyComponent = privacyPoolsAccounts.length ? (
+    noAccountsFound
+  ) : (
+    <PrivacyPoolsAccountsEmptyState onAddPress={openPrivacyPoolsBottomSheet} />
+  )
   const isPrivateTabOpen = isPrivacyPoolsSupported && activeTab === 'private'
   const listStyle = isPrivacyPoolsSupported ? styles.containerBelowTabs : styles.container
 
@@ -271,7 +284,7 @@ const AccountSelectScreen = () => {
               data={filteredPrivacyPoolsAccounts}
               renderItem={renderPrivacyPoolsAccount}
               keyExtractor={privacyPoolsAccountKeyExtractor}
-              ListEmptyComponent={noAccountsFound}
+              ListEmptyComponent={privacyPoolsAccountsEmptyComponent}
             />
           ) : (
             // Without a regular account selected there is no row to scroll to, so nothing to wait for
@@ -328,6 +341,16 @@ const AccountSelectScreen = () => {
         </FooterGlassView>
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      {isPrivacyPoolsSupported && (
+        <AddPrivacyPoolsAccountBottomSheet
+          // The one nested in `AddAccount` is mounted too, and the ids must differ
+          id="accounts-empty-state-add-privacy-pools-account-bottom-sheet"
+          sheetRef={privacyPoolsSheetRef}
+          closeBottomSheet={closePrivacyPoolsBottomSheet}
+          // Closes as the flow moves on to the personalize step
+          onFlowStart={closePrivacyPoolsBottomSheet}
+        />
+      )}
       <SyncBottomSheet
         sheetRef={syncSheetRef}
         closeBottomSheet={closeSyncBottomSheet}
