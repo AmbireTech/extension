@@ -1,6 +1,6 @@
 import { formatUnits, isAddress, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import {
   getPrivacyPoolsAsset,
@@ -72,6 +72,12 @@ const NO_ADDRESS_RESOLUTION: Omit<AddressState, 'fieldValue'> = {
 }
 
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
+
+/**
+ * A card of fixed width, so that the message wraps instead of stretching the alert past the screen
+ * on one line.
+ */
+const FAILED_ALERT_STYLE: ViewStyle = { width: '100%', maxWidth: 360 }
 
 /**
  * The picked deposit's option, else the fullest deposit of a token picked without one, as when
@@ -506,6 +512,7 @@ const PrivacyPoolsSendScreen = () => {
         {hasFailed ? (
           <Failed
             title={t('Something went wrong!')}
+            alertStyle={FAILED_ALERT_STYLE}
             errorMessage={
               operation.error ||
               t(
