@@ -11,7 +11,7 @@ const usePrivacyPoolsSendRandomTitle = () => {
   const titles: [string, ...string[]] = [
     t('Transfer in motion.'),
     t('Signed and on its way.'),
-    t('Mission accomplished'),
+    t('Mission accomplished!'),
     t('Whoosh!'),
     t('Beep boop. Done!')
   ]
