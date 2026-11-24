@@ -131,14 +131,23 @@ const Dropdown: FC<Props> = ({
   }, [])
 
   const toggleDropdown = useCallback((): void => {
-    if (position.x === 0 && position.y === 0) {
-      // @ts-ignore
-      DropdownButton.current.measure((fx, fy, w, h, px, py) => {
-        setPosition({ x: px, y: py })
-      })
-    } else {
+    if (position.x !== 0 || position.y !== 0) {
       setPosition({ x: 0, y: 0 })
+      return
     }
+
+    // On web `measure` ignores CSS transforms, like the one that places a sheet on the screen,
+    // so the menu of a button in a sheet would open away from it
+    if (isWeb) {
+      // @ts-expect-error the ref is untyped
+      DropdownButton.current.measureInWindow((x, y) => setPosition({ x, y }))
+      return
+    }
+
+    // @ts-ignore
+    DropdownButton.current.measure((fx, fy, w, h, px, py) => {
+      setPosition({ x: px, y: py })
+    })
   }, [position, setPosition])
 
   const onItemPress = useCallback(
