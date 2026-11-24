@@ -19,9 +19,9 @@ const COMMON_ROUTES = {
   accountPicker: 'account-picker',
   onboardingCompleted: 'wallet-setup-completed',
   viewOnlyAccountAdder: 'view-only-account-adder',
-  safeImport: 'safe-import',
   safeImportAddress: 'safe-import-address',
   safeImportByOwner: 'safe-import-by-owner',
+  safeCreate: 'safe-create',
   qrConnect: 'qr-connect',
   transfer: 'transfer',
   topUpGasTank: 'top-up-gas-tank',
@@ -82,12 +82,12 @@ const WEB_ROUTES = {
   addressBook: 'settings/address-book',
   manageTokens: 'settings/manage-tokens',
   recoveryPhrasesSettings: 'settings/recovery-phrases',
-  safeImport: 'safe-import',
   optOuts: 'settings/opt-outs',
   survey: 'survey',
   qrPermission: 'qr-permission',
   exportToMobile: 'export-to-mobile',
   importFromMobile: 'import-from-mobile',
+  pq1Connect: 'pq1-connect',
   oneKeyConnect: 'onekey-connect',
   // INTERNAL ROUTES
   internalLogs: 'internal/logs'
@@ -152,10 +152,11 @@ const ONBOARDING_WEB_ROUTES = [
   COMMON_ROUTES.accountPersonalize,
   COMMON_ROUTES.accountPicker,
   COMMON_ROUTES.onboardingCompleted,
-  COMMON_ROUTES.safeImport,
   COMMON_ROUTES.safeImportAddress,
   COMMON_ROUTES.safeImportByOwner,
+  COMMON_ROUTES.safeCreate,
   COMMON_ROUTES.qrConnect,
+  WEB_ROUTES.pq1Connect,
   WEB_ROUTES.importFromMobile,
   MOBILE_ROUTES.importFromExtension
 ] as const

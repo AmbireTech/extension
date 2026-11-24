@@ -43,6 +43,9 @@ import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
+import useCallSignAccountOpMethod, {
+  getSignAccountOpType
+} from '@common/hooks/useCallSignAccountOpMethod'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
@@ -54,7 +57,6 @@ import PayOption from '@common/modules/sign-account-op/components/Estimation/com
 import ServiceFee from '@common/modules/sign-account-op/components/Estimation/components/ServiceFee'
 import SpeedUpFeeComparison from '@common/modules/sign-account-op/components/Estimation/components/SpeedUpFeeComparison'
 import Sponsored from '@common/modules/sign-account-op/components/Estimation/components/Sponsored'
-import useSignAccountOpMethodDispatch from '@common/modules/sign-account-op/hooks/useSignAccountOpMethodDispatch'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -141,7 +143,6 @@ const Estimation = ({
   isOneClick,
   isViewOnly
 }: Props) => {
-  const dispatchSignAccountOpMethod = useSignAccountOpMethodDispatch(updateType)
   const { state } = useController('AddressBookController')
   const { state: networks } = useController('NetworksController', selectNetworks)
   const { state: broadcastedButNotConfirmed } = useController(
@@ -208,15 +209,18 @@ const Estimation = ({
   // means the user hasn't touched the field at all
   const [baselineFeeOption, setBaselineFeeOption] = useState<SelectValue['value'] | null>(null)
 
+  const callSignAccountOpMethod = useCallSignAccountOpMethod(getSignAccountOpType(updateType))
+
   const dispatchUpdate = useCallback<DispatchUpdate>(
-    (update) => dispatchSignAccountOpMethod('update', [update]),
-    [dispatchSignAccountOpMethod]
+    (update) => {
+      callSignAccountOpMethod('update', [update])
+    },
+    [callSignAccountOpMethod]
   )
 
-  const enableErc4337AndReestimate = useCallback(
-    () => dispatchSignAccountOpMethod('enableErc4337AndReestimate', []),
-    [dispatchSignAccountOpMethod]
-  )
+  const enableErc4337AndReestimate = useCallback(() => {
+    callSignAccountOpMethod('enableErc4337AndReestimate', [])
+  }, [callSignAccountOpMethod])
 
   const dismissEnableErc4337Prompt = useCallback(() => {
     setIsEnableErc4337PromptDismissed(true)
@@ -546,11 +550,20 @@ const Estimation = ({
       feeOption.token.address === ZERO_ADDRESS
   )
 
+  // A fee in another token is paid by the same account, so only the token changes
+  const serviceFeeOption = useMemo(
+    () =>
+      nativeFeeOption && serviceFee?.token
+        ? { ...nativeFeeOption, token: serviceFee.token }
+        : nativeFeeOption,
+    [nativeFeeOption, serviceFee]
+  )
+
   const paidByNativeValue = useMemo(() => {
     if (!serviceFee || !signAccountOpState?.estimation.availableFeeOptions.length || !hasEstimation)
       return null
 
-    if (!nativeFeeOption) return
+    if (!nativeFeeOption || !serviceFeeOption) return
 
     const mappedFeeOption = mapFeeOptions(
       nativeFeeOption,
@@ -562,12 +575,20 @@ const Estimation = ({
       <PayOption
         amount={BigInt(serviceFee.amount)}
         amountUsd={serviceFee.amountUSD}
-        feeOption={nativeFeeOption}
+        feeOption={serviceFeeOption}
         paidByAccountLabel={mappedFeeOption.paidByAccountLabel}
       />
     )
     return mappedFeeOption
-  }, [serviceFee, signAccountOpState, hasEstimation, nativeFeeOption, state.contacts, isViewOnly])
+  }, [
+    serviceFee,
+    signAccountOpState,
+    hasEstimation,
+    nativeFeeOption,
+    serviceFeeOption,
+    state.contacts,
+    isViewOnly
+  ])
 
   const speedUpMeta = signAccountOpState?.accountOp.meta?.speedUp
   const isCancelTransaction =
@@ -877,7 +898,7 @@ const Estimation = ({
         <ServiceFee
           serviceFee={serviceFee}
           paidByNativeValue={paidByNativeValue}
-          nativeFeeOption={nativeFeeOption}
+          feeOption={serviceFeeOption}
         />
       </>
     )
@@ -1013,7 +1034,7 @@ const Estimation = ({
       <ServiceFee
         serviceFee={serviceFee}
         paidByNativeValue={paidByNativeValue}
-        nativeFeeOption={nativeFeeOption}
+        feeOption={serviceFeeOption}
       />
       {v1warning && !signAccountOpState.errors.length && (
         <View

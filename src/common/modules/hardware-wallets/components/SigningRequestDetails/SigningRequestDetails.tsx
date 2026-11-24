@@ -17,6 +17,7 @@ import {
   SigningRequestVerification,
   VerificationHash
 } from '@common/modules/hardware-wallets/utils/getSigningRequestVerification'
+import { isRecord } from '@common/modules/hardware-wallets/utils/signingRequestData'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -105,7 +106,8 @@ const CheckRow = React.memo(function CheckRow({ check }: { check: SafeTransactio
 
 /**
  * Everything a user needs to verify a hardware wallet signing request on
- * their own: the hashes to compare with the device, the request exactly as
+ * their own: the address that signs, the hashes to compare with the device (with the ERC-8213
+ * digests right below them), the request exactly as
  * sent (ready to paste into a hashing tool), and, for Safe transactions,
  * the checks that can be confirmed by reading the request.
  */
@@ -125,6 +127,7 @@ const SigningRequestDetailsContent = ({
   const {
     requestKind,
     hashes,
+    erc8213Digests,
     missingHashReason,
     safeHashFormula,
     safeTransactionChecks,
@@ -151,6 +154,35 @@ const SigningRequestDetailsContent = ({
     return t('Request sent to your {{device}}', { device })
   }, [deviceName, requestKind, t])
 
+  const signerNote = useMemo(() => {
+    // A transaction doesn't carry its sender, so it's missing from the request
+    // below. A request with a list of calls (e.g. PQ1) has its own `from`
+    const isSenderMissingFromRequest =
+      requestKind === 'transaction' &&
+      isRecord(signingRequest.data) &&
+      !('from' in signingRequest.data)
+
+    if (isSenderMissingFromRequest) {
+      return t(
+        "This is the sender (From) of the transaction. It's not in the transaction below, as it comes from your device's signature."
+      )
+    }
+
+    return t('If your device shows an address, it should match this one.')
+  }, [requestKind, signingRequest.data, t])
+
+  const signerSection = !!signingRequest.signerAddr && (
+    <>
+      <SectionHeader title={t('Signing with')} copyText={signingRequest.signerAddr} />
+      <MonoBox>
+        <MonoText>{signingRequest.signerAddr}</MonoText>
+      </MonoBox>
+      <Text fontSize={12} appearance="secondaryText" style={spacings.mtMi}>
+        {signerNote}
+      </Text>
+    </>
+  )
+
   const hashesSection = (!!hashes.length || !!missingHashReason) && (
     <>
       <SectionHeader title={t('Hashes')} />
@@ -163,6 +195,16 @@ const SigningRequestDetailsContent = ({
         </Text>
       )}
       {!!safeHashFormula && <SafeHashFormula formula={safeHashFormula} />}
+    </>
+  )
+
+  // Right below the hashes, as they're compared with the device the same way
+  const erc8213Section = !!erc8213Digests.length && (
+    <>
+      <SectionHeader title={t('ERC-8213 digests')} />
+      {erc8213Digests.map((digest) => (
+        <HashBlock key={digest.id} hash={digest} />
+      ))}
     </>
   )
 
@@ -185,17 +227,23 @@ const SigningRequestDetailsContent = ({
   )
 
   // A transaction reads in the order its hash is built: the fields, then
-  // the hash of the unsigned transaction serialized from them
+  // the hash of the unsigned transaction serialized from them, then the
+  // ERC-8213 digest of its calldata. The address that signs comes first,
+  // as the device shows it before anything else
   const details =
     requestKind === 'transaction' ? (
       <>
+        {signerSection}
         {requestSection}
         {hashesSection}
+        {erc8213Section}
         <DecodedRequest requestCalls={requestCalls} humanization={humanization} />
       </>
     ) : (
       <>
+        {signerSection}
         {hashesSection}
+        {erc8213Section}
         {checksSection}
         {requestSection}
         <DecodedRequest requestCalls={requestCalls} humanization={humanization} />

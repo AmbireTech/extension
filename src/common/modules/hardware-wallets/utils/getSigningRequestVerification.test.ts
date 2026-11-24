@@ -1,4 +1,12 @@
-import { concat, Interface, keccak256, solidityPacked, Transaction, ZeroAddress } from 'ethers'
+import {
+  concat,
+  hashMessage,
+  Interface,
+  keccak256,
+  solidityPacked,
+  Transaction,
+  ZeroAddress
+} from 'ethers'
 
 import { multiSendAddr } from '@ambire-common/consts/safe'
 import { multiCallAbi } from '@ambire-common/libs/safe/helpers'
@@ -15,6 +23,10 @@ const TRANSFER_DATA = `0xa9059cbb000000000000000000000000${RECIPIENT.slice(2)}${
 const DOMAIN_HASH = `0x${'1b'.repeat(32)}`
 const MESSAGE_HASH = `0x${'e4'.repeat(32)}`
 const SAFE_HASH = keccak256(concat(['0x1901', DOMAIN_HASH, MESSAGE_HASH]))
+/** ERC-8213 Calldata Digest, built like the Solidity reference in the ERC */
+const TRANSFER_CALLDATA_DIGEST = keccak256(
+  solidityPacked(['uint256', 'bytes'], [BigInt((TRANSFER_DATA.length - 2) / 2), TRANSFER_DATA])
+)
 
 const eip1559Transaction = {
   to: TOKEN,
@@ -94,6 +106,34 @@ describe('getSigningRequestVerification', () => {
       expect(JSON.parse(result.requestJson)).toEqual(eip1559Transaction)
     })
 
+    test('ERC-8213: the Calldata Digest of the transaction data', () => {
+      const result = getSigningRequestVerification({
+        type: 'raw-transaction',
+        data: eip1559Transaction
+      })
+
+      expect(result.erc8213Digests).toEqual([
+        expect.objectContaining({
+          id: 'calldataDigest',
+          label: 'Calldata Digest',
+          value: TRANSFER_CALLDATA_DIGEST
+        })
+      ])
+    })
+
+    test('ERC-8213: the Calldata Digest leaves out the chain, so it is the same on every chain', () => {
+      const [mainnetDigest, polygonDigest] = ['1', '137'].map(
+        (chainId) =>
+          getSigningRequestVerification({
+            type: 'raw-transaction',
+            data: { ...eip1559Transaction, chainId }
+          }).erc8213Digests[0]?.value
+      )
+
+      expect(mainnetDigest).toBe(TRANSFER_CALLDATA_DIGEST)
+      expect(polygonDigest).toBe(mainnetDigest)
+    })
+
     test('legacy: no max fee per gas means a type 0 transaction', () => {
       const legacyTransaction = {
         to: TOKEN,
@@ -113,6 +153,8 @@ describe('getSigningRequestVerification', () => {
       expect(result.hashes[0]?.value).toBe(
         Transaction.from({ ...legacyTransaction, type: 0 }).unsignedHash
       )
+      // ERC-8213 shows the Calldata Digest only for non-empty calldata
+      expect(result.erc8213Digests).toEqual([])
     })
 
     test('a transaction that also upgrades the account gets no hash, as the request is not all that is signed', () => {
@@ -123,6 +165,10 @@ describe('getSigningRequestVerification', () => {
 
       expect(result.hashes).toEqual([])
       expect(result.missingHashReason).toBeTruthy()
+      // The calldata is signed as is, so its digest is still shown
+      expect(result.erc8213Digests.map(({ id, value }) => [id, value])).toEqual([
+        ['calldataDigest', TRANSFER_CALLDATA_DIGEST]
+      ])
     })
 
     test('a list of calls a device sends on its own gets no hash, but its calls', () => {
@@ -134,6 +180,7 @@ describe('getSigningRequestVerification', () => {
       expect(result.hashes).toEqual([])
       expect(result.missingHashReason).toBeTruthy()
       expect(result.requestCalls?.calls).toHaveLength(1)
+      expect(result.erc8213Digests).toEqual([])
     })
 
     test('a request with fields a transaction does not have gets no hash', () => {
@@ -150,6 +197,7 @@ describe('getSigningRequestVerification', () => {
       const result = getSigningRequestVerification({ type: 'raw-transaction', data: 'oops' })
 
       expect(result.hashes).toEqual([])
+      expect(result.erc8213Digests).toEqual([])
       expect(result.requestJson).toBe('"oops"')
     })
   })
@@ -167,6 +215,22 @@ describe('getSigningRequestVerification', () => {
       expect(result.safeHashFormula).toEqual({ isMatch: true })
     })
 
+    test('ERC-8213: the Calldata Digest of what the Safe runs, without an EIP-712 Digest that repeats the Safe hash', () => {
+      const result = getSigningRequestVerification(getSafeTxRequest())
+
+      expect(result.erc8213Digests.map(({ id, label, value }) => [id, label, value])).toEqual([
+        ['safeCalldataDigest', 'Calldata Digest', TRANSFER_CALLDATA_DIGEST]
+      ])
+    })
+
+    test('ERC-8213: a Safe transaction without data has no digests, as the Safe hash is its EIP-712 Digest', () => {
+      const result = getSigningRequestVerification(
+        getSafeTxRequest({ ...safeTxMessage, to: RECIPIENT, value: '1000', data: '0x' })
+      )
+
+      expect(result.erc8213Digests).toEqual([])
+    })
+
     test('a Safe hash that does not come from the domain and message hashes is flagged', () => {
       const request = getSafeTxRequest()
       const result = getSigningRequestVerification({
@@ -175,6 +239,13 @@ describe('getSigningRequestVerification', () => {
       })
 
       expect(result.safeHashFormula).toEqual({ isMatch: false })
+      // The EIP-712 Digest is built from the domain and message hashes, never
+      // copied from the Safe hash sent with the request, and it's shown as it's
+      // the hash the device actually signs when the two differ
+      expect(result.erc8213Digests.map(({ id, value }) => [id, value])).toEqual([
+        ['eip712Digest', SAFE_HASH],
+        ['safeCalldataDigest', TRANSFER_CALLDATA_DIGEST]
+      ])
     })
 
     test('the JSON is only the typed data, so it can be pasted into a hashing tool', () => {
@@ -316,6 +387,10 @@ describe('getSigningRequestVerification', () => {
       ])
       expect(result.hashes[0]?.note).toBeTruthy()
       expect(result.safeHashFormula).toBeNull()
+      // The calculated Safe hash is the EIP-712 Digest, so it isn't repeated
+      expect(result.erc8213Digests.map(({ id, value }) => [id, value])).toEqual([
+        ['safeCalldataDigest', TRANSFER_CALLDATA_DIGEST]
+      ])
     })
 
     test('the Safe checks run', () => {
@@ -377,6 +452,9 @@ describe('getSigningRequestVerification', () => {
     ])
     expect(result.safeHashFormula).toEqual({ isMatch: true })
     expect(result.safeTransactionChecks).toEqual([])
+    // A Safe message runs no data, so it has no Calldata Digest, and the Safe
+    // message hash is its EIP-712 Digest
+    expect(result.erc8213Digests).toEqual([])
   })
 
   test('other typed data (e.g. an Ambire smart account): domain and message hashes only', () => {
@@ -395,16 +473,49 @@ describe('getSigningRequestVerification', () => {
     expect(result.hashes.map(({ id }) => id)).toEqual(['domainHash', 'messageHash'])
     expect(result.safeHashFormula).toBeNull()
     expect(result.safeTransactionChecks).toEqual([])
+    expect(result.erc8213Digests.map(({ id, value }) => [id, value])).toEqual([
+      ['eip712Digest', SAFE_HASH]
+    ])
   })
 
-  test('messages and authorizations: only the JSON', () => {
+  test('messages: the JSON and the ERC-8213 ERC-191 Digest of the bytes the hex encodes', () => {
+    const message = `0x${'5d'.repeat(32)}`
+    const result = getSigningRequestVerification({ type: 'message', data: { message } })
+
+    expect(result.requestKind).toBe('other')
+    expect(result.hashes).toEqual([])
+    expect(result.erc8213Digests).toEqual([
+      expect.objectContaining({
+        id: 'erc191Digest',
+        label: 'ERC-191 Digest',
+        value: hashMessage(Buffer.from('5d'.repeat(32), 'hex'))
+      })
+    ])
+    // Hashing the hex as text would sign something else
+    expect(result.erc8213Digests[0]?.value).not.toBe(hashMessage(message))
+    expect(JSON.parse(result.requestJson)).toEqual({ message })
+  })
+
+  test('a text message that cannot be encoded gets no digest instead of breaking the screen', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
     const result = getSigningRequestVerification({
       type: 'message',
-      data: { message: `0x${'5d'.repeat(32)}` }
+      data: { message: 'broken \uD800 emoji' }
+    })
+
+    expect(result.erc8213Digests).toEqual([])
+    expect(errorSpy).toHaveBeenCalled()
+    errorSpy.mockRestore()
+  })
+
+  test('authorizations: only the JSON', () => {
+    const result = getSigningRequestVerification({
+      type: 'eip-7702-authorization',
+      data: { chainId: '1', contract: SAFE, nonce: '0' }
     })
 
     expect(result.requestKind).toBe('other')
     expect(result.hashes).toEqual([])
-    expect(JSON.parse(result.requestJson)).toEqual({ message: `0x${'5d'.repeat(32)}` })
+    expect(result.erc8213Digests).toEqual([])
   })
 })

@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import { Account } from '@ambire-common/interfaces/account'
 import { Key } from '@ambire-common/interfaces/keystore'
@@ -46,6 +46,66 @@ interface Props {
   accountKeys: Key[]
 }
 
+/** Tells the user that the account has no keys to sign with, so it is view-only */
+const ViewOnlyBadge = React.memo(({ style }: { style?: ViewStyle }) => {
+  const { t } = useTranslation()
+  const { theme } = useTheme()
+  const tooltipId = useMemo(() => nanoid(6), [])
+
+  return (
+    <View
+      dataSet={
+        isWeb
+          ? createGlobalTooltipDataSet({
+              id: tooltipId,
+              content: t(BADGE_PRESETS['view-only'].tooltipText)
+            })
+          : undefined
+      }
+      style={[
+        flexbox.directionRow,
+        flexbox.alignCenter,
+        {
+          height: BADGE_HEIGHT,
+          borderRadius: BADGE_HEIGHT / 2,
+          borderWidth: 1,
+          borderColor: theme.neutral600,
+          overflow: 'hidden'
+        },
+        style
+      ]}
+    >
+      {/* The eye in place of the key icon, in a cell of its own like the key's */}
+      <View
+        style={[
+          flexbox.alignCenter,
+          flexbox.justifyCenter,
+          {
+            alignSelf: 'stretch',
+            paddingLeft: 5,
+            paddingRight: SPACING_MI,
+            backgroundColor: hexToRgba(theme.secondaryText, 0.12)
+          }
+        ]}
+      >
+        <ViewOnlyIcon
+          width={LEADING_ICON_SIZE}
+          height={LEADING_ICON_SIZE}
+          color={theme.secondaryText}
+        />
+      </View>
+      <Text
+        fontSize={12}
+        weight="medium"
+        color={theme.secondaryText}
+        style={{ paddingLeft: SEGMENT_PADDING_LEFT, paddingRight: SPACING_TY }}
+      >
+        {t('View-only')}
+      </Text>
+    </View>
+  )
+})
+
 /**
  * Tells the user which kinds of keys can sign for the account, in a single badge that starts
  * with a key icon and names each kind. Without keys, it tells that the account is view-only.
@@ -53,7 +113,6 @@ interface Props {
 const AccountKeysBadge = ({ account, accountKeys }: Props) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const tooltipId = useMemo(() => nanoid(6), [])
   const keyTypes = useMemo(() => {
     const types = Array.from(new Set(accountKeys.map((key) => key.type)))
 
@@ -71,58 +130,7 @@ const AccountKeysBadge = ({ account, accountKeys }: Props) => {
     )
   }
 
-  if (!keyTypes.length)
-    return (
-      <View
-        dataSet={
-          isWeb
-            ? createGlobalTooltipDataSet({
-                id: tooltipId,
-                content: t(BADGE_PRESETS['view-only'].tooltipText)
-              })
-            : undefined
-        }
-        style={[
-          flexbox.directionRow,
-          flexbox.alignCenter,
-          {
-            height: BADGE_HEIGHT,
-            borderRadius: BADGE_HEIGHT / 2,
-            borderWidth: 1,
-            borderColor: theme.neutral600,
-            overflow: 'hidden'
-          }
-        ]}
-      >
-        {/* The eye in place of the key icon, in a cell of its own like the key's */}
-        <View
-          style={[
-            flexbox.alignCenter,
-            flexbox.justifyCenter,
-            {
-              alignSelf: 'stretch',
-              paddingLeft: 5,
-              paddingRight: SPACING_MI,
-              backgroundColor: hexToRgba(theme.secondaryText, 0.12)
-            }
-          ]}
-        >
-          <ViewOnlyIcon
-            width={LEADING_ICON_SIZE}
-            height={LEADING_ICON_SIZE}
-            color={theme.secondaryText}
-          />
-        </View>
-        <Text
-          fontSize={12}
-          weight="medium"
-          color={theme.secondaryText}
-          style={{ paddingLeft: SEGMENT_PADDING_LEFT, paddingRight: SPACING_TY }}
-        >
-          {t('View-only')}
-        </Text>
-      </View>
-    )
+  if (!keyTypes.length) return <ViewOnlyBadge />
 
   const segmentDividerColor = hexToRgba(theme.secondaryAccent400, 0.3)
 
@@ -196,4 +204,5 @@ const AccountKeysBadge = ({ account, accountKeys }: Props) => {
   )
 }
 
+export { ViewOnlyBadge }
 export default React.memo(AccountKeysBadge)

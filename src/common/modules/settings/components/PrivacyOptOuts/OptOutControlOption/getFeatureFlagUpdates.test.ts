@@ -30,4 +30,26 @@ describe('getFeatureFlagUpdates', () => {
       gasTank: false
     })
   })
+
+  it('enables Ambire analytics with Email Vault', () => {
+    expect(getFeatureFlagUpdates('emailVault', true)).toEqual({
+      emailVault: true,
+      ambireAnalytics: true
+    })
+  })
+
+  it('keeps Ambire analytics on when disabling Email Vault', () => {
+    expect(getFeatureFlagUpdates('emailVault', false)).toEqual({ emailVault: false })
+  })
+
+  it('disables Email Vault with Ambire analytics', () => {
+    expect(getFeatureFlagUpdates('ambireAnalytics', false)).toEqual({
+      ambireAnalytics: false,
+      emailVault: false
+    })
+  })
+
+  it('enables only Ambire analytics', () => {
+    expect(getFeatureFlagUpdates('ambireAnalytics', true)).toEqual({ ambireAnalytics: true })
+  })
 })

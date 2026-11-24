@@ -21,7 +21,12 @@ import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwar
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
-import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
+import {
+  attachBalanceHint,
+  getAppInstanceId,
+  isAmbireAnalyticsEnabled,
+  isAmbireApiUrl
+} from '@common/utils/analytics'
 import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
@@ -71,14 +76,15 @@ const userBalances: Record<string, number> = {}
 
 /**
  * The fetch handed to the controllers. Only the internal Ambire APIs get the analytics
- * headers and params - requests to 3rd parties must never carry anything that identifies
- * the app instance. Resolved per request, because the keystore uid, the invite code and
+ * headers and params, and only while the user hasn't opted out of Ambire analytics -
+ * requests to 3rd parties must never carry anything that identifies the app instance. Resolved per request, because the keystore uid, the invite code and
  * the balance are not available at boot; a request fired before the keystore is
  * constructed goes out with an empty source, same as in the extension.
  */
 const fetchWithAnalytics: Fetch = (input, init) => {
   const url = input.toString()
-  if (!isAmbireApiUrl(url)) return fetchWithRelayerCustomHeaders(input as any, init as any) as any
+  if (!isAmbireApiUrl(url) || !isAmbireAnalyticsEnabled(mainCtrl?.featureFlags))
+    return fetchWithRelayerCustomHeaders(input as any, init as any) as any
 
   // Optional all the way down, because a request can fire while the controllers are
   // still being constructed

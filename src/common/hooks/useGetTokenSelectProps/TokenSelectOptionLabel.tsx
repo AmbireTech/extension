@@ -10,6 +10,7 @@ import { ExchangeInfoMap } from '@ambire-common/libs/portfolio/interfaces'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
+import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import CopyText from '@common/components/CopyText'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
@@ -76,6 +77,8 @@ const TokenSelectOptionLabel = React.memo(
       pendingToBeConfirmedFormatted = '',
       pendingToBeSigned = '',
       pendingToBeSignedFormatted = '',
+      pendingDelivery,
+      pendingDeliveryFormatted = '',
       balanceLatestFormatted = '',
       pendingBalanceFormatted = '',
       pendingBalanceUSDFormatted = ''
@@ -143,6 +146,17 @@ const TokenSelectOptionLabel = React.memo(
                   backgroundColor={theme.infoBackground}
                   textColor={theme.infoText}
                   Icon={PendingToBeConfirmedIcon}
+                />
+              )}
+              {!!pendingDelivery && !!pendingDeliveryFormatted && (
+                <PendingBadge
+                  amount={pendingDelivery}
+                  amountFormatted={pendingDeliveryFormatted}
+                  // Only CoW Swap orders take the sold tokens after the transaction, when they're filled
+                  label={pendingDelivery > 0n ? t('on its way') : t('being swapped')}
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
+                  Icon={SwapAndBridgeIcon}
                 />
               )}
             </View>

@@ -2,7 +2,7 @@ import { Signature, toBeHex, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { Hex } from '@ambire-common/interfaces/hex'
-import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
+import { HdExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
@@ -15,11 +15,11 @@ import {
 import { getUnsignedTransaction } from '@common/modules/hardware-wallets/utils/getUnsignedTransaction'
 
 class LedgerSigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: LedgerControllerInterface | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: HdExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 

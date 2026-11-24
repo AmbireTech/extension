@@ -7,6 +7,7 @@ import { EventEmitterRegistryController } from '@ambire-common/controllers/event
 import { FeatureFlagsController } from '@ambire-common/controllers/featureFlags/featureFlags'
 import { ProvidersController } from '@ambire-common/controllers/providers/providers'
 import { StorageController } from '@ambire-common/controllers/storage/storage'
+import { TokenPricesController } from '@ambire-common/controllers/tokenPrices/tokenPrices'
 import { UiController } from '@ambire-common/controllers/ui/ui'
 import { relayerCall } from '@ambire-common/libs/relayerCall/relayerCall'
 import { buildTimeNetworks } from '@benzin/constants/networks'
@@ -74,13 +75,23 @@ export const ControllersMiddlewareProvider: React.FC<{
       const uiCtrl = new UiController({ uiManager: benzinUiManager })
       ctrls.StorageController = new StorageController(storage)
       ctrls.FeatureFlagsController = new FeatureFlagsController({}, ctrls.StorageController)
+      // Not registered in the controller mapping either, because no benzin screen reads its
+      // state - it prices the tokens looked up through the ProvidersController (e.g. the fee)
+      const featureFlagsCtrl = ctrls.FeatureFlagsController
+      const tokenPricesCtrl = new TokenPricesController({
+        fetch: fetch as any,
+        isTokenPricesEnabled: () => featureFlagsCtrl.isFeatureEnabled('tokenPrices'),
+        // No Privacy Pools account exists here, so there's nothing for the assets to cover
+        addsPrivacyPoolsAssets: false
+      })
       ctrls.ProvidersController = new ProvidersController({
         eventEmitterRegistry: eventEmitterRegistry.current,
         storage: ctrls.StorageController,
         getNetworks: () => buildTimeNetworks,
         sendUiMessage: (params) => {
           eventBus.emit('receiveOneTimeData', params)
-        }
+        },
+        tokenPrices: tokenPricesCtrl
       })
 
       ctrls.DomainsController = new DomainsController({

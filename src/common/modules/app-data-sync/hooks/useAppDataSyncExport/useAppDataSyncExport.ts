@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { Account } from '@ambire-common/interfaces/account'
 import { getAppDataSyncKeyAddrs } from '@ambire-common/libs/appDataSync/appDataSync'
 import type { AppDataSyncExportOptions } from '@ambire-common/libs/appDataSync/appDataSync'
+import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 
@@ -74,9 +75,10 @@ const useAppDataSyncExport = () => {
   const seedIdByKeyAddr = useMemo(
     () =>
       new Map(
-        keys
-          .filter(({ meta }) => !!meta.fromSeedId)
-          .map(({ addr, meta }) => [addr, meta.fromSeedId])
+        keys.flatMap((key) => {
+          const seedId = getKeySeedId(key)
+          return seedId ? [[key.addr, seedId] as const] : []
+        })
       ),
     [keys]
   )

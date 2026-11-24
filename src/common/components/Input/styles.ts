@@ -2,7 +2,7 @@ import { StyleSheet, TextStyle, ViewStyle } from 'react-native'
 
 import { isAndroid, isWeb } from '@common/config/env'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
-import spacings, { SPACING_MI } from '@common/styles/spacings'
+import spacings, { SPACING_MI, SPACING_TY } from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -21,10 +21,13 @@ export interface Style {
   tooltipWrapper: ViewStyle
   tooltip: ViewStyle
   errorContainer: ViewStyle
+  customBottomLabelContainer: ViewStyle
 }
 
 export const INPUT_HEIGHT = 48
 export const INPUT_WRAPPER_HEIGHT = INPUT_HEIGHT + 2 // 1px border top and bottom
+// Fits one line of every label below the input, the 12px ones with an icon being the tallest
+const BOTTOM_LABEL_LINE_HEIGHT = 16
 
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
@@ -106,6 +109,10 @@ const getStyles = (theme: ThemeProps) =>
     errorContainer: {
       ...flexbox.directionRow,
       ...flexbox.justifySpaceBetween
+    },
+    // The margin and padding on top match `bottomLabel`
+    customBottomLabelContainer: {
+      minHeight: SPACING_TY + SPACING_MI / 2 + BOTTOM_LABEL_LINE_HEIGHT
     }
   })
 

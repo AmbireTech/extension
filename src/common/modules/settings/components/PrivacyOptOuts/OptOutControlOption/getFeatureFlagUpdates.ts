@@ -16,6 +16,14 @@ const getFeatureFlagUpdates = (
     return { tokenPrices: false, erc4337: false, gasTank: false }
   }
 
+  if (flag === 'emailVault') {
+    return isEnabling ? { emailVault: true, ambireAnalytics: true } : { emailVault: false }
+  }
+
+  if (flag === 'ambireAnalytics' && !isEnabling) {
+    return { ambireAnalytics: false, emailVault: false }
+  }
+
   return { [flag]: isEnabling }
 }
 
