@@ -25,7 +25,14 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const selectSeeds = (state: AllControllersMappingType['KeystoreController']) => state.seeds
 
+const DEFAULT_SHEET_ID = 'add-privacy-pools-account-bottom-sheet'
+
 type Props = {
+  /**
+   * Must be unique among the mounted sheets, as the sheet's header is rendered in a portal named
+   * after it. Set it when another instance is mounted already, e.g. the one in `AddAccount`.
+   */
+  id?: string
   sheetRef: React.RefObject<any>
   closeBottomSheet: () => void
   /** Called as a flow starts, before moving on to the personalize step */
@@ -36,7 +43,12 @@ type Props = {
  * Adds a Privacy Pools account from a stored recovery phrase (one per phrase) or a new one, by
  * way of the personalize step.
  */
-const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onFlowStart }: Props) => {
+const AddPrivacyPoolsAccountBottomSheet = ({
+  id = DEFAULT_SHEET_ID,
+  sheetRef,
+  closeBottomSheet,
+  onFlowStart
+}: Props) => {
   const { t } = useTranslation()
   const { styles } = useTheme(getStyles)
   const { state: seeds } = useController('KeystoreController', selectSeeds)
@@ -76,7 +88,7 @@ const AddPrivacyPoolsAccountBottomSheet = ({ sheetRef, closeBottomSheet, onFlowS
   return (
     <>
       <BottomSheet
-        id="add-privacy-pools-account-bottom-sheet"
+        id={id}
         sheetRef={sheetRef}
         closeBottomSheet={closeBottomSheet}
         onClosed={handleSheetClosed}

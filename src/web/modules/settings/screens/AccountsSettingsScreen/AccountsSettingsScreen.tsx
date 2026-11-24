@@ -30,6 +30,7 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -37,6 +38,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
+import PrivacyPoolsAccountsEmptyState from '@web/modules/privacy-pools/components/PrivacyPoolsAccountsEmptyState'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
@@ -132,6 +134,11 @@ const AccountsSettingsScreen = () => {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
+  } = useSheetRef()
+  const {
+    ref: privacyPoolsSheetRef,
+    open: openPrivacyPoolsBottomSheet,
+    close: closePrivacyPoolsBottomSheet
   } = useSheetRef()
   const {
     ref: sheetRefAccountSmartSettings,
@@ -460,7 +467,14 @@ const AccountsSettingsScreen = () => {
             onDragEnd={handlePrivacyPoolsAccountDragEnd}
             renderItem={renderPrivacyPoolsSearchResult}
             renderDraggableItem={renderPrivacyPoolsAccount}
-            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+            ListEmptyComponent={
+              // Only without any Privacy Pools account - when the search hides them all, nothing was found
+              privacyPoolsAccounts.length ? (
+                <Text>{t('No accounts found')}</Text>
+              ) : (
+                <PrivacyPoolsAccountsEmptyState onAddPress={openPrivacyPoolsBottomSheet} />
+              )
+            }
           />
         ) : (
           <ScrollableWrapper
@@ -581,6 +595,16 @@ const AccountsSettingsScreen = () => {
         </View>
       </BottomSheet>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      {isPrivacyPoolsSupported && (
+        <AddPrivacyPoolsAccountBottomSheet
+          // The one nested in `AddAccount` is mounted too, and the ids must differ
+          id="accounts-empty-state-add-privacy-pools-account-bottom-sheet"
+          sheetRef={privacyPoolsSheetRef}
+          closeBottomSheet={closePrivacyPoolsBottomSheet}
+          // Closes as the flow moves on to the personalize step
+          onFlowStart={closePrivacyPoolsBottomSheet}
+        />
+      )}
       <SyncBottomSheet
         sheetRef={syncSheetRef}
         closeBottomSheet={closeSyncBottomSheet}
