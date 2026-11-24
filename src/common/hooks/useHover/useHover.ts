@@ -9,6 +9,8 @@ export const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 const RNTextWithFixes = (props: any) =>
   React.createElement(Text, {
+    // Matches `Text`, which ignores the system's text size setting
+    allowFontScaling: false,
     ...props,
     style: [isAndroid ? { includeFontPadding: false } : {}, props.style]
   })

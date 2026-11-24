@@ -104,7 +104,12 @@ const AmountInput = ({
       accessible={false}
     >
       <View style={styles.measure} pointerEvents="none">
-        <RNText style={[fontStyle, styles.measuredValue]} onLayout={handleValueLayout}>
+        {/* Unscaled like the input it measures, so the widths match */}
+        <RNText
+          allowFontScaling={false}
+          style={[fontStyle, styles.measuredValue]}
+          onLayout={handleValueLayout}
+        >
           {value || '0'}
         </RNText>
       </View>

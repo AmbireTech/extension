@@ -1,6 +1,6 @@
 import { formatUnits, isAddress, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import {
   getPrivacyPoolsAsset,
@@ -15,9 +15,11 @@ import {
   getAmountsFromFieldValue
 } from '@ambire-common/libs/transfer/fieldAmounts'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
 import {
@@ -36,7 +38,7 @@ import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
-import { useTranslation } from '@common/config/localization'
+import { Trans, useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -72,6 +74,12 @@ const NO_ADDRESS_RESOLUTION: Omit<AddressState, 'fieldValue'> = {
 }
 
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
+
+/**
+ * A card of fixed width, so that the message wraps instead of stretching the alert past the screen
+ * on one line.
+ */
+const FAILED_ALERT_STYLE: ViewStyle = { width: '100%', maxWidth: 360 }
 
 /**
  * The picked deposit's option, else the fullest deposit of a token picked without one, as when
@@ -332,10 +340,29 @@ const PrivacyPoolsSendScreen = () => {
       return {
         success: false,
         severity: 'error' as const,
-        message: t('You can send at most {{max}} {{symbol}}.', {
-          max: maxAmount,
-          symbol: selectedToken.symbol
-        })
+        message: (
+          <Trans
+            defaults="You can send at most <amount>{{max}} {{symbol}}</amount>."
+            values={{
+              // Rounded as on the dashboard, with the exact amount on hovering it
+              max: formatDecimals(Number(maxAmount), 'amount'),
+              symbol: selectedToken.symbol
+            }}
+            components={{
+              // Styled as the error message it is nested in
+              amount: (
+                <Text
+                  fontSize={12}
+                  appearance="errorText"
+                  dataSet={createGlobalTooltipDataSet({
+                    id: 'privacy-pools-send-max-amount',
+                    content: `${maxAmount} ${selectedToken.symbol}`
+                  })}
+                />
+              )
+            }}
+          />
+        )
       }
 
     return { success: true }
@@ -490,6 +517,8 @@ const PrivacyPoolsSendScreen = () => {
 
   if (isOutcomeShown && operation) {
     const hasFailed = operation.status === 'failed'
+    // Only an expired transfer fails while still ready: it was dropped before it was sent
+    const hasExpired = hasFailed && operation.phase === 'ready'
 
     return (
       <TrackProgress
@@ -501,7 +530,8 @@ const PrivacyPoolsSendScreen = () => {
         {/* No explorer link: the transfer's hash is not kept */}
         {hasFailed ? (
           <Failed
-            title={t('Something went wrong!')}
+            title={hasExpired ? t("Let's try that again") : t('Something went wrong!')}
+            alertStyle={FAILED_ALERT_STYLE}
             errorMessage={
               operation.error ||
               t(
