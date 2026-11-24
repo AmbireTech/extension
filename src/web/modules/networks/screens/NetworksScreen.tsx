@@ -165,7 +165,7 @@ const NetworksScreen = () => {
         >
           <Button
             text={t('Add new network')}
-            size={isNarrowWebLayout ? 'regular' : 'smaller'}
+            size="regular"
             hasBottomSpacing={false}
             style={isNarrowWebLayout ? { width: '100%' } : { minWidth: 174 }}
             childrenPosition="left"

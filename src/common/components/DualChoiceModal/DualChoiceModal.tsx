@@ -1,11 +1,11 @@
 import React, { FC, ReactNode } from 'react'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import CloseIcon from '@common/assets/svg/CloseIcon'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
+import HeaderButton from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
@@ -67,11 +67,7 @@ const DualChoiceModal: FC<Props> = ({
           <Text weight="medium" fontSize={20}>
             {title}
           </Text>
-          {!!onCloseIconPress && (
-            <Pressable onPress={onCloseIconPress}>
-              <CloseIcon />
-            </Pressable>
-          )}
+          {!!onCloseIconPress && <HeaderButton type="close" onPress={onCloseIconPress} />}
         </View>
       )}
       <View style={[styles.modalInnerContainer, style]}>

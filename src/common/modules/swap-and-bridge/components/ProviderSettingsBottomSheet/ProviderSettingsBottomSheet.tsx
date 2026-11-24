@@ -11,7 +11,7 @@ import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import FatToggle from '@common/components/FatToggle'
-import HoverablePressable from '@common/components/HoverablePressable'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
@@ -27,15 +27,6 @@ import type { AllControllersMappingType } from '@common/constants/controllersMap
 
 const PROVIDER_ICON_WIDTH = 72
 const PROVIDER_ICON_STYLE = { width: PROVIDER_ICON_WIDTH }
-/** Width/height of the swap provider settings (gear) button. */
-export const SETTINGS_BUTTON_SIZE = 40
-/** Width/height of the compact swap provider settings (gear) button. */
-export const COMPACT_SETTINGS_BUTTON_SIZE = 28
-const SETTINGS_BUTTON_STYLE = { width: SETTINGS_BUTTON_SIZE, height: SETTINGS_BUTTON_SIZE }
-const COMPACT_SETTINGS_BUTTON_STYLE = {
-  width: COMPACT_SETTINGS_BUTTON_SIZE,
-  height: COMPACT_SETTINGS_BUTTON_SIZE
-}
 const SHEET_STYLE = isWeb ? { width: '100%' as const, maxWidth: 480 } : undefined
 const COW_SWAP_PROVIDER_ID = 'cowswap'
 // The grouped list of the design: one card, each logo on a tile, rows split by a line
@@ -188,30 +179,24 @@ const ProviderRowComponent = ({
 
 const ProviderRow = memo(ProviderRowComponent)
 
-const ProviderSettingsButtonComponent = ({
-  onPress,
-  compact = false
-}: {
-  onPress: () => void
-  compact?: boolean
-}) => {
+const ProviderSettingsButtonComponent = ({ onPress }: { onPress: () => void }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
 
   return (
-    <HoverablePressable
+    <HeaderButton
+      icon={
+        <SettingsIcon
+          width={22}
+          height={22}
+          strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+          color={theme.primaryText}
+        />
+      }
       accessibilityLabel={t('Swap provider settings')}
-      accessibilityRole="button"
-      hitSlop={8}
       onPress={onPress}
       testID="swap-provider-settings-button"
-    >
-      <View
-        style={[compact ? COMPACT_SETTINGS_BUTTON_STYLE : SETTINGS_BUTTON_STYLE, flexbox.center]}
-      >
-        <SettingsIcon width={24} height={24} color={theme.iconPrimary} />
-      </View>
-    </HoverablePressable>
+    />
   )
 }
 

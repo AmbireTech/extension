@@ -34,7 +34,6 @@ import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
-import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
@@ -530,13 +529,13 @@ const PrivacyPoolsSendScreen = () => {
             onPress={handleSend}
             disabled={!canSend}
             isLoading={isPreparingTransfer}
-            size={isWeb ? 'smaller' : 'regular'}
+            size="regular"
           />
         }
       >
         <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={flexbox.flex1}>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-            <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} style={spacings.mrSm} />
+            <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} />
             <PanelTitle title={t('Send')} />
             <PrivacyPoolsBroadcasterButton onPress={openBroadcasterSheet} />
           </View>

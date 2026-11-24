@@ -9,7 +9,7 @@ import SyncIcon from '@common/assets/svg/SyncIcon'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
-import HoverablePressable from '@common/components/HoverablePressable'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
@@ -220,7 +220,7 @@ const AccountSelectScreen = () => {
     <Button
       testID="button-add-account"
       text={t('Add account')}
-      size={isNarrowWebLayout ? 'regular' : 'smaller'}
+      size="regular"
       hasBottomSpacing={false}
       onPress={openBottomSheet as any}
       childrenPosition="left"
@@ -234,13 +234,13 @@ const AccountSelectScreen = () => {
       testID="button-sync-with-mobile"
       type="secondary"
       text={t('Sync with mobile')}
-      size={isNarrowWebLayout ? 'regular' : 'smaller'}
+      size="regular"
       hasBottomSpacing={false}
       onPress={openSyncBottomSheet as any}
       childrenPosition="left"
       // On the wide footer, only as wide as its own label, so it never wraps on two
       // rows. The primary action next to it takes whatever is left.
-      style={isNarrowWebLayout ? { width: '100%' } : spacings.mrTy}
+      style={isNarrowWebLayout ? { width: '100%' } : spacings.mr}
     >
       <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
     </Button>
@@ -249,9 +249,18 @@ const AccountSelectScreen = () => {
   return !pendingToBeSetSelectedAccount && !pendingToBeSetSelectedPrivacyPoolsAccount ? (
     <LayoutWrapper>
       <HeaderWithTitle>
-        <HoverablePressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
-          <SettingsIcon width={28} height={28} />
-        </HoverablePressable>
+        <HeaderButton
+          icon={
+            <SettingsIcon
+              width={22}
+              height={22}
+              strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+              color={theme.primaryText}
+            />
+          }
+          accessibilityLabel={t('Accounts settings')}
+          onPress={() => navigate(WEB_ROUTES.accountsSettings)}
+        />
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />

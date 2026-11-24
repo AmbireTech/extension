@@ -78,7 +78,7 @@ const AddContactBottomSheet: FC<Props> = ({ sheetRef, closeBottomSheet, address 
           hasBottomSpacing={false}
           text={!name.length ? t('Name your contact') : t('Add to contacts')}
           onPress={handleAddContact}
-          size={isWeb ? 'smaller' : 'regular'}
+          size="regular"
         />
       </FooterGlassView>
     </BottomSheet>

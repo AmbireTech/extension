@@ -133,7 +133,7 @@ const QrSignRequestScreen = ({
             style={{ ...spacings.ptSm, marginTop: 'auto' }}
           >
             <Button
-              size="smaller"
+              size="regular"
               hasBottomSpacing={false}
               text={t('Get signature')}
               onPress={onContinue}

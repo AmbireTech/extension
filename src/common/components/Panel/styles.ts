@@ -10,7 +10,6 @@ interface Style {
   onboardingContainer: ViewStyle
   innerContainer: ViewStyle
   progress: ViewStyle
-  backBtnWrapper: ViewStyle
 }
 
 const getStyles = (theme: ThemeProps) => {
@@ -39,14 +38,6 @@ const getStyles = (theme: ThemeProps) => {
     progress: {
       ...flexbox.flex1,
       height: 4
-    },
-    backBtnWrapper: {
-      ...flexbox.alignCenter,
-      ...flexbox.center,
-      ...flexbox.directionRow,
-      ...common.borderRadiusPrimary,
-      width: 28,
-      height: 28
     }
   })
 }

@@ -205,7 +205,7 @@ const GasTankModal = ({ modalRef, handleClose, portfolio, account }: Props) => {
             testID="top-up-gas-tank-modal-button"
             type="primary"
             text={t('Top up')}
-            size={isMobile || isNarrowWebLayout ? 'regular' : 'smaller'}
+            size="regular"
             hasBottomSpacing={false}
             style={{
               minWidth: 128
