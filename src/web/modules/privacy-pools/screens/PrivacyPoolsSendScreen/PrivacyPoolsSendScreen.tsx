@@ -32,7 +32,6 @@ import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
-import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
@@ -49,6 +48,7 @@ import PrivacyPoolsBroadcasterBottomSheet, {
   PrivacyPoolsBroadcasterButton
 } from '@web/modules/privacy-pools/components/PrivacyPoolsBroadcasterBottomSheet'
 import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
+import PrivacyPoolsSendCompleted from '@web/modules/privacy-pools/components/PrivacyPoolsSendCompleted'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import loadTransactionSummary, {
   TransactionSummaryType
@@ -513,13 +513,7 @@ const PrivacyPoolsSendScreen = () => {
             }
           />
         ) : (
-          <Completed
-            title={t('Sending successfully')}
-            titleSecondary={t('Your {{symbol}} is on its way.', {
-              symbol: operationAsset?.symbol || t('Token')
-            })}
-            openExplorerText={t('View Transfer')}
-          />
+          <PrivacyPoolsSendCompleted symbol={operationAsset?.symbol} />
         )}
       </TrackProgress>
     )
