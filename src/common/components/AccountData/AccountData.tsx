@@ -104,21 +104,23 @@ const AccountData: FC<Props> = ({
     return undefined
   }, [account])
 
+  const hasTwoRows = isMobile || !!isExpanded
+
   const formattedAddress = useMemo(() => {
     if (!account) return ''
 
+    // Shortened in the middle, so its start and end always show
+    if (hasTwoRows) return shortenAddress(account.addr, 18, 4)
+
     if (isNarrowWebLayout) return account.addr
 
-    if (isMobile) return shortenAddress(account.addr, 18, 4)
-
     return shortenAddress(account.addr, 13)
-  }, [account, isNarrowWebLayout])
+  }, [account, hasTwoRows, isNarrowWebLayout])
 
   // A Privacy Pools account has no address of its own, so its kind stands in for one
   const label = account ? account.preferences.label : privacyPoolsAccount?.label
   const subtitle = account ? `(${formattedAddress})` : `(${t('Privacy Pools')})`
   const canCopyAddress = isWeb && !!account
-  const hasTwoRows = isMobile || !!isExpanded
 
   if (!account && !privacyPoolsAccount) return null
 
@@ -248,7 +250,7 @@ const AccountData: FC<Props> = ({
                 </Text>
                 {canCopyAddress && (
                   <AnimatedPressable
-                    style={[spacings.mlMi, addressAnimStyle]}
+                    style={[spacings.mlMi, { flexShrink: 0 }, addressAnimStyle]}
                     onPress={handleCopyText}
                     {...bindAddressAnim}
                   >
@@ -304,7 +306,7 @@ const AccountData: FC<Props> = ({
 
           {!!withArrowDownIcon && (
             <DownArrowIcon
-              style={[spacings.mlMi, { marginRight: 2 }]}
+              style={[spacings.mlMi, { marginRight: 2, flexShrink: 0 }]}
               width={12}
               height={7}
               strokeWidth={String(getHeaderIconStrokeWidth(14.879, 12))}
