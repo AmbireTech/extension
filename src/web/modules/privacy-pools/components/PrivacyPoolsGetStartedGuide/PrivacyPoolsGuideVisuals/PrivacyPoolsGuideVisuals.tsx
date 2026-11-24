@@ -192,7 +192,7 @@ export const PrivacyPoolsGuideVerifyingToken = () => {
                 ETH
               </Text>
               <Text fontSize={14} weight="number_medium" appearance="secondaryText">
-                0.005
+                0.1
               </Text>
             </View>
           </View>
