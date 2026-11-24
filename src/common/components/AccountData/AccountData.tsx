@@ -4,8 +4,10 @@ import { Animated, View } from 'react-native'
 
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
 import Avatar from '@common/components/Avatar'
+import { getHeaderIconStrokeWidth } from '@common/components/HeaderButton/constants'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
@@ -37,6 +39,8 @@ type Props = {
    * Consider refactoring in the future, if this is needed
    */
   withArrowRightIcon?: boolean
+  /** A ⌄ at the end, for a button that opens the account list */
+  withArrowDownIcon?: boolean
   /** The solid color behind the button, which its translucent background darkens */
   backgroundBehindColor?: string
   /** Overrides the button's default height */
@@ -67,6 +71,7 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 const AccountData: FC<Props> = ({
   onPress,
   withArrowRightIcon,
+  withArrowDownIcon,
   backgroundBehindColor,
   height,
   isExpanded
@@ -231,8 +236,9 @@ const AccountData: FC<Props> = ({
             </>
           )}
           {isMobile && (
-            // The name and the address on two rows, both as wide as the button lets them
-            <View style={[spacings.mrMi, { flexShrink: 1, minWidth: 0 }]}>
+            // The name and the address on two rows, both as wide as the button lets them. In an
+            // expanded button they take its free width, which pushes the ⌄ to its end.
+            <View style={[spacings.mrMi, { flexGrow: 1, flexShrink: 1, minWidth: 0 }]}>
               <Text
                 numberOfLines={1}
                 weight="medium"
@@ -308,6 +314,15 @@ const AccountData: FC<Props> = ({
                 color="#E3E6EB"
               />
             </Animated.View>
+          )}
+          {!!withArrowDownIcon && (
+            <DownArrowIcon
+              style={[spacings.mlMi, { marginRight: 2 }]}
+              width={12}
+              height={7}
+              strokeWidth={String(getHeaderIconStrokeWidth(14.879, 12))}
+              color="#E3E6EB"
+            />
           )}
         </>
       </AnimatedPressable>

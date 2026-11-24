@@ -16,6 +16,7 @@ const AccountButton = ({ height, isExpanded }: Props) => {
         navigate(WEB_ROUTES.accountSelect)
       }}
       withArrowRightIcon={isWeb}
+      withArrowDownIcon={!isWeb}
       // The black of the dashboard's overview card
       backgroundBehindColor="#000000"
       height={height}
