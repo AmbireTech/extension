@@ -213,7 +213,7 @@ const PQ1ConnectScreen = () => {
               </ScrollView>
               <View style={spacings.mtXl}>
                 <Button
-                  text={isImporting ? t('Importing...') : t('Import selected')}
+                  text={isImporting ? t('Loading...') : t('Continue')}
                   disabled={isImporting}
                   onPress={onPressImport}
                   hasBottomSpacing={false}
