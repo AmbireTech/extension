@@ -2,6 +2,7 @@ import React, { FC } from 'react'
 import { View } from 'react-native'
 
 import { PrivacyPoolsUnavailableReason } from '@ambire-common/interfaces/privacyPools'
+import Button from '@common/components/Button'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -24,13 +25,16 @@ interface Props {
   unavailableReason: PrivacyPoolsUnavailableReason | null
   /** Whether reading waits for the recovery phrase backup - see `PrivacyPoolsController`. */
   isWaitingForBackup: boolean
+  /** Opens the guide on how the account works, offered while it holds nothing */
+  onGetStarted: () => void
 }
 
 const PrivacyPoolsBalances: FC<Props> = ({
   balances,
   state,
   unavailableReason,
-  isWaitingForBackup
+  isWaitingForBackup,
+  onGetStarted
 }) => {
   const { t } = useTranslation()
   const { styles, theme } = useTheme(getStyles)
@@ -94,8 +98,21 @@ const PrivacyPoolsBalances: FC<Props> = ({
     )
   }
 
-  // Like the regular dashboard. The banner above says how to top it up
-  if (!balances.length) return <TokensEmptyState searchValue="" dashboardNetworkFilterName={null} />
+  // Like the regular dashboard, with a guide that explains how to top it up
+  if (!balances.length)
+    return (
+      <TokensEmptyState searchValue="" dashboardNetworkFilterName={null}>
+        <Button
+          testID="privacy-pools-get-started"
+          type="primary"
+          size="smaller"
+          text={t('Get started')}
+          onPress={onGetStarted}
+          hasBottomSpacing={false}
+          style={[spacings.ph, spacings.mtSm]}
+        />
+      </TokensEmptyState>
+    )
 
   return (
     <View>
