@@ -35,6 +35,8 @@ interface Props {
   isSendDisabled?: boolean
   onRefresh: () => void
   onSend: () => void
+  /** Opens the guide on how a Privacy Pools account works */
+  onAbout: () => void
   /**
    * The balance and the actions collapse as on the regular dashboard: the pages slide over them,
    * see `DashboardOverview`.
@@ -58,6 +60,7 @@ const PrivacyPoolsOverview: FC<Props> = ({
   isSendDisabled = false,
   onRefresh,
   onSend,
+  onAbout,
   onCollapsibleHeightChange
 }) => {
   const { theme } = useTheme()
@@ -138,7 +141,11 @@ const PrivacyPoolsOverview: FC<Props> = ({
               </View>
             </View>
             {/* Enabled without tokens too, like the regular Send: the form says there are none */}
-            <PrivacyPoolsActions onSend={onSend} isSendDisabled={isSendDisabled} />
+            <PrivacyPoolsActions
+              onSend={onSend}
+              isSendDisabled={isSendDisabled}
+              onAbout={onAbout}
+            />
           </OverviewCollapsible>
         </View>
       </View>

@@ -15,3 +15,10 @@ body:has(#modalBackdrop) [data-blurred-behind-sheets] {
 [data-vaul-detached-wrapper] {
   z-index: 900;
 }
+
+/* TrueSheet measures a sheet's height on a copy of its content hidden with `visibility: hidden`,
+   which Chrome doesn't fully hide: the blur of a glass element shows through wherever the glass has
+   an SVG filter inside it. Transparent, the copy draws nothing and is still measured */
+[data-truesheet-measure] {
+  opacity: 0;
+}
