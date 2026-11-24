@@ -3,8 +3,8 @@ import React from 'react'
 import { View } from 'react-native'
 import { Line, Path, Svg } from 'react-native-svg'
 
-import ClockIcon from '@common/assets/svg/ClockIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
+import TimeIcon from '@common/assets/svg/TimeIcon'
 import Blockies from '@common/components/Avatar/Blockies'
 import Badge from '@common/components/Badge'
 import GlassView from '@common/components/GlassView'
@@ -166,12 +166,12 @@ export const PrivacyPoolsGuideTransfer = ({
 /** A deposit of ETH that is still being verified, with a clock over it */
 export const PrivacyPoolsGuideVerifyingToken = () => {
   const { t } = useTranslation()
-  const { styles, theme } = useTheme(getStyles)
+  const { styles } = useTheme(getStyles)
 
   return (
     <View style={flexbox.alignCenter}>
       <GlassView cssStyle={glassCssStyles.clock}>
-        <ClockIcon width={28} height={28} color={theme.primaryText} />
+        <TimeIcon />
       </GlassView>
       <GlassView cssStyle={glassCssStyles.tokenRow}>
         <View style={styles.tokenDetails}>
