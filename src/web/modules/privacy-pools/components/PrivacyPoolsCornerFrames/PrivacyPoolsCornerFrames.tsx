@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useId, useMemo } from 'react'
 import { Defs, FeGaussianBlur, Filter, Path, Svg } from 'react-native-svg'
 
 import styles from './styles'
@@ -45,10 +45,6 @@ const CORNERS = [
   { id: 'bottom-right', edge: 'bottom', style: styles.bottomRight }
 ] as const
 
-// A `url(#id)` reference resolves to the first matching id in the document, and two cards with
-// frames can be mounted at the same time - so every instance needs its own filter ids
-let instanceCounter = 0
-
 /**
  * Glowing frames in the four corners of a Privacy Pools card, as the design draws them over its
  * background. Positioned absolutely, so the card they frame must be their parent.
@@ -61,10 +57,9 @@ const PrivacyPoolsCornerFrames = ({
   insetBottom,
   cornerRadius
 }: Props) => {
-  const [filterIdPrefix] = useState(() => {
-    instanceCounter += 1
-    return `privacy-pools-corner-glow-${instanceCounter}`
-  })
+  // A `url(#id)` reference resolves to the first matching id in the document, and two cards with
+  // frames can be mounted at the same time - so every instance needs its own filter ids
+  const filterIdPrefix = useId().replaceAll(':', '')
 
   const paths = useMemo(
     () => ({
