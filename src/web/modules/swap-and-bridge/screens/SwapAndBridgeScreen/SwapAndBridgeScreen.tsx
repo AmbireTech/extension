@@ -230,7 +230,7 @@ const SwapAndBridgeScreen = () => {
         )}
         <View>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-            <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />
+            <PanelBackButton onPress={onBackButtonPress} />
             <PanelTitle title={t('Swap & Bridge')} />
             <ProviderSettingsButton onPress={openProviderSettingsModal} />
           </View>

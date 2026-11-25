@@ -63,14 +63,6 @@ const AmbireApiOptions = () => {
             flag="tokenPrices"
           />
           <OptOutControlOption
-            title={t('Clear signing')}
-            description={t(
-              `Fetch the latest standard for translating transactions. If you turn this off, some transactions can become unreadable and your security is reduced.`
-            )}
-            icon={<SearchIcon width={24} height={24} />}
-            flag="clearSigning"
-          />
-          <OptOutControlOption
             title={t('Transaction arguments decoding')}
             description={t(
               `Use Ambire's API to decode transaction arguments and show action names when signing calls`

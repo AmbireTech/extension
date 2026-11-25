@@ -3049,10 +3049,10 @@
   resolved "https://registry.yarnpkg.com/@kohaku-eth/poseidon/-/poseidon-0.0.1.tgz#da1e22e4694519411c5eed4233ce4d132491ac5e"
   integrity sha512-qbMzNo6uBx+9R/TW8G2vJNbXkzkVxmFABAEVpiSxynTSrOed4sA6Y8ZoT7/BTDX6o+/ch6OrJItOULfoUW1dJw==
 
-"@kohaku-eth/privacy-pools@0.1.0-alpha.40":
-  version "0.1.0-alpha.40"
-  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.40.tgz#8d50dae167a161c62012dc28a6fde9725118eed7"
-  integrity sha512-oX6zqOxi2MfxdggTz8+LAM93jmuavtJvWgv+Pjd7r4Gf8QS1SV5Oqw9aHNumwre9NZg+gfiis5ekiVM+IrzTpg==
+"@kohaku-eth/privacy-pools@0.1.0-alpha.41":
+  version "0.1.0-alpha.41"
+  resolved "https://registry.yarnpkg.com/@kohaku-eth/privacy-pools/-/privacy-pools-0.1.0-alpha.41.tgz#65d3c7998d8d31c56e7055d274295b536c22a16a"
+  integrity sha512-hWKW44kDNJ0XKkSqD3AXxbOkXhbSyYhiW4swQ79aH9pzEQ5KHfCWg3o6PwmzibJoRiMhje4to0wVhv5rbF7egA==
   dependencies:
     "@fatsolutions/privacy-pools-core-circuits" "1.0.5"
     "@kohaku-eth/plugins" "0.0.1-alpha.20"
@@ -3060,7 +3060,7 @@
     "@kohaku-eth/poseidon-lean-imt" "0.0.1-alpha.2"
     "@kohaku-eth/provider" "0.1.0-alpha.14"
     "@reduxjs/toolkit" "^2.11.2"
-    "@saga-sync/client" "^0.3.0"
+    "@saga-sync/client" "^0.4.0"
     maci-crypto "2.5.0"
     ox "^0.12.0"
     viem "^2.51.3"
@@ -4300,10 +4300,10 @@
   dependencies:
     abitype "^1.2.3"
 
-"@saga-sync/client@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@saga-sync/client/-/client-0.3.0.tgz#c6f02e4849f14cce300de567555bdcfb6a799568"
-  integrity sha512-quYuCqcPMnYHB8kWRhcyJnbGnC89gPq8dlFemZX0xsKD/+HHFG+2AGfrwfU/pJgjtMLd4ja2tmhJX4TbyKVv7g==
+"@saga-sync/client@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@saga-sync/client/-/client-0.4.0.tgz#6cffcde8f2aba3d879b25687b4819c5117b1c6d0"
+  integrity sha512-1piYr9SK2aWYxBW/VjS/CvbQuuDN8JcAVyBPmYtKCINA7PVLQhVr/5s7AmnTbmjmJfFmA3rD5JtJ3Ywmhbm9Ww==
   dependencies:
     "@saga-sync/core" "0.3.0"
 
@@ -16400,11 +16400,6 @@ react-native-reanimated-carousel@5.2.2:
   resolved "https://registry.yarnpkg.com/react-native-reanimated-carousel/-/react-native-reanimated-carousel-5.2.2.tgz#96289cfeac88fc726e6b030b11b07d1dab662f25"
   integrity sha512-1Cxj3Opg0aBekmkdHwvNqngT1GHB6kaTeiWTRwWZ48m4BBSc5JT1slVm0WfXZLvquRPX0TnTnRWsQUhJEY5w6A==
 
-react-native-reanimated-dnd@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/react-native-reanimated-dnd/-/react-native-reanimated-dnd-2.0.0.tgz#036c1e3d02a37efa36217d392392f37c7aba0dc4"
-  integrity sha512-FXNWZoad5RG4Z6g1xX60/ZEBVkhO9jmmftHAuTML3XrVw15dsU8LwHA5ulVpO9UtX4iBGwAn3CCr3GNRcuH/oQ==
-
 react-native-reanimated@4.7.1:
   version "4.7.1"
   resolved "https://registry.yarnpkg.com/react-native-reanimated/-/react-native-reanimated-4.7.1.tgz#22a4e95241fe54a5cb05bed4d30b63af4d79a4f7"
@@ -16412,6 +16407,11 @@ react-native-reanimated@4.7.1:
   dependencies:
     react-native-is-edge-to-edge "^1.3.1"
     semver "^7.7.3"
+
+react-native-reorderable-list@0.18.3:
+  version "0.18.3"
+  resolved "https://registry.yarnpkg.com/react-native-reorderable-list/-/react-native-reorderable-list-0.18.3.tgz#40afe3aaaea64263a448de33e706c978cad755fa"
+  integrity sha512-6LY0ltf2+EXgJni37eVd5wTVWTMZ54/9tsANSO7CtD1dj/XLrekeSV7MC+V5SdlrhvBIkzk9VJktRQiMer/uew==
 
 react-native-safe-area-context@5.11.1:
   version "5.11.1"

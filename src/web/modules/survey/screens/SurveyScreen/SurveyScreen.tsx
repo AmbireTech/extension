@@ -4,10 +4,10 @@ import { View } from 'react-native'
 import { SurveyAnswers } from '@ambire-common/interfaces/survey'
 import { getNextQuestionForAnswers } from '@ambire-common/utils/survey'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { HEADER_BUTTON_SIZE } from '@common/components/HeaderButton'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { isMobile, isWeb } from '@common/config/env'
-import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useToast from '@common/hooks/useToast'
@@ -29,7 +29,6 @@ const selectAccount = (state: AllControllersMappingType['SelectedAccountControll
 
 const SurveyScreen = () => {
   const { addToast } = useToast()
-  const { isCompactLayout } = useCompactLayout()
   const {
     dispatch: dispatchToSurvey,
     state: { status, questions, answers, currentQuestion, errorMessage, surveyId, bannerId }
@@ -196,13 +195,13 @@ const SurveyScreen = () => {
             disabled={!buttonState.callback}
             isLoading={buttonState.loading}
             onPress={buttonState.callback}
-            size={isCompactLayout ? 'regular' : 'smaller'}
+            size="regular"
             testID="proceed-btn"
           />
         </View>
       </View>
     )
-  }, [buttonState.callback, buttonState.loading, buttonState.text, isCompactLayout])
+  }, [buttonState.callback, buttonState.loading, buttonState.text])
 
   const percentageDone = useMemo(() => {
     if (status === 'success-submitted') return 100
@@ -234,8 +233,9 @@ const SurveyScreen = () => {
         <View>
           <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={[flexbox.flex1]}>
             <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-              <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
-              <PanelTitle title={'Survey'} style={spacings.pr2Xl} />
+              <PanelBackButton onPress={handleGoBackPress} />
+              <PanelTitle title={'Survey'} />
+              <View style={{ width: HEADER_BUTTON_SIZE }} />
             </View>
             <View style={[spacings.mh2Xl, spacings.mtMd]}>
               <ProgressBar percentageDone={percentageDone} />

@@ -4,9 +4,7 @@ import { StyleProp, View, ViewStyle } from 'react-native'
 
 import { useBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import { bottomSheetCloseEventStream } from '@common/components/BottomSheet/bottomSheetEventStream'
-import SheetHeaderButton, {
-  SHEET_HEADER_BUTTON_SIZE
-} from '@common/components/BottomSheet/SheetHeaderButton'
+import HeaderButton, { HEADER_BUTTON_SIZE } from '@common/components/HeaderButton'
 import spacings, { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
@@ -24,7 +22,7 @@ type Props = {
 
 const closeAllSheets = () => bottomSheetCloseEventStream.next()
 
-const SIDE_SLOT_STYLE = { minWidth: SHEET_HEADER_BUTTON_SIZE, flexShrink: 0 }
+const SIDE_SLOT_STYLE = { minWidth: HEADER_BUTTON_SIZE, flexShrink: 0 }
 
 /**
  * The header row of a bottom sheet: ‹ back on the left when there is somewhere to
@@ -55,6 +53,7 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
   const titleContextValue = useMemo<SheetHeaderTitleContextValue>(
     () => ({
       align: isTitleOnLeft ? 'left' : 'center',
+      isLineCapIgnored: canTitleMoveLeft && !isTitleOnLeft,
       reportLines: (lineCount, firstLineHeight) => {
         if (lineCount > 1 && canTitleMoveLeft) setIsTitleLeft(true)
         setWrappedTitleFirstLineHeight(lineCount > 1 ? firstLineHeight : null)
@@ -84,7 +83,7 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
         flexbox.directionRow,
         isTitleWrapped ? flexbox.alignStart : flexbox.alignCenter,
         spacings.mb,
-        { minHeight: SHEET_HEADER_BUTTON_SIZE, columnGap: SPACING_TY },
+        { minHeight: HEADER_BUTTON_SIZE, columnGap: SPACING_TY },
         style,
         // A floating header spaces the row from its edge itself, the same in every sheet
         isHeaderFloating && spacings.mb0
@@ -94,7 +93,9 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
       {/* as mirroring a wide action would leave the title no room on a narrow sheet */}
       {hasSides && !isTitleOnLeft && (
         <View pointerEvents="box-none" style={SIDE_SLOT_STYLE}>
-          {!!handleBack && <SheetHeaderButton type="back" onPress={handleBack} />}
+          {!!handleBack && (
+            <HeaderButton type="back" onPress={handleBack} testID="bottom-sheet-back-button" />
+          )}
         </View>
       )}
       <View
@@ -104,7 +105,7 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
           isTitleOnLeft ? flexbox.alignStart : flexbox.alignCenter,
           // Centers the first line on the buttons, which sit at the top of the row
           isTitleWrapped && {
-            paddingTop: Math.max(0, (SHEET_HEADER_BUTTON_SIZE - wrappedTitleFirstLineHeight) / 2)
+            paddingTop: Math.max(0, (HEADER_BUTTON_SIZE - wrappedTitleFirstLineHeight) / 2)
           }
         ]}
       >
@@ -123,7 +124,9 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
           ]}
         >
           {rightContent}
-          {!!handleClose && <SheetHeaderButton type="close" onPress={handleClose} />}
+          {!!handleClose && (
+            <HeaderButton type="close" onPress={handleClose} testID="bottom-sheet-close-button" />
+          )}
         </View>
       )}
     </View>

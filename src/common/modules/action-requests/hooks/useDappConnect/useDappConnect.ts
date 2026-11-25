@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
-import { getImpersonation } from '@ambire-common/libs/dapps/impersonation'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useTrustDapp from '@common/hooks/useTrustDapp'
@@ -26,11 +25,9 @@ const useDappConnect = () => {
 
   const dappToConnect = useMemo(() => dappsState.dappToConnect || null, [dappsState.dappToConnect])
   const websiteContentUpdate = dappsState.dappToConnectWebsiteContentUpdate
-  const connectedApps = useMemo(
-    () =>
-      dappsState.dapps.filter((dapp) => dapp.isConnected).map(({ name, url }) => ({ name, url })),
-    [dappsState.dapps]
-  )
+  // Checked in the controller once the scam lists are, as a site that is already on them gets the
+  // stronger warning. It needs the icon the site declares, which the UI never gets.
+  const impersonation = dappsState.dappToConnectImpersonation
 
   // Both flags are only ever set on an app the hosting check flagged, so the suspicious-hosting
   // warning is the only thing they speak about.
@@ -39,24 +36,6 @@ const useDappConnect = () => {
 
   const isSuspiciousHosting =
     isScamCheckerEnabled && dappToConnect?.blacklisted === 'SUSPICIOUS_HOSTING' && !isTrustedByUser
-
-  // Checked once the scam lists are, as a site that is already on them gets the stronger warning.
-  // Not tied to the scam checker - it can be turned off to avoid its network requests, while this
-  // check runs fully on the device.
-  const impersonation = useMemo(() => {
-    if (!dappToConnect) return null
-    if (dappToConnect.blacklisted === 'LOADING' || dappToConnect.blacklisted === 'BLACKLISTED') {
-      return null
-    }
-
-    return getImpersonation({
-      hostname: dappToConnect.id,
-      name: dappToConnect.name,
-      icon: dappToConnect.icon,
-      isInAppCatalog: !dappToConnect.isCustom,
-      connectedApps
-    })
-  }, [dappToConnect, connectedApps])
 
   const toggleTrust = useCallback(() => {
     if (!dappToConnect) return

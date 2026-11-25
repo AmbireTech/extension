@@ -161,6 +161,7 @@ const CustomHDPathBottomSheet: FC<Props> = ({
         <View style={[flexbox.directionRow, flexbox.center]}>
           <Button
             testID="hd-path-confirm-btn"
+            hasBottomSpacing={false}
             style={{ width: 200 }}
             text={t('Confirm')}
             onPress={handleSubmit(onSubmit)}

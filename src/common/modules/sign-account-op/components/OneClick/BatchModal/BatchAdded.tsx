@@ -46,7 +46,6 @@ const BatchAdded: FC<Props> = ({
   const { isNarrowWebLayout } = useCompactLayout()
 
   const isWideWebLayout = isWeb && !isNarrowWebLayout
-  const buttonSize = isWideWebLayout ? 'smaller' : 'regular'
 
   const secondaryButton = (
     <Button
@@ -56,9 +55,9 @@ const BatchAdded: FC<Props> = ({
       text={secondaryButtonText}
       textStyle={spacings.mlMi}
       testID="add-more-button"
-      size={buttonSize}
+      size="regular"
       childrenPosition="left"
-      style={isWideWebLayout ? spacings.mrLg : flexbox.flex1}
+      style={isWideWebLayout ? spacings.mr : flexbox.flex1}
     >
       <AddCircularIcon width={24} height={24} color={theme.primaryText} />
     </Button>
@@ -71,7 +70,7 @@ const BatchAdded: FC<Props> = ({
       // Only where the button is as wide as its label, as it shrinks the label in a 50:50 row
       textStyle={isWideWebLayout ? spacings.phTy : undefined}
       text={primaryButtonText}
-      size={buttonSize}
+      size="regular"
       style={isWideWebLayout ? {} : flexbox.flex1}
       testID="go-dashboard-button"
     />
@@ -86,7 +85,7 @@ const BatchAdded: FC<Props> = ({
       {isMobile ? (
         <HeaderWithTitle title={t('Batch')} withBackButton={false} />
       ) : isPopup ? (
-        <Header.Wrapper containerStyle={spacings.ptSm}>
+        <Header.Wrapper containerStyle={spacings.ptSm} style={{ gap: SPACING_TY }}>
           <Header.AccountData />
           <Header.Logo withOG />
         </Header.Wrapper>

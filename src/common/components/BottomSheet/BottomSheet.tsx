@@ -438,7 +438,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
           {...listProps}
           removeClippedSubviews={isiOS ? false : listProps.removeClippedSubviews}
           contentContainerStyle={[
-            listProps.contentContainerStyle ?? sharedScrollProps.contentContainerStyle,
+            sharedScrollProps.contentContainerStyle,
+            listProps.contentContainerStyle,
             contentTopPaddingStyle
           ]}
         />
@@ -475,7 +476,8 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
                 isSectionHeaderGlass && { marginHorizontal: -horizontalPadding }
               ]}
               contentContainerStyle={[
-                listProps.contentContainerStyle ?? sharedScrollProps.contentContainerStyle,
+                sharedScrollProps.contentContainerStyle,
+                listProps.contentContainerStyle,
                 isSectionHeaderGlass && { paddingHorizontal: horizontalPadding },
                 contentTopPaddingStyle
               ]}
@@ -485,15 +487,20 @@ const BottomSheet: React.FC<BottomSheetProps> = (props: BottomSheetProps) => {
       )
     }
 
+    const callerScrollViewProps = (scrollViewProps || {}) as ScrollViewProps
     return (
       <ScrollView
         ref={scrollableRef}
         {...sharedScrollProps}
-        {...(!isScrollEnabled && {
-          scrollEnabled: false,
-          contentContainerStyle: { flexGrow: 1, paddingBottom: contentBottomPadding }
-        })}
-        {...((scrollViewProps || {}) as ScrollViewProps)}
+        {...(!isScrollEnabled && { scrollEnabled: false })}
+        {...callerScrollViewProps}
+        // Merged, so a caller's `contentContainerStyle` (often `flex: 1`) keeps the bottom padding
+        contentContainerStyle={[
+          isScrollEnabled
+            ? sharedScrollProps.contentContainerStyle
+            : { flexGrow: 1, paddingBottom: contentBottomPadding },
+          callerScrollViewProps.contentContainerStyle
+        ]}
       >
         {/* In the inner view, so the caller's `contentContainerStyle` can't drop it */}
         <View style={contentTopPaddingStyle} />

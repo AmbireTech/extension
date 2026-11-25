@@ -1,11 +1,9 @@
 import QrScannerLib from 'qr-scanner'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { View } from 'react-native'
 import { Path, Svg } from 'react-native-svg'
 
 import { useTranslation } from '@common/config/localization'
-import useTheme from '@common/hooks/useTheme'
-import QrScanProgressBar from '@common/modules/hardware-wallets/components/QrScanProgressBar'
 import {
   emptyQrScanLastRead,
   getQrCodeCoverage,
@@ -13,7 +11,6 @@ import {
   QR_SCAN_FEEDBACK_INTERVAL
 } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 import { UrFragmentDecoder } from '@common/modules/hardware-wallets/qr/utils/UrFragmentDecoder'
-import flexbox from '@common/styles/utils/flexbox'
 import { browser, engine, isExtension } from '@web/constants/browserapi'
 
 import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
@@ -114,13 +111,10 @@ const calculateScanRegion = (video: HTMLVideoElement): QrScannerLib.ScanRegion =
 
 const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
   const { t } = useTranslation()
-  const { theme } = useTheme()
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const scannerRef = useRef<QrScannerLib | null>(null)
   const decoderRef = useRef(new UrFragmentDecoder())
   const isCompletedRef = useRef(false)
-  // How much of an animated (multi-part) code is read, undefined while no such code is being read
-  const [animatedScanProgress, setAnimatedScanProgress] = useState<number>()
   // Kept in a ref so that a caller re-creating the callback does not restart the camera
   const onProgressRef = useRef(onProgress)
 
@@ -168,9 +162,6 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
             if (!decoderRef.current.isComplete()) return
 
             isCompletedRef.current = true
-            // The progress is not polled anymore once the scan completes, so the bar is
-            // filled up here
-            setAnimatedScanProgress(decoderRef.current.expectedPartCount() > 1 ? 1 : undefined)
             const payload = decoderRef.current.result()
             void scanner.stop()
 
@@ -208,17 +199,13 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
     )
 
     const progressInterval = setInterval(() => {
-      if (isCompletedRef.current || disposed) return
+      if (!onProgressRef.current || isCompletedRef.current || disposed) return
 
       const progress = {
         feedback: getQrScanFeedback(lastRead),
         expectedParts: decoderRef.current.expectedPartCount(),
         progress: decoderRef.current.progress()
       }
-
-      setAnimatedScanProgress(progress.expectedParts > 1 ? progress.progress : undefined)
-
-      if (!onProgressRef.current) return
 
       // Only on change, so that the message the user is reading is not re-rendered while
       // nothing about the scan moved
@@ -303,30 +290,13 @@ const QrScanner = ({ onComplete, onError, onProgress, disabled }: Props) => {
         <Path
           d="M31 2H10a8 8 0 0 0-8 8v21M207 2h21a8 8 0 0 1 8 8v21m0 176v21a8 8 0 0 1-8 8h-21m-176 0H10a8 8 0 0 1-8-8v-21"
           fill="none"
-          stroke={String(theme.primary)}
+          // White like the mobile scanner's corners, which stand out on any camera picture
+          stroke="#fff"
           strokeWidth={4}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
       </Svg>
-      {animatedScanProgress !== undefined && (
-        <View
-          pointerEvents="none"
-          style={[
-            flexbox.justifyCenter,
-            {
-              position: 'absolute',
-              bottom: 0,
-              left: `${SCAN_REGION_INSET}%`,
-              right: `${SCAN_REGION_INSET}%`,
-              // The strip between the scan region and the bottom edge
-              height: `${SCAN_REGION_INSET}%`
-            }
-          ]}
-        >
-          <QrScanProgressBar progress={animatedScanProgress} />
-        </View>
-      )}
     </View>
   )
 }

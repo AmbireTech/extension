@@ -183,6 +183,8 @@ const Input = ({
               onFocus={handleOnFocus}
               ref={setAutoFocusInputRef}
               autoFocus={nativeAutoFocus}
+              // Matches `Text`, which ignores the system's text size setting
+              allowFontScaling={false}
               {...rest}
               style={[
                 styles.nativeInput,

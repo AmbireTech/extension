@@ -113,6 +113,8 @@ const TextArea = ({
             ref={setAutoFocusInputRef}
             autoFocus={nativeAutoFocus}
             value={value}
+            // Matches `Text`, which ignores the system's text size setting
+            allowFontScaling={false}
             {...rest}
             style={[
               { textAlignVertical: 'top' },

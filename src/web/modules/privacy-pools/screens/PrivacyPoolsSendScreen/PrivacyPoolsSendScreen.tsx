@@ -1,6 +1,6 @@
 import { formatUnits, isAddress, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 
 import {
   getPrivacyPoolsAsset,
@@ -15,12 +15,16 @@ import {
   getAmountsFromFieldValue
 } from '@ambire-common/libs/transfer/fieldAmounts'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
 import {
+  PRIVACY_LINE_SKELETON_HEIGHT,
+  PRIVACY_LINE_SKELETON_WIDTH,
   PrivacyFieldNote,
   PrivacyFieldTip,
   PrivacySendStatus
@@ -32,11 +36,9 @@ import SendToken from '@common/components/SendToken'
 import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
-import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
-import { isWeb } from '@common/config/env'
-import { useTranslation } from '@common/config/localization'
+import { Trans, useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -49,7 +51,7 @@ import { Content, Wrapper } from '@web/components/TransactionsScreen'
 import PrivacyPoolsBroadcasterBottomSheet, {
   PrivacyPoolsBroadcasterButton
 } from '@web/modules/privacy-pools/components/PrivacyPoolsBroadcasterBottomSheet'
-import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
+import PrivacyPoolsSendCompleted from '@web/modules/privacy-pools/components/PrivacyPoolsSendCompleted'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import loadTransactionSummary, {
   TransactionSummaryType
@@ -72,6 +74,12 @@ const NO_ADDRESS_RESOLUTION: Omit<AddressState, 'fieldValue'> = {
 }
 
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
+
+/**
+ * A card of fixed width, so that the message wraps instead of stretching the alert past the screen
+ * on one line.
+ */
+const FAILED_ALERT_STYLE: ViewStyle = { width: '100%', maxWidth: 360 }
 
 /**
  * The picked deposit's option, else the fullest deposit of a token picked without one, as when
@@ -97,10 +105,6 @@ const findPickedTokenOption = (
   return fullestOfToken || options[0] || null
 }
 
-/** As tall as the privacy line, so the form does not move once it loads */
-const PRIVACY_SKELETON_HEIGHT = 16
-const PRIVACY_SKELETON_WIDTH = 160
-
 const selectSendForm = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.sendForm
 const selectSendFormResetCounter = (state: AllControllersMappingType['PrivacyPoolsController']) =>
@@ -125,7 +129,8 @@ const PrivacyPoolsSendScreen = () => {
     recheckWithdrawal,
     broadcastWithdrawal,
     dismissOperation,
-    isAvailable
+    isAvailable,
+    balancesState
   } = usePrivacyPools()
   const { withdrawTokens, withdrawTokenSections } = usePrivacyPoolsTokens({ getNetworkName })
   const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
@@ -216,18 +221,20 @@ const PrivacyPoolsSendScreen = () => {
     [withdrawTokens, selectedTokenValue]
   )
 
-  // Shown in the select itself, like the regular Send, so the form does not grow
-  const noTokensOption: SelectValue = useMemo(
+  // Shown in the select itself, like the regular Send, so the form does not grow. Before the first
+  // read an empty list does not mean an empty account, so it says the tokens are loading instead.
+  const isReadingTokens = balancesState === 'loading' || balancesState === 'not-loaded'
+  const emptyTokenOption: SelectValue = useMemo(
     () => ({
-      value: 'noTokens',
+      value: isReadingTokens ? 'loading' : 'noTokens',
       label: (
         <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
-          {t('No tokens found')}
+          {isReadingTokens ? t('Loading tokens...') : t('No tokens found')}
         </Text>
       ),
       icon: null
     }),
-    [t]
+    [isReadingTokens, t]
   )
 
   const handleChangeToken = useCallback(
@@ -333,10 +340,29 @@ const PrivacyPoolsSendScreen = () => {
       return {
         success: false,
         severity: 'error' as const,
-        message: t('You can send at most {{max}} {{symbol}}.', {
-          max: maxAmount,
-          symbol: selectedToken.symbol
-        })
+        message: (
+          <Trans
+            defaults="You can send at most <amount>{{max}} {{symbol}}</amount>."
+            values={{
+              // Rounded as on the dashboard, with the exact amount on hovering it
+              max: formatDecimals(Number(maxAmount), 'amount'),
+              symbol: selectedToken.symbol
+            }}
+            components={{
+              // Styled as the error message it is nested in
+              amount: (
+                <Text
+                  fontSize={12}
+                  appearance="errorText"
+                  dataSet={createGlobalTooltipDataSet({
+                    id: 'privacy-pools-send-max-amount',
+                    content: `${maxAmount} ${selectedToken.symbol}`
+                  })}
+                />
+              )
+            }}
+          />
+        )
       }
 
     return { success: true }
@@ -411,8 +437,8 @@ const PrivacyPoolsSendScreen = () => {
       />
     )
   }, [isTransferInFlight, parsedAmount, selectedToken, setRawAmount])
-  // Proving and pricing, before the fee sheet opens. The form is locked meanwhile, as the transfer
-  // is proved for what it held on Proceed; leaving the screen cancels it.
+  // Proving and pricing, while the fee sheet waits for it. The form is locked meanwhile, as the
+  // transfer is proved for what it held on Proceed; leaving the screen cancels it.
   const isPreparingTransfer = isTransferInFlight && operation?.phase === 'proving'
   const canSend =
     isAvailable &&
@@ -427,7 +453,7 @@ const PrivacyPoolsSendScreen = () => {
   const handleSend = useCallback(() => {
     if (!canSend || !selectedToken || parsedAmount === null) return
 
-    // The fee sheet opens once the transfer is proved and priced - see the effect below
+    // The fee sheet opens right away and waits there for the transfer - see the effect below
     prepareWithdrawal({
       chainId: selectedToken.chainId,
       tokenAddress: selectedToken.tokenAddress,
@@ -437,16 +463,16 @@ const PrivacyPoolsSendScreen = () => {
     })
   }, [canSend, parsedAmount, prepareWithdrawal, recipient, selectedToken])
 
-  // Opens the sheet when the transfer is ready and its summary is loaded. One already ready on
-  // coming back to the screen is opened by the sheet itself - see `PrivacyPoolsSendSheet`
+  // Opens the sheet as the transfer starts proving, and closes it if proving fails, as that failure
+  // is only a toast. One already proving or ready on coming back to the screen is opened by the
+  // sheet itself - see `PrivacyPoolsSendSheet`
   const operationPhase = operation?.phase
   const operationStatus = operation?.status
   useEffect(() => {
-    if (!isTransactionSummaryLoaded) return
-    if (operationStatus !== 'pending' || operationPhase !== 'ready') return
-
-    openSheet()
-  }, [isTransactionSummaryLoaded, operationStatus, operationPhase, openSheet])
+    if (operationPhase !== 'proving') return
+    if (operationStatus === 'pending') openSheet()
+    if (operationStatus === 'failed') closeSheet()
+  }, [closeSheet, operationStatus, operationPhase, openSheet])
 
   /**
    * Sent, or could not be sent from the confirmation sheet: shown on its own screen, like the regular
@@ -491,6 +517,8 @@ const PrivacyPoolsSendScreen = () => {
 
   if (isOutcomeShown && operation) {
     const hasFailed = operation.status === 'failed'
+    // Only an expired transfer fails while still ready: it was dropped before it was sent
+    const hasExpired = hasFailed && operation.phase === 'ready'
 
     return (
       <TrackProgress
@@ -502,7 +530,8 @@ const PrivacyPoolsSendScreen = () => {
         {/* No explorer link: the transfer's hash is not kept */}
         {hasFailed ? (
           <Failed
-            title={t('Something went wrong!')}
+            title={hasExpired ? t("Let's try that again") : t('Something went wrong!')}
+            alertStyle={FAILED_ALERT_STYLE}
             errorMessage={
               operation.error ||
               t(
@@ -511,13 +540,7 @@ const PrivacyPoolsSendScreen = () => {
             }
           />
         ) : (
-          <Completed
-            title={t('Sending successfully')}
-            titleSecondary={t('Your {{symbol}} is on its way.', {
-              symbol: operationAsset?.symbol || t('Token')
-            })}
-            openExplorerText={t('View Transfer')}
-          />
+          <PrivacyPoolsSendCompleted symbol={operationAsset?.symbol} />
         )}
       </TrackProgress>
     )
@@ -533,13 +556,13 @@ const PrivacyPoolsSendScreen = () => {
             onPress={handleSend}
             disabled={!canSend}
             isLoading={isPreparingTransfer}
-            size={isWeb ? 'smaller' : 'regular'}
+            size="regular"
           />
         }
       >
         <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={flexbox.flex1}>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-            <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} style={spacings.mrSm} />
+            <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} />
             <PanelTitle title={t('Send')} />
             <PrivacyPoolsBroadcasterButton onPress={openBroadcasterSheet} />
           </View>
@@ -567,7 +590,7 @@ const PrivacyPoolsSendScreen = () => {
             renderSectionHeader={renderPrivacyPoolsTokenSectionHeader}
             getSectionHeaderHeight={getPrivacyPoolsTokenSectionHeaderHeight}
             sectionOptionHeight={PRIVACY_POOLS_DEPOSIT_OPTION_HEIGHT}
-            fromTokenValue={selectedToken || noTokensOption}
+            fromTokenValue={selectedToken || emptyTokenOption}
             fromAmountValue={fieldMode === 'token' ? amount : amounts.amountInFiat}
             fromTokenAmountSelectDisabled={!withdrawTokens.length || isTransferInFlight}
             handleChangeFromToken={handleChangeToken}
@@ -602,8 +625,8 @@ const PrivacyPoolsSendScreen = () => {
           />
           {isPrivacyLoading && (
             <SkeletonLoader
-              width={PRIVACY_SKELETON_WIDTH}
-              height={PRIVACY_SKELETON_HEIGHT}
+              width={PRIVACY_LINE_SKELETON_WIDTH}
+              height={PRIVACY_LINE_SKELETON_HEIGHT}
               style={{ ...spacings.mtSm, ...spacings.mlSm }}
             />
           )}
@@ -618,12 +641,6 @@ const PrivacyPoolsSendScreen = () => {
               onRetry={retryCheck}
               style={{ ...spacings.mtSm, ...spacings.phSm }}
             />
-          )}
-          {/* At the bottom, right above the button */}
-          {isPreparingTransfer && (
-            <View style={{ marginTop: 'auto' }}>
-              <PrivacyPoolsLoadingTexts />
-            </View>
           )}
         </ScrollableWrapper>
       </Content>

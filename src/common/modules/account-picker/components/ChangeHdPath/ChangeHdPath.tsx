@@ -9,11 +9,13 @@ import { IAccountPickerController } from '@ambire-common/interfaces/accountPicke
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import { SelectValue } from '@common/components/Select/types'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import { FONT_FAMILIES } from '@common/hooks/useFonts'
+import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 
 import AdvancedModeBottomSheet from './AdvancedModeBottomSheet'
@@ -26,6 +28,7 @@ type Props = {
 const ChangeHdPath: React.FC<Props> = ({ disabled, type }) => {
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const {
     state: { hdPathTemplate, pageError, page, derivableHdPathTemplates },
     dispatch: accountPickerDispatch
@@ -69,20 +72,37 @@ const ChangeHdPath: React.FC<Props> = ({ disabled, type }) => {
 
   return (
     <>
-      <Button
-        testID="change-hd-path-btn"
-        size="small"
-        type="ghost2"
-        onPress={() => openBottomSheet()}
-        hasBottomSpacing={false}
-        disabled={disabled}
-        text={isWeb ? t('Advanced mode') : undefined}
-        childrenPosition="left"
-        textStyle={{ fontSize: 14, fontFamily: FONT_FAMILIES.REGULAR }}
-        style={isWeb ? undefined : { paddingHorizontal: 0 }}
-      >
-        <SettingsIcon width={20} style={isWeb ? spacings.mrTy : undefined} />
-      </Button>
+      {isWeb ? (
+        <Button
+          testID="change-hd-path-btn"
+          size="small"
+          type="ghost2"
+          onPress={() => openBottomSheet()}
+          hasBottomSpacing={false}
+          disabled={disabled}
+          text={t('Advanced mode')}
+          childrenPosition="left"
+          textStyle={{ fontSize: 14, fontFamily: FONT_FAMILIES.REGULAR }}
+        >
+          <SettingsIcon width={20} style={spacings.mrTy} />
+        </Button>
+      ) : (
+        // Icon only on mobile, where it sits in the screen header
+        <HeaderButton
+          testID="change-hd-path-btn"
+          icon={
+            <SettingsIcon
+              width={22}
+              height={22}
+              strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+              color={theme.primaryText}
+            />
+          }
+          accessibilityLabel={t('Advanced mode')}
+          onPress={openBottomSheet}
+          disabled={disabled}
+        />
+      )}
 
       <AdvancedModeBottomSheet
         sheetRef={sheetRef}

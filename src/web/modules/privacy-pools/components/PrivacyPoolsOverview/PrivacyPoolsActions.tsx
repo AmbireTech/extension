@@ -1,6 +1,7 @@
 import React, { FC, useMemo } from 'react'
 import { View } from 'react-native'
 
+import InfoIcon from '@common/assets/svg/InfoIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
@@ -11,10 +12,12 @@ import flexbox from '@common/styles/utils/flexbox'
 interface Props {
   onSend: () => void
   isSendDisabled: boolean
+  /** Opens the guide on how a Privacy Pools account works */
+  onAbout: () => void
 }
 
 // The dashboard's route buttons. No receive button: funds are sent here from other accounts.
-const PrivacyPoolsActions: FC<Props> = ({ onSend, isSendDisabled }) => {
+const PrivacyPoolsActions: FC<Props> = ({ onSend, isSendDisabled, onAbout }) => {
   const { t } = useTranslation()
   const { isNarrowWebLayout } = useCompactLayout()
 
@@ -28,9 +31,17 @@ const PrivacyPoolsActions: FC<Props> = ({ onSend, isSendDisabled }) => {
         disabled: isSendDisabled,
         scale: 1,
         scaleOnHover: 1.08
+      },
+      {
+        testID: 'privacy-pools-button-about',
+        icon: InfoIcon,
+        label: t('About'),
+        onPress: onAbout,
+        scale: 1,
+        scaleOnHover: 1.08
       }
     ],
-    [t, onSend, isSendDisabled]
+    [t, onSend, isSendDisabled, onAbout]
   )
 
   return (

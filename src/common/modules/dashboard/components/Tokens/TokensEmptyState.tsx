@@ -9,9 +9,11 @@ import flexbox from '@common/styles/utils/flexbox'
 type Props = {
   searchValue: string
   dashboardNetworkFilterName: string | null
+  /** Below the text, e.g. a button that shows how to get the first tokens */
+  children?: React.ReactNode
 }
 
-const TokensEmptyState = ({ searchValue, dashboardNetworkFilterName }: Props) => {
+const TokensEmptyState = ({ searchValue, dashboardNetworkFilterName, children }: Props) => {
   const { t } = useTranslation()
 
   return (
@@ -28,6 +30,7 @@ const TokensEmptyState = ({ searchValue, dashboardNetworkFilterName }: Props) =>
             }.`
           )}
       </Text>
+      {children}
     </View>
   )
 }

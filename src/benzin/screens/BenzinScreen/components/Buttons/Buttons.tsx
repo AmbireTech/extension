@@ -11,7 +11,7 @@ import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { EXPLORER_LINKS_DISABLED_TOOLTIP } from '@common/modules/settings/components/TransactionHistory/SubmittedTransactionSummary/constants'
-import spacings, { SPACING_LG, SPACING_TY } from '@common/styles/spacings'
+import spacings, { SPACING, SPACING_TY } from '@common/styles/spacings'
 import { isExtension } from '@web/constants/browserapi'
 
 const useIsCompactBenzinButtonsLayout = () => {
@@ -23,10 +23,9 @@ const useIsCompactBenzinButtonsLayout = () => {
 }
 
 const getButtonSize = (isCompactLayout: boolean) => {
-  if (isMobile) return 'regular'
-  if (!isCompactLayout) return 'large'
-  // The standalone website stacks the buttons, while the extension puts them on one row
-  return isBenzin ? 'regular' : 'smaller'
+  if (isMobile || isCompactLayout) return 'regular'
+
+  return 'large'
 }
 
 interface Props {
@@ -44,10 +43,12 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExpl
 }) => {
   const { theme } = useTheme()
   const isCompactLayout = useIsCompactBenzinButtonsLayout()
+  // A narrow extension view lays its footer out as on mobile, where both actions are secondary
+  const isMobileLike = isExtension && isCompactLayout
 
   const button = (
     <Button
-      type={isExtension ? 'outline' : 'secondary'}
+      type={isExtension && !isMobileLike ? 'outline' : 'secondary'}
       onPress={handleOpenExplorer}
       text="Open explorer"
       childrenPosition="left"
@@ -60,8 +61,8 @@ const OpenExplorerButton: FC<Pick<Props, 'handleOpenExplorer' | 'disableOpenExpl
               ...spacings.phTy,
               ...(isCompactLayout
                 ? { flex: 1, minWidth: 0, width: '100%' }
-                : { width: 170, marginRight: SPACING_LG }),
-              borderWidth: 2
+                : { width: 170, marginRight: SPACING }),
+              ...(!isMobileLike && { borderWidth: 2 })
             }
           : { height: 46 }
       }

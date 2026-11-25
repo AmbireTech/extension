@@ -18,6 +18,14 @@ export interface LedgerControllerInterface {
   ) => Promise<'ALREADY_UNLOCKED' | 'JUST_UNLOCKED'>
   isUnlocked: (path?: string, expectedKeyOnThisPath?: string) => boolean
   signTransaction: (derivationPath: string, transaction: Uint8Array) => Promise<LedgerSignature>
+  /**
+   * Signs a type 4 (EIP-7702) transaction with the sideloaded "Ambire Signer" app,
+   * as the official Ethereum app doesn't sign them since v1.24.0
+   */
+  signTransactionTypeFour: (
+    derivationPath: string,
+    transaction: Uint8Array
+  ) => Promise<LedgerSignature>
   signPersonalMessage: (derivationPath: string, messageHex: string) => Promise<LedgerSignature>
   signTypedData: (params: {
     path: string
