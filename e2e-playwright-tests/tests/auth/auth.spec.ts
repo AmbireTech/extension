@@ -1,10 +1,10 @@
-import { KEYSTORE_PASS, SEED } from 'constants/env'
+import { KEYSTORE_PASS } from 'constants/env'
 import mainConstants from 'constants/mainConstants'
 import selectors from 'constants/selectors'
+import { computeAddress, HDNodeWallet, Wallet } from 'ethers'
 import { test } from 'fixtures/pageObjects' // your extended test with auth
 
 import { expect } from '@playwright/test'
-import { Wallet } from 'ethers'
 
 import { emulatorOptions } from '../../constants/trezor'
 import {
@@ -46,17 +46,68 @@ test.describe('auth', { tag: '@auth' }, () => {
     await pages.auth.importExistingAccount(privateKeys)
   })
 
-  // TODO: duplicate; entering same seed phrase 2 times
-  // test('import one Basic Account from a 12 words seed phrase and personalize them', async ({
-  //   pages
-  // }) => {
-  //   await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
-  // })
+  // The zero-entropy BIP39 test vector is eleven "abandon" words followed by "about".
+  const seed = [...Array(11).fill('abandon'), 'about'].join(' ')
+  const seedInputs = [
+    { name: 'full words without a passphrase', seed, passphrase: undefined },
+    {
+      name: 'mixed words and prefixes with a passphrase',
+      seed: 'aban aband abando abandon aban aband abando abandon aban aband abando abou',
+      // Passphrase case, spaces and BIP39-like fragments must remain unchanged.
+      passphrase: '  Aban  abou MiXeD!  '
+    }
+  ]
 
-  test('import one Smart Account from a 12 words seed phrase and personalize them', async ({
+  for (const input of seedInputs) {
+    test(`import recovery phrase using ${input.name}`, async ({ pages }) => {
+      const expectedAddress = HDNodeWallet.fromPhrase(seed, input.passphrase).address
+
+      await pages.auth.importExistingAccountByRecoveryPhrase(input.seed, input.passphrase)
+
+      // Opening settings reloads the dashboard, so these checks also cover the saved seed.
+      await pages.recoveryPhrases.open()
+      const seedId = await pages.recoveryPhrases.getFirstSeedId()
+      const restored = await pages.recoveryPhrases.revealSeed({ seedId })
+      // Compare secrets as booleans to keep them out of assertion failure output.
+      expect(restored.phrase === seed).toBe(true)
+      expect(restored.passphrase === (input.passphrase || null)).toBe(true)
+
+      const privateKey = await pages.accountKeys.exportPrivateKey({
+        keyAddr: expectedAddress,
+        accountAddr: expectedAddress
+      })
+      expect(computeAddress(privateKey)).toBe(expectedAddress)
+    })
+  }
+
+  test('rejects recovery phrase typos and invalid checksums, then accepts corrected fragments', async ({
     pages
   }) => {
-    await pages.auth.importExistingAccountByRecoveryPhrase(SEED)
+    await pages.auth.click(selectors.getStarted.importExistingAccBtn)
+    await pages.auth.click(selectors.getStarted.importMethodRecoveryPhrase)
+    const input = pages.auth.page.getByTestId(selectors.getStarted.enterSeedPhraseField)
+    const confirm = pages.auth.page.getByTestId(selectors.getStarted.importBtn)
+    // Confirm is disabled before anything is typed, so the error messages prove that the
+    // validation actually ran.
+    const unknownWordsError = pages.auth.page.getByText(
+      'Some words are not valid recovery phrase words.'
+    )
+    const invalidPhraseError = pages.auth.page.getByText(
+      'Invalid recovery phrase. Check that the words are spelled correctly and in the right order.'
+    )
+
+    await input.fill(['abandox', ...Array(10).fill('aban'), 'abou'].join(' '))
+    await expect(unknownWordsError).toBeVisible()
+    await expect(confirm).toHaveAttribute('aria-disabled', 'true')
+
+    await input.fill(Array(12).fill('abandon').join(' '))
+    await expect(invalidPhraseError).toBeVisible()
+    await expect(confirm).toHaveAttribute('aria-disabled', 'true')
+
+    await input.fill([...Array(11).fill('aban'), 'abou'].join(' '))
+    await expect(confirm).not.toHaveAttribute('aria-disabled', 'true')
+    await expect(unknownWordsError).toBeHidden()
+    await expect(invalidPhraseError).toBeHidden()
   })
 
   test('import a couple of view-only accounts (at once) and personalize some of them', async ({

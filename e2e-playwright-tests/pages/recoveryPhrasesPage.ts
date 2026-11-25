@@ -91,7 +91,8 @@ export class RecoveryPhrasesPage extends BasePage {
     const passphraseEl = this.page.getByTestId(
       selectors.keystoreMigration.recoveryPhrasePassphraseValue
     )
-    const passphrase = (await passphraseEl.isVisible()) ? await passphraseEl.innerText() : null
+    // Read raw text so passphrase checks do not depend on layout whitespace.
+    const passphrase = (await passphraseEl.isVisible()) ? await passphraseEl.textContent() : null
 
     // Close the manage-phrase sheet via the X in its own header row (the closest ancestor of
     // manageHeader that has one) and wait for the whole sheet to unmount - it's

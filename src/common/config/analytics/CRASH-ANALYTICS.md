@@ -41,7 +41,7 @@ Reports carry these account trait tags, to help reproduce bugs:
 
 - Any EVM address (`0x` and 40 hex characters, checksummed or not) becomes `[REDACTED_ADDRESS]`, in messages, URLs, breadcrumbs, tags and JSON text, and also under field names like `address`. A longer hex value is never cut to an address-sized piece.
 - Any 64-character hex value becomes `[REDACTED_HEX]`, labeled or not.
-- Any run of 12 to 24 words that are all in the BIP-39 wordlist becomes `[REDACTED_SEED_PHRASE]`. Labeled or not, capitalized or not, and also when it sits in the middle of a longer sentence.
+- Any run of 12 to 24 words that the recovery phrase import would accept becomes `[REDACTED_SEED_PHRASE]`. That means BIP-39 words, or their first 4+ letters (e.g. `aban` for `abandon`), separated by whitespace or invisible characters like zero-width spaces. Labeled or not, capitalized or not, and also when it sits in the middle of a longer sentence. The check reuses the import's own word rules from [`seedPhrase.ts`](../../modules/auth/utils/seedPhrase.ts), so the two can't drift apart.
 
 **By field name**
 

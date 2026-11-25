@@ -97,14 +97,17 @@ export class AuthPage extends BasePage {
     await this.click(selectors.getStarted.openDashboardButton)
   }
 
-  // TODO: imporove method assertions
-  async importExistingAccountByRecoveryPhrase(passphrase: string): Promise<void> {
+  // TODO: improve method assertions
+  async importExistingAccountByRecoveryPhrase(seed: string, passphrase?: string): Promise<void> {
     await this.click(selectors.getStarted.importExistingAccBtn)
     await this.click(selectors.getStarted.importMethodRecoveryPhrase)
-    await this.entertext(selectors.getStarted.enterSeedPhraseField, passphrase)
-    // enter phrase and recovery phrase
-    await this.click(selectors.getStarted.advancedPassPhraseSwitch)
-    await this.entertext(selectors.getStarted.recoveryPhrasePassphraseField, passphrase)
+    await this.entertext(selectors.getStarted.enterSeedPhraseField, seed)
+    if (passphrase) {
+      await this.click(selectors.getStarted.advancedPassPhraseSwitch)
+      await this.entertext(selectors.getStarted.recoveryPhrasePassphraseField, passphrase)
+      // Off by default, so the passphrase can be checked after the import
+      await this.click(selectors.getStarted.savePassphraseSwitch)
+    }
     // import
     await this.click(selectors.getStarted.importBtn)
     // set pass and name

@@ -1,8 +1,23 @@
-import { wordlists } from 'bip39'
-import { Mnemonic } from 'ethers'
+import { LangEn, Mnemonic } from 'ethers'
 
-const ENGLISH_WORDLIST: readonly string[] = wordlists.english || []
+const BIP39_WORDLIST_LENGTH = 2048
+// `LangEn` loads only the english list, unlike `wordlists` from `bip39` which loads every
+// language. This file is also used by the crash report scrubber in the background.
+const englishWordlist = LangEn.wordlist()
+const ENGLISH_WORDLIST: readonly string[] = Array.from(
+  { length: BIP39_WORDLIST_LENGTH },
+  (_, index) => englishWordlist.getWord(index)
+)
 const ENGLISH_WORDS = new Set(ENGLISH_WORDLIST)
+
+/**
+ * The first 4 letters of every english BIP39 word are unique, so they are enough
+ * to identify the word. Metal backups often keep only these letters.
+ */
+const BIP39_PREFIX_LENGTH = 4
+const ENGLISH_WORDS_BY_PREFIX = new Map(
+  ENGLISH_WORDLIST.map((word) => [word.slice(0, BIP39_PREFIX_LENGTH), word])
+)
 
 /**
  * Word counts allowed by BIP39 (128 to 256 bits of entropy, in 32 bit steps).
@@ -14,7 +29,7 @@ const MAX_SEED_PHRASE_WORD_COUNT = 24
  * Invisible characters that `String.prototype.trim` doesn't remove, but often end up
  * in text copied from web pages or PDFs. They are treated as whitespace.
  */
-const INVISIBLE_CHARS = new Set(['​', '‌', '‍', '⁠', '﻿'])
+export const INVISIBLE_CHARS = new Set(['​', '‌', '‍', '⁠', '﻿'])
 
 export type SeedPhraseStatus = 'incomplete' | 'valid' | 'invalid'
 
@@ -41,7 +56,8 @@ export type SeedPhraseToken = {
    */
   isActive: boolean
   /**
-   * The active word is the beginning of a BIP39 word, but not a complete one yet
+   * The active word is the beginning of a BIP39 word, but not yet a full word or
+   * a fragment of at least 4 letters (e.g. "aba")
    */
   isBeingTyped: boolean
   isInvalidWord: boolean
@@ -49,7 +65,28 @@ export type SeedPhraseToken = {
 
 const isWhitespaceChar = (char: string) => char.trim() === '' || INVISIBLE_CHARS.has(char)
 
-const isBip39Word = (word: string) => ENGLISH_WORDS.has(word.toLowerCase())
+/**
+ * Expands a BIP39 word prefix of at least 4 letters to the full word (e.g. "aban" and
+ * "abando" -> "abandon"). Typos are not corrected, so any other word is only lowercased.
+ */
+const expandBip39WordPrefix = (word: string) => {
+  const lowercaseWord = word.toLowerCase()
+  const fullWord = ENGLISH_WORDS_BY_PREFIX.get(lowercaseWord.slice(0, BIP39_PREFIX_LENGTH))
+
+  if (lowercaseWord.length < BIP39_PREFIX_LENGTH || !fullWord?.startsWith(lowercaseWord)) {
+    return lowercaseWord
+  }
+
+  return fullWord
+}
+
+/**
+ * Whether the word (in any letter case) is an english BIP39 word or a prefix of
+ * at least 4 letters that stands for one (e.g. "aban", "abando"). This is how the
+ * recovery phrase import reads each word.
+ */
+export const isBip39WordOrFragment = (word: string) =>
+  ENGLISH_WORDS.has(expandBip39WordPrefix(word))
 
 const isBip39WordPrefix = (prefix: string) => {
   const lowercasePrefix = prefix.toLowerCase()
@@ -88,21 +125,23 @@ const splitIntoChunks = (seed: string) => {
 
 /**
  * Splits the seed phrase into its lowercase words, ignoring any whitespace.
+ * BIP39 word prefixes of at least 4 letters are expanded to the full words.
  */
 export const getSeedPhraseWords = (seed: string) =>
   splitIntoChunks(seed)
     .filter((chunk) => !isWhitespaceChar(chunk[0]!))
-    .map((word) => word.toLowerCase())
+    .map(expandBip39WordPrefix)
 
 /**
  * Trims, lowercases and collapses all whitespace (spaces, tabs, new lines) between
- * the words into single spaces. This is the format expected by the keystore.
+ * the words into single spaces, and expands BIP39 word prefixes to the full words.
+ * This is the format expected by the keystore.
  */
 export const normalizeSeedPhrase = (seed: string) => getSeedPhraseWords(seed).join(' ')
 
 /**
  * Splits the raw input into word and whitespace tokens and marks the words that
- * are not part of the BIP39 english wordlist.
+ * are neither english BIP39 words nor fragments of at least 4 letters of one.
  *
  * @param caretPosition - the caret position in the input, or `null` when the input
  * is not focused. The word at the caret is not marked as invalid while it can still
@@ -119,7 +158,7 @@ export const getSeedPhraseTokens = (
     startIndex += chunk.length
 
     const isWhitespace = isWhitespaceChar(chunk[0]!)
-    const isWord = !isWhitespace && isBip39Word(chunk)
+    const isWord = !isWhitespace && isBip39WordOrFragment(chunk)
     const isActive =
       !isWhitespace &&
       caretPosition !== null &&
@@ -170,7 +209,10 @@ export const getSeedPhraseValidation = (
   if (Mnemonic.isValidMnemonic(words.join(' '))) return { status: 'valid', error: null }
 
   const activeWord = tokens.find((token) => token.isActive)
-  const isActiveWordStillBeingTyped = !!activeWord && canBecomeLongerBip39Word(activeWord.value)
+  // Fragments are checked as the full word they stand for, because typing more letters
+  // of a fragment (e.g. "aban" -> "abandon") doesn't change the word.
+  const isActiveWordStillBeingTyped =
+    !!activeWord && canBecomeLongerBip39Word(expandBip39WordPrefix(activeWord.value))
 
   return isActiveWordStillBeingTyped ? incomplete : invalid('invalid-phrase')
 }
