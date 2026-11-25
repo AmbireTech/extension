@@ -17,6 +17,7 @@ import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInTab } from '@common/utils/links'
+import { getVisibleNftName, getVisibleNftTokenId } from '@common/utils/nft'
 import { getUiType } from '@common/utils/uiType'
 
 import HideCollectibleButton from './HideCollectibleButton'
@@ -29,9 +30,12 @@ const selectNetworks = (state: AllControllersMappingType['NetworksController']) 
 
 const { isTab } = getUiType()
 
+// Short enough for the title to fit in two lines, long enough to show most token ids in full
+const TITLE_COLLECTION_NAME_MAX_LENGTH = 24
+const TITLE_TOKEN_ID_MAX_LENGTH = 15
+
 export type SelectedCollectible = {
   address: string
-  name: string
   chainId: bigint
   lastPrice: string
   id: bigint
@@ -142,13 +146,15 @@ const CollectibleModal = ({
   const modalContent = useMemo(() => {
     if (!selectedCollectible) return null
 
-    const { image, name, collectionName, chainId, lastPrice } = selectedCollectible
+    const { image, collectionName, id, chainId, lastPrice } = selectedCollectible
     const networkData = networks.find(({ chainId: networkChainId }) => chainId === networkChainId)
+    const title = `${getVisibleNftName(collectionName, TITLE_COLLECTION_NAME_MAX_LENGTH)} #${getVisibleNftTokenId(String(id), TITLE_TOKEN_ID_MAX_LENGTH)}`
+
     return (
       <>
         <SheetHeaderRow>
           <Text fontSize={isTab ? 20 : 18} weight="semiBold" numberOfLines={2} selectable>
-            {name || t('Unknown NFT')}
+            {title}
           </Text>
         </SheetHeaderRow>
         <View style={styles.imageContainer}>

@@ -1,18 +1,29 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FlatList, ListRenderItemInfo, Pressable, TextStyle, View } from 'react-native'
+import {
+  BackHandler,
+  FlatList,
+  GestureResponderEvent,
+  ListRenderItemInfo,
+  Pressable,
+  StyleSheet,
+  TextStyle,
+  View
+} from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
 import KebabMenuIcon from '@common/assets/svg/KebabMenuIcon'
 import AboveSheetsOverlay from '@common/components/AboveSheetsOverlay'
 import { openBottomSheetsCount } from '@common/components/BottomSheet/bottomSheetEventStream'
 import { BOTTOM_SHEET_Z_INDEX } from '@common/components/BottomSheet/styles'
+import usePressedElementScreenPosition from '@common/components/BottomSheet/usePressedElementScreenPosition'
+import FadeInView from '@common/components/FadeInView'
 import Text from '@common/components/Text'
 import { isWeb } from '@common/config/env'
+import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { Portal } from '@gorhom/portal'
 
-import { registerDropdownDismiss, unregisterDropdownDismiss } from './dropdownDismissManager'
 import getStyles from './styles'
 
 const DROPDOWN_ITEM_HEIGHT = 40
@@ -37,10 +48,11 @@ const Dropdown: FC<Props> = ({
 }) => {
   const DropdownButton = useRef(null)
   const { styles, theme } = useTheme(getStyles)
+  const { t } = useTranslation()
   const { width: windowWidth, height: windowHeight } = useWindowSize()
   const modalRef: any = useRef(null)
-  const touchStartedInsideRef = useRef(false)
   const [internalPosition, setInternalPosition] = useState({ x: 0, y: 0 })
+  const getPressedElementScreenPosition = usePressedElementScreenPosition()
 
   const position = useMemo(
     () => externalPosition || internalPosition,
@@ -56,6 +68,7 @@ const Dropdown: FC<Props> = ({
     },
     [setExternalPosition]
   )
+  const closeDropdown = useCallback(() => setPosition({ x: 0, y: 0 }), [setPosition])
 
   const dropdownHeight = useMemo(
     () =>
@@ -94,7 +107,7 @@ const Dropdown: FC<Props> = ({
       if ((DropdownButton.current as HTMLElement | null)?.contains?.(event.target as Node)) return
 
       if (modalRef.current && !modalRef.current?.contains(event.target)) {
-        setPosition({ x: 0, y: 0 })
+        closeDropdown()
       }
     }
     document.addEventListener('mousedown', handleClickOutside, { passive: true })
@@ -102,51 +115,46 @@ const Dropdown: FC<Props> = ({
       if (!isWeb) return
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [setPosition, position])
+  }, [closeDropdown, position])
 
-  // close menu on touch outside (mobile)
+  // Registered after the listener of the sheet the menu is in, so Android back closes the menu first
   useEffect(() => {
     if (isWeb || !isOpen) return
 
-    // The tap that opened the dropdown raised the flag while there was nothing registered to
-    // consume it, so clear it here or the first tap outside would be spent on it
-    touchStartedInsideRef.current = false
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      closeDropdown()
+      return true
+    })
 
-    // The touch is observed on the app root, which cannot tell where it landed, so the dropdown and
-    // its button flag their own touches on the way up and this only closes when no flag was raised
-    const dismissCheck = () => {
-      const startedInside = touchStartedInsideRef.current
-      touchStartedInsideRef.current = false
+    return () => subscription.remove()
+  }, [closeDropdown, isOpen])
 
-      if (!startedInside) setPosition({ x: 0, y: 0 })
-    }
+  // Not from `measure`, which can't tell where a sheet is on the screen. On web it ignores the CSS
+  // transform that places the sheet, and on mobile the sheet is a native view of its own
+  const toggleDropdown = useCallback(
+    (event: GestureResponderEvent): void => {
+      if (position.x !== 0 || position.y !== 0) {
+        closeDropdown()
+        return
+      }
 
-    registerDropdownDismiss(dismissCheck)
+      if (isWeb) {
+        // @ts-expect-error the ref is untyped
+        DropdownButton.current.measureInWindow((x, y) => setPosition({ x, y }))
+        return
+      }
 
-    return () => unregisterDropdownDismiss(dismissCheck)
-  }, [isOpen, setPosition])
-
-  const flagTouchStartedInside = useCallback((): void => {
-    touchStartedInsideRef.current = true
-  }, [])
-
-  const toggleDropdown = useCallback((): void => {
-    if (position.x === 0 && position.y === 0) {
-      // @ts-ignore
-      DropdownButton.current.measure((fx, fy, w, h, px, py) => {
-        setPosition({ x: px, y: py })
-      })
-    } else {
-      setPosition({ x: 0, y: 0 })
-    }
-  }, [position, setPosition])
+      setPosition(getPressedElementScreenPosition(event))
+    },
+    [closeDropdown, getPressedElementScreenPosition, position, setPosition]
+  )
 
   const onItemPress = useCallback(
     (item: any): void => {
       onSelect(item)
-      setPosition({ x: 0, y: 0 })
+      closeDropdown()
     },
-    [onSelect, setPosition]
+    [closeDropdown, onSelect]
   )
 
   const renderItem = ({ item }: ListRenderItemInfo<NonNullable<Props['data']>[number]>) => (
@@ -170,25 +178,33 @@ const Dropdown: FC<Props> = ({
 
   return (
     <>
-      <View onTouchStart={flagTouchStartedInside}>
-        <Pressable onPress={toggleDropdown} ref={DropdownButton} testID={testID}>
-          <View style={styles.button}>
-            <KebabMenuIcon {...kebabIconProps} />
-          </View>
-        </Pressable>
-      </View>
+      <Pressable onPress={toggleDropdown} ref={DropdownButton} testID={testID}>
+        {/* The button takes the touch, which its position on mobile is read from */}
+        <View style={styles.button} pointerEvents="none">
+          <KebabMenuIcon {...kebabIconProps} />
+        </View>
+      </Pressable>
       {isOpen && (
         <Portal hostName="global">
           {/* Native sheets present in their own window, which a z-index can't draw above */}
           <AboveSheetsOverlay>
+            {/* On mobile a tap outside the menu lands here and only closes the menu, as touches in a */}
+            {/* native sheet and on its dimmed area never reach the app's own views */}
+            {!isWeb && (
+              <FadeInView style={StyleSheet.absoluteFill}>
+                <Pressable
+                  onPress={closeDropdown}
+                  style={styles.backdrop}
+                  accessibilityLabel={t('Close')}
+                />
+              </FadeInView>
+            )}
             <View
-              onTouchStart={flagTouchStartedInside}
               style={[
                 styles.dropdown,
                 {
                   right: windowWidth - position.x,
                   top: dropdownTop,
-                  maxHeight: dropdownHeight,
                   zIndex
                 }
               ]}

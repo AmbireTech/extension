@@ -49,12 +49,19 @@ const Failed: FC<FailedProps> = ({
     }
   })
 
+  // Capped to the screen's width and shrinking with it, so a long message wraps instead of
+  // pushing the alert to the edges
   return (
-    <View>
+    <View style={{ maxWidth: '100%' }}>
       <View
         style={[flexbox.directionRow, flexbox.alignCenter, flexbox.justifyCenter, spacings.mbLg]}
       >
-        <AlertVertical size="md" title={title} text={errorMessage} style={alertStyle}>
+        <AlertVertical
+          size="md"
+          title={title}
+          text={errorMessage}
+          style={{ flexShrink: 1, ...alertStyle }}
+        >
           {!!toToken && (
             <AnimatedPressable
               style={{

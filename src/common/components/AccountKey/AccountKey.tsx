@@ -336,6 +336,8 @@ const AccountKey: React.FC<Props> = ({
             isImported ? KEY_ADDRESS_MAX_LENGTH : NOT_IMPORTED_KEY_ADDRESS_MAX_LENGTH
           }
           renderRightChildren={renderKeyActions}
+          // On mobile the copy button would sit next to the key's menu, so the menu is left alone
+          withCopy={isWeb}
           renderExtraBadges={renderOwnerNetworksBadge}
           withAccountStatus={false}
           badgeKeys={badgeKeys}

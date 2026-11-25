@@ -20,6 +20,11 @@ interface Styles {
 export const BORDER_RADIUS_PRIMARY = 16
 export const BORDER_RADIUS_SECONDARY = 12
 export const BORDER_RADIUS_TERTIARY = 2
+/**
+ * Opacity of the theme's `backdrop` behind a popover (a tooltip or a menu). The theme's
+ * backdrop is for sheets, so a popover dims the screen only slightly.
+ */
+export const POPOVER_BACKDROP_OPACITY = 0.45
 
 const commonStyles: Styles & StyleSheet.NamedStyles<any> = {
   shadowPrimary: {

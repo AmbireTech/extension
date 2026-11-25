@@ -103,6 +103,8 @@ const SheetHeaderRow: FC<Props> = ({ children, onBack, rightContent, style }) =>
         style={[
           flexbox.flex1,
           isTitleOnLeft ? flexbox.alignStart : flexbox.alignCenter,
+          // Keeps a title on the left off the sheet's edge, as no back button sits before it
+          isTitleOnLeft && spacings.plSm,
           // Centers the first line on the buttons, which sit at the top of the row
           isTitleWrapped && {
             paddingTop: Math.max(0, (HEADER_BUTTON_SIZE - wrappedTitleFirstLineHeight) / 2)
