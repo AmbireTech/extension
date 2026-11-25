@@ -204,15 +204,19 @@ const Account = ({
   /**
    * Measured in a layout effect rather than on layout, so that a list that positions its
    * rows by height has this one's before it is painted, instead of jumping to it.
+   * Skipped when no list asks for it, as the measuring is synchronous and costs every row
+   * a render more.
    */
   const updateContentHeight = useCallback(() => {
+    if (!onExtraHeightChange) return
+
     // Relative to the row's content, as the native measuring needs an ancestor
     const content = measureLayoutSync(contentHeightRef.current, contentRef.current)
     if (!content) return
 
     const height = Math.round(content.height)
     setContentHeight((prev) => (prev === height ? prev : height))
-  }, [])
+  }, [onExtraHeightChange])
 
   // Whenever what the badges show changes, as that may change how many lines they take. Anything
   // else that resizes the row is caught by the content's `onLayout`, at worst a frame later.
