@@ -1,7 +1,13 @@
-import { wordlists } from 'bip39'
-import { Mnemonic } from 'ethers'
+import { LangEn, Mnemonic } from 'ethers'
 
-const ENGLISH_WORDLIST: readonly string[] = wordlists.english || []
+const BIP39_WORDLIST_LENGTH = 2048
+// `LangEn` loads only the english list, unlike `wordlists` from `bip39` which loads every
+// language. This file is also used by the crash report scrubber in the background.
+const englishWordlist = LangEn.wordlist()
+const ENGLISH_WORDLIST: readonly string[] = Array.from(
+  { length: BIP39_WORDLIST_LENGTH },
+  (_, index) => englishWordlist.getWord(index)
+)
 const ENGLISH_WORDS = new Set(ENGLISH_WORDLIST)
 
 /**
