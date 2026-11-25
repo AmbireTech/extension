@@ -1,4 +1,4 @@
-import { isBip39Word } from '@common/modules/auth/utils/seedPhrase'
+import { INVISIBLE_CHARS, isBip39Word } from '@common/modules/auth/utils/seedPhrase'
 
 type RedactionRule = {
   pattern: RegExp
@@ -15,6 +15,11 @@ const SEED_PHRASE_MAX_WORDS = 24
 // in any letter case (e.g. auto-capitalized by a mobile text field).
 const areAllValidBip39Words = (words: string[]): boolean => words.every(isBip39Word)
 
+// The import also splits words on invisible characters (e.g. zero-width spaces)
+// that `\s` doesn't match, so they separate words here too.
+const WORD_SEPARATOR = `[\\s${[...INVISIBLE_CHARS].join('')}]+`
+const wordSeparatorPattern = new RegExp(WORD_SEPARATOR)
+
 // Finds a contiguous 12-24 word BIP-39-valid subsequence anywhere within a run
 // of words and redacts just that span, leaving surrounding words untouched --
 // this lets a real seed phrase embedded in longer prose (e.g. "my recovery
@@ -25,7 +30,7 @@ const areAllValidBip39Words = (words: string[]): boolean => words.every(isBip39W
 // backtracking overhead (a mild ReDoS shape) on long non-matching input such
 // as stack traces.
 const redactSeedPhraseWithinWordRun = (wordRun: string): string => {
-  const words = wordRun.split(/\s+/)
+  const words = wordRun.split(wordSeparatorPattern)
   if (words.length < SEED_PHRASE_MIN_WORDS) return wordRun
 
   for (let start = 0; start <= words.length - SEED_PHRASE_MIN_WORDS; start += 1) {
@@ -43,10 +48,10 @@ const redactSeedPhraseWithinWordRun = (wordRun: string): string => {
   return wordRun
 }
 
-// A single maximal run of letters-and-whitespace (case-insensitive so a
+// A single maximal run of letters and word separators (case-insensitive so a
 // capitalized phrase is still captured as one run); the actual seed-phrase
 // detection/redaction happens in redactSeedPhraseWithinWordRun above.
-const wordRunPattern = /[a-z]+(?:\s+[a-z]+)*/gi
+const wordRunPattern = new RegExp(`[a-z]+(?:${WORD_SEPARATOR}[a-z]+)*`, 'gi')
 
 // Regex-based redaction for high-risk secrets. This can still produce false positives/negatives.
 const REDACTION_RULES: RedactionRule[] = [

@@ -342,6 +342,34 @@ describe('scrubSentryEventSecrets', () => {
     expect(result.message).toBe('failed to import "[REDACTED_SEED_PHRASE]"')
   })
 
+  it.each([
+    ['zero-width space', '​'],
+    ['zero-width non-joiner', '‌'],
+    ['zero-width joiner', '‍'],
+    ['word joiner', '⁠'],
+    ['byte order mark', '﻿']
+  ])('redacts a seed phrase separated by a %s, like the import does', (_name, separator) => {
+    const phrase = [
+      'abandon',
+      'ability',
+      'able',
+      'about',
+      'above',
+      'absent',
+      'absorb',
+      'abstract',
+      'absurd',
+      'abuse',
+      'access',
+      'accident'
+    ].join(separator)
+    const event = { message: `failed to import "${phrase}"` }
+
+    const result = scrubSentryEventSecrets(event)
+
+    expect(result.message).toBe('failed to import "[REDACTED_SEED_PHRASE]"')
+  })
+
   it('does not treat 3-letter fragments or typos as BIP-39 words', () => {
     const message = 'aba abi abl abo abo abs abs abs abs abu acc acc abanx'
     const event = { message }

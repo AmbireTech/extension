@@ -23,7 +23,7 @@ const MAX_SEED_PHRASE_WORD_COUNT = 24
  * Invisible characters that `String.prototype.trim` doesn't remove, but often end up
  * in text copied from web pages or PDFs. They are treated as whitespace.
  */
-const INVISIBLE_CHARS = new Set(['​', '‌', '‍', '⁠', '﻿'])
+export const INVISIBLE_CHARS = new Set(['​', '‌', '‍', '⁠', '﻿'])
 
 export type SeedPhraseStatus = 'incomplete' | 'valid' | 'invalid'
 
