@@ -73,7 +73,12 @@ const expandBip39WordPrefix = (word: string) => {
   return fullWord
 }
 
-const isBip39Word = (word: string) => ENGLISH_WORDS.has(expandBip39WordPrefix(word))
+/**
+ * Whether the word (in any letter case) is an english BIP39 word or a prefix of
+ * at least 4 letters that stands for one (e.g. "aban", "abando"). This is how the
+ * recovery phrase import reads each word.
+ */
+export const isBip39Word = (word: string) => ENGLISH_WORDS.has(expandBip39WordPrefix(word))
 
 const isBip39WordPrefix = (prefix: string) => {
   const lowercasePrefix = prefix.toLowerCase()
