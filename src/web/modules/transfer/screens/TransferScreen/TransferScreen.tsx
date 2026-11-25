@@ -2,7 +2,6 @@ import { parseUnits } from 'ethers'
 import React, { Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { FEE_COLLECTOR } from '@ambire-common/consts/addresses'
 import { getPrivacyPoolsChainConfig } from '@ambire-common/consts/privacyPools'
@@ -15,6 +14,7 @@ import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import { getAddressFromAddressState, getResolvedDomainName } from '@ambire-common/utils/domains'
 import { getCallsCount } from '@ambire-common/utils/userRequest'
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import SkeletonLoader from '@common/components/SkeletonLoader'
@@ -41,6 +41,7 @@ import Estimation from '@common/modules/sign-account-op/components/OneClick/Esti
 import useTrackAccountOp from '@common/modules/sign-account-op/hooks/OneClick/useTrackAccountOp'
 import GasTankInfoModal from '@common/modules/transfer/components/GasTankInfoModal'
 import SendForm from '@common/modules/transfer/components/SendForm/SendForm'
+import usePrivacyPoolsDepositFee from '@common/modules/transfer/hooks/usePrivacyPoolsDepositFee'
 import getTransferBuildRequest from '@common/modules/transfer/utils/getTransferBuildRequest'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -64,6 +65,7 @@ const selectAccountsOps = (state: AllControllersMappingType['ActivityController'
 const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
   const { addToast } = useToast()
   const { state: transferState, dispatch: transferDispatch } = useController('TransferController')
+  const privacyPoolsDepositFee = usePrivacyPoolsDepositFee()
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { verifiedDomainsStatus, domains } = useController('DomainsController').state
   const {
@@ -85,7 +87,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     amountInFiat,
     privacyPoolsRecipient,
     isPreparingPrivacyPoolsDeposit,
-    privacyPoolsDepositError
+    privacyPoolsDepositError,
+    privacyPoolsDepositPrivacy
   } = transferState
   const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
 
@@ -113,7 +116,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     ref: gasTankSheetRef,
     open: openGasTankInfoBottomSheet,
     close: closeGasTankInfoBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { state: accountsOps } = useController('ActivityController', selectAccountsOps)
   const { canUseGasTank } = useHasGasTank({ account })
   const recipientMenuClosedAutomatically = useRef(false)
@@ -238,7 +241,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     ref: estimationModalRef,
     open: openEstimationModal,
     close: closeEstimationModal
-  } = useModalize()
+  } = useSheetRef()
 
   const closeEstimationModalAndDispatch = useCallback(() => {
     transferDispatch({
@@ -330,10 +333,19 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     })
   }, [accountUserRequests, isSendingBatch, networkUserRequests, t])
 
+  const isCheckingPrivacyPoolsDeposit =
+    !!privacyPoolsRecipient &&
+    (isPreparingPrivacyPoolsDeposit || !!privacyPoolsDepositPrivacy?.isLoading)
+  // Sending without knowing how private the deposit is asks for a hold
+  const isPrivacyPoolsDepositUnchecked =
+    !!privacyPoolsRecipient &&
+    privacyPoolsDepositPrivacy?.rating === 'unchecked' &&
+    !privacyPoolsDepositPrivacy.isLoading
+
   const isTransferFormValid = useMemo(() => {
-    // No address to validate, but the deposit calls must be prepared, which takes a while
+    // No address to validate, but the deposit calls and its privacy check take a while
     if (privacyPoolsRecipient)
-      return !!isFormValid && !isPreparingPrivacyPoolsDeposit && !privacyPoolsDepositError
+      return !!isFormValid && !isCheckingPrivacyPoolsDeposit && !privacyPoolsDepositError
 
     return !!(isTopUp
       ? isFormValid
@@ -343,7 +355,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     isFormValid,
     isTopUp,
     privacyPoolsRecipient,
-    isPreparingPrivacyPoolsDeposit,
+    isCheckingPrivacyPoolsDeposit,
     privacyPoolsDepositError
   ])
 
@@ -470,12 +482,17 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
         isBatchDisabled={isSendingBatch || isSignAccountOpInProgress}
         isNotReadyToProceed={!isSendingBatch && !isTransferFormValid}
         // See `isTransferFormValid`
-        isLoading={!!privacyPoolsRecipient && isPreparingPrivacyPoolsDeposit}
+        isLoading={isCheckingPrivacyPoolsDeposit}
         signAccountOpErrors={[]}
         networkUserRequests={networkUserRequests}
         isLocalStateOutOfSync={isLocalStateOutOfSync}
-        shouldHoldToProceed={!!validationFormMsgs.recipientAddress.shouldHold}
-        onRecipientAddressUnknownAgree={onRecipientAddressUnknownAgree}
+        shouldHoldToProceed={
+          isPrivacyPoolsDepositUnchecked || !!validationFormMsgs.recipientAddress.shouldHold
+        }
+        // A Privacy Pools account is not an unknown address to agree to
+        onRecipientAddressUnknownAgree={
+          privacyPoolsRecipient ? undefined : onRecipientAddressUnknownAgree
+        }
       />
     )
   }, [
@@ -489,7 +506,8 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
     onRecipientAddressUnknownAgree,
     addTransaction,
     privacyPoolsRecipient,
-    isPreparingPrivacyPoolsDeposit
+    isCheckingPrivacyPoolsDeposit,
+    isPrivacyPoolsDepositUnchecked
   ])
 
   const handleGoBackPress = useCallback(() => {
@@ -654,7 +672,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
               ]}
             >
               <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbSm]}>
-                <PanelBackButton onPress={handleGoBackPress} style={spacings.mrSm} />
+                <PanelBackButton onPress={handleGoBackPress} />
                 <PanelTitle title={isTopUp ? t('Top up Gas Tank') : t('Send')} />
                 <View style={{ width: 40 }} />
               </View>
@@ -742,6 +760,7 @@ const TransferScreen = ({ isTopUpScreen }: { isTopUpScreen?: boolean }) => {
           hasProceeded={hasProceeded}
           signAccountOpController={signAccountOpController}
           Modals={Modals}
+          serviceFee={privacyPoolsDepositFee}
         />
       </Suspense>
     </Wrapper>

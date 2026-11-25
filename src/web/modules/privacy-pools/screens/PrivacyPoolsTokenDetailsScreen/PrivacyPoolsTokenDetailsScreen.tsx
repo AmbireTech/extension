@@ -1,11 +1,9 @@
-import { parseUnits } from 'ethers'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { LayoutChangeEvent } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
-import { TokenResult } from '@ambire-common/libs/portfolio'
 import ExitIcon from '@common/assets/svg/ExitIcon'
 import SendIcon from '@common/assets/svg/SendIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
@@ -60,7 +58,7 @@ const PrivacyPoolsTokenDetailsScreen = () => {
   )
   const { state: poolStats } = useController('PrivacyPoolsController', selectPoolStats)
   const { balances, balancesState, getTokenPrice } = usePrivacyPools()
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
   // Reserves as much scroll space as the floating footer takes, as on the regular token details
   const [footerHeight, setFooterHeight] = useState(0)
   const handleFooterLayout = useCallback((event: LayoutChangeEvent) => {
@@ -91,23 +89,7 @@ const PrivacyPoolsTokenDetailsScreen = () => {
 
   const price = balance ? getTokenPrice(balance.chainId, balance.tokenAddress) : null
 
-  // Shaped like a portfolio token for the shared token details parts. Priced by the Privacy Pools
-  // controller, as the account has no portfolio, and with no market data, which would be fetched
-  const token: TokenResult | null = useMemo(() => {
-    if (!balance) return null
-
-    return {
-      symbol: balance.symbol,
-      name: balance.symbol,
-      decimals: balance.decimals,
-      address: balance.tokenAddress,
-      chainId: BigInt(balance.chainId),
-      amount: parseUnits(balance.totalAmount, balance.decimals),
-      priceIn: price === null ? [] : [{ baseCurrency: 'usd', price }],
-      marketDataIn: [],
-      flags: { onGasTank: false, rewardsType: null, canTopUpGasTank: false, isFeeToken: false }
-    }
-  }, [balance, price])
+  const token = balance?.token ?? null
   const formatted = useMemo(() => (token ? getAndFormatTokenDetails(token) : null), [token])
 
   const openSend = useCallback(
@@ -116,7 +98,7 @@ const PrivacyPoolsTokenDetailsScreen = () => {
   )
   const openRagequit = useCallback(() => openSheet(), [openSheet])
 
-  const canSend = !!balance && Number(balance.approvedAmount) > 0
+  const canSend = !!balance && Number(balance.approvedAmountPostSimulation) > 0
   const canRagequit = !!balance && balance.pendingAmountRaw > 0n
   const actions = useMemo(
     () => [

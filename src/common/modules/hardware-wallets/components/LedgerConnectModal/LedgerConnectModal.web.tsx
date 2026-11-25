@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import AmbireDevice from '@common/assets/svg/AmbireDevice'
 import DriveIcon from '@common/assets/svg/DriveIcon'
 import LeftPointerArrowIcon from '@common/assets/svg/LeftPointerArrowIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Text from '@common/components/Text'
 import { Trans, useTranslation } from '@common/config/localization'
@@ -40,7 +40,7 @@ const LedgerConnectModal = ({
   handleOnConnect,
   displayOptionToAuthorize = true
 }: Props) => {
-  const { ref, open, close } = useModalize()
+  const { ref, open, close } = useSheetRef()
   const mainCtrlState = useController('MainController').state
   const { requestLedgerDeviceAccess } = useLedger()
   const { addToast } = useToast()
@@ -97,7 +97,6 @@ const LedgerConnectModal = ({
     <BottomSheet
       id="ledger-connect-modal"
       sheetRef={ref}
-      autoWidth={false}
       closeBottomSheet={handleClose}
       onClosed={handleClose}
       autoOpen={isVisible}
@@ -148,6 +147,7 @@ const LedgerConnectModal = ({
       {displayOptionToAuthorize && (
         <Button
           text={isLoading ? t('Connecting...') : t('Authorize & Connect')}
+          hasBottomSpacing={false}
           disabled={isLoading}
           style={{ width: 264, ...flexbox.alignSelfCenter }}
           onPress={onPressNext}

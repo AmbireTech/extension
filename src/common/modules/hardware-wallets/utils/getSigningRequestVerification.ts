@@ -5,6 +5,7 @@ import { HardwareWalletSigningRequest } from '@ambire-common/interfaces/signAcco
 import { SAFE_CALL_OPERATION, SAFE_DELEGATE_CALL_OPERATION } from '@ambire-common/libs/safe/helpers'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 
+import { ERC_8213_LABELS, getCalldataDigest, getEip712Digest, getErc191Digest } from './erc8213'
 import { getRequestCalls, RequestCalls } from './getRequestCalls'
 import { getUnsignedTransaction } from './getUnsignedTransaction'
 import { isRecord, isSafeTxTypedData, toBigIntOrNull } from './signingRequestData'
@@ -30,6 +31,11 @@ export type SafeTransactionCheck = {
 export type SigningRequestVerification = {
   requestKind: 'typed-data' | 'transaction' | 'other'
   hashes: VerificationHash[]
+  /**
+   * The digests ERC-8213 standardizes, under its names, so they can be compared
+   * with any wallet or hardware wallet that follows it
+   */
+  erc8213Digests: VerificationHash[]
   /** Explains why a hash the user expects is missing */
   missingHashReason: string | null
   /** Whether keccak256(0x1901 ‖ domain hash ‖ message hash) gives the Safe hash */
@@ -137,6 +143,7 @@ const getTransactionVerification = (
   const base: RequestVerification = {
     requestKind: 'transaction',
     hashes: [],
+    erc8213Digests: [],
     missingHashReason: null,
     safeHashFormula: null,
     safeTransactionChecks: [],
@@ -152,9 +159,26 @@ const getTransactionVerification = (
     }
   }
 
+  // The calldata is signed as is, whatever else the transaction carries, so
+  // its digest is shown even when the transaction hash can't be
+  const calldataDigest = getCalldataDigest(data.data)
+  const transactionBase: RequestVerification = {
+    ...base,
+    erc8213Digests: calldataDigest
+      ? [
+          {
+            id: 'calldataDigest',
+            label: ERC_8213_LABELS.calldataDigest,
+            value: calldataDigest,
+            note: "ERC-8213: keccak256(data length as uint256 ‖ data). It doesn't cover the recipient (to) or the amount (value), so check them separately."
+          }
+        ]
+      : []
+  }
+
   if (isAccountUpgradeTransaction) {
     return {
-      ...base,
+      ...transactionBase,
       missingHashReason:
         "The transaction hash isn't shown because this transaction also upgrades your account, which is signed together with it."
     }
@@ -163,13 +187,13 @@ const getTransactionVerification = (
   const transactionHash = getUnsignedTransactionHash(data)
   if (!transactionHash) {
     return {
-      ...base,
+      ...transactionBase,
       missingHashReason: "The transaction hash couldn't be calculated for this request."
     }
   }
 
   return {
-    ...base,
+    ...transactionBase,
     hashes: [
       {
         id: 'transactionHash',
@@ -266,6 +290,45 @@ const getSafeTransactionChecks = (
   return checks
 }
 
+/**
+ * The EIP-712 Digest, which is the hash the device signs, and for a Safe
+ * transaction also the Calldata Digest of the data the Safe runs. The Safe
+ * hash is the EIP-712 Digest under Safe's name, so the digest is left out
+ * when it matches the Safe hash shown, and kept only when they differ, as
+ * it's then the hash the device actually signs
+ */
+const getTypedDataErc8213Digests = (
+  data: Record<string, unknown>,
+  safeTxHash: string | null
+): VerificationHash[] => {
+  const digests: VerificationHash[] = []
+  const eip712Digest = getEip712Digest(data.domainHash, data.messageHash)
+  const safeHash = safeTxHash ?? (isHash(data.safeMessageHash) ? data.safeMessageHash : null)
+  const isSameAsSafeHash =
+    !!eip712Digest && !!safeHash && safeHash.toLowerCase() === eip712Digest.toLowerCase()
+
+  if (eip712Digest && !isSameAsSafeHash) {
+    digests.push({
+      id: 'eip712Digest',
+      label: ERC_8213_LABELS.eip712Digest,
+      value: eip712Digest,
+      note: 'ERC-8213: keccak256(0x1901 ‖ Domain hash ‖ Message hash), the hash your device signs.'
+    })
+  }
+
+  const safeCalldataDigest = isSafeTxTypedData(data) ? getCalldataDigest(data.message.data) : null
+  if (safeCalldataDigest) {
+    digests.push({
+      id: 'safeCalldataDigest',
+      label: ERC_8213_LABELS.calldataDigest,
+      value: safeCalldataDigest,
+      note: "ERC-8213 digest of the data the Safe runs: keccak256(data length as uint256 ‖ data). It doesn't cover the recipient (to) or the amount (value), so check them separately."
+    })
+  }
+
+  return digests
+}
+
 const getTypedDataVerification = (
   data: unknown,
   requestCalls: RequestCalls | null
@@ -273,6 +336,7 @@ const getTypedDataVerification = (
   const base: RequestVerification = {
     requestKind: 'typed-data',
     hashes: [],
+    erc8213Digests: [],
     missingHashReason: null,
     safeHashFormula: null,
     safeTransactionChecks: [],
@@ -330,6 +394,7 @@ const getTypedDataVerification = (
   return {
     ...base,
     hashes,
+    erc8213Digests: getTypedDataErc8213Digests(data, sentSafeTxHash ?? calculatedSafeTxHash),
     safeHashFormula,
     safeTransactionChecks: isSafeTransaction
       ? getSafeTransactionChecks(data.message, requestCalls)
@@ -339,10 +404,34 @@ const getTypedDataVerification = (
   }
 }
 
+/** The ERC-191 Digest of a message, which is the hash the device signs for it */
+const getMessageErc8213Digests = (data: unknown): VerificationHash[] => {
+  let erc191Digest: string | null = null
+  try {
+    erc191Digest = isRecord(data) ? getErc191Digest(data.message) : null
+  } catch (error) {
+    // Messages reach the device as hex, so only text that can't be encoded
+    // (e.g. a broken emoji) gets here. Kept from breaking the signing screen
+    console.error('hardware wallet signing: could not calculate the ERC-191 Digest', error)
+    captureException(error)
+  }
+  if (!erc191Digest) return []
+
+  return [
+    {
+      id: 'erc191Digest',
+      label: ERC_8213_LABELS.erc191Digest,
+      value: erc191Digest,
+      note: 'ERC-8213: keccak256("\\x19Ethereum Signed Message:\\n" ‖ message length ‖ message), the hash your device signs.'
+    }
+  ]
+}
+
 /**
  * Prepares what a user needs to verify a hardware wallet signing request on
  * their own: the request exactly as sent (ready to paste into a hashing
- * tool), the hashes Ambire computed from it, for Safe transactions, the
+ * tool), the hashes Ambire computed from it, the ERC-8213 digests (Calldata,
+ * EIP-712 or ERC-191 Digest), for Safe transactions, the
  * checks that can be confirmed by reading the request, and the calls it makes.
  */
 export const getSigningRequestVerification = (
@@ -361,6 +450,8 @@ export const getSigningRequestVerification = (
   return {
     requestKind: 'other',
     hashes: [],
+    erc8213Digests:
+      signingRequest.type === 'message' ? getMessageErc8213Digests(signingRequest.data) : [],
     missingHashReason: null,
     safeHashFormula: null,
     safeTransactionChecks: [],

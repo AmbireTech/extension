@@ -1,22 +1,26 @@
-import { BlurView } from 'expo-blur'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { BlurTargetView, BlurView } from 'expo-blur'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { StyleSheet, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import CopyIcon from '@common/assets/svg/CopyIcon'
+import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import InvisibilityIcon from '@common/assets/svg/InvisibilityIcon'
 import VisibilityIcon from '@common/assets/svg/VisibilityIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
-import Editable from '@common/components/Editable'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
+import PassphraseBadge from '@common/components/PassphraseBadge'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useController from '@common/hooks/useController'
+import useHover, { AnimatedPressable } from '@common/hooks/useHover'
 import usePrivacyPoolsAccounts from '@common/hooks/usePrivacyPoolsAccounts'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
@@ -25,10 +29,12 @@ import eventBus from '@common/services/event/eventBus'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { THEME_TYPES } from '@common/styles/themeConfig'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import { setStringAsync } from '@common/utils/clipboard'
 
+import EditRecoveryPhraseNameBottomSheet from './EditRecoveryPhraseNameBottomSheet'
 import getStyles from './styles'
 
 const DUMMY_SEED = 'dummy seed phrase canyon pigeon meadow orbit lunch erupt promote silver casino'
@@ -53,17 +59,26 @@ const ManageRecoveryPhrase = ({
     ref: sheetRefDeleteConfirmation,
     open: openDeleteConfirmation,
     close: closeDeleteConfirmation
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefConfirmPassword,
     open: openConfirmPassword,
     close: closeConfirmPassword
-  } = useModalize()
+  } = useSheetRef()
 
   const { addToast } = useToast()
   const { theme, styles, themeType } = useTheme(getStyles)
+  const blurTargetRef = useRef<View>(null)
   const { t } = useTranslation()
   const { accounts: privacyPoolsAccounts } = usePrivacyPoolsAccounts()
+  const [bindEditAnim, editAnimStyle] = useHover({ preset: 'opacityInverted' })
+  const [isEditNameSheetMounted, setIsEditNameSheetMounted] = useState(false)
+  // The prop is a snapshot taken when the phrase was opened, so a rename shows only through state
+  const savedSeed = useMemo(
+    () => keystoreState.seeds.find(({ id }) => id === recoveryPhrase.id),
+    [keystoreState.seeds, recoveryPhrase.id]
+  )
+  const label = savedSeed?.label ?? recoveryPhrase.label
   // Removed along with the phrase, the only way to recover it
   const hasPrivacyPoolsAccount = useMemo(
     () => privacyPoolsAccounts.some(({ seedId }) => seedId === recoveryPhrase.id),
@@ -148,90 +163,121 @@ const ManageRecoveryPhrase = ({
     })
   }
 
-  const onSave = useCallback(
-    (value: string) => {
-      keystoreDispatch({
-        type: 'method',
-        params: { method: 'updateSeed', args: [{ id: recoveryPhrase.id, label: value }] }
-      })
-      addToast(t('Recovery phrase label updated.'))
-    },
-    [addToast, keystoreDispatch, recoveryPhrase.id, t]
-  )
+  const openEditNameSheet = useCallback(() => setIsEditNameSheetMounted(true), [])
+  const unmountEditNameSheet = useCallback(() => setIsEditNameSheetMounted(false), [])
 
   const isBlurred = blurred || seed === DUMMY_SEED
+  // Manage sits in a sheet, where the header row spaces the title instead
+  const isInSheet = useIsInsideBottomSheet()
 
   return (
     <>
       <View style={flexbox.flex1}>
-        <View
-          testID="manage-recovery-phrase-header"
-          style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}
-        >
-          {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
-          <PanelTitle title={t('Manage recovery phrase')} style={isWeb ? text.left : text.center} />
-        </View>
-        <View style={[isMobile ? spacings.mbSm : spacings.mb, flexbox.directionRow]}>
-          <Editable
-            initialValue={recoveryPhrase.label}
-            onSave={onSave}
-            fontSize={16}
-            height={24}
-            textProps={{
-              weight: 'medium'
-            }}
-            minWidth={100}
-            maxLength={40}
-          />
+        {/* In a sheet the header row adds the X and spaces the title itself */}
+        <SheetHeaderRow style={spacings.mbLg}>
+          <View
+            testID="manage-recovery-phrase-header"
+            style={[
+              flexbox.directionRow,
+              flexbox.alignCenter,
+              common.fullWidth,
+              !isInSheet && spacings.mbLg
+            ]}
+          >
+            <PanelTitle title={t('Manage recovery phrase')} style={text.center} />
+          </View>
+        </SheetHeaderRow>
+        <View style={[isMobile ? spacings.mbSm : spacings.mb, flexbox.alignStart]}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+            <Text fontSize={16} weight="medium" numberOfLines={1} style={{ flexShrink: 1 }}>
+              {label}
+            </Text>
+            <AnimatedPressable
+              onPress={openEditNameSheet}
+              style={[spacings.mlTy, editAnimStyle]}
+              {...bindEditAnim}
+              accessibilityRole="button"
+              accessibilityLabel={t('Edit name')}
+              testID="edit-recovery-phrase-name-button"
+            >
+              <EditPenIcon color={theme.iconPrimary} width={20} height={20} />
+            </AnimatedPressable>
+          </View>
+          {!!savedSeed?.withPassphrase && (
+            <PassphraseBadge passphraseLabel={savedSeed.passphraseLabel} style={spacings.mtMi} />
+          )}
         </View>
         <View
           style={[
             // On web the blur is a CSS `filter`; on native it doesn't apply,
             // so a BlurView overlay is rendered below instead
             isWeb && isBlurred && (isSeedRevealed ? styles.notBlurred : styles.blurred),
-            spacings.pvMd,
-            spacings.phMd,
             {
-              backgroundColor:
-                themeType === THEME_TYPES.DARK
-                  ? theme.tertiaryBackground
-                  : theme.secondaryBackground,
               borderRadius: BORDER_RADIUS_PRIMARY,
               overflow: 'hidden'
             }
           ]}
         >
-          <Text testID="recovery-phrase-value" fontSize={14} color={theme.secondaryText}>
-            {seed}
-          </Text>
-          {!!seedPassphrase && (
-            <View style={spacings.ptSm}>
-              <Text fontSize={14} color={theme.secondaryText}>
-                {t('Passphrase: ')}
-                <Text
-                  testID="recovery-phrase-passphrase-value"
-                  fontSize={14}
-                  color={theme.secondaryText}
-                  weight="medium"
-                >
-                  {seedPassphrase}
+          {/* Fills the box, so the Android BlurView has the whole area to blur */}
+          <BlurTargetView
+            ref={blurTargetRef}
+            style={[
+              spacings.pvMd,
+              spacings.phMd,
+              {
+                backgroundColor:
+                  themeType === THEME_TYPES.DARK
+                    ? theme.tertiaryBackground
+                    : theme.secondaryBackground
+              }
+            ]}
+          >
+            <Text testID="recovery-phrase-value" fontSize={14} color={theme.secondaryText}>
+              {seed}
+            </Text>
+            {!!seedPassphrase && (
+              <View style={spacings.ptSm}>
+                <Text fontSize={14} color={theme.secondaryText}>
+                  {t('Passphrase: ')}
+                  <Text
+                    testID="recovery-phrase-passphrase-value"
+                    fontSize={14}
+                    color={theme.secondaryText}
+                    weight="medium"
+                  >
+                    {seedPassphrase}
+                  </Text>
                 </Text>
-              </Text>
-            </View>
-          )}
+              </View>
+            )}
+          </BlurTargetView>
           {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView to hide the phrase */}
           {isMobile && isBlurred && (
             <BlurView
               intensity={12}
               // Android renders a barely visible tint instead of a blur unless this
-              // experimental method is on, leaving the phrase readable
-              experimentalBlurMethod="dimezisBlurView"
+              // method is on and pointed at the content, leaving the phrase readable
+              blurMethod="dimezisBlurView"
+              blurTarget={blurTargetRef}
               blurReductionFactor={1}
               tint={themeType === THEME_TYPES.DARK ? 'dark' : 'light'}
               style={StyleSheet.absoluteFill}
             />
           )}
         </View>
+        {isSeedRevealed && !!savedSeed?.isPassphraseNeeded && (
+          <Alert
+            type="info"
+            isTypeLabelHidden
+            titleWeight="semiBold"
+            size="sm"
+            title={t('Passphrase not saved')}
+            text={t(
+              'To restore these accounts anywhere, you need these words and your passphrase.'
+            )}
+            style={spacings.mtSm}
+          />
+        )}
         <View
           style={[
             flexbox.directionRow,
@@ -239,7 +285,7 @@ const ManageRecoveryPhrase = ({
             isWeb && flexbox.justifySpaceBetween,
             isWeb ? spacings.mtTy : spacings.mtSm,
             isWeb && { marginHorizontal: -SPACING_SM },
-            isMobile && spacings.mbLg
+            isWeb ? spacings.mbSm : spacings.mbLg
           ]}
         >
           <View
@@ -301,13 +347,11 @@ const ManageRecoveryPhrase = ({
         containerInnerWrapperStyles={{ flex: 1 }}
         style={isWeb ? { maxWidth: 432, minHeight: 432, ...spacings.pvLg } : undefined}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          {!isMobile && <PanelBackButton onPress={closeDeleteConfirmation} style={spacings.mrSm} />}
-          <PanelTitle
-            title={t('Confirm phrase removal')}
-            style={isMobile ? text.center : text.left}
-          />
-        </View>
+        <SheetHeaderRow style={spacings.mbLg}>
+          <View style={[flexbox.directionRow, flexbox.alignCenter, common.fullWidth]}>
+            <PanelTitle title={t('Confirm phrase removal')} style={text.center} />
+          </View>
+        </SheetHeaderRow>
         <View style={[flexbox.flex1, flexbox.justifyEnd]}>
           {hasPrivacyPoolsAccount && (
             <Alert
@@ -334,9 +378,16 @@ const ManageRecoveryPhrase = ({
             value={deleteSeedIsConfirmed}
             onValueChange={() => setDeleteSeedIsConfirmed(!deleteSeedIsConfirmed)}
             uncheckedBorderColor={theme.secondaryText}
-            label={t(
-              `I acknowledge ${recoveryPhrase.label} will no longer be available as a backup in the extension`
-            )}
+            label={
+              isMobile
+                ? t('I acknowledge {{label}} will no longer be available as a backup in the app', {
+                    label
+                  })
+                : t(
+                    'I acknowledge {{label}} will no longer be available as a backup in the extension',
+                    { label }
+                  )
+            }
             labelProps={{
               style: { color: theme.secondaryText, fontSize: 14 },
               weight: 'medium'
@@ -347,6 +398,7 @@ const ManageRecoveryPhrase = ({
               type="danger"
               style={spacings.mtTy}
               text={t('Remove recovery phrase')}
+              hasBottomSpacing={false}
               disabled={!deleteSeedIsConfirmed}
               onPress={deleteSavedSeed}
             />
@@ -371,9 +423,14 @@ const ManageRecoveryPhrase = ({
           onPasswordConfirmed={onPasswordConfirmed}
           onBiometricsConfirmed={onPasswordConfirmed}
           withFullHeightLayout
-          onBackButtonPress={closeConfirmPassword}
         />
       </BottomSheet>
+      {isEditNameSheetMounted && !!savedSeed && (
+        <EditRecoveryPhraseNameBottomSheet
+          recoveryPhrase={savedSeed}
+          onClosed={unmountEditNameSheet}
+        />
+      )}
     </>
   )
 }

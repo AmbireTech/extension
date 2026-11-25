@@ -1,16 +1,16 @@
 import React from 'react'
 import { Animated, Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import BurgerIcon from '@common/assets/svg/BurgerIcon'
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import NetworkStatusesIcon from '@common/assets/svg/NetworkStatusIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { isAmbireNext, isDev, isMobile } from '@common/config/env'
 import useController from '@common/hooks/useController'
 import useHover from '@common/hooks/useHover'
 import useNavigation from '@common/hooks/useNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
-import spacings from '@common/styles/spacings'
+import { SPACING_TY } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import { openInternalPageInTab } from '@common/utils/links/links'
 import { getUiType } from '@common/utils/uiType'
@@ -18,6 +18,7 @@ import useSidePanelSettingsTab from '@web/hooks/useSidePanelSettingsTab'
 
 import NetworkStatusesBottomSheet from '../NetworkStatusesBottomSheet'
 import AccountButton from './AccountButton'
+import { ROUND_BUTTON_STYLE } from './styles'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -42,7 +43,7 @@ const DashboardHeader = () => {
     ref: networkStatusesSheetRef,
     open: openNetworkStatusesSheet,
     close: closeNetworkStatusesSheet
-  } = useModalize()
+  } = useSheetRef()
 
   // Shown in production for Privacy Pools: its first network reads take long
   const shouldDisplayNetworkStatuses =
@@ -58,13 +59,20 @@ const DashboardHeader = () => {
           closeBottomSheet={closeNetworkStatusesSheet}
         />
       )}
-      <View style={[flexbox.directionRow, flexbox.flex1, flexbox.justifySpaceBetween]}>
+      <View
+        style={[
+          flexbox.directionRow,
+          flexbox.flex1,
+          flexbox.justifySpaceBetween,
+          { gap: SPACING_TY }
+        ]}
+      >
         {/* Also shows a Privacy Pools account */}
         <AccountButton />
-        <View style={[flexbox.directionRow, flexbox.alignStart]}>
+        <View style={[flexbox.directionRow, flexbox.alignStart, { gap: SPACING_TY }]}>
           {shouldDisplayNetworkStatuses && (
             <Pressable
-              style={[flexbox.justifyCenter, flexbox.alignCenter, { width: 40, height: 40 }]}
+              style={ROUND_BUTTON_STYLE}
               onPress={() => openNetworkStatusesSheet()}
               {...bindNetworkStatusesAnim}
             >
@@ -76,21 +84,7 @@ const DashboardHeader = () => {
 
           <Pressable
             testID="dashboard-hamburger-btn"
-            style={[
-              spacings.mlTy,
-              flexbox.justifyCenter,
-              flexbox.alignCenter,
-              {
-                borderRadius: 50,
-                width: 40,
-                height: 40,
-                backgroundColor: '#000000A3'
-              },
-              isMobile && {
-                borderWidth: 1,
-                borderColor: '#FFFFFF1F'
-              }
-            ]}
+            style={ROUND_BUTTON_STYLE}
             onPress={() => {
               if (isSidePanel && isSettingsTabOpen) {
                 closeSettingsTab()

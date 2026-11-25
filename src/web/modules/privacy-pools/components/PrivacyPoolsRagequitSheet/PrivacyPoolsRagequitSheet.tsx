@@ -7,6 +7,7 @@ import { getIsViewOnly } from '@ambire-common/utils/accounts'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -202,9 +203,11 @@ const PrivacyPoolsRagequitSheet: FC<Props> = ({
       onClosed={handleClosed}
       backgroundColor="primaryBackground"
     >
-      <Text fontSize={18} weight="semiBold" style={spacings.mbTy}>
-        {t('Rage quit')}
-      </Text>
+      <SheetHeaderRow style={spacings.mbTy}>
+        <Text fontSize={18} weight="semiBold">
+          {t('Rage quit')}
+        </Text>
+      </SheetHeaderRow>
 
       <Text fontSize={14} appearance="secondaryText" style={spacings.mbMd}>
         {t('Cancel a deposit and return the full amount to the account it was sent from.')}

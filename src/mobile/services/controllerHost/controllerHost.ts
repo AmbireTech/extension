@@ -21,7 +21,12 @@ import QrHardwareSigner from '@common/modules/hardware-wallets/signers/QrHardwar
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
-import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
+import {
+  attachBalanceHint,
+  getAppInstanceId,
+  isAmbireAnalyticsEnabled,
+  isAmbireApiUrl
+} from '@common/utils/analytics'
 import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { handleActions } from '@mobile/handlers/handleActions'
 import LedgerController from '@mobile/modules/hardware-wallet/controllers/LedgerController'
@@ -71,14 +76,15 @@ const userBalances: Record<string, number> = {}
 
 /**
  * The fetch handed to the controllers. Only the internal Ambire APIs get the analytics
- * headers and params - requests to 3rd parties must never carry anything that identifies
- * the app instance. Resolved per request, because the keystore uid, the invite code and
+ * headers and params, and only while the user hasn't opted out of Ambire analytics -
+ * requests to 3rd parties must never carry anything that identifies the app instance. Resolved per request, because the keystore uid, the invite code and
  * the balance are not available at boot; a request fired before the keystore is
  * constructed goes out with an empty source, same as in the extension.
  */
 const fetchWithAnalytics: Fetch = (input, init) => {
   const url = input.toString()
-  if (!isAmbireApiUrl(url)) return fetchWithRelayerCustomHeaders(input as any, init as any) as any
+  if (!isAmbireApiUrl(url) || !isAmbireAnalyticsEnabled(mainCtrl?.featureFlags))
+    return fetchWithRelayerCustomHeaders(input as any, init as any) as any
 
   // Optional all the way down, because a request can fire while the controllers are
   // still being constructed
@@ -171,7 +177,29 @@ function debounceFrontEndEventUpdatesOnSameTick(
   return 'EMITTED'
 }
 
+/** The names of the registered controllers, as of the last registry change. */
+let registeredCtrlNames = new Set<string>()
+
+/**
+ * Tells the UI that the controllers removed from the registry are gone, so it doesn't keep
+ * their last state: a removed controller's pending update is dropped (see `sendUpdate`), and
+ * a new one with the same name would show it until it streams its own, e.g. the previous
+ * transaction's signing state on the next sign screen. Checked on the next tick, as a
+ * controller replaced by a new one is removed before the new one is added.
+ */
+const clearRemovedCtrlStatesOnNextTick = () => {
+  setTimeout(() => {
+    const currentNames = new Set(eventEmitterRegistry.values().map((ctrl) => ctrl.name))
+    registeredCtrlNames.forEach((ctrlName) => {
+      if (!currentNames.has(ctrlName)) emitCtrlUpdate(ctrlName, null)
+    })
+    registeredCtrlNames = currentNames
+  }, 0)
+}
+
 const eventEmitterRegistry = new EventEmitterRegistryController(() => {
+  clearRemovedCtrlStatesOnNextTick()
+
   eventEmitterRegistry.values().forEach((ctrl: any) => {
     const hasOnUpdateInitialized = ctrl.onUpdateIds.includes('mobile')
     if (!hasOnUpdateInitialized) {

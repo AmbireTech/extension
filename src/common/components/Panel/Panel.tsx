@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react'
-import { Pressable, TextStyle, View, ViewProps, ViewStyle } from 'react-native'
+import { TextStyle, View, ViewProps, ViewStyle } from 'react-native'
 
-import LeftArrowIcon from '@common/assets/svg/LeftArrowIcon'
+import HeaderButton, { HEADER_BUTTON_SIZE } from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
@@ -55,15 +55,10 @@ const PanelBackButton = ({
   style?: ViewStyle
   testID?: string
 }) => {
-  const { styles, theme } = useTheme(getStyles)
   return (
-    <Pressable testID={testID} onPress={onPress} style={style} hitSlop={8}>
-      {({ hovered }: any) => (
-        <View style={[styles.backBtnWrapper]}>
-          <LeftArrowIcon color={hovered ? theme.primaryText : theme.iconPrimary} />
-        </View>
-      )}
-    </Pressable>
+    <View style={style}>
+      <HeaderButton type="back" onPress={onPress} testID={testID} />
+    </View>
   )
 }
 
@@ -165,7 +160,7 @@ const Panel: React.FC<PanelProps> = ({
             >
               {!!withBackButton && <PanelBackButton onPress={onBackButtonPress} />}
               {!!title && <PanelTitle title={title} />}
-              {!!withBackButton && <View style={{ width: 20 }} />}
+              {!!withBackButton && <View style={{ width: HEADER_BUTTON_SIZE }} />}
             </View>
           )}
           {children}

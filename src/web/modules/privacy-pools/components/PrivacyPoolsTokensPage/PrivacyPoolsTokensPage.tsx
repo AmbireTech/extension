@@ -39,6 +39,8 @@ interface Props {
   isWaitingForBackup: boolean
   /** The dashboard's network filter name, if any. */
   networkFilterName: string | null
+  /** Opens the guide on how the account works, offered while it holds nothing */
+  onGetStarted: () => void
 }
 
 /** The Tokens page of a Privacy Pools account, a slide of the dashboard carousel. */
@@ -48,7 +50,8 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
   state,
   unavailableReason,
   isWaitingForBackup,
-  networkFilterName
+  networkFilterName,
+  onGetStarted
 }) => {
   const { t } = useTranslation()
   const { state: dashboardNetworkFilter } = useController(
@@ -91,6 +94,7 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
         state={state}
         unavailableReason={unavailableReason}
         isWaitingForBackup={isWaitingForBackup}
+        onGetStarted={onGetStarted}
       />
     )
   }, [
@@ -101,7 +105,8 @@ const PrivacyPoolsTokensPage: FC<Props> = ({
     searchValue,
     state,
     unavailableReason,
-    isWaitingForBackup
+    isWaitingForBackup,
+    onGetStarted
   ])
 
   const keyExtractor = useCallback((item: string) => item, [])

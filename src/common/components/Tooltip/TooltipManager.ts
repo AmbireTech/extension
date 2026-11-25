@@ -7,12 +7,17 @@ type TooltipData = {
   title?: string
 }
 
+/** Where the element that opened a tooltip is, relative to the app's root view. */
+export type TooltipAnchor = { x: number; y: number; width: number; height: number }
+
 type Listener = (id: string | null) => void
 
 class TooltipManager {
   private tooltips: Record<string, TooltipData> = {}
   private listeners: Listener[] = []
   private activeTooltipId: string | null = null
+
+  private activeAnchor: TooltipAnchor | null = null
 
   register(id: string, children: React.ReactNode) {
     this.tooltips[id] = { id, children }
@@ -22,23 +27,30 @@ class TooltipManager {
     delete this.tooltips[id]
   }
 
-  show(id: string, children?: React.ReactNode, title?: string) {
+  /** On mobile, `anchor` places the tooltip next to the element that opened it. */
+  show(id: string, children?: React.ReactNode, title?: string, anchor?: TooltipAnchor) {
     if (children) {
       this.tooltips[id] = { id, children, title }
     }
     if (this.tooltips[id]) {
       this.activeTooltipId = id
+      this.activeAnchor = anchor || null
       this.notify()
     }
   }
 
   hide() {
     this.activeTooltipId = null
+    this.activeAnchor = null
     this.notify()
   }
 
   getActiveTooltip() {
     return this.activeTooltipId ? this.tooltips[this.activeTooltipId] : null
+  }
+
+  getActiveAnchor() {
+    return this.activeAnchor
   }
 
   subscribe(listener: Listener) {

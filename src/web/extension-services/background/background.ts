@@ -20,7 +20,11 @@ import { getAccountKeysCount } from '@ambire-common/libs/keys/keys'
 import { KeystoreSigner } from '@ambire-common/libs/keystoreSigner/keystoreSigner'
 import { createProverFactory } from '@ambire-common/libs/privacyPools/prover'
 import { parse, stringify } from '@ambire-common/libs/richJson/richJson'
-import { openAmbireIdb } from '@ambire-common/services/storage/idbDatabase'
+import {
+  IdbOpenReport,
+  isIdbOpenTimeoutError,
+  openAmbireIdb
+} from '@ambire-common/services/storage/idbDatabase'
 import { AMBIRE_IDB_SCHEMA } from '@ambire-common/services/storage/idbSchema'
 import wait from '@ambire-common/utils/wait'
 import {
@@ -39,7 +43,8 @@ import CONFIG, { APP_VERSION, isAmbireNext, isDev, isProd } from '@common/config
 import { controllersNestedInMainMapping } from '@common/constants/controllersMapping'
 import {
   CRASH_REPORT_ACCOUNT_TAG_CONTROLLERS,
-  CULTURE_CONTEXT_INTEGRATION_NAME
+  CULTURE_CONTEXT_INTEGRATION_NAME,
+  PRIVACY_POOLS_CONTROLLER_NAME
 } from '@common/constants/crashAnalytics'
 import { AutoLockController } from '@common/controllers/auto-lock'
 import { WalletStateController } from '@common/controllers/wallet-state'
@@ -52,7 +57,12 @@ import handleProviderRequests from '@common/modules/provider/handleProviderReque
 import { resolveViewRoute } from '@common/modules/router/helpers'
 import { storage } from '@common/services/storage'
 import { Action, MethodAction } from '@common/types/actions'
-import { attachBalanceHint, getAppInstanceId, isAmbireApiUrl } from '@common/utils/analytics'
+import {
+  attachBalanceHint,
+  getAppInstanceId,
+  isAmbireAnalyticsEnabled,
+  isAmbireApiUrl
+} from '@common/utils/analytics'
 import { LOG_LEVELS, logInfoWithPrefix } from '@common/utils/logger'
 import { fetchWithRelayerCustomHeaders } from '@common/utils/relayerCustomHeaders'
 import { serializeControllerForUI } from '@common/utils/serializeControllerForUI'
@@ -93,19 +103,22 @@ import {
 } from '@web/extension-services/messengers'
 import {
   canUseOffscreenProver,
-  createOffscreenProverFactory
-} from '@web/extension-services/privacy-pools-prover/offscreenProverFactory'
+  createOffscreenPrivacyPools
+} from '@web/extension-services/privacy-pools-prover/offscreenPrivacyPools'
 import LatticeController from '@web/modules/hardware-wallet/controllers/LatticeController'
 import LedgerController from '@web/modules/hardware-wallet/controllers/LedgerController'
 import OneKeyController from '@web/modules/hardware-wallet/controllers/OneKeyController'
+import PQ1Controller from '@web/modules/hardware-wallet/controllers/PQ1Controller'
 import TrezorController from '@web/modules/hardware-wallet/controllers/TrezorController'
 import LatticeSigner from '@web/modules/hardware-wallet/libs/LatticeSigner'
 import OneKeySigner from '@web/modules/hardware-wallet/libs/OneKeySigner'
+import PQ1Signer from '@web/modules/hardware-wallet/libs/PQ1Signer'
 import { providerRequestTransport } from '@web/modules/provider/providerRequestTransport'
 import { isExtensionOverlayPort } from '@web/utils/sidePanel'
 
 import {
   captureBackgroundException,
+  captureBackgroundMessage,
   CRASH_ANALYTICS_BACKGROUND_CONFIG,
   setBackgroundCrashReportId,
   setBackgroundTagContext
@@ -165,10 +178,43 @@ function stateDebug(
 
 /**
  * How many times the background tries to open IndexedDB before settling for the key-value
- * fallback. Two, not more: a second attempt covers a slow open, and every further one only
- * adds its own deadline to the boot for a failure that is not going to clear.
+ * fallback. Two, not more: the second attempt covers an open that fails at once, e.g. on a
+ * database file locked for a moment, and a failure that repeats is not going to clear.
  */
 const IDB_OPEN_ATTEMPTS = 2
+
+/** Opens slower than this are reported, so Sentry shows how long the slow ones take. */
+const SLOW_IDB_OPEN_MS = 1000
+
+const BYTES_IN_MB = 1024 * 1024
+
+/**
+ * Reports an open of IndexedDB that took longer than SLOW_IDB_OPEN_MS, with the data that can
+ * point at the cause: the size of the stored data, and whether an upgrade ran or was blocked.
+ */
+const reportSlowIdbOpen = async (report: IdbOpenReport) => {
+  if (report.durationMs <= SLOW_IDB_OPEN_MS) return
+
+  let storageUsageMb: number | undefined
+  let storageEstimateErrorName: string | undefined
+  try {
+    const { usage } = await navigator.storage.estimate()
+    if (usage !== undefined) storageUsageMb = Math.round(usage / BYTES_IN_MB)
+  } catch (error: any) {
+    // Reported with the slow open instead, which still carries everything else
+    storageEstimateErrorName = error?.name ?? 'UnknownError'
+  }
+
+  captureBackgroundMessage('[background] Opening IDB was slow', {
+    level: 'warning',
+    extra: {
+      ...report,
+      expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion,
+      storageUsageMb,
+      storageEstimateErrorName
+    }
+  })
+}
 
 const syncCrashReportAccountTags = createCrashReportAccountTagsSync(setBackgroundTagContext)
 
@@ -327,9 +373,10 @@ const init = async () => {
 
   // Skip adding custom headers and URL modifications for 3rd party URLs
   // (only internal Ambire APIs need the x-app-* headers and tracking params)
+  // and for users who opted out of Ambire analytics
   // @ts-ignore
   const fetchWithAnalytics: Fetch = (url, init) => {
-    if (!isAmbireApiUrl(url.toString())) {
+    if (!isAmbireApiUrl(url.toString()) || !isAmbireAnalyticsEnabled(mainCtrl?.featureFlags)) {
       // @ts-ignore
       return fetchWithRelayerCustomHeaders(url, init)
     }
@@ -449,6 +496,18 @@ const init = async () => {
   })
 
   qrCtrl = new QrHardwareController(new UrQrProtocolAdapter(), eventEmitterRegistry)
+  // Created before mainCtrl, which takes it as an external signer controller. The callbacks
+  // only run once the user imports PQ1 accounts from a view, long after mainCtrl exists.
+  const pq1Ctrl = new PQ1Controller(eventEmitterRegistry, {
+    getImportedAccounts: () => mainCtrl.accounts.accounts,
+    onPrepareAccounts: (prepared) => mainCtrl.accountPicker.prepareAccounts(prepared),
+    sendUiMessage: (params) => mainCtrl.ui.message.sendUiMessage(params),
+    // Read once the flags are loaded, as until then they are the defaults
+    isSafeApiEnabled: async () => {
+      await mainCtrl.featureFlags.initialLoadPromise
+      return mainCtrl.featureFlags.isFeatureEnabled('safeApi')
+    }
+  })
 
   // Created before mainCtrl, whose UI manager reads the side panel mode. It doesn't need mainCtrl
   // itself - the log level callback only runs on a log level change, long after both exist.
@@ -464,10 +523,10 @@ const init = async () => {
 
   const getIsSidePanelModeEnabled = () => walletStateCtrl.isSidePanelModeEnabled
 
-  // Retried once, because openAmbireIdb() gives up after a second so a blocked upgrade cannot
-  // hang the boot — and this is the only call, so a merely slow open (cold browser start, busy
-  // disk) would otherwise put the whole service-worker lifetime on key-value, where history
-  // renders from the blob frozen at migration time.
+  // openAmbireIdb() gives up at its deadline so a blocked upgrade cannot hang the boot — and
+  // this is the only call, so a merely slow open (cold browser start, busy disk) puts the whole
+  // service-worker lifetime on key-value, where history renders from the blob frozen at
+  // migration time. Slow opens are reported with their real duration to find the cause.
   //
   // Reported after the last attempt, not the first: this is the only signal that a user has
   // landed on the key-value fallback. The wallet stays usable — history renders from the
@@ -475,20 +534,25 @@ const init = async () => {
   // fallback is invisible in aggregate and we could not tell whether it affects one user or
   // many. Reporting a failure the retry went on to recover from would make it useless.
   const openIdbWithRetry = async () => {
+    const openStartedAt = Date.now()
     let lastError: any
     let attempts = 0
 
     while (attempts < IDB_OPEN_ATTEMPTS) {
       attempts += 1
       try {
-        return await openAmbireIdb()
+        return await openAmbireIdb((report) => {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          reportSlowIdbOpen(report)
+        })
       } catch (error: any) {
         lastError = error
 
-        // VersionError means a database newer than this build's dbVersion, i.e. a downgrade.
-        // That is not transient — a retry fails identically and only delays the boot. Any
-        // other name points at the open itself failing, which a retry can still win.
-        if (error?.name === 'VersionError') break
+        // A timeout is not retried: the browser queues every open of one database, so a second
+        // open only waits behind the first. VersionError means a database newer than this
+        // build's dbVersion, i.e. a downgrade, which fails identically. Any other name points
+        // at the open failing at once, e.g. on a locked file, which a retry can still win.
+        if (isIdbOpenTimeoutError(error) || error?.name === 'VersionError') break
       }
     }
 
@@ -497,8 +561,10 @@ const init = async () => {
       extra: {
         errorName: lastError?.name,
         expectedDbVersion: AMBIRE_IDB_SCHEMA.dbVersion,
-        // Fewer than IDB_OPEN_ATTEMPTS means the loop broke early on a downgrade.
-        attempts
+        // Fewer than IDB_OPEN_ATTEMPTS means the loop broke early on a timeout or a downgrade.
+        attempts,
+        // The real time of a timed-out open comes later, with the slow open report.
+        elapsedMs: Date.now() - openStartedAt
       }
     })
 
@@ -509,6 +575,19 @@ const init = async () => {
 
   // Copied at build time and served same-origin - see webpack/extension.js
   const privacyPoolsCircuitsBaseUrl = browser.runtime.getURL('privacy-pools-circuits/')
+  // On Chrome, proofs and large trees go to an offscreen document using every core; elsewhere or if
+  // it fails, they stay right here
+  const privacyPoolsOffscreen = canUseOffscreenProver()
+    ? createOffscreenPrivacyPools({
+        fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
+        // Tagged as the controller's, so the Privacy Pools strip applies even when a regular
+        // account builds trees for a deposit
+        onError: (error) =>
+          captureBackgroundException(error, {
+            extra: { controllerName: PRIVACY_POOLS_CONTROLLER_NAME }
+          })
+      })
+    : undefined
 
   mainCtrl = new MainController({
     eventEmitterRegistry,
@@ -517,13 +596,8 @@ const init = async () => {
     storageAPI: storage,
     fetch: fetchWithAnalytics,
     privacyPoolsCircuitsBaseUrl,
-    // On Chrome, in an offscreen document using every core; elsewhere or if it fails, right here
-    privacyPoolsProverFactory: canUseOffscreenProver()
-      ? createOffscreenProverFactory({
-          fallback: createProverFactory(privacyPoolsCircuitsBaseUrl),
-          onError: (error) => captureBackgroundException(error)
-        })
-      : undefined,
+    privacyPoolsProverFactory: privacyPoolsOffscreen?.proverFactory,
+    privacyPoolsMerkleTreeBuilder: privacyPoolsOffscreen?.merkleTreeBuilder,
     relayerUrl: RELAYER_URL,
     velcroUrl: VELCRO_URL,
     liFiApiKey: LI_FI_API_KEY,
@@ -539,14 +613,16 @@ const init = async () => {
       trezor: TrezorSigner,
       onekey: OneKeySigner,
       lattice: LatticeSigner,
-      qr: QrHardwareSigner
+      qr: QrHardwareSigner,
+      pq1: PQ1Signer
     } as any,
     externalSignerControllers: {
       ledger: ledgerCtrl,
       trezor: trezorCtrl,
       onekey: oneKeyCtrl,
       lattice: latticeCtrl,
-      qr: qrCtrl
+      qr: qrCtrl,
+      pq1: pq1Ctrl
     } as any,
     uiManager: {
       window: {
@@ -606,8 +682,8 @@ const init = async () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const badgesCtrl = new BadgesController(mainCtrl, walletStateCtrl)
 
-  // Turning side panel mode off leaves nothing to show a pending app request (Chrome closes its
-  // panel, Firefox's sidebar shows the "mode off" notice), so it's moved to a request window
+  // Turning side panel mode off leaves nothing to show a pending app request (an open panel shows
+  // the "mode off" notice), so it's moved to a request window
   let wasSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled
   walletStateCtrl.onUpdate(() => {
     const isSidePanelModeEnabled = walletStateCtrl.isSidePanelModeEnabled

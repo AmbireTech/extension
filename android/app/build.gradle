@@ -14,7 +14,7 @@ def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 react {
     entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())
     reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
-    hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
+    hermesCommand = new File(["node", "--print", "require.resolve('hermes-compiler/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/hermesc/%OS-BIN%/hermesc"
     codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
 
     enableBundleCompression = (findProperty('android.enableBundleCompression') ?: false).toBoolean()
@@ -107,15 +107,26 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace 'com.ambire.wallet'
+
+    // Token and network icons (@ambire/token-and-network-icons, whose `assets` folder holds only the
+    // tokenIcons and networkIcons folders) ship inside the native app, not the JS bundle, so OTA
+    // updates don't carry them again each time.
+    // Loaded as `asset:/tokenIcons/...` and `asset:/networkIcons/...`
+    sourceSets {
+        main {
+            assets.srcDirs += ["$rootDir/../node_modules/@ambire/token-and-network-icons/assets"]
+        }
+    }
+
     defaultConfig {
         applicationId 'com.ambire.wallet'
         // minSdkVersion is provided by the React Native Gradle plugin; for React Native 0.81.x the default is 24 (API 24+).
         minSdkVersion rootProject.ext.minSdkVersion
         // targetSdkVersion is also provided by the React Native Gradle plugin; for React Native 0.81.x the default is 36 (Android 16).
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 77
+        versionCode 79
         // This is planned to be in sync with app.json 's "version" two components, e.g. 5.39
-        versionName "6.23"
+        versionName "6.27"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -180,7 +191,7 @@ android {
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
             crunchPngs enablePngCrunchInRelease.toBoolean()
         }

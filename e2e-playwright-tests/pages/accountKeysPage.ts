@@ -27,9 +27,15 @@ export class AccountKeysPage extends BasePage {
     await this.checkUrl('/settings/accounts')
   }
 
-  // Closes the topmost visible sheet by clicking its panel-back-btn
+  // Closes the topmost visible sheet: the ‹ back of a nested one closes only it, while a sheet
+  // opened on its own has just the X. Waits until one sheet fewer is open
   private async closeTopSheet(): Promise<void> {
-    await this.page.getByTestId('panel-back-btn').last().click()
+    const closeButtons = this.page.getByTestId(selectors.sheetCloseButton).filter({ visible: true })
+    const backButtons = this.page.getByTestId(selectors.sheetBackButton).filter({ visible: true })
+    const openSheetCount = await closeButtons.count()
+    const button = (await backButtons.count()) ? backButtons.last() : closeButtons.last()
+    await button.click()
+    await expect(closeButtons).toHaveCount(openSheetCount - 1)
   }
 
   private async findAndOpenAccountKeys(keyAddr: string, accountAddr: string): Promise<void> {
@@ -53,10 +59,10 @@ export class AccountKeysPage extends BasePage {
     await manageKeys.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
     await manageKeys.click()
 
-    // Only locate the export button here — the caller asserts enabled/disabled, since HW
-    // keys render the same button in a disabled state.
-    const exportBtn = this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
-    await exportBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
+    // Only locate the key's options (⋮) button here — the caller decides which key type's
+    // menu to open, since one address can be imported as several key types.
+    const keyOptionsBtn = this.page.locator(`[data-testid^="key-options-${keyAddr}-"]`).first()
+    await keyOptionsBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
   }
 
   async exportPrivateKey({
@@ -71,9 +77,12 @@ export class AccountKeysPage extends BasePage {
     await this.open()
     await this.findAndOpenAccountKeys(keyAddr, accountAddr)
 
-    const exportBtn = this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
-    await exportBtn.scrollIntoViewIfNeeded()
-    await exportBtn.click()
+    const keyOptionsBtn = this.page.getByTestId(
+      selectors.keystoreMigration.keyOptionsButton(keyAddr, 'internal')
+    )
+    await keyOptionsBtn.scrollIntoViewIfNeeded()
+    await keyOptionsBtn.click()
+    await this.page.getByText('Export key', { exact: true }).click()
 
     const revealBtn = this.page.getByTestId(selectors.keystoreMigration.revealPrivateKeyButton)
     await revealBtn.waitFor({ state: 'visible', timeout: PRESENCE_TIMEOUT })
@@ -88,11 +97,14 @@ export class AccountKeysPage extends BasePage {
     }
 
     const keyEl = this.page.getByTestId(selectors.keystoreMigration.privateKeyValue)
+    const keyBlurContainer = this.page.getByTestId(
+      selectors.keystoreMigration.privateKeyBlurContainer
+    )
     await expect(keyEl).not.toBeEmpty({ timeout: 15000 })
     const copyBtn = this.page.getByTestId(selectors.keystoreMigration.copyPrivateKeyButton)
     await expect(copyBtn).toBeVisible()
     await expect(revealBtn).toHaveText('Show key')
-    await expect(keyEl.locator('..')).toHaveCSS('filter', 'blur(3px)')
+    await expect(keyBlurContainer).toHaveCSS('filter', 'blur(3px)')
 
     await this.context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await this.page.evaluate(() => navigator.clipboard.writeText('clipboard-test-sentinel'))
@@ -109,7 +121,7 @@ export class AccountKeysPage extends BasePage {
     expect(copiedPrivateKeyMatches).toBe(true)
 
     await expect(revealBtn).toHaveText('Show key')
-    await expect(keyEl.locator('..')).toHaveCSS('filter', 'blur(3px)')
+    await expect(keyBlurContainer).toHaveCSS('filter', 'blur(3px)')
 
     await revealBtn.click()
     await expect(revealBtn).toHaveText('Hide key')
@@ -130,11 +142,17 @@ export class AccountKeysPage extends BasePage {
     await this.open()
     await this.findAndOpenAccountKeys(keyAddr, accountAddr)
 
-    // The Button renders as a <div aria-disabled="true"> (not a native control), so
-    // toBeDisabled() doesn't recognize it — assert the ARIA attribute directly.
-    await expect(
-      this.page.getByTestId(selectors.keystoreMigration.exportKeyButton(keyAddr))
-    ).toHaveAttribute('aria-disabled', 'true', { timeout: PRESENCE_TIMEOUT })
+    // HW keys never leave the device, so their options (⋮) menu has no Export at all
+    const keyOptionsBtn = this.page
+      .locator(`[data-testid^="key-options-${keyAddr}-"]:not([data-testid$="-internal"])`)
+      .first()
+    await keyOptionsBtn.click()
+    await expect(this.page.getByText('Remove key', { exact: true })).toBeVisible({
+      timeout: PRESENCE_TIMEOUT
+    })
+    await expect(this.page.getByText('Export key', { exact: true })).toHaveCount(0)
+    // A second press closes the menu
+    await keyOptionsBtn.click()
 
     await this.closeTopSheet()
   }

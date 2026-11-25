@@ -7,6 +7,7 @@ import CheckIcon from '@common/assets/svg/CheckIcon'
 import NoEntryIcon from '@common/assets/svg/NoEntryIcon/NoEntryIcon'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
+import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
 import { default as flexbox } from '@common/styles/utils/flexbox'
@@ -19,6 +20,8 @@ const SAFE_GLOBAL_STALL_WARNING_DELAY_MS = 5000
 const SafeGlobalLagWarning = React.memo(function SafeGlobalLagWarning() {
   const { t } = useTranslation()
   const [isVisible, setIsVisible] = useState(false)
+  // Nothing is sent to Safe Global while the user opted out of the Safe API
+  const { isSafeApiEnabled } = useSafeApiSetting()
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -28,7 +31,7 @@ const SafeGlobalLagWarning = React.memo(function SafeGlobalLagWarning() {
     return () => clearTimeout(timeoutId)
   }, [])
 
-  if (!isVisible) return null
+  if (!isVisible || !isSafeApiEnabled) return null
 
   return (
     <Text type="caption" appearance="warningText" style={[spacings.mtMi, spacings.phMi]}>
@@ -46,7 +49,11 @@ interface Props {
   addr: Key['addr']
   type: Key['type']
   onSign?: (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => void
+  /** Shows the Sign button, but it can't be pressed */
+  isSignDisabled?: boolean
   shouldSignAndClose?: boolean
+  /** Replaces the Sign label, e.g. for owners that approve onchain instead of signing */
+  signButtonText?: string
 }
 
 const SafeKeyWrapper = ({
@@ -56,9 +63,11 @@ const SafeKeyWrapper = ({
   hasSigned,
   isSignLoading,
   onSign,
+  isSignDisabled,
   addr,
   type,
-  shouldSignAndClose
+  shouldSignAndClose,
+  signButtonText
 }: Props) => {
   const { theme, styles } = useTheme(getStyles)
   const { t } = useTranslation()
@@ -75,7 +84,8 @@ const SafeKeyWrapper = ({
           <ButtonWithLoader
             type="primary"
             isLoading={isSignLoading}
-            text={t(shouldSignAndClose ? 'Sign & Close' : 'Sign')}
+            disabled={isSignDisabled}
+            text={signButtonText || t(shouldSignAndClose ? 'Sign & Close' : 'Sign')}
             onPress={() => onSign(addr, type)}
             size="tiny"
             style={[styles.icon, { minWidth: 60 }, withMobileLayout && { height: 40 }]}
@@ -83,7 +93,8 @@ const SafeKeyWrapper = ({
         )}
         {isDisabled && !hasSigned && <NoEntryIcon width={18} height={18} style={styles.icon} />}
       </View>
-      {isSignLoading && <SafeGlobalLagWarning />}
+      {/* An onchain approval (signButtonText) is being prepared here, not sent to Safe Global */}
+      {isSignLoading && !signButtonText && <SafeGlobalLagWarning />}
     </View>
   )
 }

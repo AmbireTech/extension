@@ -6,8 +6,16 @@ import BaseTokenItem from './BaseTokenItem'
 import RewardsTokenItem from './RewardsTokenItem'
 
 import type { TokenResult } from '@ambire-common/libs/portfolio'
+import type { PendingDelivery } from '@ambire-common/libs/swapAndBridge/pendingDeliveries'
 
-const TokenItem = ({ token }: { token: TokenResult }) => {
+const TokenItem = ({
+  token,
+  pendingDelivery
+}: {
+  token: TokenResult
+  /** What in-progress swaps and bridges will still move of the token (see `usePendingDeliveries`) */
+  pendingDelivery?: PendingDelivery
+}) => {
   const { dispatch: requestsDispatch } = useController('RequestsController')
   const { rewardsType } = token.flags
 
@@ -32,7 +40,7 @@ const TokenItem = ({ token }: { token: TokenResult }) => {
   if (rewardsType === 'wallet-vesting')
     return <RewardsTokenItem token={token} actionButtonText="Claim" onPress={mintVesting} />
 
-  return <BaseTokenItem token={token} />
+  return <BaseTokenItem token={token} pendingDelivery={pendingDelivery} />
 }
 
 export default React.memo(TokenItem)

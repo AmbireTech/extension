@@ -1,10 +1,9 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import { useModalize } from 'react-native-modalize'
-
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-import { isAmbireNext, isDev, isMobile } from '@common/config/env'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
+import { isMobile } from '@common/config/env'
 import { AnimatedPressable, DURATIONS, useMultiHover } from '@common/hooks/useHover'
 import useController from '@common/hooks/useController'
 
@@ -22,7 +21,7 @@ const MobileAppPromoBanner = () => {
     'SelectedAccountController',
     selectMobileInviteKey
   )
-  const { ref: sheetRef, open: openInfoSheet, close: closeInfoSheet } = useModalize()
+  const { ref: sheetRef, open: openInfoSheet, close: closeInfoSheet } = useSheetRef()
 
   // `container` itself is the hover box, and its `width` is what's animated (not an inner
   // layer) - collapsed, it's exactly PEEK_WIDTH, so only the actually visible sliver is
@@ -41,9 +40,7 @@ const MobileAppPromoBanner = () => {
   // since the mobile app must never show a banner promoting itself.
   // The relayer only returns a mobile invite key for accounts it has generated one for -
   // hide the whole promo when there isn't one to activate the mobile app with.
-  // Rolling out gradually - only on dev builds and the Ambire Next preview build, not
-  // yet on the real production build.
-  if (isMobile || !mobileInviteKey || !(isDev || isAmbireNext)) return null
+  if (isMobile || !mobileInviteKey) return null
 
   return (
     <>

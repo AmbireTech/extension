@@ -1,13 +1,14 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Image, ImageSourcePropType, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheMobile from '@common/assets/images/sync-steps-on-the-mobile.gif'
 import ScanIcon from '@common/assets/svg/ScanIcon'
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
+import StepsGuide, { StepsGuideFooter } from '@common/components/StepsGuide'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useBiometrics from '@common/hooks/useBiometrics'
@@ -16,9 +17,6 @@ import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import SyncImportSteps, {
-  SyncImportStepsFooter
-} from '@common/modules/app-data-sync/components/SyncImportSteps'
 import SyncPasswordOptions from '@common/modules/app-data-sync/components/SyncPasswordOptions'
 import SyncScanFeedbackAlert from '@common/modules/app-data-sync/components/SyncScanFeedbackAlert'
 import useAppDataSyncImport from '@common/modules/app-data-sync/hooks/useAppDataSyncImport'
@@ -35,7 +33,7 @@ import QrScannerWithPermission from '@web/modules/hardware-wallet/screens/QrScan
 import BottomSheetPasswordConfirmation from '@web/modules/settings/components/BottomSheetPasswordConfirmation'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
-import type { SyncImportStep } from '@common/modules/app-data-sync/components/SyncImportSteps'
+import type { StepsGuideStep } from '@common/components/StepsGuide'
 import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
 
 const SCANNER_SIZE = 290
@@ -65,12 +63,12 @@ const ImportFromMobileScreen = () => {
   const { addToast } = useToast()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
-  const { goToNextRoute, goToPrevRoute, setSyncedAccountAddrs } = useOnboardingNavigation()
+  const { goToNextRoute, goToPrevRoute } = useOnboardingNavigation()
   const {
     ref: passwordSheetRef,
     open: openPasswordSheet,
     close: closePasswordSheet
-  } = useModalize()
+  } = useSheetRef()
   const [isScanning, setIsScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState<QrScanProgress | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
@@ -83,7 +81,7 @@ const ImportFromMobileScreen = () => {
   // On by default once biometrics turn out to be available, until the user says otherwise
   const isBiometricsEnabled = isBiometricsToggled ?? canEnableBiometrics
 
-  const steps: SyncImportStep[] = useMemo(
+  const steps: StepsGuideStep[] = useMemo(
     () => [
       {
         id: 'steps-on-mobile',
@@ -178,15 +176,12 @@ const ImportFromMobileScreen = () => {
         return
       }
 
-      // Added already - personalize shows them for naming
-      setSyncedAccountAddrs(importedAccountAddrs)
-
       // During onboarding the accounts arrive before the extension has a password of its
       // own. Reusing the mobile app's one sets it (and biometrics) right here, so the
       // keystore setup screen is skipped and the modal stays up until it lands.
       if (!hasPasswordSecret && isPasswordReused) {
         // A cancelled biometrics prompt returns no secret. The accounts are already
-        // imported and the password still has to be set, so the flow goes on without
+        // prepared and the password still has to be set, so the flow goes on without
         // biometrics and only says so.
         const biometricsSecret = isBiometricsEnabled ? await saveBiometricsSecret() : null
 
@@ -215,7 +210,6 @@ const ImportFromMobileScreen = () => {
       leaveScreen,
       saveBiometricsSecret,
       setPasswordFromSync,
-      setSyncedAccountAddrs,
       t
     ]
   )
@@ -335,19 +329,21 @@ const ImportFromMobileScreen = () => {
             <>
               {/* The steps take the panel's free space, so the dots and the button stay
               at the bottom of the card, the same as on mobile */}
-              <SyncImportSteps
+              <StepsGuide
                 steps={steps}
                 stepIndex={stepIndex}
                 style={flexbox.flex1}
                 illustrationCardStyle={{ height: ILLUSTRATION_CARD_HEIGHT }}
               />
-              <SyncImportStepsFooter
+              <StepsGuideFooter
                 steps={steps}
                 stepIndex={stepIndex}
                 onStepIndexChange={setStepIndex}
                 finishText={t('Scan QR code')}
                 finishIcon={<ScanIcon width={24} height={24} color="#fff" style={spacings.mrTy} />}
                 onFinish={startScanning}
+                nextButtonTestID="sync-import-next-step"
+                finishButtonTestID="sync-import-start-scanning"
                 style={spacings.mtLg}
               />
             </>

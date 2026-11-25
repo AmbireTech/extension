@@ -1,9 +1,13 @@
 import { formatUnits, isAddress, parseUnits } from 'ethers'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
+import { View, ViewStyle } from 'react-native'
 
-import { getPrivacyPoolsAsset } from '@ambire-common/consts/privacyPools'
+import {
+  getPrivacyPoolsAsset,
+  getPrivacyPoolsTokenId,
+  PRIVACY_POOLS_AMOUNT_LEAK_IDS,
+  PRIVACY_POOLS_RECIPIENT_LEAK_IDS
+} from '@ambire-common/consts/privacyPools'
 import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/domains'
 import { PrivacyPoolsSendForm } from '@ambire-common/interfaces/privacyPools'
 import {
@@ -11,20 +15,30 @@ import {
   getAmountsFromFieldValue
 } from '@ambire-common/libs/transfer/fieldAmounts'
 import { getAddressFromAddressState } from '@ambire-common/utils/domains'
+import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { getSafeAmountFromFieldValue } from '@ambire-common/utils/numbers/formatters'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
+import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import PrivacyPoolsAmountChips from '@common/components/PrivacyPoolsAmountChips'
+import {
+  PRIVACY_LINE_SKELETON_HEIGHT,
+  PRIVACY_LINE_SKELETON_WIDTH,
+  PrivacyFieldNote,
+  PrivacyFieldTip,
+  PrivacySendStatus
+} from '@common/components/PrivacyStatus'
 import Recipient from '@common/components/Recipient'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import SendToken from '@common/components/SendToken'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import TrackProgress from '@common/components/TrackProgress'
-import { captureException } from '@common/config/analytics/CrashAnalytics'
-import Completed from '@common/components/TrackProgress/ByStatus/Completed'
 import Failed from '@common/components/TrackProgress/ByStatus/Failed'
-import { isWeb } from '@common/config/env'
-import { useTranslation } from '@common/config/localization'
+import { captureException } from '@common/config/analytics/CrashAnalytics'
+import { Trans, useTranslation } from '@common/config/localization'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
@@ -32,14 +46,24 @@ import useSyncedState from '@common/hooks/useSyncedState'
 import { ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
+import { getPrivacyPoolsSuggestedAmounts } from '@common/utils/privacyPools'
 import { Content, Wrapper } from '@web/components/TransactionsScreen'
-import PrivacyPoolsLoadingTexts from '@web/modules/privacy-pools/components/PrivacyPoolsLoadingTexts'
+import PrivacyPoolsBroadcasterBottomSheet, {
+  PrivacyPoolsBroadcasterButton
+} from '@web/modules/privacy-pools/components/PrivacyPoolsBroadcasterBottomSheet'
+import PrivacyPoolsSendCompleted from '@web/modules/privacy-pools/components/PrivacyPoolsSendCompleted'
 import PrivacyPoolsSendSheet from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet'
 import loadTransactionSummary, {
   TransactionSummaryType
 } from '@web/modules/privacy-pools/components/PrivacyPoolsSendSheet/loadTransactionSummary'
 import usePrivacyPools from '@web/modules/privacy-pools/hooks/usePrivacyPools'
-import usePrivacyPoolsTokens from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
+import usePrivacyPoolsSendCheck from '@web/modules/privacy-pools/hooks/usePrivacyPoolsSendCheck'
+import usePrivacyPoolsTokens, {
+  getPrivacyPoolsTokenSectionHeaderHeight,
+  PRIVACY_POOLS_DEPOSIT_OPTION_HEIGHT,
+  renderPrivacyPoolsTokenSectionHeader
+} from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens'
+import type { PrivacyPoolsTokenOption } from '@web/modules/privacy-pools/hooks/usePrivacyPoolsTokens/usePrivacyPoolsTokens'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
@@ -50,6 +74,36 @@ const NO_ADDRESS_RESOLUTION: Omit<AddressState, 'fieldValue'> = {
 }
 
 const NO_AMOUNTS = { amount: '', amountInFiat: '' }
+
+/**
+ * A card of fixed width, so that the message wraps instead of stretching the alert past the screen
+ * on one line.
+ */
+const FAILED_ALERT_STYLE: ViewStyle = { width: '100%', maxWidth: 360 }
+
+/**
+ * The picked deposit's option, else the fullest deposit of a token picked without one, as when
+ * opened from the token on the dashboard, else the first one. Null when there is none.
+ */
+const findPickedTokenOption = (
+  options: PrivacyPoolsTokenOption[],
+  pickedValue: string
+): PrivacyPoolsTokenOption | null => {
+  const pickedOption = options.find(({ value }) => value === pickedValue)
+  if (pickedOption) return pickedOption
+
+  const fullestOfToken = options
+    .filter(
+      ({ chainId, tokenAddress }) => getPrivacyPoolsTokenId(chainId, tokenAddress) === pickedValue
+    )
+    .reduce<PrivacyPoolsTokenOption | null>(
+      (fullest, option) =>
+        !fullest || option.availableAmount > fullest.availableAmount ? option : fullest,
+      null
+    )
+
+  return fullestOfToken || options[0] || null
+}
 
 const selectSendForm = (state: AllControllersMappingType['PrivacyPoolsController']) =>
   state.sendForm
@@ -69,17 +123,22 @@ const PrivacyPoolsSendScreen = () => {
   const { navigate } = useNavigation()
   const {
     operation,
-    tokenBalances,
     getNetworkName,
     getTokenPrice,
     prepareWithdrawal,
     recheckWithdrawal,
     broadcastWithdrawal,
     dismissOperation,
-    isAvailable
+    isAvailable,
+    balancesState
   } = usePrivacyPools()
-  const { withdrawTokens } = usePrivacyPoolsTokens({ tokenBalances, getNetworkName })
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { withdrawTokens, withdrawTokenSections } = usePrivacyPoolsTokens({ getNetworkName })
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
+  const {
+    ref: broadcasterSheetRef,
+    open: openBroadcasterSheet,
+    close: closeBroadcasterSheet
+  } = useSheetRef()
   const [TransactionSummary, setTransactionSummary] = useState<TransactionSummaryType | null>(null)
   const [isTransactionSummaryLoaded, setIsTransactionSummaryLoaded] = useState(false)
 
@@ -156,25 +215,26 @@ const PrivacyPoolsSendScreen = () => {
   })
   const recipient = getAddressFromAddressState(addressState)
 
-  // Falls back to the first token if none is picked or the picked one runs out
+  // Falls back to the first deposit if none is picked or the picked one runs out
   const selectedToken = useMemo(
-    () =>
-      withdrawTokens.find(({ value }) => value === selectedTokenValue) || withdrawTokens[0] || null,
+    () => findPickedTokenOption(withdrawTokens, selectedTokenValue),
     [withdrawTokens, selectedTokenValue]
   )
 
-  // Shown in the select itself, like the regular Send, so the form does not grow
-  const noTokensOption: SelectValue = useMemo(
+  // Shown in the select itself, like the regular Send, so the form does not grow. Before the first
+  // read an empty list does not mean an empty account, so it says the tokens are loading instead.
+  const isReadingTokens = balancesState === 'loading' || balancesState === 'not-loaded'
+  const emptyTokenOption: SelectValue = useMemo(
     () => ({
-      value: 'noTokens',
+      value: isReadingTokens ? 'loading' : 'noTokens',
       label: (
         <Text fontSize={14} appearance="secondaryText" style={spacings.plTy}>
-          {t('No tokens found')}
+          {isReadingTokens ? t('Loading tokens...') : t('No tokens found')}
         </Text>
       ),
       icon: null
     }),
-    [t]
+    [isReadingTokens, t]
   )
 
   const handleChangeToken = useCallback(
@@ -185,7 +245,7 @@ const PrivacyPoolsSendScreen = () => {
     [setAmounts, updateSendForm]
   )
 
-  // An amount typed for a picked token that ran out is dropped, so it is not sent in the fallback
+  // An amount typed for a picked deposit that ran out is dropped, so it is not sent in the fallback
   useEffect(() => {
     if (!selectedTokenValue || !selectedToken || selectedToken.value === selectedTokenValue) return
 
@@ -193,7 +253,7 @@ const PrivacyPoolsSendScreen = () => {
     setAmounts(NO_AMOUNTS)
   }, [selectedToken, selectedTokenValue, setAmounts, updateSendForm])
 
-  // Keeps the fallback token once an amount is typed for it, so a token that becomes sendable
+  // Keeps the fallback deposit once an amount is typed for it, so a deposit that becomes sendable
   // later does not take its place under the same amount
   const setAmountsOfSelectedToken = useCallback(
     (newAmounts: typeof NO_AMOUNTS) => {
@@ -233,17 +293,24 @@ const PrivacyPoolsSendScreen = () => {
       selectedToken ? formatUnits(selectedToken.availableAmount, selectedToken.decimals) : '0',
     [selectedToken]
   )
-  const setMaxAmount = useCallback(
-    () =>
+  // Set in the token, whichever mode the field is in, like the regular Send's Max
+  const setTokenAmount = useCallback(
+    (fieldValue: string) =>
       setAmountsOfSelectedToken(
         getAmountsFromFieldValue({
-          fieldValue: maxAmount,
+          fieldValue,
           fieldMode: 'token',
           price: tokenPrice,
           decimals: selectedToken?.decimals ?? 18
         })
       ),
-    [maxAmount, selectedToken?.decimals, setAmountsOfSelectedToken, tokenPrice]
+    [selectedToken?.decimals, setAmountsOfSelectedToken, tokenPrice]
+  )
+  const setMaxAmount = useCallback(() => setTokenAmount(maxAmount), [maxAmount, setTokenAmount])
+  // A common amount, or a privacy fix
+  const setRawAmount = useCallback(
+    (rawAmount: bigint) => setTokenAmount(formatUnits(rawAmount, selectedToken?.decimals ?? 18)),
+    [selectedToken?.decimals, setTokenAmount]
   )
 
   const { amount } = amounts
@@ -273,18 +340,105 @@ const PrivacyPoolsSendScreen = () => {
       return {
         success: false,
         severity: 'error' as const,
-        message: t('You can send at most {{max}} {{symbol}}.', {
-          max: maxAmount,
-          symbol: selectedToken.symbol
-        })
+        message: (
+          <Trans
+            defaults="You can send at most <amount>{{max}} {{symbol}}</amount>."
+            values={{
+              // Rounded as on the dashboard, with the exact amount on hovering it
+              max: formatDecimals(Number(maxAmount), 'amount'),
+              symbol: selectedToken.symbol
+            }}
+            components={{
+              // Styled as the error message it is nested in
+              amount: (
+                <Text
+                  fontSize={12}
+                  appearance="errorText"
+                  dataSet={createGlobalTooltipDataSet({
+                    id: 'privacy-pools-send-max-amount',
+                    content: `${maxAmount} ${selectedToken.symbol}`
+                  })}
+                />
+              )
+            }}
+          />
+        )
       }
 
     return { success: true }
   }, [maxAmount, parsedAmount, selectedToken, t])
 
+  const { privacy, recipientPrivacy, hasCheckFailed, retryCheck } = usePrivacyPoolsSendCheck(
+    selectedToken
+      ? {
+          chainId: selectedToken.chainId,
+          tokenAddress: selectedToken.tokenAddress,
+          depositNumber: selectedToken.depositNumber,
+          // Without a valid amount, only the recipient is checked
+          amount: amountValidation.success && parsedAmount ? parsedAmount : 0n,
+          recipient: isAddress(recipient) ? recipient : null
+        }
+      : null
+  )
+
   const isTransferInFlight = operation?.status === 'pending'
-  // Proving and pricing, before the fee sheet opens. The form is locked meanwhile, as the transfer
-  // is proved for what it held on Proceed; leaving the screen cancels it.
+  // Checked with the amount, so it shows only where the privacy line below does too
+  const isPrivacyShown = !!selectedToken && !!privacy && amountValidation.success
+  const isPrivacyLoading = isPrivacyShown && privacy.rating === 'unchecked' && !hasCheckFailed
+  const recipientLeakPrivacy =
+    !!selectedToken &&
+    !!recipientPrivacy &&
+    recipientPrivacy.leaks.some(({ id }) => PRIVACY_POOLS_RECIPIENT_LEAK_IDS.includes(id))
+      ? recipientPrivacy
+      : null
+  const isRecipientCheckPending = isAddress(recipient) && !recipientPrivacy
+  // A recipient that is a risk is not called valid, which would read as all good, and neither is
+  // one still being checked, so the label does not flash before the note
+  const isRecipientSuccessHidden = isRecipientCheckPending || !!recipientLeakPrivacy
+
+  // The tip gives way to the note on what makes this recipient a risk
+  const recipientCustomBottomLabel = useMemo(() => {
+    if (!recipientLeakPrivacy || !selectedToken) {
+      return (
+        <PrivacyFieldTip
+          testID="privacy-pools-send-recipient-tip"
+          text={t('For the best privacy, send to an address you have never used.')}
+        />
+      )
+    }
+
+    return (
+      <PrivacyFieldNote
+        fieldLeakIds={PRIVACY_POOLS_RECIPIENT_LEAK_IDS}
+        testID="privacy-pools-send-recipient-note"
+        rating={recipientLeakPrivacy.rating}
+        leaks={recipientLeakPrivacy.leaks}
+        cover={recipientLeakPrivacy.cover.bigEnough}
+        decimals={selectedToken.decimals}
+        symbol={selectedToken.symbol}
+        onSetAmount={isTransferInFlight ? undefined : setRawAmount}
+      />
+    )
+  }, [isTransferInFlight, recipientLeakPrivacy, selectedToken, setRawAmount, t])
+
+  const suggestedAmountChips = useMemo(() => {
+    if (!selectedToken) return undefined
+
+    return (
+      <PrivacyPoolsAmountChips
+        amounts={getPrivacyPoolsSuggestedAmounts(selectedToken.chainId, selectedToken.tokenAddress)}
+        decimals={selectedToken.decimals}
+        selectedAmount={parsedAmount}
+        maxAmount={selectedToken.availableAmount}
+        onSelect={setRawAmount}
+        disabled={isTransferInFlight}
+        testID="privacy-pools-suggested-amount"
+        style={spacings.mt0}
+      />
+    )
+  }, [isTransferInFlight, parsedAmount, selectedToken, setRawAmount])
+  // Proving and pricing, while the fee sheet waits for it. The form is locked meanwhile, as the
+  // transfer is proved for what it held on Proceed; leaving the screen cancels it.
   const isPreparingTransfer = isTransferInFlight && operation?.phase === 'proving'
   const canSend =
     isAvailable &&
@@ -293,30 +447,32 @@ const PrivacyPoolsSendScreen = () => {
     addressInputState.validation.severity !== 'error' &&
     isAddress(recipient) &&
     !addressState.isDomainResolving &&
-    !isTransferInFlight
+    !isTransferInFlight &&
+    !isPrivacyLoading
 
   const handleSend = useCallback(() => {
     if (!canSend || !selectedToken || parsedAmount === null) return
 
-    // The fee sheet opens once the transfer is proved and priced - see the effect below
+    // The fee sheet opens right away and waits there for the transfer - see the effect below
     prepareWithdrawal({
       chainId: selectedToken.chainId,
       tokenAddress: selectedToken.tokenAddress,
+      depositNumber: selectedToken.depositNumber,
       amount: parsedAmount,
       recipient
     })
   }, [canSend, parsedAmount, prepareWithdrawal, recipient, selectedToken])
 
-  // Opens the sheet when the transfer is ready and its summary is loaded. One already ready on
-  // coming back to the screen is opened by the sheet itself - see `PrivacyPoolsSendSheet`
+  // Opens the sheet as the transfer starts proving, and closes it if proving fails, as that failure
+  // is only a toast. One already proving or ready on coming back to the screen is opened by the
+  // sheet itself - see `PrivacyPoolsSendSheet`
   const operationPhase = operation?.phase
   const operationStatus = operation?.status
   useEffect(() => {
-    if (!isTransactionSummaryLoaded) return
-    if (operationStatus !== 'pending' || operationPhase !== 'ready') return
-
-    openSheet()
-  }, [isTransactionSummaryLoaded, operationStatus, operationPhase, openSheet])
+    if (operationPhase !== 'proving') return
+    if (operationStatus === 'pending') openSheet()
+    if (operationStatus === 'failed') closeSheet()
+  }, [closeSheet, operationStatus, operationPhase, openSheet])
 
   /**
    * Sent, or could not be sent from the confirmation sheet: shown on its own screen, like the regular
@@ -361,6 +517,8 @@ const PrivacyPoolsSendScreen = () => {
 
   if (isOutcomeShown && operation) {
     const hasFailed = operation.status === 'failed'
+    // Only an expired transfer fails while still ready: it was dropped before it was sent
+    const hasExpired = hasFailed && operation.phase === 'ready'
 
     return (
       <TrackProgress
@@ -372,7 +530,8 @@ const PrivacyPoolsSendScreen = () => {
         {/* No explorer link: the transfer's hash is not kept */}
         {hasFailed ? (
           <Failed
-            title={t('Something went wrong!')}
+            title={hasExpired ? t("Let's try that again") : t('Something went wrong!')}
+            alertStyle={FAILED_ALERT_STYLE}
             errorMessage={
               operation.error ||
               t(
@@ -381,13 +540,7 @@ const PrivacyPoolsSendScreen = () => {
             }
           />
         ) : (
-          <Completed
-            title={t('Sending successfully')}
-            titleSecondary={t('Your {{symbol}} is on its way. No trail back to you.', {
-              symbol: operationAsset?.symbol || t('Token')
-            })}
-            openExplorerText={t('View Transfer')}
-          />
+          <PrivacyPoolsSendCompleted symbol={operationAsset?.symbol} />
         )}
       </TrackProgress>
     )
@@ -403,15 +556,15 @@ const PrivacyPoolsSendScreen = () => {
             onPress={handleSend}
             disabled={!canSend}
             isLoading={isPreparingTransfer}
-            size={isWeb ? 'smaller' : 'regular'}
+            size="regular"
           />
         }
       >
         <ScrollableWrapper style={flexbox.flex1} contentContainerStyle={flexbox.flex1}>
           <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mb]}>
-            <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} style={spacings.mrSm} />
+            <PanelBackButton onPress={() => navigate(ROUTES.dashboard)} />
             <PanelTitle title={t('Send')} />
-            <View style={{ width: 40 }} />
+            <PrivacyPoolsBroadcasterButton onPress={openBroadcasterSheet} />
           </View>
 
           <Recipient
@@ -424,12 +577,20 @@ const PrivacyPoolsSendScreen = () => {
             addressValidationMsg={addressInputState.validation.message}
             selectedTokenSymbol={selectedToken?.symbol}
             disabled={isTransferInFlight}
+            isSuccessHidden={isRecipientSuccessHidden}
+            customBottomLabel={recipientCustomBottomLabel}
           />
 
           <SendToken
             label={t('Send token')}
+            isLabelInline
             fromTokenOptions={withdrawTokens}
-            fromTokenValue={selectedToken || noTokensOption}
+            // Each token once, with its deposits under it
+            sections={withdrawTokenSections}
+            renderSectionHeader={renderPrivacyPoolsTokenSectionHeader}
+            getSectionHeaderHeight={getPrivacyPoolsTokenSectionHeaderHeight}
+            sectionOptionHeight={PRIVACY_POOLS_DEPOSIT_OPTION_HEIGHT}
+            fromTokenValue={selectedToken || emptyTokenOption}
             fromAmountValue={fieldMode === 'token' ? amount : amounts.amountInFiat}
             fromTokenAmountSelectDisabled={!withdrawTokens.length || isTransferInFlight}
             handleChangeFromToken={handleChangeToken}
@@ -442,22 +603,56 @@ const PrivacyPoolsSendScreen = () => {
             onFromAmountChange={setAmountFieldValue}
             handleSwitchFromAmountFieldMode={switchAmountFieldMode}
             handleSetMaxFromAmount={setMaxAmount}
+            amountPresets={suggestedAmountChips}
             isMaxAmountLoading={false}
+            customBottomLabel={
+              isPrivacyShown && (
+                <PrivacyFieldNote
+                  fieldLeakIds={PRIVACY_POOLS_AMOUNT_LEAK_IDS}
+                  testID="privacy-pools-send-amount-note"
+                  rating={privacy.rating}
+                  leaks={privacy.leaks}
+                  cover={privacy.cover.bigEnough}
+                  decimals={selectedToken.decimals}
+                  symbol={selectedToken.symbol}
+                  onSetAmount={isTransferInFlight ? undefined : setRawAmount}
+                  style={spacings.mtSm}
+                />
+              )
+            }
             inputTestId="privacy-pools-amount-field"
             selectTestId="privacy-pools-tokens-select"
           />
-          {/* At the bottom, right above the button */}
-          {isPreparingTransfer && (
-            <View style={{ marginTop: 'auto' }}>
-              <PrivacyPoolsLoadingTexts />
-            </View>
+          {isPrivacyLoading && (
+            <SkeletonLoader
+              width={PRIVACY_LINE_SKELETON_WIDTH}
+              height={PRIVACY_LINE_SKELETON_HEIGHT}
+              style={{ ...spacings.mtSm, ...spacings.mlSm }}
+            />
+          )}
+          {isPrivacyShown && !isPrivacyLoading && (
+            <PrivacySendStatus
+              rating={privacy.rating}
+              leaks={privacy.leaks}
+              cover={privacy.cover.bigEnough}
+              decimals={selectedToken.decimals}
+              symbol={selectedToken.symbol}
+              onSetAmount={isTransferInFlight ? undefined : setRawAmount}
+              onRetry={retryCheck}
+              style={{ ...spacings.mtSm, ...spacings.phSm }}
+            />
           )}
         </ScrollableWrapper>
       </Content>
 
+      <PrivacyPoolsBroadcasterBottomSheet
+        sheetRef={broadcasterSheetRef}
+        closeBottomSheet={closeBroadcasterSheet}
+      />
       <PrivacyPoolsSendSheet
         operation={operation}
         symbol={operationAsset?.symbol || ''}
+        decimals={operationAsset?.decimals ?? 18}
         TransactionSummary={TransactionSummary}
         isTransactionSummaryLoaded={isTransactionSummaryLoaded}
         sheetRef={sheetRef}

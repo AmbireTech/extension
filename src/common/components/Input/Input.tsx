@@ -59,6 +59,11 @@ export interface InputProps extends TextInputProps {
   customInputContent?: ReactNode
   renderConfirmAddress?: () => ReactNode
   preventJumpOnValidationChange?: boolean
+  /**
+   * Shown below the input while no error, valid label or info takes its place. The space below
+   * the input then keeps the height of one line, so swapping these does not move the layout.
+   */
+  customBottomLabel?: ReactNode
 }
 
 const Input = ({
@@ -72,6 +77,7 @@ const Input = ({
   isValid,
   validLabel,
   validLabelAppearance,
+  customBottomLabel,
   onBlur = () => {},
   onFocus = () => {},
   onButtonPress = () => {},
@@ -171,14 +177,20 @@ const Input = ({
               autoCorrect={false}
               autoComplete="off"
               editable={editable ?? !disabled}
+              // A disabled field takes no focus, which a read-only input on web otherwise does
+              focusable={!disabled}
               onBlur={handleOnBlur}
               onFocus={handleOnFocus}
               ref={setAutoFocusInputRef}
               autoFocus={nativeAutoFocus}
+              // Matches `Text`, which ignores the system's text size setting
+              allowFontScaling={false}
               {...rest}
               style={[
                 styles.nativeInput,
                 !!customInputContent && { position: 'absolute', zIndex: -1, opacity: 0 },
+                // Always set, as dropping the key once enabled resets the `pointerEvents` prop on native
+                { pointerEvents: disabled ? 'none' : (rest.pointerEvents ?? 'auto') },
                 nativeInputStyle
               ]}
             />
@@ -213,7 +225,9 @@ const Input = ({
         </View>
         {childrenBelowInput}
       </View>
-      <View style={styles.errorContainer}>
+      <View
+        style={[styles.errorContainer, !!customBottomLabel && styles.customBottomLabelContainer]}
+      >
         {!!error && (
           <Text
             style={[styles.bottomLabel, bottomLabelStyle]}
@@ -246,7 +260,12 @@ const Input = ({
             {info}
           </Text>
         )}
-        {!!preventJumpOnValidationChange && !error && !isValid && !info && (
+        {!!customBottomLabel && !error && !(isValid && validLabel) && !info && (
+          <View style={[styles.bottomLabel, bottomLabelStyle, flexbox.flex1]}>
+            {customBottomLabel}
+          </View>
+        )}
+        {!!preventJumpOnValidationChange && !error && !isValid && !info && !customBottomLabel && (
           <Text
             style={[styles.bottomLabel, bottomLabelStyle]}
             weight="regular"

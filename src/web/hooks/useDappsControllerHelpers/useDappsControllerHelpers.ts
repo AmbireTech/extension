@@ -6,11 +6,17 @@ import { getDappIdFromUrl } from '@ambire-common/libs/dapps/helpers'
 import { isValidURL } from '@ambire-common/services/validations'
 import { captureException } from '@common/config/analytics/CrashAnalytics.web'
 import useControllerState from '@common/hooks/useControllerState'
+import useControllerStore from '@common/hooks/useControllerStore'
 import eventBus from '@common/services/event/eventBus'
 import { Action, MethodAction } from '@common/types/actions'
+import { getUiType } from '@common/utils/uiType'
 import { browser, isExtension } from '@web/constants/browserapi'
 import { getCurrentTab } from '@web/extension-services/background/webapi/tab'
 import { getCurrentWindow } from '@web/extension-services/background/webapi/window'
+
+const { isPopup, isSidePanel } = getUiType()
+// Only these views sit next to a web page. A tab or a request window is itself the active tab.
+const isOverlayView = isPopup || isSidePanel
 
 export default function useDappsControllerHelpers(
   dispatch: (action: MethodAction | Action) => void
@@ -18,6 +24,7 @@ export default function useDappsControllerHelpers(
   const { state, updateHelpers } = useControllerState({
     id: 'DappsController'
   })
+  const { controllerStore } = useControllerStore()
 
   const dappSessions = useMemo(() => state.dappSessions ?? {}, [state.dappSessions])
   const trackedWindowIdRef = useRef<number | undefined>(undefined)
@@ -106,6 +113,10 @@ export default function useDappsControllerHelpers(
 
   const refreshCurrentDapp = useCallback(
     async ({ force = false, isSilent = false }: { force?: boolean; isSilent?: boolean } = {}) => {
+      // Before the controller's first state arrives the background isn't reachable yet, so the
+      // request would only time out. That first state triggers a refresh of its own.
+      if (!isOverlayView || !controllerStore.initializedControllers.has('DappsController')) return
+
       const tab = await getCurrentTab()
       const tabId = tab?.id
       const tabUrl = tab?.url
@@ -143,7 +154,7 @@ export default function useDappsControllerHelpers(
         updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
       }
     },
-    [getCurrentDapp, updateHelpers]
+    [getCurrentDapp, updateHelpers, controllerStore]
   )
 
   const hasUnverifiedDapps = useCallback(
@@ -201,12 +212,18 @@ export default function useDappsControllerHelpers(
   )
 
   useEffect(() => {
+    // useController subscribes a reader only to helper keys that exist when it first reads them,
+    // and the first lookup can land after the dashboard has rendered
+    updateHelpers({ currentDapp: null, isLoadingCurrentDapp: false })
+  }, [updateHelpers])
+
+  useEffect(() => {
     // Update the store with the method so it can be used by useController('DappsController')
     updateHelpers({ getCurrentDapp, hasUnverifiedDapps })
   }, [getCurrentDapp, hasUnverifiedDapps, updateHelpers])
 
   useEffect(() => {
-    if (!isExtension || !browser?.tabs) return undefined
+    if (!isExtension || !browser?.tabs || !isOverlayView) return undefined
 
     let isCancelled = false
 

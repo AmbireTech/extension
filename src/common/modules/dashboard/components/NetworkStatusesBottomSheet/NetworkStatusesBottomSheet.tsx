@@ -1,15 +1,14 @@
 import React, { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScrollView } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { PortfolioNetworkResult } from '@ambire-common/libs/portfolio/interfaces'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Text from '@common/components/Text'
 import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
 
 import NetworkStatusesHeader from './NetworkStatusesHeader'
 import NetworkStatusRow from './NetworkStatusRow'
@@ -18,7 +17,7 @@ import PrivacyPoolsNetworkStatuses from './PrivacyPoolsNetworkStatuses'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
 interface Props {
-  sheetRef: ReturnType<typeof useModalize>['ref']
+  sheetRef: ReturnType<typeof useSheetRef>['ref']
   closeBottomSheet: () => void
 }
 
@@ -55,6 +54,23 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
       { label: t('Deployless'), flex: 1 }
     ],
     [t]
+  )
+  const privacyPoolsColumns = useMemo(
+    () => [
+      { label: t('Initial sync'), flex: 1 },
+      { label: t('Initial sync time'), flex: 1 },
+      { label: t('Last sync time'), flex: 1 }
+    ],
+    [t]
+  )
+  const tableHeader = useMemo(
+    () => (
+      <NetworkStatusesHeader
+        networkLabel={t('Network')}
+        columns={privacyPoolsAccountId ? privacyPoolsColumns : portfolioColumns}
+      />
+    ),
+    [portfolioColumns, privacyPoolsAccountId, privacyPoolsColumns, t]
   )
 
   const sortedNetworks = useMemo(() => {
@@ -93,44 +109,38 @@ const NetworkStatusesBottomSheet = ({ sheetRef, closeBottomSheet }: Props) => {
       })
   }, [networks, portfolioState])
 
+  const tableRows = privacyPoolsAccountId ? (
+    <PrivacyPoolsNetworkStatuses />
+  ) : (
+    sortedNetworks.map(({ networkKey, totalTime, isLoading, result, lastUpdatedAt, name }) => (
+      <NetworkStatusRow
+        key={networkKey}
+        networkKey={networkKey}
+        name={name as string}
+        lastUpdatedAt={lastUpdatedAt}
+        totalTime={totalTime}
+        isLoading={isLoading}
+        result={result}
+        theme={theme}
+      />
+    ))
+  )
+
+  // The sheet scrolls the rows itself, under its fixed header with the table header
   return (
     <BottomSheet
       id="network-statuses"
       sheetRef={sheetRef}
       closeBottomSheet={closeBottomSheet}
       backgroundColor="primaryBackground"
-      isScrollEnabled={false}
-      containerInnerWrapperStyles={flexbox.flex1}
+      HeaderComponent={tableHeader}
     >
-      <Text fontSize={20} weight="semiBold" style={spacings.mbLg}>
-        {t('Network Statuses')}
-      </Text>
-
-      {privacyPoolsAccountId ? (
-        <PrivacyPoolsNetworkStatuses />
-      ) : (
-        <>
-          {/* Table Header */}
-          <NetworkStatusesHeader networkLabel={t('Network')} columns={portfolioColumns} />
-          <ScrollView style={flexbox.flex1} contentContainerStyle={spacings.ptTy}>
-            {/* Table Rows */}
-            {sortedNetworks.map(
-              ({ networkKey, totalTime, isLoading, result, lastUpdatedAt, name }) => (
-                <NetworkStatusRow
-                  key={networkKey}
-                  networkKey={networkKey}
-                  name={name as string}
-                  lastUpdatedAt={lastUpdatedAt}
-                  totalTime={totalTime}
-                  isLoading={isLoading}
-                  result={result}
-                  theme={theme}
-                />
-              )
-            )}
-          </ScrollView>
-        </>
-      )}
+      <SheetHeaderRow style={spacings.mbLg}>
+        <Text fontSize={20} weight="semiBold">
+          {t('Network Statuses')}
+        </Text>
+      </SheetHeaderRow>
+      {tableRows}
     </BottomSheet>
   )
 }

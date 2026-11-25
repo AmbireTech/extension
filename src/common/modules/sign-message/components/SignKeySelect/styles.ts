@@ -27,9 +27,7 @@ const getStyles = (theme: ThemeProps) =>
       ...common.shadowPrimary,
       ...getDropdownBorderStyle(theme),
       backgroundColor: theme.primaryBackground,
-      // On mobile the whole sign flow lives in a BottomSheet that portals into
-      // the same "global" host, so the zIndex has to be derived from the open
-      // sheets and is applied by the component. Web isn't in a sheet.
+      // The sign flow can be in a sheet, so the component puts this above the sheets
       zIndex: 8,
       overflow: 'hidden'
     },

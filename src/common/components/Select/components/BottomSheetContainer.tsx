@@ -1,8 +1,8 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react'
 import { FlatListProps, ScrollView, SectionListProps } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import { getUiType } from '@common/utils/uiType'
@@ -14,7 +14,7 @@ const { isPopup } = getUiType()
 // Hoisted stable references so that re-renders of this component don't
 // create new inline object/function props every time, which would defeat
 // the `React.memo` wrapper on `BottomSheet` and cause the nested-Portal
-// infinite-update loop inside `react-native-modalize` / `@gorhom/portal`.
+// infinite-update loop inside `@gorhom/portal`.
 const CONTAINER_INNER_WRAPPER_STYLES = { flex: 1 } as const
 
 type Props = Pick<RenderSelectedOptionParams, 'isMenuOpen'> & {
@@ -46,7 +46,7 @@ const BottomSheetContainer: FC<Props> = ({
   const { theme } = useTheme()
   const { isCompactLayout } = useCompactLayout()
   const bottomSheetWidth = isPopup || isCompactLayout ? ('100%' as const) : 450
-  const { ref: sheetRef, open: openSheet, close: closeSheet } = useModalize()
+  const { ref: sheetRef, open: openSheet, close: closeSheet } = useSheetRef()
 
   useEffect(() => {
     if (isMenuOpen) {

@@ -1,40 +1,19 @@
 import React from 'react'
-import { Image, ImageSourcePropType, StyleSheet, View, ViewStyle } from 'react-native'
-import { Defs, FeGaussianBlur, Filter, Path, Svg } from 'react-native-svg'
+import { Image, ImageSourcePropType, StyleSheet, View } from 'react-native'
 
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import PrivacyPoolsCornerFrames from '@web/modules/privacy-pools/components/PrivacyPoolsCornerFrames'
 
 import backgroundImage from './background.jpg'
 
 // Fixed, not theme colors: the card is dark in both themes, like the regular one
 const GLOW_COLOR = '#FF955C'
 
-const CORNER_SIZE = 32
-/** Moves each corner frame as far from the card's edges as in the design. */
-const CORNER_OFFSET_SIDE = -3.75
-const CORNER_OFFSET_TOP = -4.75
-const CORNER_OFFSET_BOTTOM = -3.75
-const TOP_LEFT_CORNER_PATH = 'M8.75 24.75V16.75C8.75 12.3317 12.3317 8.75 16.75 8.75H24.75'
-
-const CORNERS: { id: string; style: ViewStyle }[] = [
-  { id: 'top-left', style: { left: CORNER_OFFSET_SIDE, top: CORNER_OFFSET_TOP } },
-  {
-    id: 'top-right',
-    style: { right: CORNER_OFFSET_SIDE, top: CORNER_OFFSET_TOP, transform: [{ scaleX: -1 }] }
-  },
-  {
-    id: 'bottom-left',
-    style: { left: CORNER_OFFSET_SIDE, bottom: CORNER_OFFSET_BOTTOM, transform: [{ scaleY: -1 }] }
-  },
-  {
-    id: 'bottom-right',
-    style: {
-      right: CORNER_OFFSET_SIDE,
-      bottom: CORNER_OFFSET_BOTTOM,
-      transform: [{ scaleX: -1 }, { scaleY: -1 }]
-    }
-  }
-]
+const CORNER_GLOW_BLUR = 4
+/** How far each corner frame sits from the card's edges, as in the design */
+const CORNER_INSET_SIDE = 5
+const CORNER_INSET_TOP = 4
+const CORNER_INSET_BOTTOM = 5
 
 /**
  * Background of the Privacy Pools overview card: the same for every Privacy Pools account, unlike
@@ -63,29 +42,14 @@ const PrivacyPoolsOverviewBackground = () => (
         }
       ]}
     />
-    {CORNERS.map(({ id, style }) => (
-      <Svg
-        key={id}
-        width={CORNER_SIZE}
-        height={CORNER_SIZE}
-        viewBox={`0 0 ${CORNER_SIZE} ${CORNER_SIZE}`}
-        fill="none"
-        style={[{ position: 'absolute' }, style]}
-      >
-        <Defs>
-          <Filter id={`privacy-pools-corner-glow-${id}`}>
-            <FeGaussianBlur stdDeviation="4" />
-          </Filter>
-        </Defs>
-        <Path
-          d={TOP_LEFT_CORNER_PATH}
-          stroke={GLOW_COLOR}
-          strokeWidth={1.5}
-          filter={`url(#privacy-pools-corner-glow-${id})`}
-        />
-        <Path d={TOP_LEFT_CORNER_PATH} stroke={GLOW_COLOR} strokeWidth={1.5} />
-      </Svg>
-    ))}
+    <PrivacyPoolsCornerFrames
+      color={GLOW_COLOR}
+      glowBlur={CORNER_GLOW_BLUR}
+      insetX={CORNER_INSET_SIDE}
+      insetTop={CORNER_INSET_TOP}
+      insetBottom={CORNER_INSET_BOTTOM}
+      cornerRadius={BORDER_RADIUS_PRIMARY}
+    />
   </View>
 )
 

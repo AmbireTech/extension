@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { Portal } from '@gorhom/portal'
 import { Controller, useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Image, ImageSourcePropType, Pressable, View, ViewStyle } from 'react-native'
@@ -18,10 +19,13 @@ import DownArrowIcon from '@common/assets/svg/DownArrowIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import UpArrowIcon from '@common/assets/svg/UpArrowIcon'
 import WarningIcon from '@common/assets/svg/WarningIcon'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import Button from '@common/components/Button'
 import Checkbox from '@common/components/Checkbox'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Input from '@common/components/Input'
+import { INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import NetworkAvailableFeatures from '@common/components/NetworkAvailableFeatures'
 import NetworkIcon from '@common/components/NetworkIcon'
 import NumberInput from '@common/components/NumberInput'
@@ -96,7 +100,7 @@ export const RpcSelectorItem = React.memo(
         style={[
           styles.selectRpcItem,
           index !== rpcUrlsLength - 1 && styles.selectRpcItemBorder,
-          (rpcUrlsLength <= 2 || forceLargeItems) && { height: 40 },
+          (rpcUrlsLength <= 2 || forceLargeItems) && { height: INPUT_WRAPPER_HEIGHT },
           style,
           hovered && { backgroundColor: theme.secondaryBackground }
         ]}
@@ -178,6 +182,8 @@ RpcSelectorItem.displayName = 'RpcSelector'
 
 // On mobile the RPC URLs list expands/collapses instead of scrolling
 const COLLAPSED_RPC_URLS_COUNT = 4
+/** Keeps a disabled field at full opacity, as Input dims disabled ones. */
+const UNDIMMED_INPUT_WRAPPER_STYLE = { opacity: 1 }
 
 // While the form is checking an RPC URL itself there is no controller info to render yet,
 // and `initial` would show the "?" rows instead of spinners.
@@ -202,14 +208,19 @@ const getRpcChainId = async (rpcUrl: string, expectedChainId?: string | number) 
 const NetworkForm = ({
   selectedChainId = 'add-custom-network',
   onCancel,
-  onSaved
+  onSaved,
+  footerHostName
 }: {
   selectedChainId?: bigint | string
   onCancel: () => void
   onSaved: () => void
+  /** A PortalHost in the sheet's footer: the buttons render there, always in view */
+  footerHostName?: string
 }) => {
   const { t } = useTranslation()
   const { addToast } = useToast()
+  // A sheet's X closes the form, so it has no Cancel there
+  const isInSheet = useIsInsideBottomSheet()
   const {
     state: { allNetworks, networkToAddOrUpdate, statuses },
     dispatch: networksDispatch
@@ -786,63 +797,64 @@ const NetworkForm = ({
     ]
   )
 
+  const buttons = (
+    <View
+      style={[
+        isWeb && flexbox.alignEnd,
+        // In a sheet's footer the footer spaces them from the form
+        !footerHostName && !isMobile && spacings.ptXl,
+        !!footerHostName && spacings.ptSm
+      ]}
+    >
+      {selectedChainId === 'add-custom-network' ? (
+        <Button
+          onPress={handleSubmitButtonPress}
+          text={t('Add network')}
+          disabled={isSaveOrAddButtonDisabled}
+          hasBottomSpacing={false}
+          size="large"
+        />
+      ) : (
+        <View style={[flexbox.directionRow, isMobile && { columnGap: SPACING_SM }]}>
+          {!isInSheet && (
+            <Button
+              onPress={onCancel}
+              text={t('Cancel')}
+              type="outline"
+              hasBottomSpacing={false}
+              style={[
+                flexbox.flex1,
+                isWeb && spacings.mrSm,
+                isWeb && { width: 90 },
+                isMobile && { backgroundColor: theme.neutral100 }
+              ]}
+              size="smaller"
+            />
+          )}
+          <Button
+            onPress={handleSubmitButtonPress}
+            text={isSomethingUpdated ? t('Save') : t('No changes')}
+            disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
+            style={[isWeb && spacings.mlMi, flexbox.flex1, isWeb && { minWidth: 124 }]}
+            hasBottomSpacing={false}
+            size="smaller"
+          />
+        </View>
+      )}
+    </View>
+  )
+
+  const isAddingNetwork = selectedChainId === 'add-custom-network'
+  const editedNetworkChainId = !isAddingNetwork ? selectedNetwork?.chainId.toString() : undefined
+  const renderNetworkNameIcon = useCallback(
+    () => (editedNetworkChainId ? <NetworkIcon id={editedNetworkChainId} size={24} /> : null),
+    [editedNetworkChainId]
+  )
+
   return (
     <>
-      <View style={styles.modalHeader}>
-        {selectedChainId === 'add-custom-network' && (
-          <Text
-            fontSize={20}
-            weight="medium"
-            numberOfLines={1}
-            style={[text.center, flexbox.flex1]}
-          >
-            {t('Add custom network')}
-          </Text>
-        )}
-        {selectedChainId !== 'add-custom-network' && !!selectedNetwork && (
-          <>
-            {isWeb && (
-              <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-                <NetworkIcon
-                  id={selectedNetwork.chainId.toString()}
-                  style={spacings.mrTy}
-                  size={28}
-                />
-                <Text
-                  appearance="secondaryText"
-                  weight="regular"
-                  style={spacings.mrMi}
-                  fontSize={16}
-                >
-                  {selectedNetwork.name || t('Unknown network')}
-                </Text>
-              </View>
-            )}
-            <Text fontSize={20} weight="medium" numberOfLines={1}>
-              {t('Edit network')}
-            </Text>
-            <View style={[flexbox.flex1, flexbox.alignEnd]}>
-              {isMobile && (
-                <View style={[flexbox.flex1, flexbox.directionRow, flexbox.alignCenter]}>
-                  <NetworkIcon
-                    id={selectedNetwork.chainId.toString()}
-                    style={spacings.mrTy}
-                    size={28}
-                  />
-                  <Text
-                    appearance="secondaryText"
-                    weight="regular"
-                    style={spacings.mrMi}
-                    fontSize={16}
-                  >
-                    {selectedNetwork.name || t('Unknown network')}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </>
-        )}
-      </View>
+      {/* The title sits in the sheet's row with the X */}
+      <ModalHeader title={isAddingNetwork ? t('Add custom network') : t('Edit network')} />
       <View
         style={[
           isWeb && spacings.phXl,
@@ -867,10 +879,12 @@ const NetworkForm = ({
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
-                    inputWrapperStyle={{ height: 40 }}
-                    inputStyle={{ height: 40 }}
+                    // Disabled when editing, but not dimmed, so the network's icon stays clear
+                    inputWrapperStyle={UNDIMMED_INPUT_WRAPPER_STYLE}
                     containerStyle={{ ...spacings.mb, ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                     label={t('Network name')}
+                    // The edited network's icon, in its name
+                    leftIcon={editedNetworkChainId ? renderNetworkNameIcon : undefined}
                     disabled={selectedChainId !== 'add-custom-network'}
                     error={handleErrors(errors.name)}
                   />
@@ -886,8 +900,6 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, flex: 1 }}
                       label={t('Currency Symbol')}
                       disabled={selectedChainId !== 'add-custom-network'}
@@ -904,8 +916,6 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mlMi, flex: 1 }}
                       label={t('Currency Name')}
                       disabled={selectedChainId !== 'add-custom-network'}
@@ -925,8 +935,6 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...spacings.mrTy, flex: 1 }}
                       label={t('Add RPC URL')}
                       error={handleErrors(errors.rpcUrl)}
@@ -945,8 +953,8 @@ const NetworkForm = ({
                             errors.rpcUrl.message !== 'At least one RPC URL should be added') ||
                           !!pendingRpcCheckType
                         }
-                        containerStyle={{ height: 40 }}
-                        style={{ height: 40 }}
+                        containerStyle={{ height: INPUT_WRAPPER_HEIGHT }}
+                        style={{ height: INPUT_WRAPPER_HEIGHT }}
                         onPress={() => handleAddRpcUrl(value)}
                       />
                     </View>
@@ -1073,8 +1081,6 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value as any}
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
                       containerStyle={{ ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Chain ID')}
                       disabled={selectedChainId !== 'add-custom-network'}
@@ -1091,8 +1097,6 @@ const NetworkForm = ({
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 2 }}
                       label={t('Block Explorer URL')}
                       error={handleErrors(errors.explorerUrl)}
@@ -1112,8 +1116,6 @@ const NetworkForm = ({
                       value={value as any}
                       disabled
                       placeholder="Coming soon..."
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
                       containerStyle={{ ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Coingecko platform ID')}
                       error={handleErrors(errors.coingeckoPlatformId)}
@@ -1131,8 +1133,6 @@ const NetworkForm = ({
                       value={value}
                       disabled
                       placeholder="Coming soon..."
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mlMi, flex: 1 }}
                       label={isMobile ? t('Coingecko asset ID') : t('Coingecko native asset ID')}
                       error={handleErrors(errors.coingeckoNativeAssetId)}
@@ -1164,8 +1164,6 @@ const NetworkForm = ({
                           </>
                         )
                       }}
-                      inputWrapperStyle={{ height: 40 }}
-                      inputStyle={{ height: 40 }}
                       containerStyle={{ ...spacings.mb, ...(isWeb ? spacings.mrMi : {}), flex: 1 }}
                       label={t('Custom bundler url (Experimental)')}
                       error={handleErrors(errors.customBundlerUrl)}
@@ -1187,41 +1185,7 @@ const NetworkForm = ({
                 </View>
               </ScrollableWrapper>
             )}
-            <View style={[isWeb && flexbox.alignEnd, isMobile ? {} : spacings.ptXl]}>
-              {selectedChainId === 'add-custom-network' ? (
-                <Button
-                  onPress={handleSubmitButtonPress}
-                  text={t('Add network')}
-                  disabled={isSaveOrAddButtonDisabled}
-                  hasBottomSpacing={false}
-                  size="large"
-                />
-              ) : (
-                <View style={[flexbox.directionRow, isMobile && { columnGap: SPACING_SM }]}>
-                  <Button
-                    onPress={onCancel}
-                    text={t('Cancel')}
-                    type="outline"
-                    hasBottomSpacing={false}
-                    style={[
-                      flexbox.flex1,
-                      isWeb && spacings.mrSm,
-                      isWeb && { width: 90 },
-                      isMobile && { backgroundColor: theme.neutral100 }
-                    ]}
-                    size="smaller"
-                  />
-                  <Button
-                    onPress={handleSubmitButtonPress}
-                    text={isSomethingUpdated ? t('Save') : t('No changes')}
-                    disabled={!isSomethingUpdated || isSaveOrAddButtonDisabled}
-                    style={[isWeb && spacings.mlMi, flexbox.flex1, isWeb && { minWidth: 124 }]}
-                    hasBottomSpacing={false}
-                    size="smaller"
-                  />
-                </View>
-              )}
-            </View>
+            {footerHostName ? <Portal hostName={footerHostName}>{buttons}</Portal> : buttons}
           </View>
         </View>
       </View>

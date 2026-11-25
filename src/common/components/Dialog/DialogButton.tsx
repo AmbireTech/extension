@@ -1,7 +1,7 @@
 import { ViewStyle } from 'react-native'
 
 import Button, { Props as ButtonProps } from '@common/components/Button'
-import { isMobile, isWeb } from '@common/config/env'
+import { isWeb } from '@common/config/env'
 
 type Props = ButtonProps &
   Required<Pick<ButtonProps, 'text' | 'type'>> & {
@@ -23,7 +23,6 @@ const DialogButton = ({ style, ...rest }: Props) => (
             ...(style || {})
           }
     }
-    size={isMobile ? 'regular' : 'small'}
   />
 )
 

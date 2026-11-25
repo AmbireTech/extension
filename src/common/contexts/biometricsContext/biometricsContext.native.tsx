@@ -5,6 +5,7 @@ import React, { createContext, useCallback, useEffect, useMemo, useState } from 
 import { Platform, StyleSheet, View } from 'react-native'
 
 import { EntropyGenerator } from '@ambire-common/libs/entropyGenerator/entropyGenerator'
+import AboveSheetsOverlay from '@common/components/AboveSheetsOverlay'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization/localization'
 import useController from '@common/hooks/useController'
@@ -235,14 +236,17 @@ const BiometricsProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         {children}
         {showOverlay && (
           <Portal hostName="global">
-            <BlurView
-              intensity={80}
-              tint={themeType}
-              style={[
-                StyleSheet.absoluteFill,
-                { backgroundColor: hexToRgba(theme.neutral800, 0.4), zIndex: 1000 }
-              ]}
-            />
+            {/* Over the open sheets too, which present in their own window */}
+            <AboveSheetsOverlay>
+              <BlurView
+                intensity={80}
+                tint={themeType}
+                style={[
+                  StyleSheet.absoluteFill,
+                  { backgroundColor: hexToRgba(theme.neutral800, 0.4), zIndex: 1000 }
+                ]}
+              />
+            </AboveSheetsOverlay>
           </Portal>
         )}
       </View>

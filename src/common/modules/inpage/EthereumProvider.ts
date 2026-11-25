@@ -4,6 +4,7 @@ import { EventEmitter } from 'events'
 import DedupePromise from '@common/modules/inpage/services/dedupePromise'
 import PushEventHandlers from '@common/modules/inpage/services/pushEventsHandlers'
 import ReadyPromise from '@common/modules/inpage/services/readyPromise'
+import { DEFAULT_LOG_LEVEL } from '@common/utils/logger'
 
 export interface StateProvider {
   accounts: string[] | null
@@ -209,10 +210,13 @@ export class EthereumProvider extends EventEmitter {
   #externalHandlers: ExternalHandlers
 
   // Numeric rank of the active log level, mirroring `loglevel`'s ordered
-  // descriptors. Defaults to the most permissive level (TRACE) until
-  // `setLogLevel` runs with the wallet's configured level (received from
-  // `getProviderState`), so logging matches the rest of the app.
-  #logLevelRank: number = LOG_LEVEL_RANKS.trace
+  // descriptors. Defaults to the build's default level (WARN in production,
+  // TRACE otherwise) until `setLogLevel` runs with the wallet's configured level
+  // (received from `getProviderState`), so logging matches the rest of the app.
+  // Not relying on `loglevel` alone for the initial filtering, because it runs
+  // in the dapp's page and picks up a level the dapp persisted under the same
+  // `loglevel` localStorage key.
+  #logLevelRank: number = LOG_LEVEL_RANKS[DEFAULT_LOG_LEVEL]
 
   logInfo = (prefix: string, ...args: any[]) => {
     // `logInfo` is info-level; suppress it once the active level is 'warn' or

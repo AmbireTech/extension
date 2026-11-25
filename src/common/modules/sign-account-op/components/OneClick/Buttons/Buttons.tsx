@@ -50,7 +50,6 @@ const Buttons: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { isCompactLayout } = useCompactLayout()
-  const buttonSize = isCompactLayout ? 'regular' : 'smaller'
   const callsCount = getCallsCount(networkUserRequests)
 
   const oneClickDisabledReason = useMemo(() => {
@@ -107,7 +106,7 @@ const Buttons: FC<Props> = ({
         handleSubmitForm(true)
       }}
       testID="proceed-btn"
-      size={buttonSize}
+      size="regular"
       style={isCompactLayout ? { width: '100%', minWidth: 0 } : undefined}
     />
   ) : (
@@ -120,7 +119,7 @@ const Buttons: FC<Props> = ({
 
         handleSubmitForm(true)
       }}
-      size={buttonSize}
+      size="regular"
       testID="proceed-btn"
       style={isCompactLayout ? { width: '100%', minWidth: 0 } : undefined}
     />
@@ -145,13 +144,13 @@ const Buttons: FC<Props> = ({
         id: 'batch-btn-tooltip',
         content: batchDisabledReason
       })}
-      style={isCompactLayout ? flexbox.flex1 : spacings.mrLg}
+      style={isCompactLayout ? flexbox.flex1 : spacings.mr}
     >
       <BatchButton
         testID="batch-btn"
         badgeCount={!batchDisabledReason ? callsCount : 0}
         infoTooltip={startBatchingInfo}
-        size={buttonSize}
+        size="regular"
         disabled={startBatchingDisabled}
         type={isSidePanel ? 'tertiary' : 'secondary'}
         style={isCompactLayout ? { width: '100%' } : { minWidth: 160, ...spacings.phMd }}

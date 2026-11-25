@@ -10,11 +10,13 @@ import { ExchangeInfoMap } from '@ambire-common/libs/portfolio/interfaces'
 import shortenAddress from '@ambire-common/utils/shortenAddress'
 import BatchIcon from '@common/assets/svg/BatchIcon'
 import PendingToBeConfirmedIcon from '@common/assets/svg/PendingToBeConfirmedIcon'
+import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import CopyText from '@common/components/CopyText'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import Text from '@common/components/Text'
 import Tooltip from '@common/components/Tooltip'
 import { isMobile } from '@common/config/env'
+import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import PendingBadge from '@common/modules/dashboard/components/Tokens/TokenItem/PendingBadge'
 import NotSupportedNetworkTooltip from '@common/modules/swap-and-bridge/components/NotSupportedNetworkTooltip'
@@ -67,6 +69,7 @@ const TokenSelectOptionLabel = React.memo(
   }: TokenSelectOptionLabelProps) => {
     const { t } = useTranslation()
     const { theme } = useTheme()
+    const { isCompactLayout } = useCompactLayout()
 
     const {
       balanceUSDFormatted = '',
@@ -76,6 +79,8 @@ const TokenSelectOptionLabel = React.memo(
       pendingToBeConfirmedFormatted = '',
       pendingToBeSigned = '',
       pendingToBeSignedFormatted = '',
+      pendingDelivery,
+      pendingDeliveryFormatted = '',
       balanceLatestFormatted = '',
       pendingBalanceFormatted = '',
       pendingBalanceUSDFormatted = ''
@@ -143,6 +148,17 @@ const TokenSelectOptionLabel = React.memo(
                   backgroundColor={theme.infoBackground}
                   textColor={theme.infoText}
                   Icon={PendingToBeConfirmedIcon}
+                />
+              )}
+              {!!pendingDelivery && !!pendingDeliveryFormatted && (
+                <PendingBadge
+                  amount={pendingDelivery}
+                  amountFormatted={pendingDeliveryFormatted}
+                  // Only CoW Swap orders take the sold tokens after the transaction, when they're filled
+                  label={pendingDelivery > 0n ? t('on its way') : t('being swapped')}
+                  backgroundColor={theme.infoBackground}
+                  textColor={theme.infoText}
+                  Icon={SwapAndBridgeIcon}
                 />
               )}
             </View>
@@ -240,13 +256,16 @@ const TokenSelectOptionLabel = React.memo(
         </>
       )
 
+    // On narrow screens the network goes under the symbol, as both don't fit next to the balance
+    const isNetworkBelowSymbol = isSelected || isCompactLayout
+
     return (
       <>
         <View
           style={[
             flexbox.flex1,
-            !isSelected && flexbox.directionRow,
-            !isSelected && flexbox.alignEnd
+            !isNetworkBelowSymbol && flexbox.directionRow,
+            !isNetworkBelowSymbol && flexbox.alignEnd
           ]}
         >
           <Text
@@ -260,14 +279,14 @@ const TokenSelectOptionLabel = React.memo(
           </Text>
           {!!networkName && (
             <Text
-              fontSize={isSelected ? 12 : 14}
-              weight={isSelected ? 'regular' : 'medium'}
+              fontSize={isNetworkBelowSymbol ? 12 : 14}
+              weight={isNetworkBelowSymbol ? 'regular' : 'medium'}
               appearance="secondaryText"
               ellipsizeMode="tail"
               numberOfLines={1}
-              style={!isSelected && spacings.mlTy}
+              style={!isNetworkBelowSymbol && spacings.mlTy}
             >
-              {`${isSelected ? '' : ' '}on ${networkName}`}
+              {`${isNetworkBelowSymbol ? '' : ' '}on ${networkName}`}
             </Text>
           )}
         </View>

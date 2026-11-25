@@ -2,7 +2,6 @@ import { formatUnits, toBeHex, ZeroAddress } from 'ethers'
 import { memo, RefObject, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import { Hex } from '@ambire-common/interfaces/hex'
 import { ISignAccountOpController, SpeedCalc } from '@ambire-common/interfaces/signAccountOp'
@@ -12,6 +11,7 @@ import { safeTokenAmountAndNumberMultiplication } from '@ambire-common/utils/num
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import NumberInput from '@common/components/NumberInput'
@@ -19,7 +19,6 @@ import Text from '@common/components/Text'
 import { isMobile } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
-import Header from '@common/modules/header/components/Header'
 import spacings from '@common/styles/spacings'
 import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -150,7 +149,7 @@ type Props = {
   is1559?: boolean
   onSaveCustomGasPrices: (gasPrices: GasSpeeds, customGasLimit?: bigint) => void
   selectedOption: ISignAccountOpController['selectedOption']
-  sheetRef: RefObject<Modalize>
+  sheetRef: RefObject<SheetRef | null>
   /** When speeding up a transaction, the lowest fees (in wei) the network accepts as a replacement */
   speedUpMinFees?: { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint }
   /** The pending transaction is being canceled rather than sped up */
@@ -373,42 +372,19 @@ const CustomGasPrice = ({
       closeBottomSheet={closeBottomSheet}
       // Compact = mobile / narrow side panel; popup also needs a sheet (v2).
       type={isCompactLayout || isPopup ? 'bottom-sheet' : 'modal'}
-      animationDuration={0}
       onOpen={resetState}
       shouldBeClosableOnDrag={isMobile}
       backgroundColor="primaryBackground"
       style={{ ...spacings.pbLg, ...(isNarrowWebLayout ? { width: '100%' } : null) }}
     >
-      {isMobile ? (
-        <>
-          <ModalHeader
-            title={t('Advanced options')}
-            style={unavailableReason ? spacings.mbLg : spacings.mbTy}
-          />
-          {!unavailableReason && (
-            <Text
-              fontSize={14}
-              appearance="secondaryText"
-              style={[spacings.mbLg, textStyles.center]}
-            >
-              {t('Set gas values manually')}
-            </Text>
-          )}
-        </>
-      ) : (
-        <View style={[flexbox.directionRow, flexbox.alignStart, spacings.mbLg]}>
-          <Header.BackButton onGoBackPress={closeBottomSheet} forceBack displayIn="always" />
-          <View style={spacings.mlTy}>
-            <Text weight="medium" fontSize={20}>
-              {t('Advanced options')}
-            </Text>
-            {!unavailableReason && (
-              <Text fontSize={14} appearance="secondaryText" style={spacings.mtTy}>
-                {t('Set gas values manually')}
-              </Text>
-            )}
-          </View>
-        </View>
+      <ModalHeader
+        title={t('Advanced options')}
+        style={unavailableReason ? spacings.mbLg : spacings.mbTy}
+      />
+      {!unavailableReason && (
+        <Text fontSize={14} appearance="secondaryText" style={[spacings.mbLg, textStyles.center]}>
+          {t('Set gas values manually')}
+        </Text>
       )}
       {unavailableReason ? (
         <Alert
@@ -499,22 +475,11 @@ const CustomGasPrice = ({
               onPress={resetCustomGas}
               hasBottomSpacing={false}
               style={[
-                spacings.mrTy,
+                isCompactLayout ? spacings.mrTy : spacings.mr,
                 isCompactLayout || isNarrowWebLayout ? flexbox.flex1 : { width: 100 }
               ]}
-              size={isNarrowWebLayout ? 'regular' : 'smaller'}
+              size="regular"
               testID="reset-custom-gas-button"
-            />
-          )}
-          {/* On web the header's back arrow already closes the sheet */}
-          {isMobile && !hasCustomGasPrices && (
-            <Button
-              type="secondary"
-              text={t('Cancel')}
-              onPress={closeBottomSheet}
-              hasBottomSpacing={false}
-              style={[spacings.mrTy, flexbox.flex1]}
-              size="smaller"
             />
           )}
           <Button
@@ -530,7 +495,7 @@ const CustomGasPrice = ({
                   ? flexbox.flex1
                   : { width: 100 }
             }
-            size={isNarrowWebLayout ? 'regular' : 'smaller'}
+            size="regular"
           />
         </FooterGlassView>
       )}

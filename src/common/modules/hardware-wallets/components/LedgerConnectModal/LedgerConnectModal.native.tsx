@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import LedgerLetterIconFilled from '@common/assets/svg/LedgerLetterIconFilled'
 import Banner from '@common/components/Banner'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import MultistateToggleButton from '@common/components/MultistateToggleButton'
 import Spinner from '@common/components/Spinner'
@@ -41,7 +41,7 @@ const LedgerConnectModal = ({
   handleOnConnect,
   onSelectDeviceForAppInstall
 }: Props) => {
-  const { ref, open, close } = useModalize()
+  const { ref, open, close } = useSheetRef()
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { theme } = useTheme()

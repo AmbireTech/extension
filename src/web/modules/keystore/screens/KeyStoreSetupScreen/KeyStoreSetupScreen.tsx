@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Animated, TouchableOpacity, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
-import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Checkbox from '@common/components/Checkbox'
-import DualChoiceModal from '@common/components/DualChoiceModal'
 import FatToggle from '@common/components/FatToggle'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -19,7 +19,6 @@ import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNav
 import KeyStoreSetupForm from '@common/modules/keystore/components/KeyStoreSetupForm'
 import TermsComponent from '@common/modules/terms/components'
 import spacings from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import {
   TabLayoutContainer,
@@ -32,7 +31,7 @@ const KeyStoreSetupScreen = () => {
   const { goToPrevRoute } = useOnboardingNavigation()
   const { theme } = useTheme()
   const [agreedWithTerms, setAgreedWithTerms] = useState(true)
-  const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useModalize()
+  const { ref: termsModalRef, open: openTermsModal, close: closeTermsModal } = useSheetRef()
   const animation = useRef(new Animated.Value(0)).current
 
   const { saveBiometricsSecret } = useBiometrics()
@@ -146,20 +145,16 @@ const KeyStoreSetupScreen = () => {
         closeBottomSheet={closeTermsModal}
         sheetRef={termsModalRef}
       >
+        {/* Just the sheet's X, floating over the logo */}
+        <SheetHeaderRow />
         <View style={[flexbox.alignCenter, flexbox.justifyCenter]}>
-          <AmbireLogo style={[spacings.mbLg, flexbox.alignCenter]} width={185} height={92} />
+          <AmbireLogoWithBackgroundAndLogotype withText={false} style={spacings.mbLg} />
           <Text fontSize={32} weight="regular" style={[{ textAlign: 'center' }, spacings.mbXl]}>
             {t('Terms Of Service')}
           </Text>
         </View>
-        <DualChoiceModal
-          hideHeader
-          description={<TermsComponent />}
-          primaryButtonText={t('Ok')}
-          onPrimaryButtonPress={closeTermsModal}
-          primaryButtonTestID="terms-accept-btn"
-          style={common.borderRadiusPrimary}
-        />
+        {/* No Ok button, the sheet's X closes it */}
+        <TermsComponent hasBottomSpacing={false} />
       </BottomSheet>
     </TabLayoutContainer>
   )

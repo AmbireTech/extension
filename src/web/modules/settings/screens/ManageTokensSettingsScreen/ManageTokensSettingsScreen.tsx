@@ -1,8 +1,8 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ScrollableWrapper from '@common/components/ScrollableWrapper'
 import { SelectValue } from '@common/components/Select/types'
 import AddNftBottomSheet from '@common/modules/settings/components/AddNftBottomSheet'
@@ -24,12 +24,12 @@ const ManageTokensSettingsScreen = () => {
     ref: addTokenBottomSheetRef,
     open: openAddTokenBottomSheet,
     close: closeAddTokenBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: addNftBottomSheetRef,
     open: openAddNftBottomSheet,
     close: closeAddNftBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const [networkFilter, setNetworkFilter] = useState(ALL_NETWORKS_FILTER)

@@ -1,4 +1,4 @@
-import { attachBalanceHint } from './analytics'
+import { attachBalanceHint, isAmbireAnalyticsEnabled } from './analytics'
 
 const ADDR = '0x1234567890123456789012345678901234567890'
 const HINT = `panVal={"a":"${ADDR}","b":42}`
@@ -47,5 +47,30 @@ describe('attachBalanceHint', () => {
     expect(
       attachBalanceHint('https://cena.ambire.com/api/v3/simple/price?ids=eth#frag', ADDR, 42)
     ).toBe(`https://cena.ambire.com/api/v3/simple/price?ids=eth&${HINT}#frag`)
+  })
+})
+
+describe('isAmbireAnalyticsEnabled', () => {
+  const flags = (isOn: boolean, initialLoadPromise?: Promise<void>) => ({
+    initialLoadPromise,
+    isFeatureEnabled: () => isOn
+  })
+
+  it('is on once the flags are loaded and the user has not opted out', () => {
+    expect(isAmbireAnalyticsEnabled(flags(true))).toBe(true)
+  })
+
+  it('is off when the user opted out', () => {
+    expect(isAmbireAnalyticsEnabled(flags(false))).toBe(false)
+  })
+
+  // Before the stored choice loads, the flags hold the defaults (on), which would
+  // send the headers for a user who opted out
+  it('is off while the flags are still loading from storage', () => {
+    expect(isAmbireAnalyticsEnabled(flags(true, Promise.resolve()))).toBe(false)
+  })
+
+  it('is off before the controllers exist', () => {
+    expect(isAmbireAnalyticsEnabled(undefined)).toBe(false)
   })
 })

@@ -14,6 +14,7 @@ import OpenIcon from '@common/assets/svg/OpenIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
 import NetworkIcon from '@common/components/NetworkIcon'
@@ -35,10 +36,8 @@ import { setStringAsync } from '@common/utils/clipboard'
 import { openInTab } from '@common/utils/links'
 import { getUiType } from '@common/utils/uiType'
 
-import type { Modalize } from 'react-native-modalize'
-
 interface Props {
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
   entry: PrivacyPoolsHistoryEntry
   network: Network
@@ -203,7 +202,6 @@ const PrivacyPoolsHistoryDetailsSheet: FC<Props> = ({
       FooterComponent={footerComponent}
       scrollViewProps={scrollViewProps}
       containerInnerWrapperStyles={SCROLL_WRAPPER_STYLE}
-      reserveScrollPadding
       style={SHEET_STYLE}
     >
       <View style={spacings.phSm}>

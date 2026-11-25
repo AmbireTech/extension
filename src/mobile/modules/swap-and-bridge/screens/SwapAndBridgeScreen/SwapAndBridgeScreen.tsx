@@ -215,11 +215,11 @@ const SwapAndBridgeScreen = () => {
         withBackButton
         onBackButtonPress={onBackButtonPress}
         title={t('Swap & Bridge')}
-        rightIcon={<ProviderSettingsButton compact onPress={openProviderSettingsModal} />}
+        rightIcon={<ProviderSettingsButton onPress={openProviderSettingsModal} />}
         headerOverlay={
           <CowSwapAnnouncement
             openProviderSettingsModal={openProviderSettingsModal}
-            isSettingsButtonCompact
+            isHeaderOverlay
           />
         }
         withScroll

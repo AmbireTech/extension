@@ -6,7 +6,6 @@ import flexbox from '@common/styles/utils/flexbox'
 
 interface Styles {
   accountButton: ViewStyle
-  accountButtonRightIcon: ViewStyle
   accountCopyIcon: ViewStyle
 }
 
@@ -19,11 +18,7 @@ const getStyles = () =>
       height: 40,
       ...spacings.plMi,
       ...(isMobile ? spacings.prTy : spacings.prSm),
-      ...(isMobile ? spacings.mrMi : spacings.mrTy),
       borderRadius: 50
-    },
-    accountButtonRightIcon: {
-      borderColor: 'transparent'
     },
     accountCopyIcon: { backgroundColor: 'transparent', borderColor: 'transparent' }
   })

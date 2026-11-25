@@ -48,7 +48,31 @@ const formatPendingAmounts = (
     )
   }
 
+  if (pendingAmounts.pendingDelivery) {
+    formattedAmounts.pendingDeliveryFormatted = formatDecimals(
+      parseFloat(formatUnits(pendingAmounts.pendingDelivery, decimals)),
+      'amount'
+    )
+  }
+
   return formattedAmounts
+}
+
+/**
+ * The latest and pending block amounts to calculate the pending amounts from. Tokens that were
+ * fetched without them (e.g. outside of the selected account's portfolio) have only `amount`,
+ * which is used for both, so a pending delivery is added to the balance the user sees.
+ */
+const getBlockAmounts = (
+  latestAmount: bigint | undefined,
+  pendingAmount: bigint | undefined,
+  amount: bigint
+) => {
+  if (typeof latestAmount !== 'bigint' && typeof pendingAmount !== 'bigint') {
+    return { latestAmount: amount, pendingAmount: amount }
+  }
+
+  return { latestAmount: latestAmount || 0n, pendingAmount: pendingAmount || 0n }
 }
 
 /**
@@ -66,14 +90,26 @@ const getAndFormatTokenDetails = (
     amount,
     decimals,
     amountPostSimulation,
-    simulationAmount
+    simulationAmount,
+    pendingDeliveryAmount
   }: SelectedAccountPortfolioTokenResult,
   /**
    * Pass `networks` only if you need `networkData` back.
    */
   networks?: Network[],
   simulatedAccountOp?: AccountOp,
-  options: { decimalRulesType: FormatType } = { decimalRulesType: 'amount' }
+  {
+    decimalRulesType = 'amount',
+    pendingDelivery = pendingDeliveryAmount
+  }: {
+    decimalRulesType?: FormatType
+    /**
+     * The amount of the token that in-progress swaps and bridges will still move.
+     * Defaults to the token's `pendingDeliveryAmount`, which the selected account's
+     * portfolio tokens have.
+     */
+    pendingDelivery?: bigint
+  } = {}
 ) => {
   const isRewards = rewardsType === 'wallet-rewards'
   const isVesting = rewardsType === 'wallet-vesting'
@@ -94,14 +130,17 @@ const getAndFormatTokenDetails = (
     ? Number(safeTokenAmountAndNumberMultiplication(amountish, decimals, priceUSD))
     : undefined
 
+  const blockAmounts = getBlockAmounts(latestAmount, pendingAmount, amountish)
   const pendingAmountsFormatted = formatPendingAmounts(
-    pendingAmount || amountPostSimulation
+    // A zero amount is still a pending state, so check the type instead of truthiness
+    typeof pendingAmount === 'bigint' || typeof amountPostSimulation === 'bigint' || pendingDelivery
       ? calculatePendingAmounts(
-          latestAmount || 0n,
-          pendingAmount || 0n,
+          blockAmounts.latestAmount,
+          blockAmounts.pendingAmount,
           amountPostSimulation,
           simulationAmount,
-          simulatedAccountOp
+          simulatedAccountOp,
+          pendingDelivery
         )
       : null,
     decimals,
@@ -113,8 +152,8 @@ const getAndFormatTokenDetails = (
   // are strings. Please decide on the type of the values when refactoring.
   return {
     balance,
-    balanceFormatted: formatDecimals(parseFloat(balance), options.decimalRulesType),
-    balanceLatestFormatted: formatDecimals(parseFloat(balanceLatest), options.decimalRulesType),
+    balanceFormatted: formatDecimals(parseFloat(balance), decimalRulesType),
+    balanceLatestFormatted: formatDecimals(parseFloat(balanceLatest), decimalRulesType),
     priceUSD,
     priceUSDFormatted: formatDecimals(priceUSD, 'price'),
     balanceUSD,

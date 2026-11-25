@@ -8,6 +8,7 @@ import SearchIcon from '@common/assets/svg/SearchIcon'
 import SidebarSecurityIcon from '@common/assets/svg/SidebarSecurityIcon'
 import SwapAndBridgeIcon from '@common/assets/svg/SwapAndBridgeIcon'
 import UnstakeIcon from '@common/assets/svg/UnstakeIcon'
+import ValueIcon from '@common/assets/svg/ValueIcon'
 import ExpandableCard from '@common/components/ExpandableCard'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -54,12 +55,12 @@ const AmbireApiOptions = () => {
             flag="tokenAndDefiAutoDiscovery"
           />
           <OptOutControlOption
-            title={t('Clear signing')}
+            title={t('Token prices')}
             description={t(
-              `Fetch the latest standard for translating transactions. If you turn this off, some transactions can become unreadable and your security is reduced.`
+              `Fetch token prices through Ambire's API. When off, prices are read from the network directly: fewer tokens get a price, and price changes and market data aren't shown.`
             )}
-            icon={<SearchIcon width={24} height={24} />}
-            flag="clearSigning"
+            icon={<ValueIcon width={24} height={24} color={theme.iconPrimary} />}
+            flag="tokenPrices"
           />
           <OptOutControlOption
             title={t('Transaction arguments decoding')}

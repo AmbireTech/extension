@@ -9,6 +9,7 @@ import { AddressState, AddressStateOptional } from '@ambire-common/interfaces/do
 import { Hex } from '@ambire-common/interfaces/hex'
 import useAddressInput from '@common/hooks/useAddressInput'
 import useController from '@common/hooks/useController'
+import useSafeApiSetting from '@common/hooks/useSafeApiSetting'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 
@@ -32,6 +33,7 @@ const useSafeImportByOwner = () => {
   } = useController('MainController')
   const { dispatchAndWait: accountPickerDispatchAndWait } = useController('AccountPickerController')
   const { state: enabledNetworks } = useController('NetworksController', selectNetworks)
+  const { isSafeApiEnabled } = useSafeApiSetting()
   const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const {
     control,
@@ -109,11 +111,13 @@ const useSafeImportByOwner = () => {
     )
 
   useEffect(() => {
-    if (!owner) safeDispatch({ type: 'method', params: { method: 'resetSearchByOwner', args: [] } })
+    // Searched once the user turns the Safe API back on
+    if (!owner || !isSafeApiEnabled)
+      safeDispatch({ type: 'method', params: { method: 'resetSearchByOwner', args: [] } })
     else safeDispatch({ type: 'method', params: { method: 'findSafesByOwner', args: [owner] } })
     return () =>
       safeDispatch({ type: 'method', params: { method: 'resetSearchByOwner', args: [] } })
-  }, [owner, safeDispatch])
+  }, [owner, safeDispatch, isSafeApiEnabled])
 
   const currentDisplayableData = useMemo(
     () =>
@@ -151,9 +155,10 @@ const useSafeImportByOwner = () => {
   }, [importedAddressSet, owner, currentDisplayableData?.accounts, selectionOverrides])
 
   const isSearching =
-    (ownerCurrentlyDisplayingFor &&
+    isSafeApiEnabled &&
+    ((ownerCurrentlyDisplayingFor &&
       safeOwnerSearches[ownerCurrentlyDisplayingFor]?.status === 'LOADING') ||
-    (owner && owner !== ownerCurrentlyDisplayingFor)
+      (owner && owner !== ownerCurrentlyDisplayingFor))
 
   const isMainBusy = Object.values(mainStatuses).some((status) => status !== 'INITIAL')
   const hasSearchCompleted =
@@ -272,6 +277,7 @@ const useSafeImportByOwner = () => {
   ])
 
   const isImportButtonDisabled =
+    !isSafeApiEnabled ||
     !isValid ||
     isSearching ||
     isMainBusy ||
@@ -285,6 +291,7 @@ const useSafeImportByOwner = () => {
     handleImport,
     hasSearchCompleted,
     isSearching,
+    isSafeApiEnabled,
     goToPrevRoute,
     importedAccounts,
     owner,

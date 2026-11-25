@@ -4,6 +4,7 @@ import { SvgProps } from 'react-native-svg'
 
 import AaveIcon from '@common/assets/svg/AaveIcon'
 import AmbireLogo from '@common/assets/svg/AmbireLogo'
+import MorphoIcon from '@common/assets/svg/MorphoIcon'
 import UniswapIcon from '@common/assets/svg/UniswapIcon'
 import NetworkIcon from '@common/components/NetworkIcon'
 import TokenIcon from '@common/components/TokenIcon'
@@ -19,7 +20,11 @@ const POSITION_TO_ICON: {
   'Uniswap V2': UniswapIcon,
   'AAVE v3': AaveIcon,
   'AAVE v2': AaveIcon,
-  'AAVE v1': AaveIcon
+  'AAVE v1': AaveIcon,
+  // For the positions read on-chain (auto discovery off), which have no icon URL
+  'AAVE v4': AaveIcon,
+  'Uniswap V4': UniswapIcon,
+  Morpho: MorphoIcon
 }
 
 const ProtocolIcon = ({

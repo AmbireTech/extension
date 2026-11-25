@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { Image, LayoutChangeEvent, View, ViewStyle } from 'react-native'
 import Animated, {
   Extrapolation,
@@ -8,7 +8,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue
 } from 'react-native-reanimated'
-import Carousel, { ICarouselInstance } from 'react-native-reanimated-carousel'
+import { Carousel, CarouselRef } from 'react-native-reanimated-carousel'
 
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
 import Button from '@common/components/Button'
@@ -88,7 +88,7 @@ const MigrationOnboardingScreen = () => {
   const { height } = useWindowSize()
   const { exportEmailAccountsBackup } = useLegacyAccountsBackup()
 
-  const carouselRef = useRef<ICarouselInstance>(null)
+  const carouselRef = useRef<CarouselRef>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   // Tracks the carousel scroll position so the dots can animate smoothly
   // between steps instead of snapping on each slide change.
@@ -100,6 +100,8 @@ const MigrationOnboardingScreen = () => {
   const handleCarouselLayout = useCallback((e: LayoutChangeEvent) => {
     setCarouselWidth(e.nativeEvent.layout.width)
   }, [])
+
+  const carouselStyle = useMemo(() => ({ width: carouselWidth }), [carouselWidth])
 
   const finishOnboarding = useCallback(() => {
     markMigrationOnboardingPassed()
@@ -249,10 +251,10 @@ const MigrationOnboardingScreen = () => {
             {carouselWidth > 0 && (
               <Carousel
                 ref={carouselRef}
-                width={carouselWidth}
+                style={carouselStyle}
                 data={STEPS}
                 loop={false}
-                onProgressChange={progress}
+                progress={progress}
                 onSnapToItem={setActiveIndex}
                 renderItem={renderStep}
               />

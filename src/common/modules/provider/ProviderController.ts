@@ -4,7 +4,7 @@ import { getAddress, isAddress } from 'ethers'
 import cloneDeep from 'lodash/cloneDeep'
 import { nanoid } from 'nanoid'
 
-import { Session } from '@ambire-common/classes/session'
+import { getSessionConnectionSource, Session } from '@ambire-common/classes/session'
 import { Account } from '@ambire-common/interfaces/account'
 import { ConnectionSource, DappProviderRequest } from '@ambire-common/interfaces/dapp'
 import { IMainController } from '@ambire-common/interfaces/main'
@@ -28,6 +28,13 @@ import { networkChainIdToHex } from '@ambire-common/libs/networks/networks'
 import { getBenzinUrlParams } from '@ambire-common/utils/benzin'
 import formatDecimals from '@ambire-common/utils/formatDecimals/formatDecimals'
 import { APP_VERSION } from '@common/config/env'
+import {
+  buildPq1Capabilities,
+  isEthGetCodeParams,
+  isPq1AccountCodeQuery,
+  isPq1Key,
+  resolvePq1AccountCode
+} from '@common/modules/hardware-wallet/libs/pq1DappProvider'
 import { SAFE_RPC_METHODS } from '@common/modules/inpage/methods'
 import { metadata } from '@common/modules/provider/metadata'
 import { RequestRes, Web3WalletPermission } from '@common/modules/provider/types'
@@ -36,13 +43,9 @@ import { openInTab } from '@common/utils/links'
 import type { TokenResult } from '@ambire-common/libs/portfolio'
 type ProviderRequest = DappProviderRequest & { requestRes: RequestRes }
 
-// Derive the connection source from the session, mirroring rpcFlow.ts: WC sessions carry a
-// wcTopic, injected (in-app browser / extension content script) ones don't. Each source has its
-// own permission entry, so connection checks must be scoped to the channel the request came from -
-// otherwise a dapp connected only via WalletConnect would auto-connect in the in-app browser
-// (eth_accounts/getProviderState would return the account list and the dapp would skip the connect prompt).
-const getRequestSource = (session: Session): ConnectionSource =>
-  session.wcTopic ? 'wc' : 'injected'
+// Each source has its own permission entry, so checks are scoped to the request's channel -
+// otherwise a dapp connected only via WalletConnect would auto-connect in the in-app browser.
+const getRequestSource = (session: Session): ConnectionSource => getSessionConnectionSource(session)
 
 const handleSignMessage = (requestRes: RequestRes) => {
   if (requestRes) {
@@ -149,6 +152,36 @@ export class ProviderController {
 
       throw error
     }
+  }
+
+  // A PQ1 account is a smart-contract wallet, but one not deployed on this
+  // chain yet has no code, so a dapp connected to it would take it for an
+  // EOA. Its answer comes from the PQ1 module — see
+  // `hardware-wallet/libs/pq1DappProvider.ts`. Every other query is a plain
+  // `ethRpc` read. SAFE, like the `ethRpc` fallback in `rpcFlow`, so reading
+  // code never asks the user to unlock or connect.
+  @metadata('SAFE', true)
+  ethGetCode = async (request: DappProviderRequest) => {
+    const { params, session } = request
+    const { id } = session
+
+    const isConnectedAndUnlocked =
+      this.mainCtrl.dapps.hasPermission(id, getRequestSource(session)) && this.isUnlocked
+    if (!isConnectedAndUnlocked || !isEthGetCodeParams(params)) return this.ethRpc(request)
+
+    const chainId = this.getDappNetwork(id).chainId
+    const isPq1Query = isPq1AccountCodeQuery(
+      this.mainCtrl.keystore.keys,
+      this._internalGetAccounts(id),
+      chainId,
+      params[0]
+    )
+    if (!isPq1Query) return this.ethRpc(request)
+
+    const provider = this.mainCtrl.providers.providers[chainId.toString()]
+    if (!provider) throw ethErrors.rpc.invalidParams('provider not found')
+
+    return resolvePq1AccountCode(provider, params)
   }
 
   ethRequestAccounts = async ({ session }: DappProviderRequest) => {
@@ -478,6 +511,12 @@ export class ProviderController {
     const state = this.mainCtrl.accounts.accountStates[accountAddr]
     if (!state) {
       throw ethErrors.rpc.invalidParams(`account with address ${accountAddr} does not exist`)
+    }
+
+    // PQ1 wallets batch atomically in one userOp, but `getBaseAccount` sees
+    // them as EOAs — answer from the PQ1 module instead.
+    if (isPq1Key(this.mainCtrl.keystore.keys, accountAddr)) {
+      return buildPq1Capabilities(this.mainCtrl.networks.networks)
     }
 
     const states = await this.mainCtrl.accounts.getOrFetchAccountStates(accountAddr)

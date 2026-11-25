@@ -7,6 +7,7 @@ require('dotenv').config()
 const createExpoWebpackConfigAsync = require('@expo/webpack-config')
 const { getExpoBabelLoader } = require('@expo/webpack-config/utils')
 const path = require('path')
+const webpack = require('webpack')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const { getRelayerCustomHeadersCacheKey } = require('../scripts/validateEnv')
 const { isWebkit, isGecko, buildOutputDir } = require('./env')
@@ -91,6 +92,13 @@ async function createBaseConfig(env, argv) {
   removeExpoPlugin(config, 'ExpoPwaManifestWebpackPlugin')
 
   const defaultExpoConfigPlugins = [...config.plugins]
+  // expo-font's web build imports node:async_hooks for server rendering only (behind `typeof window`).
+  // Webpack can't read node: URIs, so it goes through the `async_hooks: false` fallback (empty module)
+  defaultExpoConfigPlugins.push(
+    new webpack.NormalModuleReplacementPlugin(/^node:async_hooks$/, (resource) => {
+      resource.request = 'async_hooks'
+    })
+  )
 
   // override MiniCssExtractPlugin only for prod to serve the css files in the main build directory
   if (config.mode === 'production') {
@@ -140,9 +148,13 @@ async function createBaseConfig(env, argv) {
       const file = warning.file || warning.module?.resource || ''
       return moduleId.includes('react-native-worklets') || file.includes('react-native-worklets')
     },
-    // ox (viem dep) hides `import('node:worker_threads')` behind a variable on purpose, so
-    // bundlers skip it. It only runs in Node (`process.versions.node`), which the `process`
-    // polyfill doesn't define, so browser builds always take the `Worker` path instead.
+    // Modules that hide `import('node:…')` behind a variable on purpose, so bundlers skip it, and
+    // only take that branch under Node, which browser builds never are:
+    // - ox (viem dep) checks `process.versions.node`, which the `process` polyfill doesn't
+    //   define, so browser builds always take the `Worker` path instead.
+    // - @kohaku-eth/poseidon-lean-imt's parallel tree build reads `node:os` and starts
+    //   `node:worker_threads` only without `Worker`. Privacy Pools asks for it only with
+    //   `Worker` or under Node, so the service worker, which has neither, never starts it.
     (warning, compilation) => {
       if (
         typeof warning.message !== 'string' ||
@@ -155,10 +167,27 @@ async function createBaseConfig(env, argv) {
       const requestShortener = compilation?.requestShortener
       const moduleId = warning.module?.readableIdentifier?.(requestShortener) ?? ''
       const file = warning.file || warning.module?.resource || ''
-      const oxVirtualMasterPoolPath = 'ox/_esm/tempo/internal/virtualMasterPool'
-      return moduleId.includes(oxVirtualMasterPoolPath) || file.includes(oxVirtualMasterPoolPath)
+      const nodeOnlyImportPaths = [
+        'ox/_esm/tempo/internal/virtualMasterPool',
+        '@kohaku-eth/poseidon-lean-imt/dist/parallel',
+        '@kohaku-eth/poseidon-lean-imt/dist/worker'
+      ]
+      return nodeOnlyImportPaths.some((path) => moduleId.includes(path) || file.includes(path))
+    },
+    // react-native-svg's touch sound module, required lazily on Android only. Matched by `file`, as
+    // Expo rewraps the warning without its module
+    {
+      file: /react-native-svg[\\/]lib[\\/]module[\\/]fabric[\\/]NativeSvgSoundModule/,
+      message: /export 'TurboModuleRegistry'/
     }
   ]
+
+  // These ship lib/module as `"type": "module"`, and webpack provides `global` to non-ESM modules
+  // only. The worklets plugin emits `new global.Error()` in dev builds, so it would throw
+  config.module.rules.push({
+    test: /node_modules[\\/]react-native-(reanimated|worklets)[\\/]lib[\\/]module[\\/]/,
+    type: 'javascript/auto'
+  })
 
   config.resolve.extensions = [...(config.resolve.extensions || []), '.scss']
 
@@ -183,12 +212,15 @@ async function createBaseConfig(env, argv) {
       : {}),
     // There will be 2 instances of React if node_modules are installed in src/ambire-common.
     // That's why we need to alias the React package to the one in the root node_modules.
-    react: path.resolve(ROOT_DIR, 'node_modules/react')
+    react: path.resolve(ROOT_DIR, 'node_modules/react'),
+    // React Native 0.87+ no longer ships it (react-native-svg imports it); Expo's Metro maps it the same way
+    '@react-native/assets-registry/registry$': require.resolve('react-native-web/asset-registry')
   }
 
   config.resolve.fallback = {
     stream: require.resolve('stream-browserify'),
-    crypto: require.resolve('crypto-browserify')
+    crypto: require.resolve('crypto-browserify'),
+    async_hooks: false
   }
 
   config.output = {

@@ -9,20 +9,26 @@ const RELAYER_CUSTOM_HEADERS: Record<string, string> = process.env.RELAYER_CUSTO
   ? JSON.parse(process.env.RELAYER_CUSTOM_HEADERS)
   : {}
 
+const CENA_URL = 'https://cena.ambire.com'
+
 const hasRelayerCustomHeaders = Object.keys(RELAYER_CUSTOM_HEADERS).length > 0
-const relayerOrigin = hasRelayerCustomHeaders ? new URL(RELAYER_URL).origin : ''
+const serviceOrigins = hasRelayerCustomHeaders
+  ? [new URL(RELAYER_URL).origin, new URL(CENA_URL).origin]
+  : []
 
 /**
  * Same as `fetch`, but adds the relayer custom headers to the requests that go to the
- * relayer. Any other url, like a look-alike host, gets nothing extra. The headers are
- * applied last, so a caller can not overwrite them.
+ * relayer or to cena. Any other url, like a look-alike host, gets nothing extra. The
+ * headers are applied last, so a caller can not overwrite them.
  */
 const fetchWithRelayerCustomHeaders: typeof fetch = (input, init) => {
   if (!hasRelayerCustomHeaders) return fetch(input, init)
 
   const url = typeof input === 'string' ? input : 'url' in input ? input.url : input.href
-  const isRelayerUrl = url === relayerOrigin || url.startsWith(`${relayerOrigin}/`)
-  if (!isRelayerUrl) return fetch(input, init)
+  const isServiceUrl = serviceOrigins.some(
+    (origin) => url === origin || url.startsWith(`${origin}/`)
+  )
+  if (!isServiceUrl) return fetch(input, init)
 
   const headers = new Headers(
     init?.headers ?? (typeof input === 'object' && 'headers' in input ? input.headers : undefined)

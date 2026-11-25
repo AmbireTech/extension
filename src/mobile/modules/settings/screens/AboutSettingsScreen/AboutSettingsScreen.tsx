@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import { restart, useStallionUpdate } from 'react-native-stallion'
 
 import NewsletterIcon from '@common/assets/svg/NewsletterIcon'
 import OpenIcon from '@common/assets/svg/OpenIcon'
 import TosIcon from '@common/assets/svg/TosIcon'
 import Banner from '@common/components/Banner'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ControlOption from '@common/components/ControlOption'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { APP_VERSION, BUILD_NUMBER, isDev } from '@common/config/env'
@@ -38,7 +38,7 @@ const AboutSettingsScreen = () => {
     ref: ambireNextSheetRef,
     open: openAmbireNextSheet,
     close: closeAmbireNextSheet
-  } = useModalize()
+  } = useSheetRef()
   const [isAmbireNextJoined, setIsAmbireNextJoined] = useState(false)
   const versionTapsRef = useRef({ count: 0, lastTapAt: 0 })
 

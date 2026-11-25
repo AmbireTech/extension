@@ -8,6 +8,7 @@ import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { isLedgerEmulator, isProd, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
+import { AMBIRE_SIGNER_APP_NAME } from '@common/modules/hardware-wallet/constants/ledger'
 import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
 import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
@@ -15,6 +16,7 @@ import {
   DeviceModelId as LedgerDeviceModels,
   DiscoveredDevice,
   LEDGER_VENDOR_ID,
+  OpenAppDeviceAction,
   UserInteractionRequired
 } from '@ledgerhq/device-management-kit'
 import { Signature, SignerEthBuilder, TypedDataDomain } from '@ledgerhq/device-signer-kit-ethereum'
@@ -27,6 +29,12 @@ export type LedgerSignature = Signature
 
 const TIMEOUT_FOR_RETRIEVING_FROM_LEDGER = 5000
 
+/**
+ * The reason the Ledger DMK WebHID transport gives (as `originalError`) when
+ * the browser's device prompt resolves without a selected device.
+ */
+const NO_SELECTED_DEVICE_ERROR = 'No selected device'
+
 class LedgerController implements ExternalSignerController, LedgerControllerInterface {
   unlockedPath: string = ''
 
@@ -35,6 +43,8 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
   signerEth: ReturnType<SignerEthBuilder['build']> | null = null
 
   walletSDK: ReturnType<DeviceManagementKitBuilder['build']> | null = null
+
+  #sessionId: string | null = null
 
   type = 'ledger'
 
@@ -116,6 +126,12 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     // In emulator mode we don't need to grant permission, because communication is over HTTP and doesn't require it.
     if (isLedgerEmulator) return
 
+    // `getDevices()` lists only connected devices this extension already has
+    // access to, so prompting again is not needed. It's also required on
+    // Vivaldi, where the prompt resolves with no device in this case.
+    const grantedDevices = await navigator.hid.getDevices()
+    if (grantedDevices.some((device) => device.vendorId === LedgerController.vendorId)) return
+
     const dmk = new DeviceManagementKitBuilder()
       // .addLogger(new ConsoleLogger()) // for debugging only
       .addTransport(webHidTransportFactory)
@@ -131,9 +147,27 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
           dmk.close()
           resolve(device)
         },
-        error: (error) => {
+        error: async (error) => {
           subscription?.unsubscribe()
-          reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
+          dmk.close()
+
+          // DMK errors have no `message`, the reason is in `originalError`.
+          // The device prompt resolves with no device when the user closes it
+          // without picking one, or when the browser doesn't show it at all.
+          const isNoDeviceSelected = error?.originalError?.message === NO_SELECTED_DEVICE_ERROR
+          if (!isNoDeviceSelected) {
+            reject(new ExternalSignerError(normalizeLedgerMessage(error?.message)))
+            return
+          }
+
+          // TODO: Remove the Vivaldi message once VB-133598 is fixed in a Vivaldi release.
+          // Vivaldi doesn't show the device prompt on extension pages (it does on
+          // regular websites), so a new device can't be allowed there. Reported as
+          // VB-133598, see https://forum.vivaldi.net/post/930284
+          const message = (await isVivaldi())
+            ? "A known Vivaldi issue blocks connecting a new Ledger to browser extensions. We've reported it to Vivaldi. Ledgers you've already connected still work. [Learn more](https://help.ambire.com/en/articles/18457958-why-can-t-i-connect-my-ledger-in-vivaldi)"
+            : 'No Ledger device was selected. Please try again and pick your Ledger device from the list.'
+          reject(new ExternalSignerError(message))
         }
       })
     })
@@ -235,6 +269,7 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
       // Get device information
       const sessionId = await this.walletSDK.connect({ device })
+      this.#sessionId = sessionId
 
       const connectedDevice = this.walletSDK.getConnectedDevice({ sessionId })
       this.deviceModel = connectedDevice.modelId
@@ -318,9 +353,11 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       onCompleted: (output: any) => T
       errorMessage: string
       isSign?: boolean
+      /** False for device actions that complete without an output (e.g. opening an app) */
+      isOutputExpected?: boolean
     }
   ): Promise<T> {
-    const { onCompleted, errorMessage, isSign } = options
+    const { onCompleted, errorMessage, isSign, isOutputExpected = true } = options
 
     const subscriptionPromise = new Promise<T>((resolve, reject) => {
       let subscription: Subscription | undefined // so it is always defined inside the subscribe callback
@@ -363,7 +400,7 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
           if (response.status !== 'completed') return
 
           subscription?.unsubscribe()
-          if (response?.output) {
+          if (response?.output || !isOutputExpected) {
             resolve(onCompleted(response.output))
           } else {
             reject(new ExternalSignerError(normalizeLedgerMessage(errorMessage)))
@@ -499,6 +536,51 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
   }
 
   /**
+   * Opens the given app on the device. The user confirms opening it on-device,
+   * unless it's already open.
+   */
+  #openApp(appName: string) {
+    if (!this.walletSDK || !this.#sessionId) throw new ExternalSignerError(normalizeLedgerMessage())
+
+    return this.#handleLedgerSubscription<void>(
+      this.walletSDK.executeDeviceAction({
+        sessionId: this.#sessionId,
+        deviceAction: new OpenAppDeviceAction({ input: { appName } })
+      }).observable,
+      {
+        onCompleted: () => undefined,
+        errorMessage: `Failed to open the ${appName} app on the Ledger device`,
+        isSign: true,
+        isOutputExpected: false
+      }
+    )
+  }
+
+  async signTransactionTypeFour(derivationPath: string, transaction: Uint8Array) {
+    // The official Ethereum app rejects type 4 transactions since v1.24.0
+    // ("TransactionType not supported"), so sign them with the sideloaded
+    // "Ambire Signer" app, which signs the 7702 authorization too. DSK always
+    // opens the official app, so open Ambire Signer here and tell DSK to skip it.
+    // Init the session WITHOUT unlocking via getAddress, as in sign7702: unlock
+    // would open the official Ethereum app first.
+    await this.#initSDKSessionIfNeeded()
+    await this.#openApp(AMBIRE_SIGNER_APP_NAME)
+
+    if (!this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage())
+
+    return this.#handleLedgerSubscription<LedgerSignature>(
+      this.signerEth.signTransaction(getHdPathWithoutRoot(derivationPath), transaction, {
+        skipOpenApp: true
+      }).observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign transaction with Ledger device',
+        isSign: true
+      }
+    )
+  }
+
+  /**
    * Attempts to sign an EIP-712 message using the Ledger device. With Ledger DSK lib,
    * if the device does not support direct (clear) EIP-712 signing, it should internally
    * fallback to signing hashes of the message, no additional steps needed.
@@ -565,6 +647,7 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     if (this.walletSDK) this.walletSDK.close()
 
     this.walletSDK = null
+    this.#sessionId = null
     this.signerEth = null
     this.unlockedPath = ''
     this.unlockedPathKeyAddr = ''

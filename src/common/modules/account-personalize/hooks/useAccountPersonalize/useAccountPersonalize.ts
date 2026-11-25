@@ -4,16 +4,14 @@ import { useFieldArray, useForm } from 'react-hook-form'
 import { Account } from '@ambire-common/interfaces/account'
 import { captureException } from '@common/config/analytics/CrashAnalytics'
 import { useTranslation } from '@common/config/localization'
-import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import useController from '@common/hooks/useController'
 import { ReplyTimeoutError } from '@common/hooks/useController/waitForReply'
+import { ADD_ACCOUNTS_TIMEOUT_MS } from '@common/modules/account-personalize/constants/timeouts'
+import usePrivacyPoolsAccountPersonalize from '@common/modules/account-personalize/hooks/usePrivacyPoolsAccountPersonalize'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
-// Adding writes the accounts and keys, and the smart accounts' identities are created on the
-// Relayer, which can take a while on a slow connection - so it gets more room than the default.
-const ADD_ACCOUNTS_TIMEOUT_MS = 60_000
 // Finding the next unused account derives the accounts page by page
 const PREPARE_ACCOUNTS_TIMEOUT_MS = 30_000
 // The loading state stays up at least this long, so it reads as a step rather than a
@@ -29,22 +27,26 @@ const selectReadyToAddAccounts = (state: AllControllersMappingType['AccountPicke
 const selectReadyToRemoveAccounts = (state: AllControllersMappingType['AccountPickerController']) =>
   state.readyToRemoveAccounts
 const selectSubType = (state: AllControllersMappingType['AccountPickerController']) => state.subType
+const selectIsFromNewSeed = (state: AllControllersMappingType['AccountPickerController']) =>
+  state.isFromNewSeed
+const selectReadyToUpdateKeysAccountAddrs = (
+  state: AllControllersMappingType['AccountPickerController']
+) => state.readyToUpdateKeysAccountAddrs
 // Set up by a flow that only sets the picker up, and not started yet
 const selectIsWaitingToStart = (state: AllControllersMappingType['AccountPickerController']) =>
-  !!state.initParams && !state.isInitialized && !state.readyToAddAccounts.length
+  (!!state.initParams && !state.isInitialized && !state.readyToAddAccounts.length) ||
+  (!!state.privacyPoolsInitParams && !state.privacyPoolsAccountToAdd)
 const selectAccounts = (state: AllControllersMappingType['AccountsController']) => state.accounts
 const selectAddAccountsStatus = (state: AllControllersMappingType['AccountPickerController']) =>
   state.addAccountsStatus
-// Takes the swipe and Android's back over, to go nowhere
-const stayOnScreen = () => {}
-// A stable empty list, so the callbacks depending on it keep their identity
-const NO_ACCOUNTS: Account[] = []
 
 /**
  * Where the flow goes on once the accounts are added: "Ambire Wallet is ready to use" greets only
  * the wallet's first accounts, the rest go on to the dashboard. Told by the wallet before adding,
  * as the accounts state lags behind the reply.
  */
+const splitAddrs = (joinedAddrs: string) => (joinedAddrs ? joinedAddrs.split(',') : [])
+
 const getNextRoute = (walletAccounts: Account[], namedAccounts: Account[]) => {
   const namedAddrs = new Set(namedAccounts.map(({ addr }) => addr))
   const hadAccounts = walletAccounts.some(({ addr }) => !namedAddrs.has(addr))
@@ -55,13 +57,18 @@ const getNextRoute = (walletAccounts: Account[], namedAccounts: Account[]) => {
 /**
  * The personalize step of every account adding flow: shows the accounts the flow prepared
  * (or prepares them, see below), lets the user name them, and adds them once the user
- * proceeds. Nothing is added before - going back only resets the flow. Accounts a sync
- * added already are only named here. The already added accounts deselected on the picker
- * are listed too, and removed on proceeding as well.
+ * proceeds. Nothing is added before - going back only resets the flow. A Safe that Safe create
+ * found in the wallet already is only named here.
+ * The already added accounts deselected on the picker are listed too, and removed on proceeding
+ * as well. A Privacy Pools account is personalized the same way, by
+ * `usePrivacyPoolsAccountPersonalize`.
  */
 export default function useAccountPersonalize() {
   const { t } = useTranslation()
-  const { goToNextRoute, syncedAccountAddrs, setSyncedAccountAddrs } = useOnboardingNavigation()
+  const { goToNextRoute, safeCreateDraft } = useOnboardingNavigation()
+  const { dispatch: mainDispatch } = useController('MainController')
+  const privacyPools = usePrivacyPoolsAccountPersonalize()
+  const privacyPoolsAccount = privacyPools.account
   const { state: readyToAddAccounts, dispatchAndWait: accountPickerDispatchAndWait } =
     useController('AccountPickerController', selectReadyToAddAccounts)
   const { state: readyToRemoveAccounts } = useController(
@@ -69,6 +76,11 @@ export default function useAccountPersonalize() {
     selectReadyToRemoveAccounts
   )
   const { state: subType } = useController('AccountPickerController', selectSubType)
+  const { state: isFromNewSeed } = useController('AccountPickerController', selectIsFromNewSeed)
+  const { state: readyToUpdateKeysAccountAddrs } = useController(
+    'AccountPickerController',
+    selectReadyToUpdateKeysAccountAddrs
+  )
   const { state: isWaitingToStart } = useController(
     'AccountPickerController',
     selectIsWaitingToStart
@@ -77,18 +89,18 @@ export default function useAccountPersonalize() {
     'AccountsController',
     selectAccounts
   )
-  const isSyncedMode = !!syncedAccountAddrs.length
-  const syncedAccounts = useMemo(() => {
-    const syncedAddrs = syncedAccountAddrs.map((addr) => addr.toLowerCase())
+  // Safe create found its Safe in the wallet already, so it is only shown here, and the way
+  // back to Safe create stays open
+  const existingSafeAddr = safeCreateDraft?.isAlreadyInWallet ? safeCreateDraft.safeAddress : null
+  const isExistingSafeMode = !!existingSafeAddr
+  const existingSafeAccounts = useMemo(
+    () => accounts.filter(({ addr }) => addr.toLowerCase() === existingSafeAddr?.toLowerCase()),
+    [accounts, existingSafeAddr]
+  )
+  // The Safe found in the wallet, or what the flow prepared
+  const accountsToName = isExistingSafeMode ? existingSafeAccounts : readyToAddAccounts
+  const accountsToRemove = readyToRemoveAccounts
 
-    return accounts.filter(({ addr }) => syncedAddrs.includes(addr.toLowerCase()))
-  }, [accounts, syncedAccountAddrs])
-  const accountsToName = isSyncedMode ? syncedAccounts : readyToAddAccounts
-  const accountsToRemove = isSyncedMode ? NO_ACCOUNTS : readyToRemoveAccounts
-
-  // A sync has added its accounts already, so there is nothing to go back to - only Proceed
-  // (the browser's back is handled by the onboarding navigation)
-  useScreenBackHandler(isSyncedMode ? stayOnScreen : null)
   const [prepareResult, setPrepareResult] = useState<{ preparedCount: number } | 'failed' | null>(
     null
   )
@@ -110,10 +122,11 @@ export default function useAccountPersonalize() {
   })
   const { fields } = useFieldArray({ control, name: 'accounts' })
 
-  // Create, a recovery phrase and a private key only set the picker up, so it is started here,
-  // once per run. The controller decides whether to start, as the state here can lag behind the flow.
+  // Create, a recovery phrase, a private key and a Privacy Pools account only set the picker up,
+  // so it is started here, once per run. The controller decides whether to start, as the state
+  // here can lag behind the flow.
   useEffect(() => {
-    if (startedPrepareRun.current === prepareRun || isSyncedMode) return
+    if (startedPrepareRun.current === prepareRun || isExistingSafeMode) return
 
     startedPrepareRun.current = prepareRun
     const isCurrentRun = () => startedPrepareRun.current === prepareRun
@@ -129,12 +142,12 @@ export default function useAccountPersonalize() {
         console.error('Failed to prepare the accounts', error)
         if (isCurrentRun()) setPrepareResult('failed')
       })
-  }, [accountPickerDispatchAndWait, isSyncedMode, prepareRun])
+  }, [accountPickerDispatchAndWait, isExistingSafeMode, prepareRun])
 
   useEffect(() => {
-    if (readyToAddAccounts.length || readyToRemoveAccounts.length)
+    if (readyToAddAccounts.length || readyToRemoveAccounts.length || privacyPoolsAccount)
       hasShownPreparedAccounts.current = true
-  }, [readyToAddAccounts.length, readyToRemoveAccounts.length])
+  }, [readyToAddAccounts.length, readyToRemoveAccounts.length, privacyPoolsAccount])
 
   // The picker was set up anew after this run's accounts were prepared, so the step starts over,
   // also from the done view a web tab keeps showing. Waiting for them to show first keeps a
@@ -164,7 +177,8 @@ export default function useAccountPersonalize() {
   // Until the reply, then until the accounts it reports reach the state - the reply can come
   // first (mobile holds updates back while a screen transition runs)
   const preparedCount = prepareResult === 'failed' ? 0 : prepareResult?.preparedCount
-  const isPreparing = !isSyncedMode && !readyToAddAccounts.length && preparedCount !== 0
+  const isPreparing =
+    !isExistingSafeMode && !privacyPoolsAccount && !readyToAddAccounts.length && preparedCount !== 0
   const isLoading = !hasMinLoadingPassed || (isPreparing && !hasMaxLoadingPassed)
 
   // Every controller update hands over a new list, so the form follows the addresses instead -
@@ -174,6 +188,35 @@ export default function useAccountPersonalize() {
   useEffect(() => {
     accountsToNameRef.current = accountsToName
   }, [accountsToName])
+
+  // The prepared accounts the wallet has already (e.g. a sync of accounts this device has too),
+  // apart by whether they get a new key. Kept from before adding, which puts all of them in the
+  // wallet (and the picker resets) while the screen is still up.
+  const inWalletAddrs = isExistingSafeMode
+    ? []
+    : accountsToName
+        .filter(({ addr }) => accounts.some((account) => account.addr === addr))
+        .map(({ addr }) => addr)
+  const updatingKeysKey = inWalletAddrs
+    .filter((addr) => readyToUpdateKeysAccountAddrs.includes(addr))
+    .join(',')
+  const alreadyAddedKey = inWalletAddrs
+    .filter((addr) => !readyToUpdateKeysAccountAddrs.includes(addr))
+    .join(',')
+  const [keptKeys, setKeptKeys] = useState({ updatingKeysKey, alreadyAddedKey })
+  const haveKeysChanged =
+    keptKeys.updatingKeysKey !== updatingKeysKey || keptKeys.alreadyAddedKey !== alreadyAddedKey
+  if (!isAdding && !addedAccounts && haveKeysChanged) {
+    setKeptKeys({ updatingKeysKey, alreadyAddedKey })
+  }
+  const updatingKeysAddrs = useMemo(
+    () => splitAddrs(keptKeys.updatingKeysKey),
+    [keptKeys.updatingKeysKey]
+  )
+  const alreadyAddedAddrs = useMemo(
+    () => splitAddrs(keptKeys.alreadyAddedKey),
+    [keptKeys.alreadyAddedKey]
+  )
 
   // The prepared accounts change when more are added from the picker. The names the
   // user gave the ones already there are kept.
@@ -261,21 +304,24 @@ export default function useAccountPersonalize() {
 
   const handleProceed = useCallback(async () => {
     if (isProceedingRef.current) return
-    // Left set after a sync, as the screen moves on or shows them as added
     isProceedingRef.current = true
 
     const namedAccounts = getValues('accounts')
     const names = namedAccounts.map(({ addr, preferences }) => ({ addr, preferences }))
     const nextRoute = getNextRoute(accountsRef.current, namedAccounts)
-    if (isSyncedMode) {
+    // Nothing to add - the names are saved, and the dashboard opens on the Safe. The screen
+    // stays usable, as on web the dashboard opens in the popup and this tab stays up
+    if (existingSafeAddr) {
       accountsDispatch({
         type: 'method',
         params: { method: 'updateAccountPreferences', args: [names] }
       })
-      setAddedAccounts(namedAccounts)
-      // Dropped first, as the way back is closed only while they are set
-      setSyncedAccountAddrs([])
-      goToNextRouteRef.current(nextRoute)
+      mainDispatch({
+        type: 'method',
+        params: { method: 'selectAccount', args: [existingSafeAddr] }
+      })
+      isProceedingRef.current = false
+      goToNextRouteRef.current('/')
       return
     }
 
@@ -319,54 +365,111 @@ export default function useAccountPersonalize() {
     isProceedingRef.current = false
     setIsAdding(false)
   }, [
-    isSyncedMode,
+    existingSafeAddr,
+    mainDispatch,
     getValues,
     accountsDispatch,
-    setSyncedAccountAddrs,
     accountPickerDispatchAndWait,
     accountsToRemove,
     finishAdding
   ])
 
   const isRemovalOnly = !fields.length && !!accountsToRemove.length
+  const updatingKeysCount = fields.filter(({ addr }) => updatingKeysAddrs.includes(addr)).length
+  const newAccountsCount = fields.filter(
+    ({ addr }) => !alreadyAddedAddrs.includes(addr) && !updatingKeysAddrs.includes(addr)
+  ).length
+  // Nothing new, only names of accounts the wallet has to update
+  const isAlreadyAddedOnly =
+    !!fields.length && !newAccountsCount && !updatingKeysCount && !accountsToRemove.length
+  // No new accounts, but new keys for some the wallet has
+  const isUpdatingKeysOnly = !newAccountsCount && !!updatingKeysCount && !accountsToRemove.length
   // Removing only changes what was picked already, so there is nothing more to pick
-  const canAddMore = !isSyncedMode && !addedAccounts && !isLoading && !isRemovalOnly
+  const canAddMore = !isExistingSafeMode && !addedAccounts && !isLoading && !isRemovalOnly
 
   const getTitle = () => {
     // A blank title while loading: the header (and its height) shows only with a title or a
     // back arrow
     if (isLoading) return ' '
+    if (isExistingSafeMode) return t('Already in your wallet')
     if (isRemovalOnly)
       return accountsToRemove.length > 1 ? t('Remove accounts') : t('Remove account')
-    if (accountsToRemove.length) return t('Review changes')
+    if (accountsToRemove.length || isUpdatingKeysOnly) return t('Review changes')
+    if (privacyPoolsAccount) return t('Personalize account')
     if (!fields.length) return t('No new accounts added')
+    if (isAlreadyAddedOnly) return t('Already in your wallet')
 
     return fields.length > 1 ? t('Personalize accounts') : t('Personalize account')
   }
 
-  const getProceedText = () => {
-    if (isAdding) return isRemovalOnly ? t('Removing...') : t('Adding...')
-    if (!isRemovalOnly) return t('Proceed')
+  // Made by the flow rather than imported: a new recovery phrase, a Safe or a Privacy Pools account
+  const isNewAccount =
+    isFromNewSeed || (!!safeCreateDraft && !isExistingSafeMode) || !!privacyPoolsAccount
 
-    return accountsToRemove.length > 1
-      ? t('Remove {{count}} accounts', { count: accountsToRemove.length })
-      : t('Remove 1 account')
+  const getProceedText = () => {
+    if (isExistingSafeMode) return t('Open dashboard')
+    if (isRemovalOnly) {
+      if (isAdding) return t('Removing...')
+
+      return accountsToRemove.length > 1
+        ? t('Remove {{count}} accounts', { count: accountsToRemove.length })
+        : t('Remove 1 account')
+    }
+    if (accountsToRemove.length) {
+      if (isAdding) return t('Updating...')
+
+      const updateCount = newAccountsCount + updatingKeysCount + accountsToRemove.length
+      return updateCount === 1
+        ? t('Update 1 account')
+        : t('Update {{count}} accounts', { count: updateCount })
+    }
+    if (isAlreadyAddedOnly) return isAdding ? t('Saving...') : t('Done')
+    if (isUpdatingKeysOnly) {
+      if (isAdding) return t('Updating...')
+
+      return updatingKeysCount === 1
+        ? t('Update 1 account')
+        : t('Update {{count}} accounts', { count: updatingKeysCount })
+    }
+    if (isNewAccount) {
+      if (isAdding || privacyPools.isAdding) return t('Creating...')
+
+      // A Privacy Pools account is shown instead of the fields
+      const createCount = privacyPoolsAccount ? 1 : fields.length
+      return createCount === 1
+        ? t('Create 1 account')
+        : t('Create {{count}} accounts', { count: createCount })
+    }
+    if (isAdding) return t('Adding...')
+
+    return newAccountsCount === 1
+      ? t('Add 1 account')
+      : t('Add {{count}} accounts', { count: newAccountsCount })
   }
 
   return {
     control,
     fields,
+    // Listed apart from the new accounts
+    updatingKeysAddrs,
+    alreadyAddedAddrs,
     isLoading,
-    // No way back while loading, nor after a sync
-    hasBackButton: !isLoading && !isSyncedMode,
-    isAdding,
+    // No way back while loading
+    hasBackButton: !isLoading,
+    isAdding: isAdding || privacyPools.isAdding,
     addedAccounts,
     accountsToRemove,
     removedAccounts,
     isRemovalOnly,
-    canProceed: (!!fields.length || !!accountsToRemove.length) && !isAdding,
+    canProceed: privacyPoolsAccount
+      ? privacyPools.canProceed
+      : (!!fields.length || !!accountsToRemove.length) && !isAdding,
     handleSaveAccountName,
-    handleProceed,
+    handleProceed: privacyPoolsAccount ? privacyPools.handleProceed : handleProceed,
+    // Shown instead of the accounts, when the flow adds a Privacy Pools account
+    privacyPoolsAccount,
+    addedPrivacyPoolsAccount: privacyPools.addedAccount,
+    handleSavePrivacyPoolsAccountName: privacyPools.handleSaveName,
     title: getTitle(),
     proceedText: getProceedText(),
     removalOnlyText: isRemovalOnly

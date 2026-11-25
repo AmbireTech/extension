@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import IS_SHEET_HEADER_FLOATING from '@common/components/BottomSheet/isSheetHeaderFloating'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
@@ -115,7 +116,8 @@ const SelectContainer: FC<Props> = ({
             autoFocus={false}
             setInputRef={setInputRef}
             control={control}
-            containerStyle={spacings.mb}
+            // A floating sheet header pads itself below the search
+            containerStyle={IS_SHEET_HEADER_FLOATING ? spacings.mb0 : spacings.mb}
           />
         )}
         {menuHeader}

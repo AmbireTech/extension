@@ -8,9 +8,10 @@ import {
   useIsBottomSheetOpen,
   useIsInsideBottomSheet
 } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
 import InputPassword from '@common/components/InputPassword'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import { DEV_PREFILLED_PASSWORD, isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import { CURRENT_PASSWORD_AUTOFILL_PROPS } from '@common/constants/textInput'
@@ -20,12 +21,12 @@ import useNavigation from '@common/hooks/useNavigation'
 import useSecretConfirmation from '@common/hooks/useSecretConfirmation'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings from '@common/styles/spacings'
+import common from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import textStyles from '@common/styles/utils/text'
 
 interface Props {
   onPasswordConfirmed: (password: string) => void
-  onBackButtonPress: () => void
   text: string
   title?: string
   onCustomSubmit?: (password: string) => void
@@ -56,7 +57,6 @@ const FOCUS_DELAY = 600
 
 const PasswordConfirmation: React.FC<Props> = ({
   onPasswordConfirmed,
-  onBackButtonPress,
   text,
   title = isMobile ? 'Confirm app password' : 'Confirm extension password',
   onCustomSubmit,
@@ -236,10 +236,19 @@ const PasswordConfirmation: React.FC<Props> = ({
 
   return (
     <View style={flexbox.flex1}>
-      <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-        {isWeb && <PanelBackButton onPress={onBackButtonPress} style={spacings.mrSm} />}
-        <PanelTitle title={panelTitle} style={isWeb ? textStyles.left : textStyles.center} />
-      </View>
+      {/* In a sheet the header row adds the X and spaces the title itself */}
+      <SheetHeaderRow style={spacings.mbLg}>
+        <View
+          style={[
+            flexbox.directionRow,
+            flexbox.alignCenter,
+            common.fullWidth,
+            !isInsideBottomSheet && spacings.mbLg
+          ]}
+        >
+          <PanelTitle title={panelTitle} style={textStyles.center} />
+        </View>
+      </SheetHeaderRow>
       {isOfferingBiometrics && isUsingBiometrics ? (
         <BiometricsPrompt
           BiometricsIcon={BiometricsIcon}

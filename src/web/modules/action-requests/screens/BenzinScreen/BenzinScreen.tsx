@@ -13,10 +13,11 @@ import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import PendingRequests from '@common/modules/action-requests/components/PendingRequests'
-import spacings, { SPACING_TY } from '@common/styles/spacings'
-import common from '@common/styles/utils/common'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
+import common, { hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { isExtension } from '@web/constants/browserapi'
 
@@ -30,6 +31,7 @@ const BenzinScreen = () => {
   const { t } = useTranslation()
   const { isNarrowWebLayout } = useCompactLayout()
   const { maxWidthSize } = useWindowSize()
+  const { theme } = useTheme()
 
   const {
     state: { currentUserRequest, visibleUserRequests },
@@ -69,11 +71,7 @@ const BenzinScreen = () => {
   const primaryButton = (
     <Button
       onPress={resolveAction}
-      style={
-        isNarrowWebLayout
-          ? { width: '100%' }
-          : { minWidth: maxWidthSize('s') ? 180 : 120, ...spacings.mlSm }
-      }
+      style={isNarrowWebLayout ? { width: '100%' } : { minWidth: maxWidthSize('s') ? 180 : 120 }}
       hasBottomSpacing={false}
       size={isNarrowWebLayout ? 'regular' : 'large'}
       text={pendingRequests.length ? t('Proceed to Next Request') : t('Close')}
@@ -86,58 +84,54 @@ const BenzinScreen = () => {
     </Button>
   )
 
-  return (
-    <Benzin state={state} topContent={pendingRequestsTopContent}>
-      <FooterGlassView
-        // In a narrow view the footer is a flex sibling under the scroll view, so it stays pinned
-        // to the bottom of the screen without an absolute spacer that would force a scrollbar
-        absolute={!isNarrowWebLayout}
-        fullWidth={isNarrowWebLayout}
-        size={isNarrowWebLayout ? 'sm' : 'md'}
-        style={isNarrowWebLayout ? spacings.pbSm : undefined}
-        innerContainerStyle={
-          isNarrowWebLayout
-            ? { width: '100%', flexDirection: 'column', alignItems: 'stretch', gap: SPACING_TY }
-            : undefined
-        }
-      >
-        {isNarrowWebLayout ? (
-          <>
-            {primaryButton}
-            <View
-              style={[
-                flexbox.directionRow,
-                flexbox.alignCenter,
-                { width: '100%', minWidth: 0, gap: SPACING_TY }
-              ]}
-            >
-              {!!state?.handleOpenExplorer && (
+  // In a narrow view the footer is laid out as on mobile: the secondary actions side by side
+  // above the main one. It is a flex sibling under the scroll view, so it stays at the bottom
+  if (isNarrowWebLayout) {
+    return (
+      <Benzin state={state} topContent={pendingRequestsTopContent}>
+        <View
+          style={[
+            spacings.phSm,
+            spacings.pvSm,
+            {
+              rowGap: SPACING_SM,
+              borderTopWidth: 1,
+              borderTopColor: theme.primaryBorder,
+              backgroundColor: hexToRgba(theme.primaryBackground, 0.75)
+            }
+          ]}
+        >
+          <View style={[flexbox.directionRow, flexbox.alignCenter, { columnGap: SPACING_SM }]}>
+            {!!state?.showCopyBtn && !!state?.handleCopyText && (
+              <View style={flexbox.flex1}>
+                <CopyButton handleCopyText={state.handleCopyText} />
+              </View>
+            )}
+            {!!state?.handleOpenExplorer && (
+              <View style={flexbox.flex1}>
                 <OpenExplorerButton
                   handleOpenExplorer={state.handleOpenExplorer}
                   disableOpenExplorerBtn={state.disableOpenExplorerBtn}
                 />
-              )}
-              {!!state?.showCopyBtn && !!state?.handleCopyText && (
-                <CopyButton handleCopyText={state.handleCopyText} />
-              )}
-            </View>
-          </>
-        ) : (
-          <>
-            {!!state?.handleOpenExplorer && (
-              <OpenExplorerButton
-                handleOpenExplorer={state.handleOpenExplorer}
-                disableOpenExplorerBtn={state.disableOpenExplorerBtn}
-              />
+              </View>
             )}
-            <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-              {!!state?.showCopyBtn && !!state?.handleCopyText && (
-                <CopyButton handleCopyText={state.handleCopyText} />
-              )}
-              {primaryButton}
-            </View>
-          </>
+          </View>
+          {primaryButton}
+        </View>
+      </Benzin>
+    )
+  }
+
+  return (
+    <Benzin state={state} topContent={pendingRequestsTopContent}>
+      <FooterGlassView>
+        {!!state?.handleOpenExplorer && (
+          <OpenExplorerButton
+            handleOpenExplorer={state.handleOpenExplorer}
+            disableOpenExplorerBtn={state.disableOpenExplorerBtn}
+          />
         )}
+        {primaryButton}
       </FooterGlassView>
     </Benzin>
   )

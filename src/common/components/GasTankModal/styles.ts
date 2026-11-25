@@ -19,7 +19,6 @@ type Style = {
 const getStyles = (theme: ThemeProps) =>
   StyleSheet.create<Style>({
     containerInnerWrapper: {
-      ...(isWeb ? common.shadowSecondary : {}),
       maxHeight: isWeb ? 600 : 'auto'
     },
     content: {
@@ -38,7 +37,7 @@ const getStyles = (theme: ThemeProps) =>
       ...spacings.mbXl
     },
     overlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: 'white',
       opacity: 0.5,
       zIndex: 1

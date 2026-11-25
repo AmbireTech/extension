@@ -74,7 +74,8 @@ const Modals: FC<ModalsProps> = ({
             title={t(warningToPromptBeforeSign.title)}
             description={t(warningToPromptBeforeSign.text || '')}
             primaryButtonText={t('Proceed')}
-            secondaryButtonText={t('Cancel')}
+            // A closable warning has the sheet's X instead
+            secondaryButtonText={slowPaymasterRequest ? t('Cancel') : undefined}
             onPrimaryButtonPress={acknowledgeWarning}
             onSecondaryButtonPress={dismissWarning}
             type={warningToPromptBeforeSign?.type}
@@ -159,7 +160,8 @@ const Modals: FC<ModalsProps> = ({
         humanization={signAccountOpState.humanization}
         isPaymasterSlow={slowPaymasterRequest}
         accountOp={signAccountOpState.accountOp}
-        actionType={actionType}
+        // A Safe owner approval is signed in the Safe request's window, so it isn't moved to one
+        actionType={actionType === 'safeOwnerApproval' ? undefined : actionType}
         cancelReq={() => {
           void trezorDeeplinkService.signingCleanup()
 
@@ -173,6 +175,12 @@ const Modals: FC<ModalsProps> = ({
             return transferDispatch({
               type: 'method',
               params: { method: 'cancelSignReq', args: [] }
+            })
+          }
+          if (actionType === 'safeOwnerApproval') {
+            return signAccountOpDispatch({
+              type: 'method',
+              params: { method: 'callSafeOwnerApprovalMethod', args: ['cancelSignReq', []] }
             })
           }
 

@@ -45,13 +45,11 @@ html.theme-light #root {
 }
 
 .light-scrollbar {
-  --scroll-thumb-color: #6770b360;
-  --scroll-track-color: #dddff766;
+  --scroll-thumb-color: #00000059;
 }
 
 .dark-scrollbar {
-  --scroll-thumb-color: #ffffff1f;
-  --scroll-track-color: #202022;
+  --scroll-thumb-color: #ffffff59;
 }
 
 /* Sets specific size for the extension popup, otherwise, it shrinks to fit the content */
@@ -90,25 +88,38 @@ textarea[data-seed-phrase-input='true']::selection {
   background-color: rgba(128, 128, 255, 0.35);
 }
 
+/* The browsers' scrollbars take no room: floatingScrollbar.ts draws a floating one instead, as on iOS */
 ::-webkit-scrollbar {
-  width: 4px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--scroll-track-color);
-  border-radius: 13px;
+/* Firefox has no ::-webkit-scrollbar */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: none;
+  }
 }
 
-::-webkit-scrollbar-thumb {
+.floating-scrollbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  border-radius: 2px;
   background: var(--scroll-thumb-color);
-  border-radius: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease-out;
 }
 
-/* The dashboard pages hide their scrollbars while the carousel moves between them, and show
-   them again once it settles on one. Transparent rather than removed, so nothing is laid out again */
-[data-pager-moving='true'] ::-webkit-scrollbar-track,
-[data-pager-moving='true'] ::-webkit-scrollbar-thumb {
-  background: transparent;
+.floating-scrollbar[data-visible='true'] {
+  opacity: 1;
+  transition: none;
+}
+
+/* The dashboard pages hide their scrollbars while the carousel moves between them */
+body:has([data-pager-moving='true']) .floating-scrollbar {
+  opacity: 0;
 }
 
 .button-icon g,

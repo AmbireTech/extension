@@ -2,7 +2,7 @@ import { Signature, toBeHex, Transaction, TransactionLike } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import { Hex } from '@ambire-common/interfaces/hex'
-import { ExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
+import { HdExternalKey, KeystoreSignerInterface } from '@ambire-common/interfaces/keystore'
 import { addHexPrefix } from '@ambire-common/utils/addHexPrefix'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
@@ -15,11 +15,11 @@ import {
 import { getUnsignedTransaction } from '@common/modules/hardware-wallets/utils/getUnsignedTransaction'
 
 class LedgerSigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: LedgerControllerInterface | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: HdExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 
@@ -59,14 +59,16 @@ class LedgerSigner implements KeystoreSignerInterface {
       )
     }
 
-    if (!this.controller.isUnlocked(path, this.key.addr)) {
-      throw new ExternalSignerError(
-        `The Ledger is unlocked, but with different seed or passphrase, because the address of the retrieved key is different than the key expected (${shortenAddress(
-          this.key.addr,
-          13
-        )})`
-      )
-    }
+    if (!this.controller.isUnlocked(path, this.key.addr)) throw this.#getWrongKeyError()
+  }
+
+  #getWrongKeyError() {
+    return new ExternalSignerError(
+      `The Ledger is unlocked, but with different seed or passphrase, because the address of the retrieved key is different than the key expected (${shortenAddress(
+        this.key.addr,
+        13
+      )})`
+    )
   }
 
   #normalizeSignature(rawSignature: LedgerSignature): string {
@@ -197,7 +199,16 @@ class LedgerSigner implements KeystoreSignerInterface {
     txnRequest,
     eip7702Auth
   }) => {
-    await this.#prepareForSigning()
+    // Intentionally skip #prepareForSigning() here, as in sign7702: it unlocks
+    // via getAddress, which opens the official Ethereum app between the 7702
+    // authorization and this txn, both signed in "Ambire Signer". The key is
+    // checked below instead, against the signer recovered from the signed txn.
+    if (!this.controller) {
+      throw new ExternalSignerError(
+        'Something went wrong when preparing Ledger to sign. Please try again or contact support if the problem persists.',
+        { sendCrashReport: true }
+      )
+    }
 
     try {
       const maxPriorityFeePerGas = txnRequest.maxPriorityFeePerGas ?? txnRequest.gasPrice
@@ -229,19 +240,21 @@ class LedgerSigner implements KeystoreSignerInterface {
       const transactionBytes = hexStringToUint8Array(strippedTxn)
 
       const path = getHdPathFromTemplate(this.key.meta.hdPathTemplate, this.key.meta.index)
-      const res = await this.controller!.signTransaction(path, transactionBytes)
+      const res = await this.controller.signTransactionTypeFour(path, transactionBytes)
 
       const signature = Signature.from({
         r: res.r,
         s: res.s,
         v: Signature.getNormalizedV(res.v)
       })
-      const signedSerializedTxn = Transaction.from({
+      const signedTxn = Transaction.from({
         ...unsignedTxn,
         signature
-      }).serialized
+      })
+      if (signedTxn.from?.toLowerCase() !== this.key.addr.toLowerCase())
+        throw this.#getWrongKeyError()
 
-      return signedSerializedTxn as Hex
+      return signedTxn.serialized as Hex
     } catch (e: any) {
       throw new ExternalSignerError(
         e?.message || 'ledgerSigner: singing failed for unknown reason',

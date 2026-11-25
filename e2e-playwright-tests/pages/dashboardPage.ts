@@ -230,7 +230,8 @@ export class DashboardPage extends BasePage {
 
     const wrapper = this.page.getByTestId(selectors.sigtool.dappWrapper)
     const button = this.page.getByTestId(selectors.sigtool.sigToolIconButton)
-    const disconnect = this.page.locator(selectors.sigtool.disconnectDapp)
+    // A sheet's hidden copy, which it measures its height with, has the same text
+    const disconnect = this.page.locator(selectors.sigtool.disconnectDapp).filter({ visible: true })
 
     // define element box
     const box = await wrapper.boundingBox()

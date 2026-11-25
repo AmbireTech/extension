@@ -1,11 +1,11 @@
 import React, { memo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import ChainlistIcon from '@common/assets/svg/ChainlistIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { isWeb } from '@common/config/env'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
@@ -17,7 +17,7 @@ import Option from '../Option'
 const CHAINLIST_URL = 'https://chainlist.org/'
 
 interface Props {
-  sheetRef: ReturnType<typeof useModalize>['ref']
+  sheetRef: ReturnType<typeof useSheetRef>['ref']
   closeBottomSheet: () => void
 }
 

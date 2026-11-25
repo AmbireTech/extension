@@ -61,7 +61,7 @@ test.describe.skip('Mock Relayer down', { tag: '@relayer' }, () => {
       )
 
       // close modal
-      await pages.basePage.click(selectors.transaction.backButton)
+      await pages.basePage.click(selectors.transaction.closeSheetButton)
     })
 
     await test.step('set token to USDC on OP', async () => {
@@ -133,7 +133,7 @@ test.describe.skip('Mock Relayer down', { tag: '@relayer' }, () => {
       )
 
       // close modal
-      await pages.basePage.click(selectors.transaction.backButton)
+      await pages.basePage.click(selectors.transaction.closeSheetButton)
     })
 
     await test.step('set token to USDC on OP', async () => {

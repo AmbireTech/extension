@@ -1,7 +1,6 @@
-import { BlurView } from 'expo-blur'
-import React, { useCallback, useMemo } from 'react'
+import { BlurTargetView, BlurView } from 'expo-blur'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import QRCode from 'react-native-qrcode-svg'
 
 import { APP_DATA_SYNC_UR_TYPE } from '@ambire-common/libs/appDataSync/appDataSync'
@@ -9,6 +8,7 @@ import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import CopyText from '@common/components/CopyText'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
@@ -53,6 +53,7 @@ interface Props {
 const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
   const { t } = useTranslation()
   const { theme, themeType } = useTheme()
+  const placeholderBlurTargetRef = useRef<View>(null)
   const {
     accounts,
     selectedAddrs,
@@ -71,7 +72,7 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
     reset,
     qrCbor
   } = useAppDataSyncExport()
-  const { ref: selectSheetRef, open: openSelectSheet, close: closeSelectSheet } = useModalize()
+  const { ref: selectSheetRef, open: openSelectSheet, close: closeSelectSheet } = useSheetRef()
   const [bindPlaceholderAnim, placeholderAnimStyle] = useHover({ preset: 'opacityInverted' })
   const { width: windowWidth, height: windowHeight } = useWindowDimensions()
 
@@ -183,16 +184,21 @@ const ExportToExtensionSheet = ({ sheetRef, closeBottomSheet }: Props) => {
             ]}
             {...bindPlaceholderAnim}
           >
-            <View style={[StyleSheet.absoluteFill, flexbox.center]} pointerEvents="none">
+            <BlurTargetView
+              ref={placeholderBlurTargetRef}
+              style={[StyleSheet.absoluteFill, flexbox.center]}
+              pointerEvents="none"
+            >
               <QRCode value={PLACEHOLDER_QR_VALUE} size={qrSize} quietZone={0} ecl="L" />
-            </View>
+            </BlurTargetView>
             {/* On native `filter: blur()` is a no-op (web-only CSS), so overlay a real BlurView,
                 plus a dark scrim, to leave only a faint hint of the dummy QR code behind */}
             <BlurView
               intensity={PLACEHOLDER_BLUR_INTENSITY}
               // Android renders a barely visible tint instead of a blur unless this
-              // experimental method is on, leaving the dummy QR code recognizable
-              experimentalBlurMethod="dimezisBlurView"
+              // method is on and pointed at the QR code, leaving it recognizable
+              blurMethod="dimezisBlurView"
+              blurTarget={placeholderBlurTargetRef}
               blurReductionFactor={PLACEHOLDER_BLUR_INTENSITY / MAX_ANDROID_BLUR_RADIUS}
               tint="dark"
               style={[StyleSheet.absoluteFill, { backgroundColor: theme.backdrop }]}

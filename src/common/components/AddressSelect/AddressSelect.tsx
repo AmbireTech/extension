@@ -1,8 +1,7 @@
 import Fuse from 'fuse.js'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ColorValue, Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Contact } from '@ambire-common/interfaces/addressBook'
 import { AddressState } from '@ambire-common/interfaces/domains'
@@ -23,7 +22,9 @@ import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
+import IS_SHEET_HEADER_FLOATING from '@common/components/BottomSheet/isSheetHeaderFloating'
 import NearIdenticalAddressSuggestion from '@common/components/AddressSelect/NearIdenticalAddressSuggestion'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { InputProps } from '@common/components/Input'
 import { INPUT_HEIGHT, INPUT_WRAPPER_HEIGHT } from '@common/components/Input/styles'
 import PrivacyPoolsAccountAvatar from '@common/components/PrivacyPoolsAccountAvatar'
@@ -35,7 +36,7 @@ import {
 } from '@common/components/Select/types'
 import Text from '@common/components/Text'
 import TitleAndIcon from '@common/components/TitleAndIcon'
-import { isMobile, isPrivacyPoolsEnabled, isWeb } from '@common/config/env'
+import { isMobile, isPrivacyPoolsSupported, isWeb } from '@common/config/env'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
 import useHover, { AnimatedPressable } from '@common/hooks/useHover'
@@ -76,6 +77,14 @@ export interface AddressSelectProps extends InputProps {
    * default input background, so the input stays visible.
    */
   inputBackgroundColor?: ColorValue
+  /** Addresses left out of the list, e.g. the ones the flow has already picked */
+  hiddenAddresses?: string[]
+  /**
+   * Shows a valid address like any other value, without the "Valid address" label and the
+   * success border, e.g. where several fields would all show it. The validation still runs.
+   * The empty line kept under the input for a message is left out too.
+   */
+  isSuccessHidden?: boolean
   // The props below drive the "Add to address book" prompt, which only applies when the
   // address is a transfer recipient. Other flows can leave them out.
   addressValidationMsg?: string
@@ -120,6 +129,8 @@ const SelectedMenuOption: React.FC<{
   }
   inputBackgroundColor?: ColorValue
   plainAddressMaxLength?: number
+  isSuccessHidden?: boolean
+  customBottomLabel?: ReactNode
 }> = ({
   selectRef,
   filteredContacts,
@@ -137,7 +148,9 @@ const SelectedMenuOption: React.FC<{
   autoFocus = false,
   addressHighlight,
   inputBackgroundColor,
-  plainAddressMaxLength
+  plainAddressMaxLength,
+  isSuccessHidden,
+  customBottomLabel
 }) => {
   const [isFocused, setIsFocused] = useState(false)
   const { theme } = useTheme()
@@ -179,6 +192,9 @@ const SelectedMenuOption: React.FC<{
   // On mobile the near-identical address wraps to show all of its mistyped chars, so the
   // input grows to fit it instead of keeping its single line height
   const shouldGrowInput = isMobile && !!addressHighlight?.differingFrom
+  // In a floating sheet header, the gap to the list is the same as in every other sheet, so
+  // no empty line is kept under the input for a message
+  const isInFloatingSheetHeader = type === 'input' && IS_SHEET_HEADER_FLOATING
 
   const content = useMemo(
     () => (
@@ -192,26 +208,32 @@ const SelectedMenuOption: React.FC<{
         autoFocus={autoFocus}
         // Address entry never benefits from the keyboard's autocorrect
         autoCorrect={false}
-        containerStyle={styles.inputContainer}
+        containerStyle={isInFloatingSheetHeader ? spacings.mb0 : styles.inputContainer}
         backgroundColor={inputBackgroundColor}
         resolvedAddress={resolvedAddress}
         resolvedAddressType={resolvedAddressType}
         addressHighlight={addressHighlight}
         plainAddressMaxLength={plainAddressMaxLength}
+        isSuccessHidden={isSuccessHidden}
+        preventJumpOnValidationChange={isInFloatingSheetHeader ? false : undefined}
+        customBottomLabel={customBottomLabel}
         isRecipientDomainResolving={isRecipientDomainResolving}
         value={address}
         // On mobile input mode we still need details view when poisoning highlight exists,
         // because highlight rendering lives in the detailed address row.
         withDetails={type === 'selected-menu-option' || (isMobile && !!addressHighlight)}
         onChangeText={setAddress}
-        onScanAddress={type === 'input' ? setAddress : undefined}
+        // A disabled field takes no address, typed or scanned
+        onScanAddress={type === 'input' && !disabled ? setAddress : undefined}
         // The collapsed row is a button that opens the contacts menu, so the scan
         // icon is rendered next to the dropdown arrow to stay reachable without it.
         childrenBeforeButtons={
-          isButtonMode && !address ? <AddressScanButton onScanned={setAddress} /> : undefined
+          isButtonMode && !address && !disabled ? (
+            <AddressScanButton onScanned={setAddress} />
+          ) : undefined
         }
         disabled={disabled}
-        editable={!isButtonMode}
+        editable={!isButtonMode && !disabled}
         pointerEvents={isButtonMode ? 'none' : 'auto'}
         renderConfirmAddress={renderConfirmAddress}
         onFocus={() => {
@@ -231,7 +253,7 @@ const SelectedMenuOption: React.FC<{
         button={
           type === 'input' || address ? undefined : isMenuOpen ? <UpArrowIcon /> : <DownArrowIcon />
         }
-        buttonProps={{ onPress: () => setIsMenuOpen(true) }}
+        buttonProps={{ onPress: () => setIsMenuOpen(!isMenuOpen) }}
         inputWrapperStyle={{
           ...(type === 'input' && { backgroundColor: theme.neutral400 }),
           ...(shouldGrowInput && { height: 'auto', minHeight: INPUT_WRAPPER_HEIGHT })
@@ -269,13 +291,18 @@ const SelectedMenuOption: React.FC<{
       shouldGrowInput,
       inputBackgroundColor,
       plainAddressMaxLength,
+      isSuccessHidden,
+      isInFloatingSheetHeader,
+      customBottomLabel,
       type,
       validation
     ]
   )
 
   return isButtonMode ? (
-    <Pressable onPress={() => setIsMenuOpen(true)}>{content}</Pressable>
+    <Pressable disabled={disabled} onPress={() => setIsMenuOpen(true)}>
+      {content}
+    </Pressable>
   ) : (
     content
   )
@@ -300,8 +327,11 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   withShortenedAddresses,
   includeSelectedAccount = false,
   inputBackgroundColor,
+  hiddenAddresses,
+  isSuccessHidden,
   privacyPoolsAccounts,
-  onSelectPrivacyPoolsAccount
+  onSelectPrivacyPoolsAccount,
+  customBottomLabel
 }) => {
   const { isNarrowWebLayout } = useCompactLayout()
   const { state: account } = useController('SelectedAccountController', 'account')
@@ -319,7 +349,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const contactAddressMaxLength = isNarrowWebLayout || withShortenedAddresses ? 16 : undefined
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const { state: contacts } = useController('AddressBookController', 'contacts')
   const {
     state: { domains }
@@ -328,12 +358,12 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
     preset: 'opacityInverted'
   })
   // Split like the accounts list: Privacy Pools accounts, having no address, are private. Without
-  // them, the list is as it was
-  const hasAccountsTabs = isPrivacyPoolsEnabled && !!onSelectPrivacyPoolsAccount
+  // them, the list is as it was. Where they are not released yet, the Private tab is only a teaser
+  const hasAccountsTabs = isPrivacyPoolsSupported && !!onSelectPrivacyPoolsAccount
   // The search stays when switching tabs, so it filters the newly opened tab too
   const [activeTab, setActiveTab] = useState<AccountsTab>('public')
 
-  const selectableContacts = useMemo<Contact[]>(() => {
+  const contactsWithSelectedAccount = useMemo<Contact[]>(() => {
     if (!includeSelectedAccount || !account) return contacts
     const isSelectedAccountIncluded = contacts.some(
       ({ address: contactAddress }) => contactAddress.toLowerCase() === account.addr.toLowerCase()
@@ -349,6 +379,15 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       ...contacts
     ]
   }, [account, contacts, includeSelectedAccount])
+
+  const selectableContacts = useMemo<Contact[]>(() => {
+    if (!hiddenAddresses?.length) return contactsWithSelectedAccount
+
+    const hiddenAddressSet = new Set(hiddenAddresses.map((addr) => addr.toLowerCase()))
+    return contactsWithSelectedAccount.filter(
+      ({ address: contactAddress }) => !hiddenAddressSet.has(contactAddress.toLowerCase())
+    )
+  }, [contactsWithSelectedAccount, hiddenAddresses])
 
   // Computed once for the whole list, so the rows don't each subscribe to the keystore.
   // Safe accounts are left out, like in the accounts list
@@ -403,11 +442,7 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
   const filteredPrivacyPoolsAccounts = useMemo(
     () =>
       privacyPoolsAccounts && onSelectPrivacyPoolsAccount
-        ? filterPrivacyPoolsAccountsBySearch(
-            privacyPoolsAccounts,
-            privacyPoolsSearch,
-            t('Privacy Pools')
-          )
+        ? filterPrivacyPoolsAccountsBySearch(privacyPoolsAccounts, privacyPoolsSearch, t)
         : NO_PRIVACY_POOLS_ACCOUNTS,
     [privacyPoolsAccounts, onSelectPrivacyPoolsAccount, privacyPoolsSearch, t]
   )
@@ -441,9 +476,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const privacyPoolsAccountOptions = useMemo(
     () =>
-      filteredPrivacyPoolsAccounts.map(({ seedId, label }) => ({
+      filteredPrivacyPoolsAccounts.map(({ seedId, label, sourceLabel }) => ({
         value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
-        // Named like in the accounts list: the account has no name or address of its own
+        // Named like in the accounts list: the account has no address of its own
         label: (
           <View
             testID={`address-book-privacy-pools-account-${seedId}`}
@@ -452,10 +487,10 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
             <View style={flexbox.flex1}>
               <Text fontSize={14} weight="medium" numberOfLines={1}>
-                {t('Private account')}
+                {label}
               </Text>
               <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
-                {t('Added from {{seedLabel}}', { seedLabel: label })}
+                {t('From {{seedLabel}}', { seedLabel: sourceLabel })}
               </Text>
             </View>
           </View>
@@ -666,6 +701,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           addressHighlight={selectedAddressHighlight}
           inputBackgroundColor={inputBackgroundColor}
           plainAddressMaxLength={contactAddressMaxLength}
+          isSuccessHidden={isSuccessHidden}
+          customBottomLabel={customBottomLabel}
         />
       )
     },
@@ -681,7 +718,9 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
       renderConfirmAddress,
       selectedAddressHighlight,
       inputBackgroundColor,
-      contactAddressMaxLength
+      contactAddressMaxLength,
+      isSuccessHidden,
+      customBottomLabel
     ]
   )
 
@@ -724,6 +763,8 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
             disabled={disabled}
             addressHighlight={selectedAddressHighlight}
             plainAddressMaxLength={contactAddressMaxLength}
+            isSuccessHidden={isSuccessHidden}
+            customBottomLabel={customBottomLabel}
           />
         )}
         containerStyle={spacings.mb0}

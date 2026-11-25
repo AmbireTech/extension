@@ -2,8 +2,8 @@ import { Signature, Transaction } from 'ethers'
 
 import ExternalSignerError from '@ambire-common/classes/ExternalSignerError'
 import {
-  ExternalKey,
   ExternalSignerController,
+  HdExternalKey,
   KeystoreSignerInterface
 } from '@ambire-common/interfaces/keystore'
 import { getHdPathFromTemplate } from '@ambire-common/utils/hdPath'
@@ -27,11 +27,11 @@ import { getUnsignedTransaction } from '@common/modules/hardware-wallets/utils/g
  * request → scan → response signing flow.
  */
 class QrHardwareSigner implements KeystoreSignerInterface {
-  key: ExternalKey & { isExternallyStored: boolean }
+  key: HdExternalKey & { isExternallyStored: boolean }
 
   controller: QrHardwareController | null = null
 
-  constructor(_key: ExternalKey) {
+  constructor(_key: HdExternalKey) {
     this.key = { ..._key, isExternallyStored: true }
   }
 

@@ -3,6 +3,7 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from '
 import { StyleSheet, View, ViewStyle } from 'react-native'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
+import { Key } from '@ambire-common/interfaces/keystore'
 import { canBecomeSmarter } from '@ambire-common/libs/account/account'
 import CopyIcon from '@common/assets/svg/CopyIcon'
 import AccountAddress from '@common/components/AccountAddress'
@@ -60,6 +61,8 @@ const Account = ({
   withKeyType = true,
   renderLeftChildren,
   renderRightChildren,
+  renderBadgesEndChildren,
+  renderExtraBadges,
   inverseInteractionColors = false,
   options = {
     withOptionsButton: false
@@ -72,6 +75,8 @@ const Account = ({
   withSafeSignerBadges = false,
   isOnSecondaryBackground = false,
   withBadges = true,
+  withAccountStatus = true,
+  badgeKeys,
   onExtraHeightChange
 }: {
   account: AccountInterface
@@ -84,6 +89,13 @@ const Account = ({
   /** Rendered before the avatar, e.g. a checkbox when the row is pickable */
   renderLeftChildren?: () => React.ReactNode
   renderRightChildren?: () => React.ReactNode
+  /**
+   * Rendered at the end of the badges row, centered under the last action, e.g. the arrow that
+   * opens the details of a key, so it does not crowd the copy button on mobile
+   */
+  renderBadgesEndChildren?: () => React.ReactNode
+  /** Rendered after the other badges, e.g. the networks a key is a Safe owner on */
+  renderExtraBadges?: () => React.ReactNode
   options?: {
     withOptionsButton?: boolean
     markSelected?: boolean
@@ -106,6 +118,16 @@ const Account = ({
   isOnSecondaryBackground?: boolean
   /** Set to false to show only the avatar, the label and the address, without the badges row */
   withBadges?: boolean
+  /**
+   * Set to false where the row stands for a key of another account, e.g. an owner of a Safe, so
+   * it leaves out this account's own pending requests and the chains its Safe is deployed on
+   */
+  withAccountStatus?: boolean
+  /**
+   * The keys the key badge names, in place of the account's own, e.g. the one key a row of the
+   * keys list stands for, as other kinds of keys can share its address
+   */
+  badgeKeys?: Pick<Key, 'type'>[]
   /**
    * Called with how much taller than `ACCOUNT_SELECT_ACCOUNT_HEIGHT` the row is, mostly because
    * its badges wrapped, so a list that lays its rows out by height can make room for it. Such a
@@ -182,15 +204,19 @@ const Account = ({
   /**
    * Measured in a layout effect rather than on layout, so that a list that positions its
    * rows by height has this one's before it is painted, instead of jumping to it.
+   * Skipped when no list asks for it, as the measuring is synchronous and costs every row
+   * a render more.
    */
   const updateContentHeight = useCallback(() => {
+    if (!onExtraHeightChange) return
+
     // Relative to the row's content, as the native measuring needs an ancestor
     const content = measureLayoutSync(contentHeightRef.current, contentRef.current)
     if (!content) return
 
     const height = Math.round(content.height)
     setContentHeight((prev) => (prev === height ? prev : height))
-  }, [])
+  }, [onExtraHeightChange])
 
   // Whenever what the badges show changes, as that may change how many lines they take. Anything
   // else that resizes the row is caught by the content's `onLayout`, at worst a frame later.
@@ -317,12 +343,16 @@ const Account = ({
     </View>
   )
 
+  // With no label, e.g. a key that is not an account of the wallet, the address is the title
+  const hasLabel = !!preferences.label
+
   const address = (
     <View style={[flexbox.directionRow, flexbox.alignCenter]}>
       <AccountAddress
         {...reverseLookup}
         containerStyle={spacings.pb0}
         address={addr}
+        fontSize={hasLabel ? undefined : 14}
         plainAddressMaxLength={maxAccountAddrLength}
         // On web the copy button fits next to the address, unlike on mobile, where it
         // sits next to the account to keep the touch targets apart
@@ -351,9 +381,11 @@ const Account = ({
         ) : (
           balance !== null && <BalanceBadge balance={balance} />
         ))}
-      {!!pendingRequestsCount && <PendingRequestsBadge count={pendingRequestsCount} />}
+      {withAccountStatus && !!pendingRequestsCount && (
+        <PendingRequestsBadge count={pendingRequestsCount} />
+      )}
       {!!withKeyType &&
-        (safeDeployedChainIds.length ? (
+        (withAccountStatus && safeDeployedChainIds.length ? (
           // The Safe key badge, telling also which chains the Safe is deployed on
           <Badge
             type="secondaryAccent"
@@ -395,7 +427,7 @@ const Account = ({
             </View>
           </Badge>
         ) : (
-          <AccountKeysBadge account={account} accountKeys={accountKeys} />
+          <AccountKeysBadge account={account} accountKeys={badgeKeys || accountKeys} />
         ))}
       <AccountBadges
         accountData={account}
@@ -404,6 +436,7 @@ const Account = ({
         withViewOnly={!withKeyType}
       />
       {withSafeSignerBadges && <SafeSignerBadges account={account} />}
+      {renderExtraBadges && renderExtraBadges()}
     </View>
   )
 
@@ -489,7 +522,7 @@ const Account = ({
               showTooltip
             />
             <View style={[flexbox.flex1, flexbox.justifyCenter]}>
-              {label}
+              {hasLabel && label}
               {address}
             </View>
             {actions}
@@ -498,7 +531,16 @@ const Account = ({
             <>
               {/* A view rather than a border, as per-side borders can leave stray lines on native */}
               <View style={styles.separator} />
-              {badges}
+              {renderBadgesEndChildren ? (
+                <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                  <View style={flexbox.flex1}>{badges}</View>
+                  <View style={[flexbox.alignCenter, { width: ACTION_ICON_SIZE }]}>
+                    {renderBadgesEndChildren()}
+                  </View>
+                </View>
+              ) : (
+                badges
+              )}
             </>
           )}
         </View>

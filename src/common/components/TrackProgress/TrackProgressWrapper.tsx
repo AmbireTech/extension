@@ -52,14 +52,14 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
         <Button
           onPress={handleClose}
           hasBottomSpacing={false}
-          size={isCompactLayout ? 'regular' : 'smaller'}
+          size="regular"
           type={routeStatus !== 'failed' ? secondaryButtonType : 'primary'}
           text={secondaryButtonText}
           testID="track-progress-secondary-button"
           style={
             isCompactLayout
               ? flexbox.flex1
-              : { ...(routeStatus !== 'failed' ? spacings.mrLg : spacings.mlLg), minWidth: 144 }
+              : { ...(routeStatus !== 'failed' ? spacings.mr : spacings.ml), minWidth: 144 }
           }
         />
       ) : (
@@ -71,7 +71,7 @@ const TrackProgressWrapper: FC<TrackProgressProps> = ({
         hasBottomSpacing={false}
         style={isCompactLayout ? flexbox.flex1 : { width: isRequestWindow ? 160 : 104 }}
         text={t('Close')}
-        size={isCompactLayout ? 'regular' : 'smaller'}
+        size="regular"
         type={routeStatus !== 'failed' ? 'primary' : secondaryButtonType}
         testID="track-progress-primary-button"
       />

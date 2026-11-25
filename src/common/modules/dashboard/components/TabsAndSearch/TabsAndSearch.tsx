@@ -2,7 +2,7 @@ import React, { FC } from 'react'
 import { View } from 'react-native'
 import { useSearchParams } from 'react-router-dom'
 
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import { TabType } from '@common/modules/dashboard/components/TabsAndSearch/Tabs/Tab/Tab'
@@ -25,9 +25,7 @@ const TabsAndSearch: FC<Props> = ({ openTab, setOpenTab, sessionId, tabs }) => {
   const { minWidthSize } = useWindowSize()
 
   return (
-    <View
-      style={[styles.container, isWeb && minWidthSize(480) && spacings.pl, isMobile && spacings.ph]}
-    >
+    <View style={[styles.container, (isMobile || minWidthSize(480)) && spacings.ph]}>
       <Tabs
         // Only the extension routes on the search params. On mobile the open tab lives
         // in state, and writing it would navigate the dashboard to a location that
