@@ -1,4 +1,4 @@
-import { INVISIBLE_CHARS, isBip39Word } from '@common/modules/auth/utils/seedPhrase'
+import { INVISIBLE_CHARS, isBip39WordOrFragment } from '@common/modules/auth/utils/seedPhrase'
 
 type RedactionRule = {
   pattern: RegExp
@@ -13,7 +13,7 @@ const SEED_PHRASE_MAX_WORDS = 24
 // Reuses the recovery phrase import's word check, so every phrase the import
 // accepts is also redacted here: full words and 4+ letter fragments (e.g. "aban"),
 // in any letter case (e.g. auto-capitalized by a mobile text field).
-const areAllValidBip39Words = (words: string[]): boolean => words.every(isBip39Word)
+const areAllValidBip39Words = (words: string[]): boolean => words.every(isBip39WordOrFragment)
 
 // The import also splits words on invisible characters (e.g. zero-width spaces)
 // that `\s` doesn't match, so they separate words here too.

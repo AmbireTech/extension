@@ -50,7 +50,8 @@ export type SeedPhraseToken = {
    */
   isActive: boolean
   /**
-   * The active word is the beginning of a BIP39 word, but not a complete one yet
+   * The active word is the beginning of a BIP39 word, but not yet a full word or
+   * a fragment of at least 4 letters (e.g. "aba")
    */
   isBeingTyped: boolean
   isInvalidWord: boolean
@@ -78,7 +79,8 @@ const expandBip39WordPrefix = (word: string) => {
  * at least 4 letters that stands for one (e.g. "aban", "abando"). This is how the
  * recovery phrase import reads each word.
  */
-export const isBip39Word = (word: string) => ENGLISH_WORDS.has(expandBip39WordPrefix(word))
+export const isBip39WordOrFragment = (word: string) =>
+  ENGLISH_WORDS.has(expandBip39WordPrefix(word))
 
 const isBip39WordPrefix = (prefix: string) => {
   const lowercasePrefix = prefix.toLowerCase()
@@ -133,7 +135,7 @@ export const normalizeSeedPhrase = (seed: string) => getSeedPhraseWords(seed).jo
 
 /**
  * Splits the raw input into word and whitespace tokens and marks the words that
- * are not part of the BIP39 english wordlist.
+ * are neither english BIP39 words nor fragments of at least 4 letters of one.
  *
  * @param caretPosition - the caret position in the input, or `null` when the input
  * is not focused. The word at the caret is not marked as invalid while it can still
@@ -150,7 +152,7 @@ export const getSeedPhraseTokens = (
     startIndex += chunk.length
 
     const isWhitespace = isWhitespaceChar(chunk[0]!)
-    const isWord = !isWhitespace && isBip39Word(chunk)
+    const isWord = !isWhitespace && isBip39WordOrFragment(chunk)
     const isActive =
       !isWhitespace &&
       caretPosition !== null &&
