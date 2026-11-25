@@ -288,7 +288,6 @@ const useAccountsList = ({
     isFiltered: !!debouncedSearch,
     keyExtractor,
     getItemLayout,
-    getAccountItemHeight,
     onAccountExtraHeightChange,
     onListContentSizeChange,
     onListLayout,

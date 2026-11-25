@@ -43,14 +43,7 @@ const DRAG_HANDLE_WIDTH = SPACING_SM + SPACING_MI + DRAG_ICON_WIDTH
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
-  const {
-    accounts,
-    control,
-    isFiltered,
-    keyExtractor,
-    getAccountItemHeight,
-    onAccountExtraHeightChange
-  } = useAccountsList()
+  const { accounts, control, isFiltered, keyExtractor } = useAccountsList()
   const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
@@ -178,8 +171,8 @@ const AccountsSettingsScreen = () => {
       attributes: any
     ) => {
       return (
-        // Transparent outer wrapper: the draggable list positions items by their measured
-        // onLayout height (margins are ignored), so the gap between items must be padding here
+        // Transparent outer wrapper: the list moves rows by their measured height, so the gap
+        // between them is padding here, part of the row
         <View style={spacings.pbTy}>
           <View
             style={[
@@ -195,26 +188,22 @@ const AccountsSettingsScreen = () => {
             ]}
           >
             {!isFiltered && (
-              <View {...listeners} {...attributes}>
-                <Pressable
-                  style={[
-                    flexbox.alignCenter,
-                    flexbox.justifyCenter,
-                    spacings.pvMi,
-                    isWeb && spacings.phSm,
-                    isMobile && spacings.plSm,
-                    isMobile && spacings.prMi,
-                    isWeb && spacings.mbMi,
-                    //@ts-ignore
-                    { cursor: 'grab', touchAction: 'manipulation' }
-                  ]}
-                >
-                  <DragIndicatorIcon
-                    color={isDragging ? theme.primary : theme.iconPrimary}
-                    width={DRAG_ICON_WIDTH}
-                  />
-                </Pressable>
-              </View>
+              <Pressable
+                style={[
+                  flexbox.alignCenter,
+                  flexbox.justifyCenter,
+                  spacings.pvMi,
+                  spacings.plSm,
+                  spacings.prMi
+                ]}
+                {...listeners}
+                {...attributes}
+              >
+                <DragIndicatorIcon
+                  color={isDragging ? theme.primary : theme.iconPrimary}
+                  width={DRAG_ICON_WIDTH}
+                />
+              </Pressable>
             )}
             <View style={flexbox.flex1}>
               <Account
@@ -226,7 +215,6 @@ const AccountsSettingsScreen = () => {
                 containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
                 withReceive={!isMobile}
                 withCopy={!isMobile}
-                onExtraHeightChange={onAccountExtraHeightChange}
               />
             </View>
           </View>
@@ -239,22 +227,8 @@ const AccountsSettingsScreen = () => {
       theme.iconPrimary,
       shortenAccountAddr,
       accountOptions,
-      onAccountExtraHeightChange,
       isFiltered
     ]
-  )
-  // Adapts the draggable row renderer to the plain list shown while searching
-  const renderSearchResult = useCallback(
-    ({ item, index }: { item: AccountInterface; index: number }) =>
-      renderItem(item, index, false, undefined, undefined),
-    [renderItem]
-  )
-
-  // The list positions its rows by these heights, so a row whose badges wrapped is given
-  // the room it grew by
-  const getDraggableItemHeight = useCallback(
-    (item: AccountInterface) => getAccountItemHeight(item.addr),
-    [getAccountItemHeight]
   )
 
   return (
@@ -290,14 +264,14 @@ const AccountsSettingsScreen = () => {
         <Search control={control} containerStyle={spacings.mbLg} />
         <View style={[flexbox.flex1]} ref={accountsContainerRef}>
           <ScrollableWrapper
-            // Search results are ordered by relevance, so there is no order to rearrange in them
-            type={isFiltered ? WRAPPER_TYPES.FLAT_LIST : WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+            type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+            // Search results are ordered by relevance, so there is no order to rearrange in them.
+            // The same list stays mounted, so searching doesn't rebuild every row
+            dragEnabled={!isFiltered}
             data={displayedAccounts}
             keyExtractor={keyExtractor}
             onDragEnd={handleAccDragEnd}
-            renderItem={renderSearchResult}
             renderDraggableItem={renderItem}
-            itemHeight={getDraggableItemHeight}
             keyboardDismissMode="on-drag"
             ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
           />

@@ -13,9 +13,11 @@ export type DraggableFlatListProps<T> = {
   ) => React.ReactNode
   onDragEnd: (fromIndex: number, toIndex: number) => void
   getItemLayout?: FlatListProps<T>['getItemLayout']
-  // When provided, rows are positioned at this height instead of measured dynamically - one
-  // for all of them, or one per row when they differ
-  itemHeight?: number | ((item: T, index: number) => number)
+  /**
+   * Set to false to keep the list mounted while nothing can be dragged, e.g. while showing
+   * search results. Native only - the web swaps to a plain list instead
+   */
+  dragEnabled?: boolean
   scrollableWrapperStyles?: ViewStyle
   contentContainerStyle?: StyleProp<ViewStyle>
   keyboardShouldPersistTaps?: ScrollViewProps['keyboardShouldPersistTaps']
