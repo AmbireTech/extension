@@ -34,12 +34,6 @@ const { isTab } = getUiType()
 const TITLE_COLLECTION_NAME_MAX_LENGTH = 24
 const TITLE_TOKEN_ID_MAX_LENGTH = 15
 
-/**
- * Centers both lines of the title. On web a long word still breaks instead of overflowing.
- * `overflowWrap` is missing in the types, so the style is a constant, not an inline object
- */
-const TITLE_STYLE = { textAlign: 'center', overflowWrap: 'anywhere' } as const
-
 export type SelectedCollectible = {
   address: string
   chainId: bigint
@@ -158,14 +152,8 @@ const CollectibleModal = ({
 
     return (
       <>
-        <SheetHeaderRow isTitleAlwaysCentered>
-          <Text
-            fontSize={isTab ? 20 : 18}
-            weight="semiBold"
-            numberOfLines={2}
-            selectable
-            style={TITLE_STYLE}
-          >
+        <SheetHeaderRow>
+          <Text fontSize={isTab ? 20 : 18} weight="semiBold" numberOfLines={2} selectable>
             {title}
           </Text>
         </SheetHeaderRow>
