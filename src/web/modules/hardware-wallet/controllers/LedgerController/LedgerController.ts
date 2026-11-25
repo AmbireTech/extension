@@ -8,6 +8,7 @@ import { normalizeLedgerMessage } from '@ambire-common/libs/ledger/ledger'
 import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/utils/hdPath'
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import { isLedgerEmulator, isProd, LEDGER_EMULATOR_HTTP_URL } from '@common/config/env'
+import { AMBIRE_SIGNER_APP_NAME } from '@common/modules/hardware-wallet/constants/ledger'
 import { LedgerControllerInterface } from '@common/modules/hardware-wallet/interfaces/ledgerController'
 import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
@@ -15,6 +16,7 @@ import {
   DeviceModelId as LedgerDeviceModels,
   DiscoveredDevice,
   LEDGER_VENDOR_ID,
+  OpenAppDeviceAction,
   UserInteractionRequired
 } from '@ledgerhq/device-management-kit'
 import { Signature, SignerEthBuilder, TypedDataDomain } from '@ledgerhq/device-signer-kit-ethereum'
@@ -41,6 +43,8 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
   signerEth: ReturnType<SignerEthBuilder['build']> | null = null
 
   walletSDK: ReturnType<DeviceManagementKitBuilder['build']> | null = null
+
+  #sessionId: string | null = null
 
   type = 'ledger'
 
@@ -265,6 +269,7 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
 
       // Get device information
       const sessionId = await this.walletSDK.connect({ device })
+      this.#sessionId = sessionId
 
       const connectedDevice = this.walletSDK.getConnectedDevice({ sessionId })
       this.deviceModel = connectedDevice.modelId
@@ -348,9 +353,11 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
       onCompleted: (output: any) => T
       errorMessage: string
       isSign?: boolean
+      /** False for device actions that complete without an output (e.g. opening an app) */
+      isOutputExpected?: boolean
     }
   ): Promise<T> {
-    const { onCompleted, errorMessage, isSign } = options
+    const { onCompleted, errorMessage, isSign, isOutputExpected = true } = options
 
     const subscriptionPromise = new Promise<T>((resolve, reject) => {
       let subscription: Subscription | undefined // so it is always defined inside the subscribe callback
@@ -393,7 +400,7 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
           if (response.status !== 'completed') return
 
           subscription?.unsubscribe()
-          if (response?.output) {
+          if (response?.output || !isOutputExpected) {
             resolve(onCompleted(response.output))
           } else {
             reject(new ExternalSignerError(normalizeLedgerMessage(errorMessage)))
@@ -529,6 +536,51 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
   }
 
   /**
+   * Opens the given app on the device. The user confirms opening it on-device,
+   * unless it's already open.
+   */
+  #openApp(appName: string) {
+    if (!this.walletSDK || !this.#sessionId) throw new ExternalSignerError(normalizeLedgerMessage())
+
+    return this.#handleLedgerSubscription<void>(
+      this.walletSDK.executeDeviceAction({
+        sessionId: this.#sessionId,
+        deviceAction: new OpenAppDeviceAction({ input: { appName } })
+      }).observable,
+      {
+        onCompleted: () => undefined,
+        errorMessage: `Failed to open the ${appName} app on the Ledger device`,
+        isSign: true,
+        isOutputExpected: false
+      }
+    )
+  }
+
+  async signTransactionTypeFour(derivationPath: string, transaction: Uint8Array) {
+    // The official Ethereum app rejects type 4 transactions since v1.24.0
+    // ("TransactionType not supported"), so sign them with the sideloaded
+    // "Ambire Signer" app, which signs the 7702 authorization too. DSK always
+    // opens the official app, so open Ambire Signer here and tell DSK to skip it.
+    // Init the session WITHOUT unlocking via getAddress, as in sign7702: unlock
+    // would open the official Ethereum app first.
+    await this.#initSDKSessionIfNeeded()
+    await this.#openApp(AMBIRE_SIGNER_APP_NAME)
+
+    if (!this.signerEth) throw new ExternalSignerError(normalizeLedgerMessage())
+
+    return this.#handleLedgerSubscription<LedgerSignature>(
+      this.signerEth.signTransaction(getHdPathWithoutRoot(derivationPath), transaction, {
+        skipOpenApp: true
+      }).observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign transaction with Ledger device',
+        isSign: true
+      }
+    )
+  }
+
+  /**
    * Attempts to sign an EIP-712 message using the Ledger device. With Ledger DSK lib,
    * if the device does not support direct (clear) EIP-712 signing, it should internally
    * fallback to signing hashes of the message, no additional steps needed.
@@ -595,6 +647,7 @@ class LedgerController implements ExternalSignerController, LedgerControllerInte
     if (this.walletSDK) this.walletSDK.close()
 
     this.walletSDK = null
+    this.#sessionId = null
     this.signerEth = null
     this.unlockedPath = ''
     this.unlockedPathKeyAddr = ''

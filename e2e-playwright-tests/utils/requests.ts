@@ -10,6 +10,11 @@ function categorizeRequests(requests: string[]) {
     'http://localhost:5000/apdu',
     'http://localhost:5000/events'
   ]
+  // Hosts shared by many unrelated projects (e.g. GitHub raw content), so only specific paths are allowed
+  const thirdPartyUrlPrefixAllowlist = [
+    // Token images of the swap & bridge token lists
+    'https://raw.githubusercontent.com/trustwallet/assets/'
+  ]
   const thirdPartyHostsAllowList = [
     // Bundles
     'api.pimlico.io',
@@ -55,7 +60,10 @@ function categorizeRequests(requests: string[]) {
     'coin-images.coingecko.com',
     'cdn.dexscreener.com',
     // swap&bridge to tokens
-    'files.cow.fi'
+    'files.cow.fi',
+    // Token images of the swap & bridge token lists
+    's2.coinmarketcap.com',
+    'ethena.fi'
   ]
 
   const reqs = requests.reduce(
@@ -70,6 +78,7 @@ function categorizeRequests(requests: string[]) {
       const isThirdPartyAllowed =
         thirdPartyExactMatchAllowlist.includes(urlStr) ||
         thirdPartyHostsAllowList.includes(url.hostname) ||
+        thirdPartyUrlPrefixAllowlist.some((prefix) => urlStr.startsWith(prefix)) ||
         isCloudflareChallenge
 
       if (url.hostname === 'relayer.ambire.com' && url.pathname.includes('/multi-hints')) {

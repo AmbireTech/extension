@@ -10,6 +10,7 @@ import { getHdPathFromTemplate, getHdPathWithoutRoot } from '@ambire-common/util
 import hexStringToUint8Array from '@ambire-common/utils/hexStringToUint8Array'
 import wait from '@ambire-common/utils/wait'
 import { isProd } from '@common/config/env'
+import { AMBIRE_SIGNER_APP_NAME } from '@common/modules/hardware-wallet/constants/ledger'
 import { buildLedgerContextModule } from '@common/modules/hardware-wallet/libs/buildLedgerContextModule'
 import {
   installLedgerAppOverSession,
@@ -21,6 +22,7 @@ import {
   DeviceModelId,
   DeviceStatus,
   DiscoveredDevice,
+  OpenAppDeviceAction,
   UserInteractionRequired
 } from '@ledgerhq/device-management-kit'
 import { SignerEthBuilder, TypedDataDomain } from '@ledgerhq/device-signer-kit-ethereum'
@@ -429,6 +431,52 @@ class LedgerTransportService {
     )
   }
 
+  /**
+   * Opens the given app on the device. The user confirms opening it on-device,
+   * unless it's already open.
+   */
+  #openApp = async (appName: string): Promise<void> => {
+    await this.#ensureSession()
+    if (!this.#dmk || !this.#sessionId) throw new Error('Could not reconnect to the Ledger device.')
+
+    return this.#handleLedgerSubscription<void>(
+      this.#dmk.executeDeviceAction({
+        sessionId: this.#sessionId,
+        deviceAction: new OpenAppDeviceAction({ input: { appName } })
+      }).observable,
+      {
+        onCompleted: () => undefined,
+        errorMessage: `Failed to open the ${appName} app on the Ledger device`,
+        isSign: true,
+        isOutputExpected: false
+      }
+    )
+  }
+
+  /**
+   * The official Ethereum app rejects type 4 transactions since v1.24.0
+   * ("TransactionType not supported"), so sign them with the sideloaded
+   * "Ambire Signer" app, which signs the 7702 authorization too. DSK always
+   * opens the official app, so open Ambire Signer first and tell DSK to skip it.
+   */
+  signTransactionTypeFour = async (
+    path: string,
+    rawTxHex: string
+  ): Promise<LedgerTransportSignature> => {
+    await this.#openApp(AMBIRE_SIGNER_APP_NAME)
+    const signerEth = await this.#ensureSession()
+    return this.#handleLedgerSubscription<LedgerTransportSignature>(
+      signerEth.signTransaction(getHdPathWithoutRoot(path), hexStringToUint8Array(rawTxHex), {
+        skipOpenApp: true
+      }).observable,
+      {
+        onCompleted: (output) => output,
+        errorMessage: 'Failed to sign transaction with Ledger device',
+        isSign: true
+      }
+    )
+  }
+
   signTypedData = async (
     path: string,
     typedData: LedgerTypedData
@@ -592,9 +640,11 @@ class LedgerTransportService {
       onCompleted: (output: any) => T
       errorMessage: string
       isSign?: boolean
+      /** False for device actions that complete without an output (e.g. opening an app) */
+      isOutputExpected?: boolean
     }
   ): Promise<T> {
-    const { onCompleted, errorMessage, isSign } = options
+    const { onCompleted, errorMessage, isSign, isOutputExpected = true } = options
     const blockingInteractions = isSign
       ? [UserInteractionRequired.UnlockDevice]
       : [UserInteractionRequired.UnlockDevice, UserInteractionRequired.ConfirmOpenApp]
@@ -634,7 +684,7 @@ class LedgerTransportService {
 
           subscription?.unsubscribe()
           this.#rejectSigningSubscription = null
-          if (response?.output) resolve(onCompleted(response.output))
+          if (response?.output || !isOutputExpected) resolve(onCompleted(response.output))
           else reject(new Error(errorMessage))
         },
         error: (error: any) => {
