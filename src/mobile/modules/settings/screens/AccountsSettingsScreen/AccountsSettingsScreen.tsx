@@ -40,6 +40,27 @@ import { SMART_SETTINGS_ACCOUNT_PARAM } from '@mobile/modules/settings/screens/A
 const DRAG_ICON_WIDTH = 10
 // Its horizontal padding plus the icon
 const DRAG_HANDLE_WIDTH = SPACING_SM + SPACING_MI + DRAG_ICON_WIDTH
+// A constant, so the memoized rows skip the re-renders of the list
+const ACCOUNT_CONTAINER_STYLE = { ...spacings.mb0, ...spacings.pvTy }
+// About the rows that fit on a phone screen. A row is costly to mount and all of the first
+// batch is mounted before anything on the screen shows, so the rest come in the next batches.
+const INITIAL_ROWS_TO_RENDER = 6
+
+/**
+ * Whether a frame has passed since the screen mounted, so the list mounts after the
+ * header and the search are on screen, instead of holding them back until it is done
+ */
+const useIsAfterFirstFrame = () => {
+  const [isAfterFirstFrame, setIsAfterFirstFrame] = useState(false)
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setIsAfterFirstFrame(true))
+
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  return isAfterFirstFrame
+}
 
 const AccountsSettingsScreen = () => {
   const { t } = useTranslation()
@@ -51,6 +72,7 @@ const AccountsSettingsScreen = () => {
   const { dispatch: accountsDispatch } = useController('AccountsController')
   const { dispatch: mainDispatch } = useController('MainController')
   const { theme } = useTheme()
+  const isListMounted = useIsAfterFirstFrame()
   const {
     ref: sheetRefExportImportKey,
     open: openExportImportKey,
@@ -212,7 +234,7 @@ const AccountsSettingsScreen = () => {
                 options={accountOptions}
                 inverseInteractionColors
                 isSelectable={false}
-                containerStyle={{ ...spacings.mb0, ...spacings.pvTy }}
+                containerStyle={ACCOUNT_CONTAINER_STYLE}
                 withReceive={!isMobile}
                 withCopy={!isMobile}
               />
@@ -263,18 +285,21 @@ const AccountsSettingsScreen = () => {
       <MobileLayoutWrapperMainContent withBackButton title="Accounts">
         <Search control={control} containerStyle={spacings.mbLg} />
         <View style={[flexbox.flex1]} ref={accountsContainerRef}>
-          <ScrollableWrapper
-            type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
-            // Search results are ordered by relevance, so there is no order to rearrange in them.
-            // The same list stays mounted, so searching doesn't rebuild every row
-            dragEnabled={!isFiltered}
-            data={displayedAccounts}
-            keyExtractor={keyExtractor}
-            onDragEnd={handleAccDragEnd}
-            renderDraggableItem={renderItem}
-            keyboardDismissMode="on-drag"
-            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
-          />
+          {isListMounted && (
+            <ScrollableWrapper
+              type={WRAPPER_TYPES.DRAGGABLE_FLAT_LIST}
+              // Search results are ordered by relevance, so there is no order to rearrange in them.
+              // The same list stays mounted, so searching doesn't rebuild every row
+              dragEnabled={!isFiltered}
+              data={displayedAccounts}
+              keyExtractor={keyExtractor}
+              onDragEnd={handleAccDragEnd}
+              renderDraggableItem={renderItem}
+              keyboardDismissMode="on-drag"
+              initialNumToRender={INITIAL_ROWS_TO_RENDER}
+              ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+            />
+          )}
         </View>
 
         <SafeActivationBottomSheet
