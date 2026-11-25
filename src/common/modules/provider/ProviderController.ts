@@ -523,7 +523,7 @@ export class ProviderController {
     const capabilities: any = {}
     const isErc4337Enabled = this.mainCtrl.featureFlags.isFeatureEnabled('erc4337')
     this.mainCtrl.networks.networks.forEach((network: Network) => {
-      const accountState = states[network.chainId.toString()]
+      const accountState = states?.[network.chainId.toString()]
 
       // if there's no account state for some reason (RPC not working atm),
       // we should play it safe and return false for everything
