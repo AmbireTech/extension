@@ -20,6 +20,7 @@ import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import AddressBookContact from '@common/components/AddressBookContact'
 import AddressInput from '@common/components/AddressInput'
 import AddressScanButton from '@common/components/AddressInput/AddressScanButton'
+import Badge from '@common/components/Badge'
 import AddContactBottomSheet from '@common/components/AddressSelect/AddContactBottomSheet'
 import AddToAddressBook from '@common/components/AddressSelect/AddToAddressBook'
 import IS_SHEET_HEADER_FLOATING from '@common/components/BottomSheet/isSheetHeaderFloating'
@@ -476,8 +477,10 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
 
   const privacyPoolsAccountOptions = useMemo(
     () =>
-      filteredPrivacyPoolsAccounts.map(({ seedId, label, sourceLabel }) => ({
+      filteredPrivacyPoolsAccounts.map(({ seedId, label, sourceLabel, isBackedUp }) => ({
         value: `${PRIVACY_POOLS_OPTION_VALUE_PREFIX}${seedId}`,
+        // Its recovery phrase is the only way to get the funds back, so sending waits for a backup
+        disabled: !isBackedUp,
         // Named like in the accounts list: the account has no address of its own
         label: (
           <View
@@ -486,9 +489,22 @@ const AddressSelect: React.FC<AddressSelectProps> = ({
           >
             <PrivacyPoolsAccountAvatar size={32} style={spacings.mrTy} />
             <View style={flexbox.flex1}>
-              <Text fontSize={14} weight="medium" numberOfLines={1}>
-                {label}
-              </Text>
+              <View style={[flexbox.directionRow, flexbox.alignCenter]}>
+                <Text fontSize={14} weight="medium" numberOfLines={1} style={{ flexShrink: 1 }}>
+                  {label}
+                </Text>
+                {!isBackedUp && (
+                  <Badge
+                    type="warning"
+                    text={t('Not backed up')}
+                    tooltipText={t(
+                      'Back up the recovery phrase of this private account before sending to it. Without a backup, the funds could be lost.'
+                    )}
+                    isTooltipOnBadge
+                    style={spacings.mlTy}
+                  />
+                )}
+              </View>
               <Text fontSize={12} appearance="secondaryText" numberOfLines={1}>
                 {t('From {{seedLabel}}', { seedLabel: sourceLabel })}
               </Text>
