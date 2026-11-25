@@ -43,7 +43,7 @@ const KEY_TYPES_WITHOUT_ICON: Key['type'][] = ['internal', 'pq1']
 interface Props {
   account: Account
   /** The account's own keystore keys, so a list of rows subscribes to them only once */
-  accountKeys: Key[]
+  accountKeys: Pick<Key, 'type'>[]
 }
 
 /** Tells the user that the account has no keys to sign with, so it is view-only */

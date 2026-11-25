@@ -5,7 +5,6 @@ import { ScrollView, View } from 'react-native'
 import { SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
-import Alert from '@common/components/Alert'
 import GlassView from '@common/components/GlassView'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
@@ -14,24 +13,26 @@ import useController from '@common/hooks/useController'
 import useSign from '@common/hooks/useSign'
 import useTheme from '@common/hooks/useTheme'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import ErrorInformation from '@common/modules/sign-account-op/components/ErrorInformation'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import Footer from '@common/modules/sign-account-op/components/Footer'
 import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
+import SafeApiFailedAlert from '@common/modules/sign-account-op/components/SafeApiFailedAlert'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
-import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwnerApprovalSheet, {
   useSafeOwnerApproval
 } from '@common/modules/sign-account-op/components/SafeOwnerApproval'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
+import SafeSignatureAdded from '@common/modules/sign-account-op/components/SafeSignatureAdded'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
+import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import SpeedUpNotNeededFee from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpNotNeededFee'
 import SpeedUpStatus from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpStatus'
-import Simulation from '@common/modules/sign-account-op/components/Simulation'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -42,6 +43,7 @@ import {
 } from '@web/components/TabLayoutWrapper/TabLayoutWrapper'
 import useCloseActionWindow from '@web/hooks/useCloseActionWindow'
 import Modals from '@web/modules/sign-account-op/components/Modals/Modals'
+import Pq1SafeApprovalSyncAlert from '@web/modules/sign-account-op/components/Pq1SafeApprovalSyncAlert'
 
 import getStyles from './styles'
 
@@ -148,7 +150,9 @@ const SignAccountOpScreen = () => {
     currentRequest,
     signingStep,
     disabledReason,
-    showSafeSigners
+    showSafeSigners,
+    safeSignatureAdded,
+    handleSafeSignatureAddedExitEnd
   } = useSign({
     handleUpdateStatus,
     signAccountOpState,
@@ -299,6 +303,19 @@ const SignAccountOpScreen = () => {
     signAccountOpState?.readyToSign,
     signAccountOpState?.account.safeCreation
   ])
+
+  if (safeSignatureAdded) {
+    return (
+      <SmallNotificationWindowWrapper>
+        <SafeSignatureAdded
+          signedCount={safeSignatureAdded.signedCount}
+          threshold={safeSignatureAdded.threshold}
+          closesAt={safeSignatureAdded.closesAt}
+          onExitEnd={handleSafeSignatureAddedExitEnd}
+        />
+      </SmallNotificationWindowWrapper>
+    )
+  }
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
 
@@ -569,12 +586,11 @@ const SignAccountOpScreen = () => {
                     )}
                   </>
                 )}
-                {signAccountOpState?.hasSafeApiFailed && (
-                  <Alert
-                    size="sm"
-                    type="warning"
-                    title={t('Safe API failure')}
-                    text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
+                {signAccountOpState?.hasSafeApiFailed && <SafeApiFailedAlert style={spacings.mt} />}
+                {!!signAccountOpState && (
+                  <Pq1SafeApprovalSyncAlert
+                    accountAddr={signAccountOpState.account.addr}
+                    calls={signAccountOpState.accountOp.calls}
                     style={spacings.mt}
                   />
                 )}

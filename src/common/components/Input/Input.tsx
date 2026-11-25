@@ -177,14 +177,20 @@ const Input = ({
               autoCorrect={false}
               autoComplete="off"
               editable={editable ?? !disabled}
+              // A disabled field takes no focus, which a read-only input on web otherwise does
+              focusable={!disabled}
               onBlur={handleOnBlur}
               onFocus={handleOnFocus}
               ref={setAutoFocusInputRef}
               autoFocus={nativeAutoFocus}
+              // Matches `Text`, which ignores the system's text size setting
+              allowFontScaling={false}
               {...rest}
               style={[
                 styles.nativeInput,
                 !!customInputContent && { position: 'absolute', zIndex: -1, opacity: 0 },
+                // Always set, as dropping the key once enabled resets the `pointerEvents` prop on native
+                { pointerEvents: disabled ? 'none' : (rest.pointerEvents ?? 'auto') },
                 nativeInputStyle
               ]}
             />

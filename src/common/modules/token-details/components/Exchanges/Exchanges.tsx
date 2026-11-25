@@ -1,9 +1,9 @@
 import React, { FC, memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Image, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import RightArrowIcon from '@common/assets/svg/RightArrowIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Text from '@common/components/Text'
 import useExchangesInfo from '@common/hooks/useExchangesInfo'
 import { AnimatedPressable, useCustomHover } from '@common/hooks/useHover'
@@ -24,7 +24,7 @@ const Exchanges: FC<Props> = ({ exchanges }) => {
   const { theme } = useTheme()
   const { t } = useTranslation()
   const exchangesInfo = useExchangesInfo(exchanges)
-  const { ref: sheetRef, open, close } = useModalize()
+  const { ref: sheetRef, open, close } = useSheetRef()
   const [bindAnim, animStyle] = useCustomHover({
     property: 'backgroundColor',
     values: {

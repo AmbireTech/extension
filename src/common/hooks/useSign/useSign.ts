@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useModalize } from 'react-native-modalize'
 
 import { EstimationStatus } from '@ambire-common/controllers/estimation/types'
 import { Key } from '@ambire-common/interfaces/keystore'
 import { ISignAccountOpController, SigningStatus } from '@ambire-common/interfaces/signAccountOp'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import useCallSignAccountOpMethod, {
   getSignAccountOpType
 } from '@common/hooks/useCallSignAccountOpMethod'
@@ -62,7 +62,37 @@ type Props = {
   isOneClickSign?: boolean
   updateType?: OneClickEstimationProps['updateType'] | undefined
   hasReachedBottom?: boolean | null
+  /**
+   * Called when a Safe "Sign & Close" is done and the request should close
+   */
   onSafeSignComplete?: () => void
+}
+
+/**
+ * How long the success state after a Safe "Sign & Close" stays visible, including its entry
+ * and exit animations. The request closes once the exit animation ends. Short, so
+ * "Sign & Close" still feels like a one-click action, but long enough to read the message
+ */
+export const SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS = 1300
+
+/**
+ * How long after `closesAt` the request closes anyway when the exit animation never reports
+ * that it ended, e.g. animations paused in a hidden window
+ */
+export const SAFE_SIGN_AND_CLOSE_FALLBACK_DELAY_MS = 1000
+
+/**
+ * A Safe signature added with "Sign & Close", while more signatures are still needed
+ * before the transaction can be sent
+ */
+export type SafeSignatureAddedState = {
+  accountOpId: string
+  signedCount: number
+  threshold: number
+  /**
+   * When the exit animation of the success state ends and the request closes (ms since epoch)
+   */
+  closesAt: number
 }
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
@@ -93,6 +123,9 @@ const useSign = ({
     accountOpId: string
     signingKeyAddr: Key['addr']
   } | null>(null)
+  const [safeSignatureAdded, setSafeSignatureAdded] = useState<SafeSignatureAddedState | null>(null)
+  const onSafeSignCompleteRef = useRef(onSafeSignComplete)
+  const hasClosedAfterSafeSignatureAddedRef = useRef(false)
   const prevIsChooseSignerShown = usePrevious(isChooseSignerShown)
   const { isLedgerConnected } = useLedger()
   const { ensureOneKeyAccess } = useOneKey()
@@ -144,12 +177,12 @@ const useSign = ({
   const [slowRequest, setSlowRequest] = useState<boolean>(false)
   const [slowPaymasterRequest, setSlowPaymasterRequest] = useState<boolean>(true)
   const [acknowledgedWarnings, setAcknowledgedWarnings] = useState<string[]>([])
-  const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useModalize()
+  const { ref: warningModalRef, open: openWarningModal, close: closeWarningModal } = useSheetRef()
   const {
     ref: gasFeeUpdatedModalRef,
     open: openGasFeeUpdatedModal,
     close: closeGasFeeUpdatedModal
-  } = useModalize()
+  } = useSheetRef()
 
   const hasEstimation = useMemo(
     () =>
@@ -471,7 +504,7 @@ const useSign = ({
     handleSignRef.current = handleSign
   }, [handleSign])
 
-  const handleChangeSigningKey = useCallback(
+  const signWithKey = useCallback(
     (signingKeyAddr: Key['addr'], _chosenSigningKeyType: Key['type']) => {
       handleUpdate({ signingKeyAddr, signingKeyType: _chosenSigningKeyType })
 
@@ -490,6 +523,16 @@ const useSign = ({
     [canChangeSigningKey, handleSign, handleUpdate]
   )
 
+  const handleChangeSigningKey = useCallback(
+    (signingKeyAddr: Key['addr'], chosenSigningKeyType: Key['type']) => {
+      // A plain sign replaces a "Sign & Close" that never finished (e.g. a cancelled
+      // password prompt), so its signature doesn't close the request
+      safeSignAndCloseRequest.current = null
+      signWithKey(signingKeyAddr, chosenSigningKeyType)
+    },
+    [signWithKey]
+  )
+
   const handleChangeSigningKeyAndClose = useCallback(
     (signingKeyAddr: Key['addr'], chosenSigningKeyType: Key['type']) => {
       const accountOpId = signAccountOpState?.accountOp.id
@@ -499,9 +542,9 @@ const useSign = ({
         accountOpId,
         signingKeyAddr
       }
-      handleChangeSigningKey(signingKeyAddr, chosenSigningKeyType)
+      signWithKey(signingKeyAddr, chosenSigningKeyType)
     },
-    [handleChangeSigningKey, signAccountOpState?.accountOp.id]
+    [signWithKey, signAccountOpState?.accountOp.id]
   )
 
   useEffect(() => {
@@ -520,8 +563,75 @@ const useSign = ({
     if (!hasSigningCompleted) return
 
     safeSignAndCloseRequest.current = null
-    onSafeSignComplete?.()
-  }, [onSafeSignComplete, signAccountOpState])
+
+    // The signature didn't reach the other owners. The request stays open,
+    // where a warning tells the user about it
+    if (signAccountOpState.hasSafeApiFailed) return
+
+    // A threshold of 0 means the account state isn't loaded, so there's no count to show
+    if (!signAccountOpState.threshold) {
+      onSafeSignCompleteRef.current?.()
+      return
+    }
+
+    const signedCount = signAccountOpState.accountOp.signed?.length || 0
+    // Another owner signed while this signature was being added, so the transaction can
+    // already go through. The request stays open for the user to send it
+    if (signedCount >= signAccountOpState.threshold) return
+
+    hasClosedAfterSafeSignatureAddedRef.current = false
+    // Captured once, as the controller state keeps changing after the signature
+    // (e.g. other owners signing) and the success state must not change under the user
+    setSafeSignatureAdded({
+      accountOpId: pendingRequest.accountOpId,
+      signedCount,
+      threshold: signAccountOpState.threshold,
+      closesAt: Date.now() + SAFE_SIGN_AND_CLOSE_SUCCESS_DURATION_MS
+    })
+  }, [signAccountOpState])
+
+  useEffect(() => {
+    onSafeSignCompleteRef.current = onSafeSignComplete
+  }, [onSafeSignComplete])
+
+  // Another request opened in the same window must not show the success state of this one
+  const currentAccountOpId = signAccountOpState?.accountOp.id
+  const isSafeSignatureAddedToAnotherOp =
+    !!safeSignatureAdded &&
+    !!currentAccountOpId &&
+    safeSignatureAdded.accountOpId !== currentAccountOpId
+  const safeSignatureAddedToCurrentOp = isSafeSignatureAddedToAnotherOp ? null : safeSignatureAdded
+
+  // Dropped for good, so it doesn't show again (and close the window) if the user
+  // goes back to the request it was added to
+  useEffect(() => {
+    if (!isSafeSignatureAddedToAnotherOp) return
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSafeSignatureAdded(null)
+  }, [isSafeSignatureAddedToAnotherOp])
+
+  // Called by the success state once its exit animation ends, so the request doesn't close
+  // while the animation is still running. Closes only once, whichever comes first of this
+  // and the fallback below
+  const handleSafeSignatureAddedExitEnd = useCallback(() => {
+    if (hasClosedAfterSafeSignatureAddedRef.current) return
+
+    hasClosedAfterSafeSignatureAddedRef.current = true
+    onSafeSignCompleteRef.current?.()
+  }, [])
+
+  useEffect(() => {
+    if (!safeSignatureAddedToCurrentOp) return
+
+    const fallbackCloseTimeout = setTimeout(
+      handleSafeSignatureAddedExitEnd,
+      Math.max(0, safeSignatureAddedToCurrentOp.closesAt - Date.now()) +
+        SAFE_SIGN_AND_CLOSE_FALLBACK_DELAY_MS
+    )
+
+    return () => clearTimeout(fallbackCloseTimeout)
+  }, [safeSignatureAddedToCurrentOp, handleSafeSignatureAddedExitEnd])
 
   const handleChangeFeePayerKeyType = useCallback(
     // Done for compatibility with the select component
@@ -917,6 +1027,8 @@ const useSign = ({
     signingStep,
     disabledReason,
     showSafeSigners: shouldShowSafeSigners,
+    safeSignatureAdded: safeSignatureAddedToCurrentOp,
+    handleSafeSignatureAddedExitEnd,
     signingAuthSheetRef,
     cancelSigningAuth,
     signingAuthProps

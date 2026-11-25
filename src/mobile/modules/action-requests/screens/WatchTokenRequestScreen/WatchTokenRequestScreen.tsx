@@ -14,6 +14,7 @@ import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import ActionFooter from '@common/modules/action-requests/components/ActionFooter'
 import ActionHeader from '@common/modules/action-requests/components/ActionHeader'
+import DappSafetyBanners from '@common/modules/action-requests/components/DappSafetyBanners'
 import useWatchToken from '@common/modules/action-requests/hooks/useWatchToken'
 import spacings from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
@@ -48,7 +49,9 @@ const WatchTokenRequestScreen = () => {
     isTokenCustom,
     temporaryToken,
     handleAddToken,
-    tokenDetails
+    tokenDetails,
+    dappSafetyBanners,
+    holdToProceed
   } = useWatchToken()
 
   if (networkWithFailedRPC && networkWithFailedRPC?.length > 0 && !!temporaryToken) {
@@ -71,6 +74,7 @@ const WatchTokenRequestScreen = () => {
         <ActionFooter
           onReject={handleCancel}
           onResolve={handleAddToken}
+          holdToProceed={holdToProceed}
           resolveButtonText={isLoading ? t('Adding token...') : t('Add token')}
           resolveDisabled={
             isLoading ||
@@ -87,6 +91,7 @@ const WatchTokenRequestScreen = () => {
       {/* Scrolls on short screens, so the whole body can be seen */}
       <MobileLayoutWrapperMainContent withScroll withHorizontalPadding={false}>
         <View style={styles.container}>
+          <DappSafetyBanners banners={dappSafetyBanners} style={styles.dappSafetyBanners} />
           <View style={styles.content}>
             <View style={styles.contentHeader}>
               <Text weight="medium" fontSize={20} style={spacings.mbLg} numberOfLines={1}>

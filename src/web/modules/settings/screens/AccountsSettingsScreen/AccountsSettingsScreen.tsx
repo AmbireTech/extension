@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountInterface } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
@@ -10,13 +9,15 @@ import SyncIcon from '@common/assets/svg/SyncIcon'
 import AccountKeysBottomSheet from '@common/components/AccountKeysBottomSheet'
 import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
-import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import { PanelTitle } from '@common/components/Panel/Panel'
 import SafeActivationBottomSheet from '@common/components/SafeActivationBottomSheet'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isPrivacyPoolsEnabled, isPrivacyPoolsSupported } from '@common/config/env'
+import { isPrivacyPoolsSupported } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useController from '@common/hooks/useController'
 import useElementSize from '@common/hooks/useElementSize'
@@ -29,6 +30,7 @@ import useTheme from '@common/hooks/useTheme'
 import useWindowSize from '@common/hooks/useWindowSize'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import { WEB_ROUTES } from '@common/modules/router/constants/common'
 import spacings, { SPACING_SM } from '@common/styles/spacings'
@@ -36,6 +38,7 @@ import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
+import PrivacyPoolsAccountsEmptyState from '@web/modules/privacy-pools/components/PrivacyPoolsAccountsEmptyState'
 import AccountSmartSettingsBottomSheet from '@web/modules/settings/components/Accounts/AccountSmartSettingsBottomSheet'
 import SettingsPageHeader from '@web/modules/settings/components/SettingsPageHeader'
 import { SettingsRoutesContext } from '@web/modules/settings/contexts/SettingsRoutesContext'
@@ -104,7 +107,7 @@ const AccountsSettingsScreen = () => {
     selectPrivacyPoolsAccountId
   )
   const { dispatch: privacyPoolsDispatch } = useController('PrivacyPoolsController')
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const accountsContainerRef = useRef(null)
   const { minElementWidthSize, maxElementWidthSize } = useElementSize(accountsContainerRef)
   const { setCurrentSettingsPage } = useContext(SettingsRoutesContext)
@@ -116,32 +119,37 @@ const AccountsSettingsScreen = () => {
     ref: sheetRefExportImportKey,
     open: openExportImportKey,
     close: closeExportImportKey
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefRemoveAccount,
     open: openRemoveAccount,
     close: closeRemoveAccount
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefRemovePrivacyPoolsAccount,
     open: openRemovePrivacyPoolsAccount,
     close: closeRemovePrivacyPoolsAccount
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
-  } = useModalize()
+  } = useSheetRef()
+  const {
+    ref: privacyPoolsSheetRef,
+    open: openPrivacyPoolsBottomSheet,
+    close: closePrivacyPoolsBottomSheet
+  } = useSheetRef()
   const {
     ref: sheetRefAccountSmartSettings,
     open: openAccountSmartSettings,
     close: closeAccountSmartSettings
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: sheetRefAccountDeploySettings,
     open: openAccountDeploySettings,
     close: closeAccountDeploySettings
-  } = useModalize()
+  } = useSheetRef()
 
   useEffect(() => {
     setCurrentSettingsPage('accounts')
@@ -448,7 +456,7 @@ const AccountsSettingsScreen = () => {
         {isPrivacyPoolsSupported && (
           <AccountsTabs activeTab={activeTab} onTabChange={setActiveTab} />
         )}
-        {isPrivacyPoolsEnabled && activeTab === 'private' ? (
+        {isPrivacyPoolsSupported && activeTab === 'private' ? (
           <ScrollableWrapper
             // Search results are ordered by relevance, so there is no order to rearrange in them
             type={
@@ -459,7 +467,14 @@ const AccountsSettingsScreen = () => {
             onDragEnd={handlePrivacyPoolsAccountDragEnd}
             renderItem={renderPrivacyPoolsSearchResult}
             renderDraggableItem={renderPrivacyPoolsAccount}
-            ListEmptyComponent={<Text>{t('No accounts found')}</Text>}
+            ListEmptyComponent={
+              // Only without any Privacy Pools account - when the search hides them all, nothing was found
+              privacyPoolsAccounts.length ? (
+                <Text>{t('No accounts found')}</Text>
+              ) : (
+                <PrivacyPoolsAccountsEmptyState onAddPress={openPrivacyPoolsBottomSheet} />
+              )
+            }
           />
         ) : (
           <ScrollableWrapper
@@ -496,6 +511,7 @@ const AccountsSettingsScreen = () => {
         }}
         openAddAccountBottomSheet={openBottomSheet}
         showExportImport
+        removableKeys="all"
       />
       <BottomSheet
         id="remove-account-seed-sheet"
@@ -513,21 +529,14 @@ const AccountsSettingsScreen = () => {
         containerInnerWrapperStyles={{ flex: 1 }}
         style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          <PanelBackButton
-            onPress={() => {
-              setAccountToRemove(null)
-              closeRemoveAccount()
-            }}
-            style={spacings.mrSm}
-          />
+        <SheetHeaderRow style={spacings.mbLg}>
           <PanelTitle
             title={t('Remove {{ label }}', {
               label: accountToRemove?.preferences?.label || 'account'
             })}
-            style={text.left}
+            style={text.center}
           />
-        </View>
+        </SheetHeaderRow>
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Text fontSize={16} weight="medium" style={{ ...spacings.mb, textAlign: 'center' }}>
             {t('Are you sure you want to remove this account?')}
@@ -536,6 +545,7 @@ const AccountsSettingsScreen = () => {
         <View style={flexbox.alignCenter}>
           <Button
             testID="confirm-remove-account-button"
+            hasBottomSpacing={false}
             type="danger"
             style={spacings.mtTy}
             text={t('Remove account')}
@@ -553,15 +563,14 @@ const AccountsSettingsScreen = () => {
         containerInnerWrapperStyles={{ flex: 1 }}
         style={{ maxWidth: 432, minHeight: 432, ...spacings.pvLg }}
       >
-        <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mbLg]}>
-          <PanelBackButton onPress={cancelRemovePrivacyPoolsAccount} style={spacings.mrSm} />
+        <SheetHeaderRow style={spacings.mbLg}>
           <PanelTitle
             title={t('Remove {{ label }}', {
               label: privacyPoolsAccountToRemove?.label || t('account')
             })}
-            style={text.left}
+            style={text.center}
           />
-        </View>
+        </SheetHeaderRow>
         <View style={[flexbox.flex1, flexbox.alignCenter, flexbox.justifyCenter]}>
           <Text fontSize={16} weight="medium" style={{ ...spacings.mbSm, textAlign: 'center' }}>
             {t('Are you sure you want to remove the Private account from {{seedLabel}}?', {
@@ -577,6 +586,7 @@ const AccountsSettingsScreen = () => {
         <View style={flexbox.alignCenter}>
           <Button
             testID="confirm-remove-privacy-pools-account-button"
+            hasBottomSpacing={false}
             type="danger"
             style={spacings.mtTy}
             text={t('Remove account')}
@@ -585,6 +595,16 @@ const AccountsSettingsScreen = () => {
         </View>
       </BottomSheet>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      {isPrivacyPoolsSupported && (
+        <AddPrivacyPoolsAccountBottomSheet
+          // The one nested in `AddAccount` is mounted too, and the ids must differ
+          id="accounts-empty-state-add-privacy-pools-account-bottom-sheet"
+          sheetRef={privacyPoolsSheetRef}
+          closeBottomSheet={closePrivacyPoolsBottomSheet}
+          // Closes as the flow moves on to the personalize step
+          onFlowStart={closePrivacyPoolsBottomSheet}
+        />
+      )}
       <SyncBottomSheet
         sheetRef={syncSheetRef}
         closeBottomSheet={closeSyncBottomSheet}

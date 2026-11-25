@@ -45,7 +45,8 @@ type Props = {
   fromAmountFieldMode: 'token' | 'fiat'
   maxFromAmount: string
   validateFromAmount: {
-    message?: string
+    /** A node to style a part of it, e.g. an amount with a tooltip, as nested text. */
+    message?: ReactNode
     success?: boolean
     severity?: 'error' | 'warning' | 'info' | 'success'
   }
@@ -59,6 +60,10 @@ type Props = {
   amountAdjustmentInfo?: AmountAdjustmentInfo | null
   sections?: SectionedSelectProps['sections']
   renderSectionHeader?: SectionedSelectProps['renderSectionHeader']
+  /** For sections whose headers differ in height, or hide when a search leaves them empty. */
+  getSectionHeaderHeight?: SectionedSelectProps['getSectionHeaderHeight']
+  /** The height of each option in the sections, when it is not the select's default. */
+  sectionOptionHeight?: number
   /** Whether the max amount is loading. Defaults to the selected account's portfolio state. */
   isMaxAmountLoading?: boolean
   /** Extra styling for the amount slider's own row, e.g. to give it room before the panel ends. */
@@ -95,6 +100,8 @@ const SendToken: FC<Props> = ({
   amountAdjustmentInfo,
   sections,
   renderSectionHeader,
+  getSectionHeaderHeight,
+  sectionOptionHeight,
   isMaxAmountLoading,
   sliderStyle,
   customBottomLabel
@@ -162,6 +169,8 @@ const SendToken: FC<Props> = ({
       selectStyle={{ ...spacings.plTy, ...spacings.prSm }}
       mode="bottomSheet"
       headerHeight={SECTION_MENU_HEADER_HEIGHT}
+      getSectionHeaderHeight={getSectionHeaderHeight}
+      menuOptionHeight={sectionOptionHeight}
       renderSectionHeader={renderSectionHeader}
       disabled={fromTokenAmountSelectDisabled}
       stickySectionHeadersEnabled

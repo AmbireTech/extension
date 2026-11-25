@@ -6,6 +6,9 @@ import React from 'react'
 import { isWeb } from '@common/config/env'
 import AppInit from '@common/modules/app-init/screens/AppInit'
 import { isExtension } from '@web/constants/browserapi'
+import { installFloatingScrollbar } from '@web/utils/floatingScrollbar'
+
+if (isExtension) installFloatingScrollbar()
 
 const App = () => {
   // Because this tree is only rendered for the extension we check if

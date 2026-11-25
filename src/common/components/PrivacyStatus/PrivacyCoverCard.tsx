@@ -9,7 +9,7 @@ import { BORDER_RADIUS_PRIMARY, hexToRgba } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
-import { COVER_WINDOW_DAYS } from './helpers'
+import { COVER_WINDOW_DAYS } from './constants'
 import PrivacyCommunityNote from './PrivacyCommunityNote'
 import PrivacyCoverShield from './PrivacyCoverShield'
 import { PrivacySeverity, PrivacyStage } from './types'
@@ -26,7 +26,7 @@ const UNCOVERED_BACKGROUND_OPACITY = 0.06
 const UNCOVERED_BORDER_OPACITY = 0.24
 
 const COVER_EXPLANATIONS = {
-  deposit: 'More deposits of this amount make yours harder to find.',
+  deposit: 'More deposits of this amount or more make yours harder to find.',
   send: 'More deposits that can pay this transfer make yours harder to find.'
 } as const
 

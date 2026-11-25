@@ -2,13 +2,15 @@ import { scanFromURLAsync } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppState, Linking, Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
+import { AppState, Linking, View } from 'react-native'
 
 import EditPenIcon from '@common/assets/svg/EditPenIcon'
 import GalleryIcon from '@common/assets/svg/GalleryIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import Input from '@common/components/Input'
 import Text from '@common/components/Text'
 import useNavigation from '@common/hooks/useNavigation'
@@ -40,7 +42,7 @@ const QrReaderScreen = () => {
     ref: manualEntrySheetRef,
     open: openManualEntrySheet,
     close: closeManualEntrySheet
-  } = useModalize()
+  } = useSheetRef()
   const [manualValue, setManualValue] = useState('')
 
   useEffect(() => {
@@ -141,9 +143,18 @@ const QrReaderScreen = () => {
   }, [addToast, t, handleScannedValue])
 
   const rightIcon = permissionGranted ? (
-    <Pressable onPress={handleGalleryPress} hitSlop={12}>
-      <GalleryIcon width={22} height={22} />
-    </Pressable>
+    <HeaderButton
+      icon={
+        <GalleryIcon
+          width={16}
+          height={16}
+          strokeWidth={getHeaderIconStrokeWidth(22, 16)}
+          color={theme.primaryText}
+        />
+      }
+      accessibilityLabel={t('Scan from an image')}
+      onPress={handleGalleryPress}
+    />
   ) : undefined
 
   const footer = permissionGranted ? (
@@ -197,15 +208,26 @@ const QrReaderScreen = () => {
       </MobileLayoutWrapperMainContent>
       <BottomSheet
         id="qr-manual-entry"
-        type="modal"
         sheetRef={manualEntrySheetRef}
         closeBottomSheet={handleManualCancel}
         shouldBeClosableOnDrag={false}
         backgroundColor="secondaryBackground"
+        FooterComponent={
+          <View style={spacings.ptLg}>
+            <Button
+              text={t('Done')}
+              onPress={handleManualSubmit}
+              disabled={!manualValue.trim()}
+              hasBottomSpacing={false}
+            />
+          </View>
+        }
       >
-        <Text fontSize={18} weight="semiBold" style={spacings.mbLg}>
-          {t('Enter QR code data')}
-        </Text>
+        <SheetHeaderRow>
+          <Text fontSize={18} weight="semiBold">
+            {t('Enter QR code data')}
+          </Text>
+        </SheetHeaderRow>
         <Input
           value={manualValue}
           onChangeText={setManualValue}
@@ -214,27 +236,8 @@ const QrReaderScreen = () => {
           onSubmitEditing={handleManualSubmit}
           returnKeyType="done"
           placeholder="wc: ..."
-          containerStyle={spacings.mbLg}
+          containerStyle={spacings.mb0}
         />
-        <View style={[flexbox.directionRow, flexbox.justifyEnd, flexbox.alignCenter]}>
-          <Button
-            type="ghost"
-            text={t('Cancel')}
-            size="large"
-            onPress={handleManualCancel}
-            hasBottomSpacing={false}
-            style={{ height: 44, ...spacings.phLg }}
-          />
-          <Button
-            type="primary"
-            size="large"
-            text={t('Done')}
-            onPress={handleManualSubmit}
-            disabled={!manualValue.trim()}
-            hasBottomSpacing={false}
-            style={{ borderRadius: 50, height: 44, ...spacings.phLg }}
-          />
-        </View>
       </BottomSheet>
     </MobileLayoutContainer>
   )

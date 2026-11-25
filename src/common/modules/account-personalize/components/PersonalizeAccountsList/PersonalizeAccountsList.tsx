@@ -24,6 +24,8 @@ import { SPACING_TY, SPACING_XL } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 
 const ADDING_SECTION_KEY = 'adding'
+const UPDATING_KEYS_SECTION_KEY = 'updatingKeys'
+const ALREADY_ADDED_SECTION_KEY = 'alreadyAdded'
 const REMOVING_SECTION_KEY = 'removing'
 
 // Every row and title is of a fixed height, so the list knows where each one is without
@@ -32,9 +34,9 @@ const CARD_HEIGHT = 68
 // The card lays its content out in a column, the row of an account being removed in a row
 const CARD_STYLE: ViewStyle = { height: CARD_HEIGHT, ...flexbox.justifyCenter }
 const ROW_STYLE: ViewStyle = { height: CARD_HEIGHT }
-// The removing title is apart from the accounts being added above it
-const REMOVING_TITLE_HEIGHT = ACCOUNTS_SECTION_TITLE_HEIGHT + SPACING_XL
-const REMOVING_TITLE_STYLE: ViewStyle = { height: REMOVING_TITLE_HEIGHT, paddingTop: SPACING_XL }
+// A title under another section is apart from the accounts above it
+const LATER_TITLE_HEIGHT = ACCOUNTS_SECTION_TITLE_HEIGHT + SPACING_XL
+const LATER_TITLE_STYLE: ViewStyle = { height: LATER_TITLE_HEIGHT, paddingTop: SPACING_XL }
 // Over the bottom of the list, with a gap above it from the account under it
 const PINNED_TITLE_STYLE: ViewStyle = {
   position: 'absolute',
@@ -53,6 +55,10 @@ const keyExtractor = (item: Item) => (item.kind === 'adding' ? item.field.id : i
 
 type Props = {
   fields: Field[]
+  /** The fields of accounts the wallet has already that get a new key, listed apart */
+  updatingKeysAddrs: Account['addr'][]
+  /** The fields of accounts the wallet has already, with nothing new, listed apart */
+  alreadyAddedAddrs: Account['addr'][]
   control: Control<{ accounts: Account[] }>
   accountsToRemove: Account[]
   isAdding: boolean
@@ -65,13 +71,15 @@ type Props = {
 }
 
 /**
- * The accounts of the personalize step: the ones being added, named here, and the ones being
- * removed. With both, each list gets a title that sticks to the top while it scrolls, and
- * the removing title sticks to the bottom until it scrolls into view - a long list of
- * accounts to add would hide that some are removed.
+ * The accounts of the personalize step: the ones being added, the ones the wallet has already
+ * (getting new keys or not), all named here, and the ones being removed. With more than one, each list gets a
+ * title that sticks to the top while it scrolls, and the removing title sticks to the bottom
+ * until it scrolls into view - a long list of accounts to add would hide that some are removed.
  */
 const PersonalizeAccountsList = ({
   fields,
+  updatingKeysAddrs,
+  alreadyAddedAddrs,
   control,
   accountsToRemove,
   isAdding,
@@ -82,16 +90,24 @@ const PersonalizeAccountsList = ({
   style
 }: Props) => {
   const { t } = useTranslation()
-  const hasBothSections = !!fields.length && !!accountsToRemove.length
 
   const sections = useMemo((): Section[] => {
+    const updatingKeys = new Set(updatingKeysAddrs)
+    const alreadyAdded = new Set(alreadyAddedAddrs)
+    // Named through the form, so each keeps the index of its field
+    const fieldItems = fields.map((field, index) => ({ kind: 'adding' as const, field, index }))
+    const newItems = fieldItems.filter(
+      ({ field }) => !updatingKeys.has(field.addr) && !alreadyAdded.has(field.addr)
+    )
+    const updatingKeysItems = fieldItems.filter(({ field }) => updatingKeys.has(field.addr))
+    const alreadyAddedItems = fieldItems.filter(({ field }) => alreadyAdded.has(field.addr))
+
     const result: Section[] = []
-    if (fields.length) {
-      result.push({
-        key: ADDING_SECTION_KEY,
-        data: fields.map((field, index) => ({ kind: 'adding' as const, field, index }))
-      })
-    }
+    if (newItems.length) result.push({ key: ADDING_SECTION_KEY, data: newItems })
+    if (updatingKeysItems.length)
+      result.push({ key: UPDATING_KEYS_SECTION_KEY, data: updatingKeysItems })
+    if (alreadyAddedItems.length)
+      result.push({ key: ALREADY_ADDED_SECTION_KEY, data: alreadyAddedItems })
     if (accountsToRemove.length) {
       result.push({
         key: REMOVING_SECTION_KEY,
@@ -100,17 +116,20 @@ const PersonalizeAccountsList = ({
     }
 
     return result
-  }, [fields, accountsToRemove])
+  }, [fields, updatingKeysAddrs, alreadyAddedAddrs, accountsToRemove])
+
+  const hasMultipleSections = sections.length > 1
 
   const getSectionTitleHeight = useCallback(
     (section: Section) => {
-      if (section.key === REMOVING_SECTION_KEY) {
-        return fields.length ? REMOVING_TITLE_HEIGHT : ACCOUNTS_SECTION_TITLE_HEIGHT
-      }
+      if (section !== sections[0]) return LATER_TITLE_HEIGHT
+      // Removing always says so, the rest need a title only next to another section
+      if (section.key === REMOVING_SECTION_KEY || hasMultipleSections)
+        return ACCOUNTS_SECTION_TITLE_HEIGHT
 
-      return hasBothSections ? ACCOUNTS_SECTION_TITLE_HEIGHT : 0
+      return 0
     },
-    [fields.length, hasBothSections]
+    [sections, hasMultipleSections]
   )
 
   // A SectionList counts each section's title and (empty) footer as items too, so the
@@ -148,11 +167,19 @@ const PersonalizeAccountsList = ({
   )
 
   // Where the removing title's text starts in the list, past the gap above it
-  const removingTitleOffset =
-    ACCOUNTS_SECTION_TITLE_HEIGHT +
-    fields.length * (CARD_HEIGHT + SPACING_TY) -
-    SPACING_TY +
-    SPACING_XL
+  const removingTitleOffset = useMemo(() => {
+    let offset = 0
+    for (const section of sections) {
+      if (section.key === REMOVING_SECTION_KEY) break
+
+      offset +=
+        getSectionTitleHeight(section) +
+        section.data.length * (CARD_HEIGHT + SPACING_TY) -
+        SPACING_TY
+    }
+
+    return offset + SPACING_XL
+  }, [sections, getSectionTitleHeight])
   // Read on every scroll, so they are kept apart from the renders
   const scrollOffsetRef = useRef(0)
   const listHeightRef = useRef(0)
@@ -163,11 +190,12 @@ const PersonalizeAccountsList = ({
   const updateIsRemovingTitlePinned = useCallback(() => {
     const visibleBottom = scrollOffsetRef.current + listHeightRef.current
     setIsRemovingTitlePinned(
-      hasBothSections &&
+      hasMultipleSections &&
+        !!accountsToRemove.length &&
         !!listHeightRef.current &&
         removingTitleOffset + ACCOUNTS_SECTION_TITLE_HEIGHT > visibleBottom
     )
-  }, [hasBothSections, removingTitleOffset])
+  }, [hasMultipleSections, accountsToRemove.length, removingTitleOffset])
 
   // The accounts to add can change while the screen is up (e.g. "Add more")
   useEffect(() => {
@@ -221,22 +249,30 @@ const PersonalizeAccountsList = ({
 
   const renderSectionHeader = useCallback(
     ({ section }: { section: Section }) => {
+      const style = section !== sections[0] ? LATER_TITLE_STYLE : undefined
       if (section.key === REMOVING_SECTION_KEY) {
         return (
           <AccountsSectionTitle
             title={t('Removing')}
             count={accountsToRemove.length}
             type="error"
-            style={fields.length ? REMOVING_TITLE_STYLE : undefined}
+            style={style}
           />
         )
       }
-      // Adding only needs no title
-      if (!hasBothSections) return null
+      // A single list of accounts to add or name needs no title
+      if (!hasMultipleSections) return null
 
-      return <AccountsSectionTitle title={t('Adding')} count={fields.length} />
+      const getTitle = () => {
+        if (section.key === UPDATING_KEYS_SECTION_KEY) return t('Updating keys')
+        if (section.key === ALREADY_ADDED_SECTION_KEY) return t('Already added')
+
+        return t('Adding')
+      }
+
+      return <AccountsSectionTitle title={getTitle()} count={section.data.length} style={style} />
     },
-    [accountsToRemove.length, fields.length, hasBothSections, t]
+    [sections, accountsToRemove.length, hasMultipleSections, t]
   )
 
   const listFooter = useMemo(
@@ -258,7 +294,7 @@ const PersonalizeAccountsList = ({
         renderItem={renderItem}
         renderSectionHeader={renderSectionHeader}
         getItemLayout={getItemLayout as any}
-        stickySectionHeadersEnabled={hasBothSections}
+        stickySectionHeadersEnabled={hasMultipleSections}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         ListEmptyComponent={ListEmptyComponent}

@@ -11,7 +11,7 @@ import {
 } from '@ambire-common/interfaces/signAccountOp'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
-import Button, { BUTTON_HEIGHT } from '@common/components/Button'
+import ModalHeader from '@common/components/BottomSheet/ModalHeader'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import FooterGlassView from '@common/components/FooterGlassView'
 import HoldToProceedButton from '@common/components/HoldToProceedButton'
@@ -23,20 +23,19 @@ import useCallSignAccountOpMethod, {
   getSignAccountOpType
 } from '@common/hooks/useCallSignAccountOpMethod'
 import useController from '@common/hooks/useController'
+import useTheme from '@common/hooks/useTheme'
 import useSign from '@common/hooks/useSign'
 import Estimation from '@common/modules/sign-account-op/components/Estimation'
 import BundlerWarning from '@common/modules/sign-account-op/components/Estimation/components/bundlerWarning'
 import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
-import CompactFooterButtons, {
-  COMPACT_FEE_TO_BUTTONS_SPACING
-} from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
+import getFeeFooterContainerStyle from '@common/modules/sign-account-op/components/Footer/getFeeFooterContainerStyle'
+import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/components/Footer/CompactFooterButtons'
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
 import SafetyChecksBanner from '@common/modules/sign-account-op/components/SafetyChecksBanner'
 import { ModalsProps } from '@common/modules/sign-account-op/types/modals'
 import KeySelect from '@common/modules/sign-message/components/KeySelect'
-import spacings from '@common/styles/spacings'
-import flexbox from '@common/styles/utils/flexbox'
+import spacings, { SPACING_SM } from '@common/styles/spacings'
 import { getUiType } from '@common/utils/uiType'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
@@ -59,6 +58,8 @@ export type OneClickEstimationProps = {
 const { isRequestWindow, isTab, isSidePanel } = getUiType()
 // A full tab shows the estimation in a centered modal, everywhere else it's a bottom sheet with a dragger
 const isEstimationSheetModal = isTab && !isSidePanel
+// The footer card spans the sheet's full width, out over the padding the sheet gives its footer
+const MOBILE_FOOTER_BLEED_STYLE = { marginHorizontal: -SPACING_SM }
 
 const selectNetworks = (state: AllControllersMappingType['NetworksController']) => state.networks
 
@@ -84,6 +85,7 @@ const OneClickEstimation = ({
   Modals
 }: OneClickEstimationProps) => {
   const { t } = useTranslation()
+  const { theme } = useTheme()
   const { isCompactLayout } = useCompactLayout()
   const { state: networks } = useController('NetworksController', selectNetworks)
   const chainId = signAccountOpController?.accountOp.chainId
@@ -184,6 +186,14 @@ const OneClickEstimation = ({
     hasFreshActionPressRef.current = false
   }, [hasProceeded, signAccountOpController?.fromRequestId])
 
+  // Closing while signing would show the form until the success screen replaces it, so the
+  // sheet loses its X, drag and Android back until then, as the old Back button was disabled
+  const closeBottomSheet = useMemo(() => {
+    if (isSignLoading) return undefined
+
+    return closeEstimationModal
+  }, [closeEstimationModal, isSignLoading])
+
   const markFreshActionPress = useCallback(() => {
     hasFreshActionPressRef.current = true
   }, [])
@@ -196,13 +206,19 @@ const OneClickEstimation = ({
     action()
   }, [])
 
+  const sheetTitle = useMemo(() => {
+    if (updateType === 'Swap&Bridge') return t('Confirm swap')
+    if (updateType === 'Transfer&TopUp') return t('Confirm send')
+
+    return t('Confirm transaction')
+  }, [t, updateType])
+
   // Everything from the network fee down is the sheet's footer, so it stays visible while the
   // transaction details above it scroll
   const footerComponent = useMemo(() => {
     if (!signAccountOpController) return null
 
-    // The wide footer keeps `smaller` buttons, but as tall as the compact ones
-    const signButtonStyle = isCompactLayout ? { width: '100%' as const } : { height: BUTTON_HEIGHT }
+    const signButtonStyle = isCompactLayout ? { width: '100%' as const } : undefined
     const signButton =
       (!!banners && !!banners.length) || isLinkingNewFeePayerToSafe ? (
         <HoldToProceedButton
@@ -216,7 +232,7 @@ const OneClickEstimation = ({
           disabled={isSignDisabled || signingErrors.length > 0}
           onPressIn={markFreshActionPress}
           onHoldComplete={() => runWithFreshActionPress(onSignButtonClick)}
-          size={isCompactLayout ? 'regular' : 'smaller'}
+          size="regular"
           style={signButtonStyle}
         />
       ) : (
@@ -228,18 +244,13 @@ const OneClickEstimation = ({
           disabled={isSignDisabled || signingErrors.length > 0}
           onPressIn={markFreshActionPress}
           onPress={() => runWithFreshActionPress(onSignButtonClick)}
-          size={isCompactLayout ? 'regular' : 'smaller'}
+          size="regular"
           style={signButtonStyle}
         />
       )
 
-    return (
-      <View
-        style={[
-          // Keeps the fee header off the bottom sheet's dragger
-          !isEstimationSheetModal && spacings.ptTy
-        ]}
-      >
+    const footerContent = (
+      <>
         <KeySelect
           isSigning={isSignLoading || !signAccountOpController.readyToSign}
           isChooseSignerShown={isChooseSignerShown}
@@ -312,45 +323,39 @@ const OneClickEstimation = ({
           updateType={updateType}
           hasMarginTop
         />
-        {isCompactLayout ? (
-          <View style={{ paddingTop: COMPACT_FEE_TO_BUTTONS_SPACING }}>
-            <CompactFooterButtons
-              isEvenSplit
-              secondaryActions={
-                <Button
-                  testID="back-button"
-                  // The web secondary background matches the sheet, tertiary keeps it visible
-                  type={isWeb ? 'tertiary' : 'secondary'}
-                  text={t('Back')}
-                  onPress={closeEstimationModal}
-                  hasBottomSpacing={false}
-                  disabled={isSignLoading}
-                  size="regular"
-                  style={flexbox.flex1}
-                />
-              }
-              primaryAction={signButton}
-            />
-          </View>
+        {/* The sheet's X goes back, so signing is the only button */}
+        {isMobile || isCompactLayout ? (
+          <View style={{ paddingTop: COMPACT_FEE_TO_BUTTONS_SPACING }}>{signButton}</View>
         ) : (
           <FooterGlassView size="sm" absolute={false} isSimpleBlur={false} style={spacings.pt}>
-            <Button
-              testID="back-button"
-              type="secondary"
-              text={t('Back')}
-              onPress={closeEstimationModal}
-              hasBottomSpacing={false}
-              disabled={isSignLoading}
-              style={{ width: 98, height: BUTTON_HEIGHT, ...spacings.mrLg }}
-              size="smaller"
-            />
             {signButton}
           </FooterGlassView>
         )}
+      </>
+    )
+
+    // On mobile the fee and the button sit in the card the sign screen's footer uses
+    if (isMobile) {
+      return (
+        <View style={MOBILE_FOOTER_BLEED_STYLE}>
+          <View style={getFeeFooterContainerStyle(theme)}>{footerContent}</View>
+        </View>
+      )
+    }
+
+    return (
+      <View
+        style={[
+          // Keeps the fee header off the bottom sheet's dragger
+          !isEstimationSheetModal && spacings.ptTy
+        ]}
+      >
+        {footerContent}
       </View>
     )
   }, [
     signAccountOpController,
+    theme,
     banners,
     canChangeFee,
     isLinkingNewFeePayerToSafe,
@@ -389,18 +394,18 @@ const OneClickEstimation = ({
         id="estimation-modal"
         sheetRef={estimationModalRef}
         type={isEstimationSheetModal ? 'modal' : 'bottom-sheet'}
-        // NOTE: This must be lower than SigningKeySelect's z-index
-        customZIndex={5}
         style={spacings.pb}
-        closeBottomSheet={isWeb ? undefined : closeEstimationModal}
-        // Dragging the sheet down closes it without calling closeBottomSheet, which would leave the
-        // flow marked as proceeded and the Proceed button disabled. Every other close already resets it
+        closeBottomSheet={closeBottomSheet}
+        // On mobile SafeOwnerApprovalSheet ends its flow from here, as its closeEstimationModal only
+        // closes the sheet. Transfer and Swap reset in both, which is harmless
         onClosed={isMobile ? onEstimationModalClosed : undefined}
         autoOpen={hasProceeded || (isRequestWindow && !!signAccountOpController)}
         isScrollEnabled={isMobile || shouldShowTxnDetails}
-        shouldBeClosableOnDrag={isMobile}
+        shouldBeClosableOnDrag={isMobile && !isSignLoading}
         FooterComponent={footerComponent}
       >
+        {/* The title with the sheet's X, which closes it */}
+        <ModalHeader title={sheetTitle} />
         {!!banners && !!banners.length && (
           <View style={spacings.mbTy}>
             {banners.map((banner) => (

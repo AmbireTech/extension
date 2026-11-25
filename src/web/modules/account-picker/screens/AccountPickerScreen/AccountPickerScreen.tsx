@@ -2,7 +2,6 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
 
-import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
@@ -70,19 +69,8 @@ const AccountPickerScreen = () => {
               size="large"
               disabled={isImportDisabled}
               style={flexbox.alignSelfCenter}
-              text={
-                isLoading
-                  ? t('Importing...')
-                  : !accountPickerState.selectedAccounts.length
-                    ? t('Continue')
-                    : t('Import accounts')
-              }
-              childrenPosition="left"
-            >
-              {!!accountPickerState.selectedAccounts.length && (
-                <ImportAccountIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
-              )}
-            </Button>
+              text={isLoading ? t('Loading...') : t('Continue')}
+            />
           </AccountsOnPageList>
         </Panel>
       </TabLayoutWrapperMainContent>

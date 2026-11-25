@@ -8,7 +8,8 @@ import { WalletKit, WalletKitTypes } from '@reown/walletkit'
 import { Core } from '@walletconnect/core'
 import { pino } from '@walletconnect/logger'
 import { ProposalTypes, SessionTypes } from '@walletconnect/types'
-import { getSdkError } from '@walletconnect/utils'
+import { getSdkError, parseUri } from '@walletconnect/utils'
+import { createMMKV } from 'react-native-mmkv'
 
 type WalletKitType = InstanceType<typeof WalletKit>
 type DispatchFn = (action: MethodAction | Action, windowId?: number, raw?: boolean) => void
@@ -25,14 +26,95 @@ let pendingRestoreSessions:
       candidateChainIds?: number[]
       name?: string
       icon?: string
+      isWcFromInAppBrowser: boolean
     }[]
   | null = null
 
 // Keyed by the session_authenticate request id.
 const pendingAuthenticates = new Map<
   number,
-  { authPayload: any; requesterUrl: string; iss?: string }
+  { authPayload: any; requesterUrl: string; iss?: string; isWcFromInAppBrowser: boolean }
 >()
+
+// The pairing topics of the WalletConnect links opened by an app in the in-app browser. Persisted,
+// so a session restored after a restart is still known to belong to the in-app browser.
+const inAppBrowserPairingsStorage = createMMKV({ id: 'wcInAppBrowserPairings' })
+
+/**
+ * Remembers that a WalletConnect link was opened by an app in the in-app browser, so the session
+ * it creates is connected as `'wc-in-app'` instead of `'wc'`. Call before the link is paired.
+ */
+export const markWcLinkFromInAppBrowser = (uri: string) => {
+  try {
+    const { topic } = parseUri(uri)
+    if (topic) inAppBrowserPairingsStorage.set(topic, true)
+  } catch (e) {
+    console.error('[WalletConnect] Failed to read the pairing of an in-app browser link:', e)
+  }
+}
+
+const isPairingFromInAppBrowser = (pairingTopic?: string) =>
+  !!pairingTopic && inAppBrowserPairingsStorage.getBoolean(pairingTopic) === true
+
+// When each session was approved, which WalletKit doesn't keep. Keyed by session topic.
+const sessionConnectedAtStorage = createMMKV({ id: 'wcSessionsConnectedAt' })
+
+/**
+ * Drops what we keep about pairings and sessions that are gone, e.g. a pairing the user
+ * rejected or a session that ended while the app was closed.
+ */
+const pruneStaleWcRecords = (wk: WalletKitType) => {
+  const activeSessions = Object.values(wk.getActiveSessions())
+  const usedPairingTopics = new Set([
+    ...wk.core.pairing.getPairings().map((pairing) => pairing.topic),
+    ...activeSessions.map((session) => session.pairingTopic)
+  ])
+  inAppBrowserPairingsStorage.getAllKeys().forEach((pairingTopic) => {
+    if (!usedPairingTopics.has(pairingTopic)) inAppBrowserPairingsStorage.remove(pairingTopic)
+  })
+
+  const activeSessionTopics = new Set(activeSessions.map((session) => session.topic))
+  sessionConnectedAtStorage.getAllKeys().forEach((topic) => {
+    if (!activeSessionTopics.has(topic)) sessionConnectedAtStorage.remove(topic)
+  })
+}
+
+/** What the wallet knows about a live WalletConnect session, to show it to the user */
+export const getWcSessionDetails = (topic: string) => {
+  const session = walletKit?.getActiveSessions()[topic]
+  if (!session) return null
+
+  return {
+    expiresInSeconds: Math.max(0, session.expiry - Math.floor(Date.now() / 1000)),
+    // Unknown for sessions approved before it was recorded
+    connectedAt: sessionConnectedAtStorage.getNumber(topic)
+  }
+}
+
+/** Whether the app on the other end of a session answers right now */
+export const pingWcSession = async (topic: string, timeoutMs: number) => {
+  if (!walletKit) return false
+
+  let pingTimeout: ReturnType<typeof setTimeout> | undefined
+  const ping = walletKit.engine.signClient.ping({ topic })
+  // After our timeout it still rejects once WalletKit gives up on it - already reported below
+  ping.catch(() => {})
+  try {
+    await Promise.race([
+      ping,
+      new Promise((_, reject) => {
+        pingTimeout = setTimeout(() => reject(new Error('Ping timed out')), timeoutMs)
+      })
+    ])
+    return true
+  } catch (e) {
+    // An app that is closed, offline or has forgotten the session never answers
+    console.warn('[WalletConnect] A session did not answer a ping:', e)
+    return false
+  } finally {
+    clearTimeout(pingTimeout)
+  }
+}
 
 // WalletKit drops the session before emitting `session_delete`, so keep what we need from it.
 const sessionInfoByTopic = new Map<string, { name: string; pairingTopic: string }>()
@@ -45,6 +127,7 @@ export const isWalletConnectInitialized = () => initialized
  * and WalletKit refuses to pair on an active topic, blocking reconnects with the same code.
  */
 const forgetPairing = async (pairingTopic?: string) => {
+  if (pairingTopic) inAppBrowserPairingsStorage.remove(pairingTopic)
   if (!walletKit || !pairingTopic) return
 
   try {
@@ -274,6 +357,7 @@ export const initWalletConnect = async (
         const { id, params } = proposal
         try {
           const proposerUrl = params.proposer.metadata.url
+          const isWcFromInAppBrowser = isPairingFromInAppBrowser(params.pairingTopic)
 
           const { name, icon } = await getDappMetadata(
             proposerUrl,
@@ -294,7 +378,8 @@ export const initWalletConnect = async (
                 providerId: 1,
                 topic: `temp_wallet_connect_session_${proposal.id}`,
                 tabId: proposal.id,
-                isWalletConnect: true
+                isWalletConnect: true,
+                isWcFromInAppBrowser
               }
             },
             undefined,
@@ -310,7 +395,8 @@ export const initWalletConnect = async (
                 providerId: 1,
                 topic: `temp_wallet_connect_session_${proposal.id}`,
                 tabId: proposal.id,
-                isWalletConnect: true
+                isWalletConnect: true,
+                isWcFromInAppBrowser
               }
             },
             undefined,
@@ -366,7 +452,8 @@ export const initWalletConnect = async (
                 topic,
                 tabId: getWcTabIdFromTopic(topic),
                 isWalletConnect: true,
-                chainId: parseEip155ChainIds([params.chainId])[0]
+                chainId: parseEip155ChainIds([params.chainId])[0],
+                isWcFromInAppBrowser: isPairingFromInAppBrowser(activeSession.pairingTopic)
               }
             },
             undefined,
@@ -389,19 +476,19 @@ export const initWalletConnect = async (
         }
       })
 
-      walletKit.on('session_delete', (event: WalletKitTypes.SessionDelete) => {
-        dispatch({
-          type: 'method',
-          params: {
-            method: 'disconnectWcSessionByTopic',
-            ctrlName: 'DappsController',
-            args: [event.topic]
-          }
-        })
+      const forgetEndedSession = (topic: string) => {
+        dispatch({ type: 'WC_SESSION_ENDED', params: { topic } })
 
-        const sessionInfo = sessionInfoByTopic.get(event.topic)
-        sessionInfoByTopic.delete(event.topic)
+        const sessionInfo = sessionInfoByTopic.get(topic)
+        sessionInfoByTopic.delete(topic)
+        sessionConnectedAtStorage.remove(topic)
         void forgetPairing(sessionInfo?.pairingTopic)
+        return sessionInfo
+      }
+
+      // Also covers expiry: the sign client emits `session_delete` before `session_expire`
+      walletKit.on('session_delete', (event: WalletKitTypes.SessionDelete) => {
+        const sessionInfo = forgetEndedSession(event.topic)
         addToast(
           sessionInfo?.name
             ? `${sessionInfo.name} disconnected from your wallet.`
@@ -411,10 +498,12 @@ export const initWalletConnect = async (
       })
 
       walletKit.on('session_authenticate', async (event: WalletKitTypes.SessionAuthenticate) => {
-        const { id, params: authParams } = event
+        // `topic` is the pairing topic the request came in on
+        const { id, topic: pairingTopic, params: authParams } = event
         try {
           const { authPayload, requester } = authParams
           const proposerUrl = requester.metadata.url
+          const isWcFromInAppBrowser = isPairingFromInAppBrowser(pairingTopic)
 
           const { name, icon } = await getDappMetadata(
             proposerUrl,
@@ -422,7 +511,11 @@ export const initWalletConnect = async (
             requester.metadata.icons[0]
           )
 
-          pendingAuthenticates.set(id, { authPayload, requesterUrl: proposerUrl })
+          pendingAuthenticates.set(id, {
+            authPayload,
+            requesterUrl: proposerUrl,
+            isWcFromInAppBrowser
+          })
 
           dispatch(
             {
@@ -434,7 +527,8 @@ export const initWalletConnect = async (
                 topic: `temp_wc_auth_${id}`,
                 tabId: id,
                 isWalletConnect: true,
-                isWcAuthenticate: true
+                isWcAuthenticate: true,
+                isWcFromInAppBrowser
               }
             },
             undefined,
@@ -451,7 +545,8 @@ export const initWalletConnect = async (
                 topic: `temp_wc_auth_${id}`,
                 tabId: id,
                 isWalletConnect: true,
-                isWcAuthenticate: true
+                isWcAuthenticate: true,
+                isWcFromInAppBrowser
               }
             },
             undefined,
@@ -512,13 +607,21 @@ export const initWalletConnect = async (
               chainId,
               candidateChainIds,
               name,
-              icon
+              icon,
+              isWcFromInAppBrowser: isPairingFromInAppBrowser(session.pairingTopic)
             }
           })
         )
-        if (sessionsToRestore.length > 0) pendingRestoreSessions = sessionsToRestore
+        // Handed over even when empty, so connections whose session is gone get dropped
+        pendingRestoreSessions = sessionsToRestore
       } catch (e) {
         console.error('[WalletConnect] Failed to get persisted sessions:', e)
+      }
+
+      try {
+        pruneStaleWcRecords(walletKit)
+      } catch (e) {
+        console.error('[WalletConnect] Failed to prune the stale WalletConnect records:', e)
       }
 
       initialized = true
@@ -676,6 +779,7 @@ export const approveWalletConnectSession = async (
   }
 
   const session = await walletKit.approveSession({ id, namespaces })
+  sessionConnectedAtStorage.set(session.topic, Date.now())
 
   const proposerUrl = proposal.proposer?.metadata?.url || ''
   const { name, icon } = await getDappMetadata(
@@ -699,7 +803,8 @@ export const approveWalletConnectSession = async (
         candidateChainIds,
         name,
         icon,
-        tempSessionTopic: `temp_wallet_connect_session_${proposal.id}`
+        tempSessionTopic: `temp_wallet_connect_session_${proposal.id}`,
+        isWcFromInAppBrowser: isPairingFromInAppBrowser(session.pairingTopic)
       }
     },
     undefined,
@@ -733,6 +838,7 @@ export const handleWcSessionBroadcast = async (payload: {
   if (payload.event === 'disconnect') {
     const sessionInfo = sessionInfoByTopic.get(payload.wcSessionTopic)
     sessionInfoByTopic.delete(payload.wcSessionTopic)
+    sessionConnectedAtStorage.remove(payload.wcSessionTopic)
     // Drop the pairing too, so the dapp can be reconnected with the code it already shows.
     void forgetPairing(sessionInfo?.pairingTopic)
     try {
@@ -860,7 +966,7 @@ export const prepareWcAuthenticate = async (id: number, address: string, dispatc
     return
   }
 
-  const { authPayload, requesterUrl } = pending
+  const { authPayload, requesterUrl, isWcFromInAppBrowser } = pending
 
   // Pick the first chain from the auth payload (e.g. 'eip155:1')
   const chainCaip: string = authPayload.chains?.[0] ?? 'eip155:1'
@@ -891,7 +997,8 @@ export const prepareWcAuthenticate = async (id: number, address: string, dispatc
         topic: `temp_wc_auth_${id}`,
         tabId: id,
         isWalletConnect: true,
-        isWcAuthenticate: true
+        isWcAuthenticate: true,
+        isWcFromInAppBrowser
       }
     },
     undefined,
@@ -939,6 +1046,7 @@ export const approveWcAuthenticate = async (
   // If WalletKit established a persistent session, wire up the messenger
   const session = (result as any)?.session as SessionTypes.Struct | undefined
   if (session) {
+    sessionConnectedAtStorage.set(session.topic, Date.now())
     const { name, icon } = await getDappMetadata(
       requesterUrl,
       session.peer.metadata.name,
@@ -957,7 +1065,8 @@ export const approveWcAuthenticate = async (
           candidateChainIds,
           name,
           icon,
-          tempSessionTopic: `temp_wc_auth_${id}`
+          tempSessionTopic: `temp_wc_auth_${id}`,
+          isWcFromInAppBrowser: isPairingFromInAppBrowser(session.pairingTopic)
         }
       },
       undefined,

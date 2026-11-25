@@ -74,10 +74,10 @@ export class GasTankPage extends BasePage {
       .first()
     await firstTransaction.click()
 
-    // assert
-    await expect(this.page.locator(selectors.dashboard.fuelGasTankTransactionPill)).toContainText(
-      'Fuel gas tank with'
-    )
+    // assert, on the sheet itself and not on the hidden copy it measures its height with
+    await expect(
+      this.page.locator(selectors.dashboard.fuelGasTankTransactionPill).filter({ visible: true })
+    ).toContainText('Fuel gas tank with')
     await expect(this.page.locator(selectors.dashboard.confirmedTransactionPill)).toContainText(
       'Confirmed'
     )

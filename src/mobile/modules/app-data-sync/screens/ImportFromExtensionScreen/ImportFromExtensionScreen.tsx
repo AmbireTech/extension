@@ -1,35 +1,33 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Image, ImageSourcePropType, LayoutChangeEvent, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import { Carousel } from 'react-native-reanimated-carousel'
 
-import { useScreenBackHandler } from '@common/contexts/screenBackContext'
 import scanQrCodes from '@common/assets/images/scan-qr-codes.png'
 import syncStepsOnTheExtension from '@common/assets/images/sync-steps-on-the-extension.gif'
 import Alert from '@common/components/Alert'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
+import StepsGuide, { StepsGuideFooter, StepsGuideStep } from '@common/components/StepsGuide'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
+import { useScreenBackHandler } from '@common/contexts/screenBackContext'
+import { useScreenFocusStore } from '@common/contexts/screenFocusContext'
 import useBiometrics from '@common/hooks/useBiometrics'
 import useBiometricsAvailability from '@common/hooks/useBiometricsAvailability'
 import useController from '@common/hooks/useController'
 import useNavigation from '@common/hooks/useNavigation'
 import useTheme from '@common/hooks/useTheme'
 import useToast from '@common/hooks/useToast'
-import SyncImportSteps, {
-  SyncImportStep,
-  SyncImportStepsFooter
-} from '@common/modules/app-data-sync/components/SyncImportSteps'
 import SyncPasswordOptions from '@common/modules/app-data-sync/components/SyncPasswordOptions'
 import SyncScanFeedbackAlert from '@common/modules/app-data-sync/components/SyncScanFeedbackAlert'
 import useAppDataSyncImport from '@common/modules/app-data-sync/hooks/useAppDataSyncImport'
-import type { AppDataSyncImportResult } from '@common/modules/app-data-sync/hooks/useAppDataSyncImport/useAppDataSyncImport'
 import useSyncedPasswordSetup from '@common/modules/app-data-sync/hooks/useSyncedPasswordSetup'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
 import QrScannerWithPermission from '@common/modules/hardware-wallets/screens/QrScannerWithPermission'
 import { ROUTES, WEB_ROUTES } from '@common/modules/router/constants/common'
 import PasswordConfirmation from '@common/modules/settings/components/PasswordConfirmation'
+import eventBus from '@common/services/event/eventBus'
 import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY, BORDER_RADIUS_SECONDARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
@@ -38,7 +36,9 @@ import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
 } from '@mobile/components/MobileLayoutWrapper'
+import { STACK_SETTLED_EVENT } from '@mobile/constants/navigationStack'
 
+import type { AppDataSyncImportResult } from '@common/modules/app-data-sync/hooks/useAppDataSyncImport/useAppDataSyncImport'
 import type { CarouselRef } from 'react-native-reanimated-carousel'
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 import type { QrScanProgress } from '@common/modules/hardware-wallets/qr/utils/qrScanFeedback'
@@ -59,16 +59,21 @@ const ImportFromExtensionScreen = () => {
   const { theme } = useTheme()
   const { navigate, goBack, canGoBack } = useNavigation()
   const { addToast } = useToast()
-  const { goToPrevRoute, goToNextRoute, setSyncedAccountAddrs } = useOnboardingNavigation()
+  const { goToPrevRoute, goToNextRoute } = useOnboardingNavigation()
   const { state: hasPasswordSecret } = useController('KeystoreController', selectHasPasswordSecret)
   const { state: accountsCount } = useController('AccountsController', selectAccountsCount)
   const {
     ref: passwordSheetRef,
     open: openPasswordSheet,
     close: closePasswordSheet
-  } = useModalize()
+  } = useSheetRef()
   const [isScanning, setIsScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState<QrScanProgress | null>(null)
+  // Remounts the scanner, which stops reading once a scan completes
+  const [scannerKey, setScannerKey] = useState(0)
+  // Set once the scanned accounts are prepared for the next steps of the flow
+  const hasPreparedAccountsRef = useRef(false)
+  const screenFocusStore = useScreenFocusStore()
   const [stepIndex, setStepIndex] = useState(0)
   // Onboarding only: the extension's password becomes this app's password as well, so
   // there is no second one to set. Off means the app asks for its own password next.
@@ -90,7 +95,7 @@ const ImportFromExtensionScreen = () => {
 
   const carouselStyle = useMemo(() => ({ width: carouselWidth }), [carouselWidth])
 
-  const steps: SyncImportStep[] = useMemo(
+  const steps: StepsGuideStep[] = useMemo(
     () => [
       {
         id: 'steps-on-the-extension',
@@ -180,15 +185,14 @@ const ImportFromExtensionScreen = () => {
         return
       }
 
-      // Added already - personalize shows them for naming
-      setSyncedAccountAddrs(importedAccountAddrs)
+      hasPreparedAccountsRef.current = true
 
       // During onboarding the accounts arrive before this device has a password of its
       // own. Reusing the extension's one sets it (and biometrics) right here, so the
       // keystore setup screen is skipped and the sheet stays up until it lands.
       if (!hasPasswordSecret && isPasswordReused) {
         // A refused biometric prompt returns no secret. The accounts are already
-        // imported and the password still has to be set, so the flow goes on without
+        // prepared and the password still has to be set, so the flow goes on without
         // biometrics and only says so.
         const biometricsSecret = isBiometricsEnabled ? await saveBiometricsSecret() : null
 
@@ -215,7 +219,6 @@ const ImportFromExtensionScreen = () => {
       leaveScreen,
       saveBiometricsSecret,
       setPasswordFromSync,
-      setSyncedAccountAddrs,
       t
     ]
   )
@@ -229,6 +232,23 @@ const ImportFromExtensionScreen = () => {
     importScannedData,
     isImporting
   } = useAppDataSyncImport({ onImported: handleImported })
+
+  // Going back from the next steps drops the prepared accounts, and the scanned data is gone
+  // already, so the scan starts over. Reset once the next screen has covered this one, so
+  // neither the way there nor the way back shows it changing.
+  useEffect(() => {
+    const resetCoveredScan = () => {
+      if (screenFocusStore.isFocused.current || !hasPreparedAccountsRef.current) return
+
+      hasPreparedAccountsRef.current = false
+      retryScan()
+      setScanProgress(null)
+      setScannerKey((key) => key + 1)
+    }
+
+    eventBus.addEventListener(STACK_SETTLED_EVENT, resetCoveredScan)
+    return () => eventBus.removeEventListener(STACK_SETTLED_EVENT, resetCoveredScan)
+  }, [screenFocusStore, retryScan])
 
   // The password of the other device confirms every sync, whatever was scanned, so it is
   // asked for as soon as the scan completes
@@ -249,7 +269,7 @@ const ImportFromExtensionScreen = () => {
   }, [])
 
   const renderStep = useCallback(
-    ({ index }: { index: number }) => <SyncImportSteps steps={steps} stepIndex={index} />,
+    ({ index }: { index: number }) => <StepsGuide steps={steps} stepIndex={index} />,
     [steps]
   )
 
@@ -311,12 +331,14 @@ const ImportFromExtensionScreen = () => {
             )}
           </>
         ) : (
-          <SyncImportStepsFooter
+          <StepsGuideFooter
             steps={steps}
             stepIndex={stepIndex}
             onStepIndexChange={handleStepIndexChange}
             finishText={t('Scan QR code')}
             onFinish={handleStartScanning}
+            nextButtonTestID="sync-import-next-step"
+            finishButtonTestID="sync-import-start-scanning"
           />
         )
       }
@@ -347,6 +369,7 @@ const ImportFromExtensionScreen = () => {
               }}
             >
               <QrScannerWithPermission
+                key={scannerKey}
                 onComplete={handleScanComplete}
                 disabled={hasScannedPayload || isImporting}
                 externalError={scanError}
@@ -390,7 +413,6 @@ const ImportFromExtensionScreen = () => {
           onCustomSubmit={importScannedData}
           // Only called when the local keystore gets unlocked, which this flow never does
           onPasswordConfirmed={() => {}}
-          onBackButtonPress={handleClosePasswordSheet}
         >
           <Alert
             type="info"

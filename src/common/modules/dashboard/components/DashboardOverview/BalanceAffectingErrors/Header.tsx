@@ -2,6 +2,7 @@ import React, { FC, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View } from 'react-native'
 
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Text from '@common/components/Text'
 import { isMobile, isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
@@ -27,14 +28,12 @@ const Header: FC = () => {
         }
       ]}
     >
-      <Text
-        fontSize={20}
-        weight="medium"
-        color={theme.primaryText}
-        style={[isMobile && spacings.mbTy]}
-      >
-        {t('Portfolio errors')}
-      </Text>
+      {/* In a native sheet the header row adds the X and spaces the title itself */}
+      <SheetHeaderRow style={spacings.mbTy}>
+        <Text fontSize={20} weight="medium" color={theme.primaryText}>
+          {t('Portfolio errors')}
+        </Text>
+      </SheetHeaderRow>
       <View
         style={[flexbox.directionRow, flexbox.alignCenter, isMobile && flexbox.justifySpaceBetween]}
       >

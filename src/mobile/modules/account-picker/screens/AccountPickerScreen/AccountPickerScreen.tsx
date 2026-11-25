@@ -1,7 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 
-import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import Button from '@common/components/Button'
 import useController from '@common/hooks/useController'
 import AmbireSmartAccountsDisabledModal from '@common/modules/account-picker/components/AmbireSmartAccountsDisabledModal'
@@ -9,7 +8,6 @@ import AccountsOnPageList from '@common/modules/account-picker/components/Accoun
 import ChangeHdPath from '@common/modules/account-picker/components/ChangeHdPath'
 import useAccountPicker from '@common/modules/account-picker/hooks/useAccountPicker/useAccountPicker'
 import useOnboardingNavigation from '@common/modules/auth/hooks/useOnboardingNavigation'
-import spacings from '@common/styles/spacings'
 import {
   MobileLayoutContainer,
   MobileLayoutWrapperMainContent
@@ -38,19 +36,8 @@ const AccountPickerScreen = () => {
           onPress={onImportReady}
           size="large"
           disabled={isImportDisabled}
-          text={
-            isLoading
-              ? t('Importing...')
-              : !accountPickerState.selectedAccounts.length
-                ? t('Continue')
-                : t('Import accounts')
-          }
-          childrenPosition="left"
-        >
-          {!!accountPickerState.selectedAccounts.length && (
-            <ImportAccountIcon width={24} height={24} color="#fff" style={spacings.mrMi} />
-          )}
-        </Button>
+          text={isLoading ? t('Loading...') : t('Continue')}
+        />
       }
     >
       <MobileLayoutWrapperMainContent

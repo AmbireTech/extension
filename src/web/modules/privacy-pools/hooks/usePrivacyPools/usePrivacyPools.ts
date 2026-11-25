@@ -230,7 +230,13 @@ const usePrivacyPools = () => {
   }, [dispatch])
 
   const prepareWithdrawal = useCallback(
-    (params: { chainId: string; tokenAddress: string; amount: bigint; recipient: string }) => {
+    (params: {
+      chainId: string
+      tokenAddress: string
+      depositNumber: number
+      amount: bigint
+      recipient: string
+    }) => {
       dispatch({ type: 'method', params: { method: 'prepareWithdrawal', args: [params] } })
     },
     [dispatch]

@@ -1,0 +1,89 @@
+diff --git a/node_modules/@lodev09/react-native-true-sheet/ios/TrueSheetViewController.mm b/node_modules/@lodev09/react-native-true-sheet/ios/TrueSheetViewController.mm
+index 5041ef8..c39a38d 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/ios/TrueSheetViewController.mm
++++ b/node_modules/@lodev09/react-native-true-sheet/ios/TrueSheetViewController.mm
+@@ -1044,6 +1044,20 @@ - (void)viewWillDisappear:(BOOL)animated {
+   // A swipe can still be cancelled, so emit once it commits on release. Any
+   // other dismiss (programmatic, outside tap, navigation) is already committed.
+   id<UIViewControllerTransitionCoordinator> coordinator = self.transitionCoordinator;
++
++  // iOS 26 floats a sheet as a scaled-down full-width view, and a non-swipe dismiss ends it
++  // offset by that inset again, so it slid sideways. Keep the x it was shown at
++  if (self.isBeingDismissed) {
++    UIView *presentedView = self.sheet.presentedView;
++    CGFloat shownCenterX = presentedView.center.x;
++    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> _Nonnull context) {
++      if (fabs(presentedView.center.x - shownCenterX) < 0.5) {
++        return;
++      }
++      presentedView.center = CGPointMake(shownCenterX, presentedView.center.y);
++    }
++                                 completion:nil];
++  }
+   if (coordinator.isInteractive) {
+     __weak __typeof(self) weakSelf = self;
+     [coordinator
+diff --git a/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js b/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js
+index 8eb7036..96014bb 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js
++++ b/node_modules/@lodev09/react-native-true-sheet/lib/module/TrueSheet.web.js
+@@ -1129,7 +1129,7 @@ const TrueSheetComponent = /*#__PURE__*/forwardRef((props, ref) => {
+     // Mobile portrait ignores width sizing entirely (matches iOS/Android:
+     // both apply `maxContentWidth` only when not on a portrait phone).
+     // `detached` + `detachedOffset` are still respected via the wrapper.
+-    const maxWidth = isLandscapeOrTablet ? presentation === 'form' ? DEFAULT_FORM_SHEET_WIDTH : maxContentWidth ?? DEFAULT_MAX_WIDTH : undefined;
++    const maxWidth = isLandscapeOrTablet ? presentation === 'form' ? maxContentWidth ?? DEFAULT_FORM_SHEET_WIDTH : maxContentWidth ?? DEFAULT_MAX_WIDTH : undefined;
+     const needsMargins = maxWidth != null || effectiveDetached;
+     if (!needsMargins && !dropShadow) return undefined;
+     const next = {};
+diff --git a/node_modules/@lodev09/react-native-true-sheet/lib/module/web/layout.js b/node_modules/@lodev09/react-native-true-sheet/lib/module/web/layout.js
+index b227994..1294a2d 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/lib/module/web/layout.js
++++ b/node_modules/@lodev09/react-native-true-sheet/lib/module/web/layout.js
+@@ -122,7 +122,13 @@ export function observeSheetLayout({
+     if (measurement && content) {
+       width = layout.clientWidth;
+       measurement.style.width = `${width}px`;
+-      measurement.replaceChildren(content.cloneNode(true));
++      // Without the test ids and ids of the live content, so queries find only that
++      const clone = content.cloneNode(true);
++      for (const node of [clone, ...clone.querySelectorAll('[data-testid], [id]')]) {
++        node.removeAttribute('data-testid');
++        node.removeAttribute('id');
++      }
++      measurement.replaceChildren(clone);
+     }
+     updateInset();
+     measure();
+diff --git a/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx b/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx
+index ee26704..d6ee769 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx
++++ b/node_modules/@lodev09/react-native-true-sheet/src/TrueSheet.web.tsx
+@@ -1282,7 +1282,7 @@ const TrueSheetComponent = forwardRef<TrueSheetMethods, TrueSheetProps>((props,
+     // `detached` + `detachedOffset` are still respected via the wrapper.
+     const maxWidth = isLandscapeOrTablet
+       ? presentation === 'form'
+-        ? DEFAULT_FORM_SHEET_WIDTH
++        ? (maxContentWidth ?? DEFAULT_FORM_SHEET_WIDTH)
+         : (maxContentWidth ?? DEFAULT_MAX_WIDTH)
+       : undefined;
+ 
+diff --git a/node_modules/@lodev09/react-native-true-sheet/src/web/layout.ts b/node_modules/@lodev09/react-native-true-sheet/src/web/layout.ts
+index 5be61e3..0a18d27 100644
+--- a/node_modules/@lodev09/react-native-true-sheet/src/web/layout.ts
++++ b/node_modules/@lodev09/react-native-true-sheet/src/web/layout.ts
+@@ -150,7 +150,13 @@ export function observeSheetLayout({
+     if (measurement && content) {
+       width = layout.clientWidth;
+       measurement.style.width = `${width}px`;
+-      measurement.replaceChildren(content.cloneNode(true));
++      // Without the test ids and ids of the live content, so queries find only that
++      const clone = content.cloneNode(true) as HTMLElement;
++      for (const node of [clone, ...clone.querySelectorAll('[data-testid], [id]')]) {
++        node.removeAttribute('data-testid');
++        node.removeAttribute('id');
++      }
++      measurement.replaceChildren(clone);
+     }
+     updateInset();
+     measure();

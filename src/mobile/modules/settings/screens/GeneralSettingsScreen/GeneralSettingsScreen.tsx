@@ -1,6 +1,7 @@
 import React from 'react'
 
 import AvatarTypeControlOption from '@common/modules/settings/components/General/AvatarTypeControlOption'
+import BorrowedFundsControlOption from '@common/modules/settings/components/General/BorrowedFundsControlOption'
 import ThemeControlOption from '@common/modules/settings/components/General/ThemeControlOption'
 import {
   MobileLayoutContainer,
@@ -15,6 +16,7 @@ const GeneralSettingsScreen = () => {
         <BiometricsOption />
         <ThemeControlOption />
         <AvatarTypeControlOption />
+        <BorrowedFundsControlOption />
       </MobileLayoutWrapperMainContent>
     </MobileLayoutContainer>
   )

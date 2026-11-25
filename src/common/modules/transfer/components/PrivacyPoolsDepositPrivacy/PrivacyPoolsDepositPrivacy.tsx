@@ -1,11 +1,15 @@
-import React, { FC } from 'react'
+import React, { FC, useCallback } from 'react'
 import { View } from 'react-native'
 
 import { getPrivacyPoolsTokenId } from '@ambire-common/consts/privacyPools'
 import { PrivacyPoolsDepositPrivacy as DepositPrivacy } from '@ambire-common/interfaces/privacyPools'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import { createGlobalTooltipDataSet } from '@common/components/GlobalTooltip'
-import PrivacyStatus from '@common/components/PrivacyStatus'
+import PrivacyStatus, {
+  PRIVACY_LINE_SKELETON_HEIGHT,
+  PRIVACY_LINE_SKELETON_WIDTH
+} from '@common/components/PrivacyStatus'
+import SkeletonLoader from '@common/components/SkeletonLoader'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -38,8 +42,8 @@ type Props = {
 
 /**
  * One line on a deposit into a Privacy Pools account: how many deposits have the typed amount, and
- * the pool's fee on top of it. Pressing the status opens every problem with its fix. Renders
- * nothing until an amount is typed.
+ * the pool's fee on top of it. Pressing the status opens every problem with its fix, or a retry
+ * when the count failed. Renders nothing until an amount is typed.
  */
 const PrivacyPoolsDepositPrivacy: FC<Props> = ({
   privacy,
@@ -51,28 +55,44 @@ const PrivacyPoolsDepositPrivacy: FC<Props> = ({
 }) => {
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { state: depositAssetConfigs } = useController(
+  const { state: depositAssetConfigs, dispatch: privacyPoolsDispatch } = useController(
     'PrivacyPoolsController',
     selectDepositAssetConfigs
   )
+  const chainId = token.chainId.toString()
+  const retry = useCallback(() => {
+    privacyPoolsDispatch({
+      type: 'method',
+      params: { method: 'readPrivacyData', args: [chainId] }
+    })
+  }, [chainId, privacyPoolsDispatch])
   const vettingFeeBPS =
-    depositAssetConfigs?.[getPrivacyPoolsTokenId(token.chainId.toString(), token.address)]
-      ?.vettingFeeBPS ?? null
+    depositAssetConfigs?.[getPrivacyPoolsTokenId(chainId, token.address)]?.vettingFeeBPS ?? null
 
   if (amount <= 0n) return null
 
   return (
     <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mtTy]}>
-      <PrivacyStatus
-        stage="deposit"
-        rating={privacy.rating}
-        leaks={privacy.leaks}
-        cover={privacy.sameAmount}
-        decimals={token.decimals}
-        symbol={token.symbol}
-        onSetAmount={disabled ? undefined : onSetAmount}
-        style={flexbox.flex1}
-      />
+      {privacy.isLoading ? (
+        <View style={flexbox.flex1}>
+          <SkeletonLoader
+            width={PRIVACY_LINE_SKELETON_WIDTH}
+            height={PRIVACY_LINE_SKELETON_HEIGHT}
+          />
+        </View>
+      ) : (
+        <PrivacyStatus
+          stage="deposit"
+          rating={privacy.rating}
+          leaks={privacy.leaks}
+          cover={privacy.bigEnough}
+          decimals={token.decimals}
+          symbol={token.symbol}
+          onSetAmount={disabled ? undefined : onSetAmount}
+          onRetry={retry}
+          style={flexbox.flex1}
+        />
+      )}
       {feeAmount !== null && vettingFeeBPS !== null && (
         <View style={[flexbox.directionRow, flexbox.alignCenter, spacings.mlSm]}>
           <Text appearance="secondaryText" fontSize={12} weight="medium">

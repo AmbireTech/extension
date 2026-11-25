@@ -7,3 +7,18 @@
 body:has(#modalBackdrop) [data-blurred-behind-sheets] {
   filter: blur(3px);
 }
+
+/* TrueSheet draws the sheets and their dimming outside the app's tree without a z-index, which
+   would leave them under anything in the app that has one. Matches BOTTOM_SHEET_Z_INDEX. The drawer
+   is left out: it's inside the wrapper, where a z-index would draw it over the sheet's footer */
+[data-vaul-overlay],
+[data-vaul-detached-wrapper] {
+  z-index: 900;
+}
+
+/* TrueSheet measures a sheet's height on a copy of its content hidden with `visibility: hidden`,
+   which Chrome doesn't fully hide: the blur of a glass element shows through wherever the glass has
+   an SVG filter inside it. Transparent, the copy draws nothing and is still measured */
+[data-truesheet-measure] {
+  opacity: 0;
+}

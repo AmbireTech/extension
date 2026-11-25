@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
+import { View } from 'react-native'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
@@ -78,13 +79,13 @@ const AccountSelectScreen = () => {
   const { search: routeParams } = useRoute()
   const { navigate } = useNavigation()
   const { state: account } = useController('SelectedAccountController', selectAccount)
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
-  } = useModalize()
-  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useModalize()
+  } = useSheetRef()
+  const { ref: exportSheetRef, open: openExportSheet, close: closeExportSheet } = useSheetRef()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
@@ -167,13 +168,18 @@ const AccountSelectScreen = () => {
       }
     >
       <HeaderWithTitle>
-        <Pressable
-          onPress={() => {
-            navigate(WEB_ROUTES.accountsSettings)
-          }}
-        >
-          <SettingsIcon width={28} height={28} />
-        </Pressable>
+        <HeaderButton
+          icon={
+            <SettingsIcon
+              width={22}
+              height={22}
+              strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+              color={theme.primaryText}
+            />
+          }
+          accessibilityLabel={t('Accounts settings')}
+          onPress={() => navigate(WEB_ROUTES.accountsSettings)}
+        />
       </HeaderWithTitle>
       <View style={[spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search

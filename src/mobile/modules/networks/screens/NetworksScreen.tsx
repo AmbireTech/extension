@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import { useSearchParams } from 'react-router-dom'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import LayoutWrapper from '@common/components/LayoutWrapper'
@@ -45,12 +45,12 @@ const NetworksScreen = () => {
     ref: settingsBottomSheetRef,
     open: openSettingsBottomSheet,
     close: closeSettingsBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const {
     ref: addNetworkBottomSheetRef,
     open: openAddNetworkBottomSheet,
     close: closeAddNetworkBottomSheet
-  } = useModalize()
+  } = useSheetRef()
   const { control, watch } = useForm({ mode: 'all', defaultValues: { search: '' } })
   const search = watch('search')
 

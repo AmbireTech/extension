@@ -1,6 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { Image, StyleSheet, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 import QRCode from 'react-native-qrcode-svg'
 
 import { APP_DATA_SYNC_UR_TYPE } from '@ambire-common/libs/appDataSync/appDataSync'
@@ -9,6 +8,8 @@ import AppStoreBadgeIcon from '@common/assets/svg/AppStoreBadgeIcon'
 import GooglePlayBadgeIcon from '@common/assets/svg/GooglePlayBadgeIcon'
 import ShieldInvisibilityIcon from '@common/assets/svg/ShieldInvisibilityIcon'
 import Alert from '@common/components/Alert'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
+import { HEADER_BUTTON_SIZE } from '@common/components/HeaderButton'
 import Panel from '@common/components/Panel'
 import { PanelBackButton, PanelTitle } from '@common/components/Panel/Panel'
 import Text from '@common/components/Text'
@@ -47,7 +48,7 @@ const CAPTION_ROW_HEIGHT = 32 + CAPTION_LINE_HEIGHT
 // The two steps keep the same vertical rhythm, so the titles and the row under them line
 // up. Both are the height of the taller side: the back button for the titles, a store
 // tile for the row under them.
-const TITLE_ROW_HEIGHT = 28
+const TITLE_ROW_HEIGHT = HEADER_BUTTON_SIZE
 const SECOND_ROW_MIN_HEIGHT = 52
 // Dummy value rendered behind the scrim before the accounts are picked, so the
 // placeholder hints at a QR code instead of showing a flat empty box.
@@ -75,7 +76,7 @@ const ExportToMobileScreen = () => {
     isPreparing,
     qrCbor
   } = useAppDataSyncExport()
-  const { ref: sheetRef, open: openSelectSheet, close: closeSelectSheet } = useModalize()
+  const { ref: sheetRef, open: openSelectSheet, close: closeSelectSheet } = useSheetRef()
   const [qrSize, setQrSize] = useState(0)
 
   // The QR code is square, so it takes the smaller of the two sides its container got. The
@@ -158,7 +159,7 @@ const ExportToMobileScreen = () => {
             >
               <PanelBackButton onPress={handleBackButtonPress} />
               <PanelTitle title={t('1. Download Ambire Wallet mobile')} size={16} />
-              <View style={{ width: 20 }} />
+              <View style={{ width: HEADER_BUTTON_SIZE }} />
             </View>
             {/* Labels only - the store listings are not live yet */}
             <View

@@ -6,7 +6,10 @@ import { isWeb } from '@common/config/env'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 
-type Props = Omit<CommonButtonProps, 'style' | 'children' | 'childrenPosition' | 'onPress'> & {
+export type Props = Omit<
+  CommonButtonProps,
+  'style' | 'children' | 'childrenPosition' | 'onPress'
+> & {
   style?: StyleProp<ViewStyle>
   onHoldComplete: () => void
   holdDuration?: number // in milliseconds

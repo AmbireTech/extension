@@ -1,8 +1,4 @@
-import {
-  PRIVACY_POOLS_COVER_WINDOW_DAYS,
-  PRIVACY_POOLS_MIN_REASSURING_COVER,
-  PRIVACY_POOLS_UNCHECKED_PRIVACY_TEXT
-} from '@ambire-common/consts/privacyPools'
+import { PRIVACY_POOLS_MIN_REASSURING_COVER } from '@ambire-common/consts/privacyPools'
 import {
   PrivacyPoolsLeak,
   PrivacyPoolsLeakAction,
@@ -15,8 +11,6 @@ import { formatPrivacyPoolsAmount } from '@common/utils/privacyPools'
 import { PrivacySeverity, PrivacyStage, PrivacyTone } from './types'
 
 import type { TFunction } from 'i18next'
-
-const COVER_WINDOW_DAYS = Number(PRIVACY_POOLS_COVER_WINDOW_DAYS)
 
 const PRIVACY_TONE_COLORS: Record<
   PrivacyTone,
@@ -48,9 +42,9 @@ const getPrivacyActionText = (
 ): string => `${t(label)}: ${formatPrivacyPoolsAmount(meta.amount, decimals, symbol)}`
 
 /**
- * How bad the privacy of a transfer looks. A send hidden among few deposits, or not checked at all,
- * is a `warning` even without a leak. A deposit's amount can still be sent out in other amounts, so
- * for it they are `ok`.
+ * How bad the privacy of a transfer looks. A transfer not checked at all, or a send hidden among
+ * few deposits, is a `warning` even without a leak. A deposit's amount can still be sent out in
+ * other amounts, so few deposits are `ok` for it.
  */
 const getPrivacySeverity = (
   stage: PrivacyStage,
@@ -58,19 +52,19 @@ const getPrivacySeverity = (
   cover: number
 ): PrivacySeverity => {
   if (rating === 'traceable') return 'error'
-  if (rating === 'weak') return 'warning'
-  if (stage === 'send' && (rating === 'unchecked' || cover < PRIVACY_POOLS_MIN_REASSURING_COVER))
-    return 'warning'
+  if (rating === 'weak' || rating === 'unchecked') return 'warning'
+  if (stage === 'send' && cover < PRIVACY_POOLS_MIN_REASSURING_COVER) return 'warning'
 
   return 'ok'
 }
 
 /**
- * The status line of a transfer: its cover, or that nothing could be checked yet. Leaves out the
+ * The status line of a transfer: its cover, or that nothing could be checked. Leaves out the
  * days counted, which only the privacy details have room for.
  */
 const getPrivacyStatusText = (t: TFunction, rating: PrivacyPoolsRating, cover: number): string => {
-  if (rating === 'unchecked') return t(PRIVACY_POOLS_UNCHECKED_PRIVACY_TEXT)
+  // A transfer shows as loading until its check ends, so here it has failed
+  if (rating === 'unchecked') return t('We could not count the deposits that hide yours')
 
   return cover === 1
     ? t('1 deposit covers you')
@@ -78,7 +72,6 @@ const getPrivacyStatusText = (t: TFunction, rating: PrivacyPoolsRating, cover: n
 }
 
 export {
-  COVER_WINDOW_DAYS,
   getLeakTextAppearance,
   getPrivacyActionText,
   getPrivacySeverity,

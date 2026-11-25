@@ -10,6 +10,7 @@ import Spinner from '@common/components/Spinner'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
+import SafeApiDisabledAlert from '@common/modules/auth/components/SafeApiDisabledAlert'
 import SafeAccountList from '@common/modules/auth/components/SafeAccountList'
 import useSafeImportByOwner from '@common/modules/auth/hooks/useSafeImportByOwner'
 import spacings from '@common/styles/spacings'
@@ -27,6 +28,7 @@ const SafeImportByOwnerScreen = () => {
     hasSearchCompleted,
     importedAccounts,
     isSearching,
+    isSafeApiEnabled,
     isImportButtonDisabled,
     goToPrevRoute,
     ownerAddressState,
@@ -73,9 +75,13 @@ const SafeImportByOwnerScreen = () => {
                     // The parent has the same color as the default input background, so use the focused
                     // input color to keep the input visible and the same before and after focus
                     inputBackgroundColor={theme.tertiaryBackground}
+                    // Nothing can be searched until the user turns sync back on
+                    disabled={!isSafeApiEnabled}
                   />
                 )}
               />
+
+              {!isSafeApiEnabled && <SafeApiDisabledAlert style={spacings.mt} />}
 
               {!!safeAccounts.length && (
                 <View style={[flexbox.flex1, spacings.mt]}>
@@ -133,7 +139,7 @@ const SafeImportByOwnerScreen = () => {
               <Button
                 testID="import-safe-owner-button"
                 size="large"
-                text={t('Import')}
+                text={t('Continue')}
                 hasBottomSpacing={false}
                 onPress={handleImport}
                 disabled={isImportButtonDisabled}

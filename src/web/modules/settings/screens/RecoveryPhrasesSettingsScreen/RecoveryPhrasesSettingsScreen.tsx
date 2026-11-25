@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { HD_PATH_TEMPLATE_TYPE } from '@ambire-common/consts/derivation'
 import { getKeySeedId } from '@ambire-common/libs/keys/keys'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel/Panel'
 import PassphraseBadge from '@common/components/PassphraseBadge'
@@ -35,7 +35,7 @@ const RecoveryPhraseSettingsScreen = () => {
   const { state: accounts } = useController('AccountsController', selectAccounts)
   const { seeds, keys } = useController('KeystoreController').state
   const { notBackedUpSeedIds, seedsSortedByBackupStatus } = useRecoveryPhraseBackupStatus()
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const [recoveryPhraseToManage, setRecoveryPhraseToManage] = useState<{
     id: string
     label: string

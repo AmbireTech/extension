@@ -1,12 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Pressable, View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
-import { ConnectionSource, Dapp } from '@ambire-common/interfaces/dapp'
-import GlobeIcon from '@common/assets/svg/GlobeIcon'
-import WalletConnectIcon from '@common/assets/svg/WalletConnectIcon'
+import { Dapp } from '@ambire-common/interfaces/dapp'
 import BottomSheet from '@common/components/BottomSheet'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import NetworkIcon from '@common/components/NetworkIcon'
 import AccountOption from '@common/components/Option/AccountOption'
@@ -19,10 +18,11 @@ import { AnimatedPressable } from '@common/hooks/useHover'
 import useTheme from '@common/hooks/useTheme'
 import DappItem from '@common/modules/explore/components/DappItem'
 import DisguiseAsMetaMask from '@common/modules/explore/components/ManageApp/DisguiseAsMetaMask'
+import ManageAppConnections from '@common/modules/explore/components/ManageApp/ManageAppConnections'
 import useDappConnectedAccount from '@common/modules/explore/hooks/useDappConnectedAccount'
 import useManageApp from '@common/modules/explore/hooks/useManageApp'
 import AccountSelect from '@common/modules/header/components/AccountSelect'
-import spacings, { SPACING_SM } from '@common/styles/spacings'
+import spacings from '@common/styles/spacings'
 import common, { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { sortNetworksByBalance } from '@common/utils/sorting'
@@ -50,13 +50,9 @@ const ManageApp = ({
   onReloadDapp
 }: ManageAppProps) => {
   const { theme } = useTheme()
-  const { networks, onDisconnect, onSelectNetwork, onToggleTrust } = useManageApp(dapp)
-  const { ref: sheetRef, open, close } = useModalize()
-  const {
-    ref: disconnectChooserRef,
-    open: openDisconnectChooser,
-    close: closeDisconnectChooser
-  } = useModalize()
+  const { networks, onDisconnect, onDisconnectWcSession, onSelectNetwork, onToggleTrust } =
+    useManageApp(dapp)
+  const { ref: sheetRef, open, close } = useSheetRef()
   const [isManageAccountsOpen, setIsManageAccountsOpen] = useState(false)
   // Every app in Explore has its own ManageApp, so the account sheet mounts only once this one
   // opens - before its Manage button can be pressed, so the sheet is ready to open by then
@@ -68,30 +64,16 @@ const ManageApp = ({
   )
 
   const connectedSources = dapp.connectedSources ?? []
-  const hasMultipleSources = connectedSources.length > 1
 
   const handleOpen = useCallback(() => {
     setHasOpened(true)
     open()
   }, [open])
 
-  const handleDisconnect = useCallback(
-    (source?: ConnectionSource) => {
-      onDisconnect(source)
-      closeDisconnectChooser()
-      close()
-    },
-    [onDisconnect, closeDisconnectChooser, close]
-  )
-
   const onPressDisconnect = useCallback(() => {
-    if (hasMultipleSources) {
-      openDisconnectChooser()
-      return
-    }
     onDisconnect()
     close()
-  }, [hasMultipleSources, openDisconnectChooser, onDisconnect, close])
+  }, [onDisconnect, close])
 
   const networksOptions: SelectValue[] = useMemo(
     () =>
@@ -141,69 +123,15 @@ const ManageApp = ({
         adjustToContentHeight
         style={style}
       >
-        <Text weight="semiBold" fontSize={18} style={[spacings.mb, { textAlign: 'center' }]}>
-          {t('Manage app')}
-        </Text>
+        <SheetHeaderRow>
+          <Text weight="semiBold" fontSize={18} style={{ textAlign: 'center' }}>
+            {t('Manage app')}
+          </Text>
+        </SheetHeaderRow>
 
         <View style={spacings.mbSm}>
           <DappItem {...dapp} isInSettings onPressOverride={() => {}} />
         </View>
-
-        {isMobile && connectedSources.length > 0 && (
-          <View style={spacings.mbSm}>
-            <Text fontSize={14} appearance="secondaryText" style={spacings.mbMi}>
-              {t(connectedSources.length > 1 ? 'Connections' : 'Connection')}
-            </Text>
-            <View style={[flexbox.directionRow, { columnGap: SPACING_SM }]}>
-              {connectedSources.includes('injected') && (
-                <View
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    common.borderRadiusPrimary,
-                    { backgroundColor: theme.secondaryBackground, height: 50 },
-                    spacings.ph
-                  ]}
-                >
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <GlobeIcon width={20} height={20} />
-                    <Text
-                      fontSize={14}
-                      style={spacings.mlTy}
-                      weight="medium"
-                      appearance="secondaryText"
-                    >
-                      {t('In-app browser')}
-                    </Text>
-                  </View>
-                </View>
-              )}
-              {connectedSources.includes('wc') && (
-                <View
-                  style={[
-                    flexbox.directionRow,
-                    flexbox.alignCenter,
-                    common.borderRadiusPrimary,
-                    { backgroundColor: theme.secondaryBackground, height: 50 },
-                    spacings.ph
-                  ]}
-                >
-                  <View style={[flexbox.directionRow, flexbox.alignCenter]}>
-                    <WalletConnectIcon width={22} height={22} />
-                    <Text
-                      fontSize={14}
-                      style={spacings.mlTy}
-                      weight="medium"
-                      appearance="secondaryText"
-                    >
-                      {t('WC')}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
 
         <Select
           value={selectedNetwork}
@@ -242,6 +170,14 @@ const ManageApp = ({
               />
             </View>
           </View>
+        )}
+
+        {isMobile && hasOpened && (
+          <ManageAppConnections
+            dapp={dapp}
+            onDisconnectSource={onDisconnect}
+            onDisconnectWcSession={onDisconnectWcSession}
+          />
         )}
 
         {dapp.blacklisted === 'SUSPICIOUS_HOSTING' && (
@@ -303,7 +239,8 @@ const ManageApp = ({
           </View>
         )}
 
-        {connectedSources.length > 0 && (
+        {/* On mobile each connection is disconnected from its own row above */}
+        {!isMobile && connectedSources.length > 0 && (
           <Button
             type="danger"
             text={t('Disconnect')}
@@ -312,45 +249,6 @@ const ManageApp = ({
             style={spacings.mtSm}
           />
         )}
-      </BottomSheet>
-
-      <BottomSheet
-        id="manage-app-disconnect-chooser"
-        sheetRef={disconnectChooserRef}
-        closeBottomSheet={closeDisconnectChooser}
-        adjustToContentHeight
-      >
-        <Text weight="semiBold" fontSize={18} style={[spacings.mb, { textAlign: 'center' }]}>
-          {t('Disconnect from')}
-        </Text>
-        <Text
-          fontSize={14}
-          appearance="secondaryText"
-          style={[spacings.mbSm, { textAlign: 'center' }]}
-        >
-          {t('This app is connected through more than one channel. Choose which to disconnect.')}
-        </Text>
-        <Button
-          type="secondary"
-          text={t('Disconnect In-app browser')}
-          onPress={() => handleDisconnect('injected')}
-          hasBottomSpacing={false}
-          style={spacings.mtTy}
-        />
-        <Button
-          type="secondary"
-          text={t('Disconnect WalletConnect')}
-          onPress={() => handleDisconnect('wc')}
-          hasBottomSpacing={false}
-          style={spacings.mtTy}
-        />
-        <Button
-          type="danger"
-          text={t('Disconnect both')}
-          onPress={() => handleDisconnect()}
-          hasBottomSpacing={false}
-          style={spacings.mtTy}
-        />
       </BottomSheet>
 
       {hasOpened && (

@@ -68,6 +68,7 @@ const ThemeControlOption = () => {
           })
         }}
         withSearch={false}
+        bottomSheetTitle={t('Theme mode')}
         options={THEME_SELECT_OPTIONS}
         value={selectedOption}
         selectStyle={isMobile ? { height: 42 } : undefined}

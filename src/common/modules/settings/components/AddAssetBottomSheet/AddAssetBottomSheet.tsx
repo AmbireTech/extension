@@ -111,6 +111,7 @@ const AddAssetBottomSheet: FC<Props> = ({
             options={networksOptions}
             value={networksOptions.filter((opt) => opt.value === network.name)[0]}
             label={t('Choose network')}
+            bottomSheetTitle={t('Choose network')}
             containerStyle={spacings.mbMd}
             selectStyle={{ backgroundColor: theme.secondaryBackground }}
           />

@@ -80,6 +80,7 @@ const BalanceAffectingErrorActions: FC<Props> = ({ actionName, meta, closeBottom
           value={{ value: network?.selectedRpcUrl || '', label: network?.selectedRpcUrl }}
           options={selectOptions}
           setValue={handleSelectRpcUrl}
+          bottomSheetTitle={t('Select RPC URL')}
           size="sm"
           containerStyle={{ ...flexbox.flex1, ...spacings.mb0 }}
         />

@@ -1,6 +1,5 @@
 import React from 'react'
 import { Pressable, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import AmbireLogoWithBackgroundAndLogotype from '@common/assets/svg/AmbireLogoWithBackgroundAndLogotype'
@@ -8,6 +7,7 @@ import ImportAccountIcon from '@common/assets/svg/ImportAccountIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import Panel from '@common/components/Panel'
 import Text from '@common/components/Text'
@@ -38,7 +38,7 @@ const GetStartedScreen = () => {
     ref: customizeSheetRef,
     open: openCustomizeSheet,
     close: closeCustomizeSheet
-  } = useModalize()
+  } = useSheetRef()
 
   const handleOptionPress = React.useCallback(
     (route: string) => {

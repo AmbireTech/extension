@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react'
 import { LayoutChangeEvent, View } from 'react-native'
-import { Modalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
 import ModalHeader from '@common/components/BottomSheet/ModalHeader'
+import type { SheetRef } from '@common/components/BottomSheet/useSheetRef'
 import { isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useToast from '@common/hooks/useToast'
@@ -16,7 +16,7 @@ import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   seedId: string
-  sheetRef: React.RefObject<Modalize>
+  sheetRef: React.RefObject<SheetRef | null>
   closeBottomSheet: () => void
 }
 

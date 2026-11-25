@@ -44,7 +44,7 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 - ALWAYS use `useNavigation` and `useRoute` from `@common/hooks` for routing; NEVER import `react-router-dom` or `react-router-native` directly
 - ALWAYS use `useToast` from `@common/hooks/useToast` for toasts; NEVER use `window.alert`, `Alert.alert`, or `console.log` for user-facing messages
 - ALWAYS wrap text in `t()` from `useTranslation()` (`imported from '@common/config/localization'`)
-- ALWAYS use `react-native-modalize` with `BottomSheet` for modals and bottom sheets
+- ALWAYS use `BottomSheet` (TrueSheet on every platform) with `useSheetRef` for modals and bottom sheets
 - Tooltips are added using the pattern: `dataSet={createGlobalTooltipDataSet(...)}` which creates a global dataset that is picked up by a `GlobalTooltip` component at the root of the app.
 - All warnings, errors, and other user-facing text (banners, toasts, etc.) must be written in plain, human-understandable language — NEVER assume the user is technical or Web3/blockchain-knowledgeable. Same rule for controller errors and humanizer warnings originating in `src/ambire-common` — see its `AGENTS.md` for the jargon-avoidance guidance and examples
 - All icons are in src/common/assets/svg/...; ALWAYS use icons from there and report if you can't find a suitable one by adding a comment instead of the icon and asking the human to add it
@@ -53,6 +53,17 @@ react, react-native, react-native-web, typescript, expo (bare workflow), ethers,
 
 - This is a security-critical Web3 wallet. Private keys and seed phrases must never be logged or exposed
 - The extension uses LavaMoat with SES for the background. If you add/remove dependencies or change import patterns, regenerate the policy with `yarn build:web:webkit:generate-policy` and review the changes
+
+### Public code:
+
+The `main` branch and the release tags are mirrored to a public repository. Anyone can read the code comments, test names, log messages, commit messages, branch names and PR titles (merge commits include the branch name and the PR title). Only PR descriptions, PR comments and issues stay private. Follow responsible disclosure and keep it professional:
+
+- Security fixes: in the public places above, describe **what** the change does (e.g. "Validate `chainId` before signing"). Describe how the old code could be exploited only in the PR description, PR comments or an issue
+- No secrets, API keys, private endpoints or links to internal tools (error tracking like Sentry, staging, dashboards, private docs) in public places
+- No data that can identify real users: blockchain addresses, emails, usernames (Discord, Telegram, X) or other details from support chats, tickets or logs. Test addresses and addresses of public contracts are fine
+- Keep the tone factual. Don't blame people, partners or other projects
+- Put the detailed context (exploit steps, impact, Sentry links, user reports) in the PR description, PR comments or an issue
+- `src/ambire-common` is fully public, including its PR descriptions. Follow the "Public repository" rules in `src/ambire-common/AGENTS.md` when you work there
 
 ### Code quality:
 

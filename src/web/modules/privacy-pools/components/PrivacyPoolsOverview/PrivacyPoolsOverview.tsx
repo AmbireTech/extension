@@ -21,7 +21,6 @@ import flexbox from '@common/styles/utils/flexbox'
 import PrivacyPoolsActions from './PrivacyPoolsActions'
 import PrivacyPoolsOverviewBackground from './PrivacyPoolsOverviewBackground'
 
-import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import type { WalletStateController } from '@common/controllers/wallet-state'
 
 interface Props {
@@ -32,9 +31,12 @@ interface Props {
   hasSyncError: boolean
   /** USD value of the approved and the pending part, matching the rows below. */
   totalPrivateBalance: number
-  canSend: boolean
+  /** Only while the controllers load, as there is no form to open yet - see `PrivacyPoolsDashboardShell` */
+  isSendDisabled?: boolean
   onRefresh: () => void
   onSend: () => void
+  /** Opens the guide on how a Privacy Pools account works */
+  onAbout: () => void
   /**
    * The balance and the actions collapse as on the regular dashboard: the pages slide over them,
    * see `DashboardOverview`.
@@ -42,7 +44,6 @@ interface Props {
   onCollapsibleHeightChange?: OverviewCollapsibleProps['onHeightChange']
 }
 
-const selectTokenPricesEnabled = (state: IFeatureFlagsController) => state.flags?.tokenPrices
 const selectIsPrivacyModeEnabled = (state: WalletStateController) => state.isPrivacyModeEnabled
 
 // Fixed light colors, not theme ones: the card sits on the dark PrivacyPoolsOverviewBackground
@@ -56,19 +57,16 @@ const PrivacyPoolsOverview: FC<Props> = ({
   isSyncing,
   hasSyncError,
   totalPrivateBalance,
-  canSend,
+  isSendDisabled = false,
   onRefresh,
   onSend,
+  onAbout,
   onCollapsibleHeightChange
 }) => {
   const { theme } = useTheme()
   const { state: isPrivacyModeEnabled, dispatch: walletStateDispatch } = useController(
     'WalletStateController',
     selectIsPrivacyModeEnabled
-  )
-  const { state: isTokenPricesEnabled } = useController(
-    'FeatureFlagsController',
-    selectTokenPricesEnabled
   )
   const [isBalanceHovered, setIsBalanceHovered] = useState(false)
 
@@ -115,7 +113,6 @@ const PrivacyPoolsOverview: FC<Props> = ({
                     // whether the account is read, empty or waiting for its phrase backup
                     variant={isSyncing && !hasSyncedAnyChain ? 'skeleton' : 'ready'}
                     totalAmount={totalPrivateBalance}
-                    isTokenPricesEnabled={isTokenPricesEnabled}
                     color={hasSyncError ? theme.warningDecorative2 : PRIMARY_TEXT_COLOR}
                     isPrivacyModeEnabled={isPrivacyModeEnabled}
                     onPress={togglePrivacyMode}
@@ -143,8 +140,12 @@ const PrivacyPoolsOverview: FC<Props> = ({
                 </Pressable>
               </View>
             </View>
-            {/* Disabled until the notes are read, or the form would have an empty dropdown */}
-            <PrivacyPoolsActions onSend={onSend} isSendDisabled={!canSend} />
+            {/* Enabled without tokens too, like the regular Send: the form says there are none */}
+            <PrivacyPoolsActions
+              onSend={onSend}
+              isSendDisabled={isSendDisabled}
+              onAbout={onAbout}
+            />
           </OverviewCollapsible>
         </View>
       </View>

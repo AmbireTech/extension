@@ -615,14 +615,33 @@
         "tslib": true
       }
     },
-    "@kohaku-eth/privacy-pools": {
+    "@kohaku-eth/poseidon-lean-imt": {
       "globals": {
         "URL": true,
+        "Worker": true,
+        "navigator.hardwareConcurrency": true
+      },
+      "packages": {
+        "@kohaku-eth/privacy-pools>@kohaku-eth/poseidon": true
+      }
+    },
+    "@kohaku-eth/privacy-pools": {
+      "globals": {
+        "AbortController": true,
+        "Response": true,
+        "TextDecoder": true,
+        "TextEncoder": true,
+        "TransformStream": true,
+        "URL": true,
+        "Worker": true,
+        "clearTimeout": true,
         "console.error": true,
         "console.group": true,
         "console.groupEnd": true,
         "console.log": true,
-        "console.warn": true
+        "console.warn": true,
+        "crypto.getRandomValues": true,
+        "setTimeout": true
       },
       "meta": {
         "webpack-optimization": [
@@ -633,11 +652,11 @@
       "packages": {
         "@kohaku-eth/privacy-pools>@fatsolutions/privacy-pools-core-circuits": true,
         "@kohaku-eth/privacy-pools>@kohaku-eth/plugins": true,
+        "@kohaku-eth/poseidon-lean-imt": true,
         "@kohaku-eth/privacy-pools>@kohaku-eth/poseidon": true,
         "@kohaku-eth/privacy-pools>@kohaku-eth/provider": true,
         "@kohaku-eth/privacy-pools>@reduxjs/toolkit": true,
         "@kohaku-eth/privacy-pools>@saga-sync/client": true,
-        "@kohaku-eth/privacy-pools>@zk-kit/lean-imt": true,
         "ox>abitype": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
         "ethers": true,
@@ -742,6 +761,46 @@
     "@ledgerhq/device-signer-kit-ethereum>@ledgerhq/signer-utils": {
       "packages": {
         "@ledgerhq/device-management-kit": true
+      }
+    },
+    "@lodev09/react-native-true-sheet": {
+      "globals": {
+        "Element": true,
+        "HTMLElement": true,
+        "HTMLInputElement": true,
+        "HTMLTextAreaElement": true,
+        "MutationObserver": true,
+        "Node": true,
+        "ResizeObserver": true,
+        "addEventListener": true,
+        "cancelAnimationFrame": true,
+        "clearTimeout": true,
+        "console.warn": true,
+        "document": true,
+        "getComputedStyle": true,
+        "getSelection": true,
+        "innerHeight": true,
+        "innerWidth": true,
+        "location.href": true,
+        "matchMedia": true,
+        "navigator": true,
+        "pageXOffset": true,
+        "pageYOffset": true,
+        "removeEventListener": true,
+        "requestAnimationFrame": true,
+        "scrollTo": true,
+        "scrollX": true,
+        "scrollY": true,
+        "setTimeout": true,
+        "visualViewport": true
+      },
+      "packages": {
+        "@radix-ui/react-dialog": true,
+        "@radix-ui/react-presence": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "react": true,
+        "react-dom": true,
+        "react-native-web": true
       }
     },
     "@metamask/eth-sig-util>@metamask/abi-utils": {
@@ -890,6 +949,158 @@
       "packages": {
         "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>asn1js": true,
         "@safe-global/api-kit>@safe-global/protocol-kit>@peculiar/asn1-schema>pvtsutils": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/primitive": {
+      "globals": {
+        "document": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-compose-refs": {
+      "packages": {
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-context": {
+      "packages": {
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog": {
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/primitive": true,
+        "@radix-ui/react-dialog>@radix-ui/react-compose-refs": true,
+        "@radix-ui/react-dialog>@radix-ui/react-context": true,
+        "@radix-ui/react-dialog>@radix-ui/react-dismissable-layer": true,
+        "@radix-ui/react-dialog>@radix-ui/react-focus-guards": true,
+        "@radix-ui/react-dialog>@radix-ui/react-focus-scope": true,
+        "@radix-ui/react-dialog>@radix-ui/react-id": true,
+        "@radix-ui/react-dialog>@radix-ui/react-portal": true,
+        "@radix-ui/react-presence": true,
+        "@radix-ui/react-dialog>@radix-ui/react-primitive": true,
+        "@radix-ui/react-dialog>@radix-ui/react-slot": true,
+        "@radix-ui/react-dialog>@radix-ui/react-use-controllable-state": true,
+        "@radix-ui/react-dialog>@radix-ui/react-use-layout-effect": true,
+        "@radix-ui/react-dialog>aria-hidden": true,
+        "react": true,
+        "@radix-ui/react-dialog>react-remove-scroll": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-dismissable-layer": {
+      "globals": {
+        "CustomEvent": true,
+        "Node": true,
+        "clearTimeout": true,
+        "document": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/primitive": true,
+        "@radix-ui/react-dialog>@radix-ui/react-compose-refs": true,
+        "@radix-ui/react-dialog>@radix-ui/react-primitive": true,
+        "@radix-ui/react-dialog>@radix-ui/react-focus-scope>@radix-ui/react-use-callback-ref": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-focus-guards": {
+      "globals": {
+        "document.body.firstElementChild": true,
+        "document.body.insertAdjacentElement": true,
+        "document.body.lastElementChild": true,
+        "document.createElement": true
+      },
+      "packages": {
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-focus-scope": {
+      "globals": {
+        "CustomEvent": true,
+        "MutationObserver": true,
+        "NodeFilter.FILTER_ACCEPT": true,
+        "NodeFilter.FILTER_SKIP": true,
+        "NodeFilter.SHOW_ELEMENT": true,
+        "document": true,
+        "getComputedStyle": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/react-compose-refs": true,
+        "@radix-ui/react-dialog>@radix-ui/react-primitive": true,
+        "@radix-ui/react-dialog>@radix-ui/react-focus-scope>@radix-ui/react-use-callback-ref": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-id": {
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/react-use-layout-effect": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-portal": {
+      "globals": {
+        "document.body": true
+      },
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/react-primitive": true,
+        "@radix-ui/react-dialog>@radix-ui/react-use-layout-effect": true,
+        "react": true,
+        "react-dom": true
+      }
+    },
+    "@radix-ui/react-presence": {
+      "globals": {
+        "CSS.escape": true,
+        "getComputedStyle": true
+      },
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/react-use-layout-effect": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-primitive": {
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/react-slot": true,
+        "react": true,
+        "react-dom": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-slot": {
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/react-compose-refs": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-focus-scope>@radix-ui/react-use-callback-ref": {
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/react-use-layout-effect": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-use-controllable-state": {
+      "globals": {
+        "console.warn": true
+      },
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/primitive": true,
+        "@radix-ui/react-dialog>@radix-ui/react-dismissable-layer>@radix-ui/react-use-effect-event": true,
+        "@radix-ui/react-dialog>@radix-ui/react-use-layout-effect": true,
+        "node-polyfill-webpack-plugin>console-browserify": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-dismissable-layer>@radix-ui/react-use-effect-event": {
+      "packages": {
+        "@radix-ui/react-dialog>@radix-ui/react-use-layout-effect": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>@radix-ui/react-use-layout-effect": {
+      "globals": {
+        "document": true
+      },
+      "packages": {
+        "react": true
       }
     },
     "@raugfer/jazzicon": {
@@ -1195,22 +1406,12 @@
         "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub>@zk-kit/utils": true
       }
     },
-    "@kohaku-eth/privacy-pools>@zk-kit/lean-imt": {
-      "packages": {
-        "@kohaku-eth/privacy-pools>@zk-kit/lean-imt>@zk-kit/utils": true
-      }
-    },
     "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/poseidon-cipher": {
       "packages": {
         "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub": true
       }
     },
     "@kohaku-eth/privacy-pools>maci-crypto>@zk-kit/baby-jubjub>@zk-kit/utils": {
-      "packages": {
-        "buffer": true
-      }
-    },
-    "@kohaku-eth/privacy-pools>@zk-kit/lean-imt>@zk-kit/utils": {
       "packages": {
         "buffer": true
       }
@@ -1264,6 +1465,16 @@
     "@signinwithethereum/siwe>@signinwithethereum/siwe-parser>apg-js": {
       "packages": {
         "buffer": true
+      }
+    },
+    "@radix-ui/react-dialog>aria-hidden": {
+      "globals": {
+        "HTMLElement": true,
+        "console.error": true,
+        "document": true
+      },
+      "packages": {
+        "node-polyfill-webpack-plugin>console-browserify": true
       }
     },
     "crypto-browserify>public-encrypt>parse-asn1>asn1.js": {
@@ -2056,6 +2267,11 @@
         "eslint-plugin-react>array-includes>math-intrinsics": true
       }
     },
+    "@radix-ui/react-dialog>react-remove-scroll>react-style-singleton>get-nonce": {
+      "globals": {
+        "__webpack_nonce__": true
+      }
+    },
     "eslint-plugin-react>array-includes>es-abstract>get-proto": {
       "packages": {
         "eslint-plugin-react>es-iterator-helpers>has-proto>dunder-proto": true,
@@ -2812,13 +3028,6 @@
         "react-native-worklets": true
       }
     },
-    "react-native-modalize": {
-      "packages": {
-        "react": true,
-        "react-native-gesture-handler": true,
-        "react-native-web": true
-      }
-    },
     "react-native-qrcode-svg": {
       "globals": {
         "btoa": true
@@ -2916,7 +3125,7 @@
         "CSS": true,
         "Image": true,
         "Intl.Locale": true,
-        "Node": true,
+        "Node.TEXT_NODE": true,
         "PointerEvent": true,
         "RN$Bridgeless": true,
         "ResizeObserver": true,
@@ -2938,7 +3147,6 @@
         "getSelection": true,
         "location": "write",
         "matchMedia": true,
-        "navigator": true,
         "open": true,
         "performance.now": true,
         "removeEventListener": true,
@@ -2960,7 +3168,6 @@
         "react-native-web>memoize-one": true,
         "react-native>nullthrows": true,
         "react": true,
-        "react-dom": true,
         "react-native-web>styleq": true
       }
     },
@@ -2981,6 +3188,41 @@
       },
       "packages": {
         "node-polyfill-webpack-plugin>console-browserify": true
+      }
+    },
+    "@radix-ui/react-dialog>react-remove-scroll>react-remove-scroll-bar": {
+      "globals": {
+        "document.body": true,
+        "document.documentElement.clientWidth": true,
+        "getComputedStyle": true,
+        "innerWidth": true
+      },
+      "packages": {
+        "react": true,
+        "@radix-ui/react-dialog>react-remove-scroll>react-style-singleton": true
+      }
+    },
+    "@radix-ui/react-dialog>react-remove-scroll": {
+      "globals": {
+        "Element": true,
+        "Node.DOCUMENT_FRAGMENT_NODE": true,
+        "ShadowRoot": true,
+        "addEventListener": true,
+        "document.addEventListener": true,
+        "document.body": true,
+        "document.removeEventListener": true,
+        "getComputedStyle": true,
+        "getSelection": true,
+        "removeEventListener": true,
+        "setTimeout": true
+      },
+      "packages": {
+        "react": true,
+        "@radix-ui/react-dialog>react-remove-scroll>react-remove-scroll-bar": true,
+        "@radix-ui/react-dialog>react-remove-scroll>react-style-singleton": true,
+        "tslib": true,
+        "@radix-ui/react-dialog>react-remove-scroll>use-callback-ref": true,
+        "@radix-ui/react-dialog>react-remove-scroll>use-sidecar": true
       }
     },
     "react-router-dom": {
@@ -3023,6 +3265,15 @@
       "packages": {
         "react-router-dom>@remix-run/router": true,
         "node-polyfill-webpack-plugin>console-browserify": true,
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>react-remove-scroll>react-style-singleton": {
+      "globals": {
+        "document": true
+      },
+      "packages": {
+        "@radix-ui/react-dialog>react-remove-scroll>react-style-singleton>get-nonce": true,
         "react": true
       }
     },
@@ -3449,6 +3700,17 @@
       "packages": {
         "url>punycode": true,
         "url>querystring": true
+      }
+    },
+    "@radix-ui/react-dialog>react-remove-scroll>use-callback-ref": {
+      "packages": {
+        "react": true
+      }
+    },
+    "@radix-ui/react-dialog>react-remove-scroll>use-sidecar": {
+      "packages": {
+        "react": true,
+        "tslib": true
       }
     },
     "util": {

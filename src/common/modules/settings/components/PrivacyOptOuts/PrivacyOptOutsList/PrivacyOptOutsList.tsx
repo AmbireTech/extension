@@ -6,8 +6,8 @@ import EnsIcon from '@common/assets/svg/EnsIcon'
 import GasTankIcon from '@common/assets/svg/GasTankIcon'
 import LedgerLetterIcon from '@common/assets/svg/LedgerLetterIcon'
 import LightningIcon from '@common/assets/svg/LightningIcon'
+import SafeIconGray from '@common/assets/svg/SafeIconGray'
 import TrendingIcon from '@common/assets/svg/TrendingIcon'
-import ValueIcon from '@common/assets/svg/ValueIcon'
 import { isMobile, isWeb } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
@@ -22,6 +22,9 @@ import spacings from '@common/styles/spacings'
 
 import type { AllControllersMappingType } from '@common/constants/controllersMapping'
 
+const selectHasSafeAccounts = (state: AllControllersMappingType['AccountsController']) =>
+  state.accounts.some((account) => !!account.safeCreation)
+
 const selectHasKeystoreRecovery = (state: AllControllersMappingType['EmailVaultController']) =>
   state.hasKeystoreRecovery
 
@@ -30,10 +33,6 @@ const PrivacyOptOutsList = () => {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const erc4337RequiredBy = useMemo(() => ({ flag: 'gasTank' as const, title: t('Gas Tank') }), [t])
-  const tokenPricesRequiredBy = useMemo(
-    () => ({ flag: 'erc4337' as const, title: t('ERC-4337') }),
-    [t]
-  )
   const ambireAnalyticsRequiredBy = useMemo(
     () => ({ flag: 'emailVault' as const, title: t('Email Vault') }),
     [t]
@@ -43,6 +42,20 @@ const PrivacyOptOutsList = () => {
   const { state: hasKeystoreRecovery } = useController(
     'EmailVaultController',
     selectHasKeystoreRecovery
+  )
+  // Only worth a warning when there are Safe accounts to stop syncing
+  const { state: hasSafeAccounts } = useController('AccountsController', selectHasSafeAccounts)
+  const safeApiDisableConfirmation = useMemo(
+    () =>
+      hasSafeAccounts
+        ? {
+            title: t('Stop syncing Safe accounts?'),
+            text: t(
+              "Your Safe accounts will no longer sync between Ambire on your phone and in your browser. Transactions and messages started by the other owners or in the Safe app won't show up here, and what you sign here won't reach them."
+            )
+          }
+        : undefined,
+    [hasSafeAccounts, t]
   )
   const emailVaultAction = useMemo(
     () =>
@@ -72,9 +85,7 @@ const PrivacyOptOutsList = () => {
       <AmbireApiOptions />
       <OptOutControlOption
         title={t('Gas Tank')}
-        description={t(
-          'Pay network fees cross chain. Requires ERC-4337 smart account features and Token prices.'
-        )}
+        description={t('Pay network fees cross chain. Requires ERC-4337 smart account features.')}
         icon={<GasTankIcon width={24} height={24} color={theme.iconPrimary} />}
         flag="gasTank"
       />
@@ -82,18 +93,11 @@ const PrivacyOptOutsList = () => {
         <OptOutControlOption
           title={t('ERC-4337 smart account features')}
           description={t(
-            'Use bundlers and paymasters for smart account gas estimation, Gas Tank, sponsored gas, and token fee payments. Requires Token prices.'
+            'Use bundlers and paymasters for smart account gas estimation, Gas Tank, sponsored gas, and token fee payments.'
           )}
           icon={<LightningIcon width={24} height={24} color={theme.iconPrimary} />}
           flag="erc4337"
           requiredBy={erc4337RequiredBy}
-        />
-        <OptOutControlOption
-          title={t('Token prices')}
-          description={t(`Fetch token prices through Ambire's API`)}
-          icon={<ValueIcon width={24} height={24} color={theme.iconPrimary} />}
-          flag="tokenPrices"
-          requiredBy={tokenPricesRequiredBy}
         />
       </View>
       {isMobile ? (
@@ -127,6 +131,15 @@ const PrivacyOptOutsList = () => {
         )}
         icon={<EnsIcon width={20} height={20} color={theme.iconPrimary} />}
         flag="keepEnsProfilesUpToDate"
+      />
+      <OptOutControlOption
+        title={t('Sync Safe accounts')}
+        description={t(
+          "Find Safe accounts to import and keep them in sync with the other owners and your other devices. This sends your Safe and owner addresses, what you sign, your signatures and the app that asked for them to Safe's servers."
+        )}
+        icon={<SafeIconGray width={24} height={24} />}
+        flag="safeApi"
+        disableConfirmation={safeApiDisableConfirmation}
       />
       <SwapProviderControlOption />
       <CrashAnalyticsControlOption />

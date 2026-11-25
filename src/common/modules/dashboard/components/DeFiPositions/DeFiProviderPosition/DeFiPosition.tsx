@@ -24,7 +24,7 @@ import Badge from './DeFiPositionHeader/Badge'
 type Props = Omit<PositionsByProvider, 'iconUrl' | 'positions' | 'positionInUSD' | 'source'> &
   Position & {
     providerName: string
-    positionInUSD?: string
+    formattedBalance?: string
   }
 
 const ASSET_TYPE_TO_LABEL = {
@@ -46,7 +46,7 @@ const getMappedType = (type: AssetType) => {
 
 const DeFiPosition: FC<Props> = ({
   chainId,
-  positionInUSD,
+  formattedBalance,
   additionalData,
   assets,
   providerName,
@@ -168,7 +168,7 @@ const DeFiPosition: FC<Props> = ({
           )}
         </View>
         <Text fontSize={14} weight="semiBold" style={[spacings.ml, { flexShrink: 0 }]}>
-          {positionInUSD || '$-'}
+          {formattedBalance || '$-'}
         </Text>
       </View>
       <PerpDetails additionalData={additionalData} />

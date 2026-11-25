@@ -174,13 +174,16 @@ const nodeCoreRedirects = {
 }
 
 // Modules that must be swapped out but are imported by relative path from inside
-// ambire-common, so there is no specifier to key on. Matched on the resolved file
-// instead. Colibri runs a WebAssembly verifier and Hermes has no WebAssembly.
+// ambire-common or a package, so there is no specifier to key on. Matched on the resolved
+// file instead. Colibri runs a WebAssembly verifier and Hermes has no WebAssembly.
+// poseidon-lean-imt's parallel build starts workers in a way Metro cannot bundle.
 const resolvedFileRedirects = {
   [path.resolve(__dirname, 'src/ambire-common/src/services/provider/colibri.ts')]: path.resolve(
     __dirname,
     'src/mobile/shims/colibri.ts'
   ),
+  [path.resolve(__dirname, 'node_modules/@kohaku-eth/poseidon-lean-imt/dist/parallel.js')]:
+    path.resolve(__dirname, 'src/mobile/shims/poseidonLeanImtParallel.ts'),
   ...viemModuleRedirects
 }
 

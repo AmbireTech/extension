@@ -22,7 +22,6 @@ interface Props {
   totalAmount: number
   color: ColorValue
   isPrivacyModeEnabled: boolean
-  isTokenPricesEnabled: boolean
   // 'skeleton' shows the loading block, 'ready' the live value, 'cached' the last
   // known value with an opacity pulse (while the fresh portfolio loads).
   variant: Variant
@@ -38,7 +37,6 @@ const DashboardBalance: React.FC<Props> = ({
   totalAmount,
   color,
   isPrivacyModeEnabled,
-  isTokenPricesEnabled,
   variant,
   badge,
   onPress,
@@ -57,7 +55,9 @@ const DashboardBalance: React.FC<Props> = ({
     )
   }
 
-  const formattedAmount = isTokenPricesEnabled ? formatDecimals(totalAmount, 'value') : '$-'
+  // Shown even when the user opted out of our price API, as the tokens are then priced from the
+  // network: the total may leave out the tokens it couldn't price, but it's never hidden
+  const formattedAmount = formatDecimals(totalAmount, 'value')
   const [integerPart, decimalPart] = formattedAmount.split('.')
 
   const amount = (

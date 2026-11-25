@@ -97,7 +97,6 @@ const GasFeeUpdatedModal = ({ signAccountOpState, onAccept, onCancel }: Props) =
       title={hasEnoughFunds ? t('Gas fee updated') : t('Insufficient funds')}
       description={t('Network fee changed significantly while preparing the transaction')}
       primaryButtonText={t('Accept and continue')}
-      secondaryButtonText={t('Cancel')}
       onPrimaryButtonPress={onAccept}
       onSecondaryButtonPress={onCancel}
       type={hasEnoughFunds ? 'info' : 'error'}

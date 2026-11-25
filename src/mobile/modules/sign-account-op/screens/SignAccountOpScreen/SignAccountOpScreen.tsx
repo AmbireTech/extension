@@ -7,7 +7,6 @@ import { Key } from '@ambire-common/interfaces/keystore'
 import { CallsUserRequest } from '@ambire-common/interfaces/userRequest'
 import { isSafeRejectionCall } from '@ambire-common/libs/accountOp/accountOp'
 import { isCancelAccountOp } from '@ambire-common/libs/accountOp/cancel'
-import Alert from '@common/components/Alert'
 import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
 import NetworkBadge from '@common/components/NetworkBadge'
 import NoKeysToSignAlert from '@common/components/NoKeysToSignAlert'
@@ -25,12 +24,14 @@ import { COMPACT_FEE_TO_BUTTONS_SPACING } from '@common/modules/sign-account-op/
 import PendingTransactions from '@common/modules/sign-account-op/components/PendingTransactions'
 import SafeAccountTabs from '@common/modules/sign-account-op/components/SafeAccountTabs'
 import SafeEip712Data from '@common/modules/sign-account-op/components/SafeEip712Data'
+import SafeApiFailedAlert from '@common/modules/sign-account-op/components/SafeApiFailedAlert'
 import EarlierPendingTransaction from '@common/modules/sign-account-op/components/EarlierPendingTransaction'
 import SafeNonce from '@common/modules/sign-account-op/components/SafeNonce'
 import SafeOwnerApprovalSheet, {
   useSafeOwnerApproval
 } from '@common/modules/sign-account-op/components/SafeOwnerApproval'
 import SafeOwners from '@common/modules/sign-account-op/components/SafeOwners'
+import SafeSignatureAdded from '@common/modules/sign-account-op/components/SafeSignatureAdded'
 import SafetyChecksOverlay from '@common/modules/sign-account-op/components/SafetyChecksOverlay'
 import SectionHeading from '@common/modules/sign-account-op/components/SectionHeading'
 import SpeedUpNotNeededFee from '@common/modules/sign-account-op/components/SpeedUpStatus/SpeedUpNotNeededFee'
@@ -145,6 +146,8 @@ const SignAccountOpScreen = () => {
     holdToProceedButtonType,
     disabledReason,
     showSafeSigners,
+    safeSignatureAdded,
+    handleSafeSignatureAddedExitEnd,
     shouldDisplayQrSigningModal,
     handleQrSigningFlowOnContinuePressed,
     handleQrSigningFlowSubmitSignatureResponse,
@@ -306,6 +309,17 @@ const SignAccountOpScreen = () => {
     signAccountOpState?.readyToSign,
     signAccountOpState?.account.safeCreation
   ])
+
+  if (safeSignatureAdded) {
+    return (
+      <SafeSignatureAdded
+        signedCount={safeSignatureAdded.signedCount}
+        threshold={safeSignatureAdded.threshold}
+        closesAt={safeSignatureAdded.closesAt}
+        onExitEnd={handleSafeSignatureAddedExitEnd}
+      />
+    )
+  }
 
   const estimationFailed = signAccountOpState?.status?.type === SigningStatus.EstimationError
 
@@ -543,15 +557,7 @@ const SignAccountOpScreen = () => {
                   />
                 )
               )}
-              {signAccountOpState?.hasSafeApiFailed && (
-                <Alert
-                  size="sm"
-                  type="warning"
-                  title={t('Safe API failure')}
-                  text={t('Transaction was not sent to Safe Global due to a Safe API failure')}
-                  style={spacings.mt}
-                />
-              )}
+              {signAccountOpState?.hasSafeApiFailed && <SafeApiFailedAlert style={spacings.mt} />}
               {isViewOnly && (
                 <NoKeysToSignAlert
                   style={spacings.mt}

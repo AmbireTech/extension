@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Keyboard } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import { useTranslation } from '@common/config/localization'
 import useController from '@common/hooks/useController'
 import useExtraEntropy from '@common/hooks/useExtraEntropy'
@@ -22,7 +22,7 @@ const useChangeKeystorePassword = () => {
     ref: confirmationModalRef,
     open: openConfirmation,
     close: closeConfirmation
-  } = useModalize()
+  } = useSheetRef()
   // Held until the keystore is idle enough to accept it, see the effect below
   const [pendingChange, setPendingChange] = useState<{ oldPassword?: string } | null>(null)
   // Which pending change was already sent. Keyed on the change itself, so a retry after a wrong

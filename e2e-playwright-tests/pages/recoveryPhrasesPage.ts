@@ -94,12 +94,14 @@ export class RecoveryPhrasesPage extends BasePage {
     // Read raw text so passphrase checks do not depend on layout whitespace.
     const passphrase = (await passphraseEl.isVisible()) ? await passphraseEl.textContent() : null
 
-    // Close the manage-phrase sheet via its own back button (scoped to manageHeader, not the
-    // page-wide "panel-back-btn" testid) and wait for the whole sheet to unmount - it's
+    // Close the manage-phrase sheet via the X in its own header row (the closest ancestor of
+    // manageHeader that has one) and wait for the whole sheet to unmount - it's
     // conditionally rendered by the parent screen, so "hidden" here means fully closed.
     await expect(async () => {
-      const backBtn = manageHeader.getByTestId('panel-back-btn')
-      if (await backBtn.isVisible()) await backBtn.click()
+      const closeBtn = manageHeader
+        .locator(`xpath=ancestor::div[.//*[@data-testid="${selectors.sheetCloseButton}"]][1]`)
+        .getByTestId(selectors.sheetCloseButton)
+      if (await closeBtn.isVisible()) await closeBtn.click()
       await expect(manageHeader).toBeHidden({ timeout: PRESENCE_TIMEOUT })
     }).toPass({ timeout: 30000 })
 

@@ -7,7 +7,7 @@ import Alert from '@common/components/Alert'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
 import Text from '@common/components/Text'
-import { isMobile, isWeb } from '@common/config/env'
+import { isMobile } from '@common/config/env'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
@@ -19,7 +19,6 @@ import flexbox from '@common/styles/utils/flexbox'
 
 type Props = {
   onContinue: () => void
-  onReject: () => void
   urType: any
   urCborHex: any
   transactionProgress?: {
@@ -46,7 +45,6 @@ const MAX_MOBILE_QR_SIZE = 400
 
 const QrSignRequestScreen = ({
   onContinue,
-  onReject,
   urType,
   urCborHex,
   transactionProgress = null,
@@ -126,8 +124,8 @@ const QrSignRequestScreen = ({
             }
           />
         )}
-        {/* Inside a bottom sheet the buttons are rendered as its sticky footer, so they
-        stay reachable no matter how tall the signing request details get */}
+        {/* Inside a bottom sheet the button is rendered as its sticky footer, so it stays
+        reachable no matter how tall the signing request details get. The sheet's X cancels */}
         {!withMobileLayout && (
           <FooterGlassView
             size="sm"
@@ -135,15 +133,7 @@ const QrSignRequestScreen = ({
             style={{ ...spacings.ptSm, marginTop: 'auto' }}
           >
             <Button
-              size="smaller"
-              hasBottomSpacing={false}
-              type="secondary"
-              text={t('Back')}
-              onPress={onReject}
-              style={isWeb ? { width: 98, ...spacings.mrLg } : undefined}
-            />
-            <Button
-              size="smaller"
+              size="regular"
               hasBottomSpacing={false}
               text={t('Get signature')}
               onPress={onContinue}

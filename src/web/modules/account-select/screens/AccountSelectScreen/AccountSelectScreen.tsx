@@ -1,20 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LayoutChangeEvent, View } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import { Account as AccountType } from '@ambire-common/interfaces/account'
 import AddCircularIcon from '@common/assets/svg/AddCircularIcon'
 import SettingsIcon from '@common/assets/svg/SettingsIcon'
 import SyncIcon from '@common/assets/svg/SyncIcon'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import Button from '@common/components/Button'
 import FooterGlassView from '@common/components/FooterGlassView'
-import HoverablePressable from '@common/components/HoverablePressable'
+import HeaderButton, { getHeaderIconStrokeWidth } from '@common/components/HeaderButton'
 import LayoutWrapper from '@common/components/LayoutWrapper'
 import ScrollableWrapper, { WRAPPER_TYPES } from '@common/components/ScrollableWrapper'
 import Search from '@common/components/Search'
 import Text from '@common/components/Text'
-import { isPrivacyPoolsEnabled, isPrivacyPoolsSupported } from '@common/config/env'
+import { isPrivacyPoolsSupported } from '@common/config/env'
 import useAccountsList from '@common/hooks/useAccountsList'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useController from '@common/hooks/useController'
@@ -26,6 +26,7 @@ import useRoute from '@common/hooks/useRoute'
 import useTheme from '@common/hooks/useTheme'
 import Account from '@common/modules/account-select/components/Account'
 import AddAccount from '@common/modules/account-select/components/AddAccount'
+import AddPrivacyPoolsAccountBottomSheet from '@common/modules/account-select/components/AddPrivacyPoolsAccountBottomSheet'
 import SyncBottomSheet from '@common/modules/app-data-sync/components/SyncBottomSheet'
 import DashboardSkeleton from '@common/modules/dashboard/components/Skeleton'
 import { HeaderWithTitle } from '@common/modules/header/components/Header/Header'
@@ -34,6 +35,7 @@ import spacings, { SPACING_SM } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import AccountsTabs, { AccountsTab } from '@common/components/AccountsTabs'
 import PrivacyPoolsAccountRow from '@web/modules/privacy-pools/components/PrivacyPoolsAccountRow'
+import PrivacyPoolsAccountsEmptyState from '@web/modules/privacy-pools/components/PrivacyPoolsAccountsEmptyState'
 
 import getStyles from './styles'
 
@@ -83,12 +85,17 @@ const AccountSelectScreen = () => {
     'SelectedAccountController',
     selectPrivacyPoolsAccountId
   )
-  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useModalize()
+  const { ref: sheetRef, open: openBottomSheet, close: closeBottomSheet } = useSheetRef()
   const {
     ref: syncSheetRef,
     open: openSyncBottomSheet,
     close: closeSyncBottomSheet
-  } = useModalize()
+  } = useSheetRef()
+  const {
+    ref: privacyPoolsSheetRef,
+    open: openPrivacyPoolsBottomSheet,
+    close: closePrivacyPoolsBottomSheet
+  } = useSheetRef()
   const { t } = useTranslation()
   const accountsContainerRef = useRef(null)
   const [pendingToBeSetSelectedAccount, setPendingToBeSetSelectedAccount] = useState('')
@@ -213,14 +220,20 @@ const AccountSelectScreen = () => {
     [listBottomInset]
   )
   const noAccountsFound = <Text>{t('No accounts found')}</Text>
-  const isPrivateTabOpen = isPrivacyPoolsEnabled && activeTab === 'private'
+  // Only without any Privacy Pools account - when the search hides them all, nothing was found
+  const privacyPoolsAccountsEmptyComponent = privacyPoolsAccounts.length ? (
+    noAccountsFound
+  ) : (
+    <PrivacyPoolsAccountsEmptyState onAddPress={openPrivacyPoolsBottomSheet} />
+  )
+  const isPrivateTabOpen = isPrivacyPoolsSupported && activeTab === 'private'
   const listStyle = isPrivacyPoolsSupported ? styles.containerBelowTabs : styles.container
 
   const addAccountButton = (
     <Button
       testID="button-add-account"
       text={t('Add account')}
-      size={isNarrowWebLayout ? 'regular' : 'smaller'}
+      size="regular"
       hasBottomSpacing={false}
       onPress={openBottomSheet as any}
       childrenPosition="left"
@@ -234,13 +247,13 @@ const AccountSelectScreen = () => {
       testID="button-sync-with-mobile"
       type="secondary"
       text={t('Sync with mobile')}
-      size={isNarrowWebLayout ? 'regular' : 'smaller'}
+      size="regular"
       hasBottomSpacing={false}
       onPress={openSyncBottomSheet as any}
       childrenPosition="left"
       // On the wide footer, only as wide as its own label, so it never wraps on two
       // rows. The primary action next to it takes whatever is left.
-      style={isNarrowWebLayout ? { width: '100%' } : spacings.mrTy}
+      style={isNarrowWebLayout ? { width: '100%' } : spacings.mr}
     >
       <SyncIcon width={24} height={24} color={theme.primaryText} style={spacings.mrTy} />
     </Button>
@@ -249,9 +262,18 @@ const AccountSelectScreen = () => {
   return !pendingToBeSetSelectedAccount && !pendingToBeSetSelectedPrivacyPoolsAccount ? (
     <LayoutWrapper>
       <HeaderWithTitle>
-        <HoverablePressable onPress={() => navigate(WEB_ROUTES.accountsSettings)}>
-          <SettingsIcon width={28} height={28} />
-        </HoverablePressable>
+        <HeaderButton
+          icon={
+            <SettingsIcon
+              width={22}
+              height={22}
+              strokeWidth={getHeaderIconStrokeWidth(28, 22)}
+              color={theme.primaryText}
+            />
+          }
+          accessibilityLabel={t('Accounts settings')}
+          onPress={() => navigate(WEB_ROUTES.accountsSettings)}
+        />
       </HeaderWithTitle>
       <View style={[spacings.pt, spacings.phSm, flexbox.flex1]} ref={accountsContainerRef}>
         <Search autoFocus control={control} style={styles.searchBar} />
@@ -271,7 +293,7 @@ const AccountSelectScreen = () => {
               data={filteredPrivacyPoolsAccounts}
               renderItem={renderPrivacyPoolsAccount}
               keyExtractor={privacyPoolsAccountKeyExtractor}
-              ListEmptyComponent={noAccountsFound}
+              ListEmptyComponent={privacyPoolsAccountsEmptyComponent}
             />
           ) : (
             // Without a regular account selected there is no row to scroll to, so nothing to wait for
@@ -328,6 +350,16 @@ const AccountSelectScreen = () => {
         </FooterGlassView>
       </View>
       <AddAccount sheetRef={sheetRef} closeBottomSheet={closeBottomSheet} />
+      {isPrivacyPoolsSupported && (
+        <AddPrivacyPoolsAccountBottomSheet
+          // The one nested in `AddAccount` is mounted too, and the ids must differ
+          id="accounts-empty-state-add-privacy-pools-account-bottom-sheet"
+          sheetRef={privacyPoolsSheetRef}
+          closeBottomSheet={closePrivacyPoolsBottomSheet}
+          // Closes as the flow moves on to the personalize step
+          onFlowStart={closePrivacyPoolsBottomSheet}
+        />
+      )}
       <SyncBottomSheet
         sheetRef={syncSheetRef}
         closeBottomSheet={closeSyncBottomSheet}

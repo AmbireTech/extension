@@ -1,16 +1,16 @@
 import React, { ReactNode, useCallback, useState } from 'react'
 import { View, ViewStyle } from 'react-native'
-import { useModalize } from 'react-native-modalize'
 
 import BottomSheet from '@common/components/BottomSheet'
-import Button from '@common/components/Button'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
+import useSheetRef from '@common/components/BottomSheet/useSheetRef'
 import ButtonWithLoader from '@common/components/ButtonWithLoader/ButtonWithLoader'
 import GlassView from '@common/components/GlassView'
 import Text from '@common/components/Text'
 import { useTranslation } from '@common/config/localization'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useToast from '@common/hooks/useToast'
-import spacings, { SPACING_LG, SPACING_SM } from '@common/styles/spacings'
+import spacings, { SPACING_LG } from '@common/styles/spacings'
 import flexbox from '@common/styles/utils/flexbox'
 import text from '@common/styles/utils/text'
 
@@ -54,7 +54,7 @@ const EditNameBottomSheet = ({
   const { t } = useTranslation()
   const { addToast } = useToast()
   const { isCompactLayout } = useCompactLayout()
-  const { ref: sheetRef, close } = useModalize()
+  const { ref: sheetRef, close } = useSheetRef()
   const [isSaving, setIsSaving] = useState(false)
 
   const canSave = canSaveName && !isSaving
@@ -82,18 +82,8 @@ const EditNameBottomSheet = ({
     }
   }, [addToast, canSave, close, onSave, successMessage, t])
 
-  const renderButtons = ({ buttonStyle }: { buttonStyle?: ViewStyle } = {}) => [
-    <Button
-      type="secondary"
-      size="smaller"
-      text={t('Cancel')}
-      onPress={handleClose}
-      disabled={isSaving}
-      hasBottomSpacing={false}
-      style={buttonStyle}
-      testID={`${testID}-cancel-button`}
-      key="cancel"
-    />,
+  // The sheet's X closes it, so there is no Cancel next to Save
+  const renderSaveButton = (buttonStyle?: ViewStyle) => (
     <ButtonWithLoader
       type="primary"
       size="smaller"
@@ -103,9 +93,8 @@ const EditNameBottomSheet = ({
       isLoading={isSaving}
       style={buttonStyle}
       testID={`${testID}-save-button`}
-      key="save"
     />
-  ]
+  )
 
   return (
     <BottomSheet
@@ -119,25 +108,16 @@ const EditNameBottomSheet = ({
       autoOpen
       style={isCompactLayout ? undefined : WIDE_MODAL_STYLE}
       // On narrow screens the buttons stay pinned to the bottom of the sheet
-      FooterComponent={
-        isCompactLayout && (
-          <View style={[flexbox.directionRow, spacings.ptLg, { columnGap: SPACING_SM }]}>
-            {/* Unpadded cells, as flex splits the space after each button's own padding and border */}
-            {renderButtons().map((button) => (
-              <View key={button.key} style={flexbox.flex1}>
-                {button}
-              </View>
-            ))}
-          </View>
-        )
-      }
+      FooterComponent={isCompactLayout && <View style={spacings.ptLg}>{renderSaveButton()}</View>}
     >
-      <Text fontSize={20} weight="medium" style={[text.center, spacings.mbXl]}>
-        {title}
-      </Text>
+      <SheetHeaderRow style={spacings.mbXl}>
+        <Text fontSize={20} weight="medium" style={text.center}>
+          {title}
+        </Text>
+      </SheetHeaderRow>
       {children(handleSave)}
       {!isCompactLayout && (
-        // On wide screens the buttons sit centered in a glass pill instead of filling the width
+        // On wide screens the button sits centered in a glass pill instead of filling the width
         <View style={[flexbox.directionRow, flexbox.justifyCenter, spacings.pt2Xl]}>
           <GlassView borderRadius={28}>
             <View
@@ -148,7 +128,7 @@ const EditNameBottomSheet = ({
                 { columnGap: SPACING_LG }
               ]}
             >
-              {renderButtons({ buttonStyle: { minWidth: 99 } })}
+              {renderSaveButton({ minWidth: 99 })}
             </View>
           </GlassView>
         </View>

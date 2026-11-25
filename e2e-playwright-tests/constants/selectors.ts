@@ -146,7 +146,7 @@ const selectors = {
       txnConfirmedStep: 'finalized-rows',
       recepientAddressBlock: 'recipient-address-undefined'
     },
-    backButton: 'back-button',
+    closeSheetButton: 'bottom-sheet-close-button',
     amountField: 'amount-field',
     proceedBtn: 'proceed-btn',
     transactionError: '//span[contains(text(),"Error")]', // e.g. snackbar when relayer is down,
@@ -328,8 +328,11 @@ const selectors = {
   networkDetailEditButton: '//div[.//div[text()="Network details"]]//div[text()="Edit"]',
   // edit network modal
   editNetworkModalTitle: '//div[text()="Edit network"]',
-  editNetworkCancelButton: '//div[contains(text(),"Cancel")]',
+  editNetworkCloseButton: '[data-testid="bottom-sheet-close-button"]',
   editNetworkSaveButton: '//div[contains(text(),"Save")]',
+  // the round buttons in a sheet's header row
+  sheetBackButton: 'bottom-sheet-back-button',
+  sheetCloseButton: 'bottom-sheet-close-button',
   networkSettingsSavedSnackbar: (networkName: string) =>
     `((//div[contains(normalize-space(), "${networkName} settings saved!")]))[4]`, // TODO: snackbar selector finding 8 elements; change once we have ID on FE
   // Sign
@@ -360,7 +363,7 @@ const selectors = {
     recoveryPhrasePassphraseValue: 'recovery-phrase-passphrase-value',
     revealRecoveryPhraseButton: 'reveal-recovery-phrase-button',
     copyRecoveryPhraseButton: 'copy-recovery-phrase-button',
-    exportKeyButton: (addr: string) => `export-key-button-${addr}`,
+    keyOptionsButton: (addr: string, type: string) => `key-options-${addr}-${type}`,
     privateKeyValue: 'private-key-value',
     privateKeyBlurContainer: 'private-key-blur-container',
     revealPrivateKeyButton: 'reveal-private-key-button',

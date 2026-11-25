@@ -10,13 +10,17 @@ import useController from '@common/hooks/useController'
 import useTheme from '@common/hooks/useTheme'
 import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
 import { checkIfImageExists } from '@common/utils/checkIfImageExists'
+import {
+  getBundledTokenIcon,
+  handleBundledTokenIconLoadFailure
+} from '@common/utils/getBundledTokenIcon'
 import { getHardcodedCitreaIcons } from '@common/utils/getHardcodedCitreaIcons'
 
-import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 import SkeletonLoader from '../SkeletonLoader'
 import { SkeletonLoaderProps } from '../SkeletonLoader/types'
 import getStyles from './styles'
 
+import type { IFeatureFlagsController } from '@ambire-common/interfaces/featureFlags'
 interface Props extends Partial<ImageProps> {
   /* supports network id or chain id */
   chainId?: bigint
@@ -78,6 +82,21 @@ const TokenIcon: React.FC<Props> = ({
     [chainId, networks]
   )
 
+  // Icons shipped with the app take priority: they need no network request, so they also
+  // show up when token & DeFi auto-discovery (which allows loading remote icons) is off
+  const bundledIconSource = useMemo(() => getBundledTokenIcon(chainId, address), [chainId, address])
+  const [failedBundledIconSource, setFailedBundledIconSource] = useState<{ uri: string } | null>(
+    null
+  )
+  const shouldUseBundledIcon = !!bundledIconSource && bundledIconSource !== failedBundledIconSource
+
+  const handleBundledIconError = useCallback(() => {
+    if (!bundledIconSource || chainId === undefined) return
+
+    handleBundledTokenIconLoadFailure(chainId, address)
+    setFailedBundledIconSource(bundledIconSource)
+  }, [bundledIconSource, chainId, address])
+
   const handleImageLoaded = useCallback(() => setUriStatus(UriStatus.IMAGE_EXISTS), [])
   const attemptToLoadFallbackImage = useCallback(async () => {
     if (!areTokenIconsEnabled) return
@@ -107,7 +126,7 @@ const TokenIcon: React.FC<Props> = ({
   }, [areTokenIconsEnabled, fallbackUri, address, network?.chainId])
 
   useEffect(() => {
-    if (!areTokenIconsEnabled) {
+    if (!areTokenIconsEnabled || shouldUseBundledIcon) {
       return
     }
 
@@ -133,7 +152,8 @@ const TokenIcon: React.FC<Props> = ({
     fallbackUri,
     attemptToLoadFallbackImage,
     network,
-    areTokenIconsEnabled
+    areTokenIconsEnabled,
+    shouldUseBundledIcon
   ])
 
   const memoizedContainerStyle = useMemo(
@@ -156,7 +176,8 @@ const TokenIcon: React.FC<Props> = ({
     ]
   )
 
-  const effectiveUriStatus = areTokenIconsEnabled ? uriStatus : UriStatus.IMAGE_MISSING
+  const remoteIconUriStatus = areTokenIconsEnabled ? uriStatus : UriStatus.IMAGE_MISSING
+  const effectiveUriStatus = shouldUseBundledIcon ? UriStatus.IMAGE_EXISTS : remoteIconUriStatus
   const shouldDisplayNetworkIcon = withNetworkIcon && !!network && !onGasTank
 
   return (
@@ -173,7 +194,7 @@ const TokenIcon: React.FC<Props> = ({
           width={withContainer ? containerWidth : width}
           height={withContainer ? containerHeight : height}
         />
-      ) : isMobile && imageUrl?.toLowerCase().endsWith('.svg') ? (
+      ) : !shouldUseBundledIcon && isMobile && imageUrl?.toLowerCase().endsWith('.svg') ? (
         <View style={{ borderRadius: BORDER_RADIUS_PRIMARY, overflow: 'hidden' }}>
           <SvgUri
             width={width}
@@ -185,10 +206,10 @@ const TokenIcon: React.FC<Props> = ({
         </View>
       ) : (
         <Image
-          source={{ uri: imageUrl }}
+          source={shouldUseBundledIcon ? bundledIconSource : { uri: imageUrl }}
           style={{ width, height, borderRadius: BORDER_RADIUS_PRIMARY }}
           // Just in case the URI is valid and image exists, but still fails to load
-          onError={attemptToLoadFallbackImage}
+          onError={shouldUseBundledIcon ? handleBundledIconError : attemptToLoadFallbackImage}
           onLoad={handleImageLoaded}
           {...props}
         />

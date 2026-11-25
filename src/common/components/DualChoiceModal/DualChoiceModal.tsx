@@ -1,13 +1,16 @@
 import React, { FC, ReactNode } from 'react'
-import { Pressable, View, ViewStyle } from 'react-native'
+import { View, ViewStyle } from 'react-native'
 import { SvgProps } from 'react-native-svg'
 
-import CloseIcon from '@common/assets/svg/CloseIcon'
+import { useIsInsideBottomSheet } from '@common/components/BottomSheet/BottomSheetContext'
+import SheetHeaderRow from '@common/components/BottomSheet/SheetHeaderRow'
 import Button from '@common/components/Button'
+import HeaderButton from '@common/components/HeaderButton'
 import Text from '@common/components/Text'
 import useCompactLayout from '@common/hooks/useCompactLayout'
 import useTheme from '@common/hooks/useTheme'
 import spacings from '@common/styles/spacings'
+import text from '@common/styles/utils/text'
 
 import getStyles from './styles'
 
@@ -46,19 +49,25 @@ const DualChoiceModal: FC<Props> = ({
 }) => {
   const { styles, theme } = useTheme(getStyles)
   const { isCompactLayout } = useCompactLayout()
+  const isInSheet = useIsInsideBottomSheet()
 
   return (
     <View>
-      {!hideHeader && (
+      {/* In a sheet the title goes to the sheet's fixed header row, whose X replaces
+      the close icon */}
+      {!hideHeader && isInSheet && (
+        <SheetHeaderRow>
+          <Text weight="medium" fontSize={20} style={text.center}>
+            {title}
+          </Text>
+        </SheetHeaderRow>
+      )}
+      {!hideHeader && !isInSheet && (
         <View style={styles.modalHeader}>
           <Text weight="medium" fontSize={20}>
             {title}
           </Text>
-          {!!onCloseIconPress && (
-            <Pressable onPress={onCloseIconPress}>
-              <CloseIcon />
-            </Pressable>
-          )}
+          {!!onCloseIconPress && <HeaderButton type="close" onPress={onCloseIconPress} />}
         </View>
       )}
       <View style={[styles.modalInnerContainer, style]}>
