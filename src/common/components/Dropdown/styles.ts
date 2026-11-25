@@ -3,13 +3,16 @@ import { StyleSheet, ViewStyle } from 'react-native'
 import { isMobile } from '@common/config/env'
 import spacings from '@common/styles/spacings'
 import { ThemeProps } from '@common/styles/themeConfig'
-import common, { getDropdownBorderStyle } from '@common/styles/utils/common'
+import common, {
+  getDropdownBorderStyle,
+  POPOVER_BACKDROP_OPACITY
+} from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 
 interface Style {
   button: ViewStyle
   dropdown: ViewStyle
-  overlay: ViewStyle
+  backdrop: ViewStyle
   item: ViewStyle
 }
 
@@ -34,10 +37,10 @@ const getStyles = (theme: ThemeProps) =>
       ...(isMobile ? { shadowOpacity: 1 } : {}),
       ...(isMobile ? { shadowRadius: 8 } : {})
     },
-    overlay: {
-      width: '100%',
-      height: '100%',
-      backgroundColor: theme.backdrop
+    backdrop: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: theme.backdrop,
+      opacity: POPOVER_BACKDROP_OPACITY
     },
     item: {
       ...spacings.phSm,

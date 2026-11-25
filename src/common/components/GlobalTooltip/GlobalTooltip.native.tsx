@@ -8,27 +8,25 @@ import {
   View,
   ViewStyle
 } from 'react-native'
-import Animated, { FadeIn } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import CloseIcon from '@common/assets/svg/CloseIcon'
 import InfoIcon from '@common/assets/svg/InfoIcon'
 import AboveSheetsOverlay from '@common/components/AboveSheetsOverlay'
+import FadeInView from '@common/components/FadeInView'
 import HoverablePressable from '@common/components/HoverablePressable'
 import Text from '@common/components/Text'
 import { TooltipAnchor, tooltipManager } from '@common/components/Tooltip/TooltipManager'
 import { useTranslation } from '@common/config/localization'
 import useTheme from '@common/hooks/useTheme'
 import spacings, { SPACING, SPACING_SM, SPACING_TY } from '@common/styles/spacings'
-import { BORDER_RADIUS_PRIMARY } from '@common/styles/utils/common'
+import { BORDER_RADIUS_PRIMARY, POPOVER_BACKDROP_OPACITY } from '@common/styles/utils/common'
 import flexbox from '@common/styles/utils/flexbox'
 import { Portal } from '@gorhom/portal'
 
 const MAX_WIDTH = 320
 const ARROW_SIZE = 12
 const CLOSE_BUTTON_SIZE = 12
-/** The theme's backdrop is for sheets, so the tooltip dims the screen only slightly. */
-const BACKDROP_OPACITY = 0.45
 /**
  * Space between the card and the element that opened it: the pointer (a square turned 45deg,
  * so it sticks out by half its diagonal) plus a small gap.
@@ -165,9 +163,9 @@ export function GlobalTooltip() {
     const { containerStyle, maxHeight, arrowLeft, isBelow } = getPlacement(anchor, size, insets)
 
     return (
-      <Animated.View
+      // Keyed so the card mounts, and fades in, again when another tooltip replaces it
+      <FadeInView
         key={activeTooltip.id}
-        entering={FadeIn.duration(150)}
         style={[{ position: 'absolute' }, containerStyle]}
         accessibilityViewIsModal
       >
@@ -230,7 +228,7 @@ export function GlobalTooltip() {
             </View>
           )}
         </View>
-      </Animated.View>
+      </FadeInView>
     )
   }
 
@@ -238,17 +236,17 @@ export function GlobalTooltip() {
     <Portal hostName="global">
       {/* Native sheets present in their own window, which a z-index can't draw above */}
       <AboveSheetsOverlay>
-        <Animated.View entering={FadeIn.duration(150)} style={StyleSheet.absoluteFill}>
+        <FadeInView style={StyleSheet.absoluteFill}>
           <Pressable
             onPress={close}
             onLayout={handleOverlayLayout}
             style={[
               StyleSheet.absoluteFill,
-              { backgroundColor: theme.backdrop, opacity: BACKDROP_OPACITY }
+              { backgroundColor: theme.backdrop, opacity: POPOVER_BACKDROP_OPACITY }
             ]}
             accessibilityLabel={t('Close')}
           />
-        </Animated.View>
+        </FadeInView>
         {/* Placed once the overlay is measured, which only the first open waits for */}
         {!!overlaySize && renderCard(overlaySize)}
       </AboveSheetsOverlay>
